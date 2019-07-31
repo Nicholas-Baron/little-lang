@@ -9,21 +9,22 @@
 
 #include <iostream>
 
-class context_module{
+class context_module {
 
 	llvm::LLVMContext context_{};
-	llvm::Module module_;
+	llvm::Module	  module_;
 	llvm::IRBuilder<> builder_;
 
-	public:
+   public:
 	context_module() = delete;
-	explicit context_module(const std::string& name) : module_{name, context_}, builder_{context_} {}
+	explicit context_module(const std::string & name)
+		: module_{name, context_}, builder_{context_} {}
 
-	context_module(const context_module&) = delete;
-	context_module& operator=(const context_module&) = delete;
+	context_module(const context_module &) = delete;
+	context_module & operator=(const context_module &) = delete;
 
-	context_module(context_module&&) = delete;
-	context_module& operator=(context_module&&) = delete;
+	context_module(context_module &&) = delete;
+	context_module & operator=(context_module &&) = delete;
 
 	~context_module() noexcept = default;
 
@@ -35,17 +36,18 @@ class context_module{
 
 	void dump() const { module_.print(llvm::dbgs(), nullptr); }
 
-	auto * find_first_class_value(const std::string& name) {
+	auto * find_first_class_value(const std::string & name) {
 		return module_.getValueSymbolTable().lookup(name);
 	}
 };
 
-inline auto * find_local_value(llvm::Function * func, const std::string& name){
+inline auto * find_local_value(llvm::Function *	func,
+							   const std::string & name) {
 	return func->getValueSymbolTable()->lookup(name);
 }
 
-inline void print_symbol_table(llvm::ValueSymbolTable * table){
-	for (const auto& entry : *table){
+inline void print_symbol_table(llvm::ValueSymbolTable * table) {
+	for (const auto & entry : *table) {
 		std::cout << entry.getKey().str() << std::endl;
 	}
 }
