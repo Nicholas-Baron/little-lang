@@ -42,8 +42,6 @@ extern "C" int yywrap(){ return 1; /* To prevent reading a second file */ }
 "/"				return token(T_DIV);
 "*"				return token(T_MULT);
 "%"				return token(T_MOD);
-"++"			return token(T_INCRE);
-"--"			return token(T_DECRE);
 
 	/* Miscellaneous Symbols */
 
