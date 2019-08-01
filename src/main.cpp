@@ -11,7 +11,7 @@ extern struct yy_buffer_state;
 using YY_BUFFER_STATE = yy_buffer_state *;
 extern YY_BUFFER_STATE yy_scan_string(char * str);
 */
-extern int			   yyparse();
+extern int yyparse();
 
 std::string read_file(const std::string & name) {
 
@@ -45,7 +45,7 @@ int main(const int arg_count, const char * const * const args) {
 	auto content = read_file(filename) + "\0\0";
 
 	auto buffer = yy_scan_string(content.data());
-	
+
 	yy_switch_to_buffer(buffer);
 	const auto parse_status = yyparse();
 
