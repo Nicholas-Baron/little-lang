@@ -12,6 +12,10 @@ extern "C" int yywrap(){ return 1; /* To prevent reading a second file */ }
 
 %}
 
+%option nodefault
+%option nounput
+%option header="tokens.hpp"
+
 %%
 
 [ \t\n]		; /* Whitespace agnostic */
