@@ -96,8 +96,8 @@ action : T_RET expr
 	   | T_LET typed_var initialization
 	   ;
 
-conditional : T_IF boolean_expr T_LBRACE statement_seq T_RBRACE else_block
-			| T_IF boolean_expr statement
+conditional : T_IF bool_expr T_LBRACE statement_seq T_RBRACE else_block
+			| T_IF bool_expr statement
 			;
 
 else_block : %empty
