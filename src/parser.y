@@ -45,5 +45,114 @@
 
 %%
 
+program : top_lvl_seq function 
+
+top_lvl_seq : %empty% 
+			| top_lvl_item top_lvl_seq
+			;
+
+top_lvl_item : global
+			 | function
+			 ;
+
+global : T_GLOBAL typed_var initialization T_SEMI
+	   ;
+
+function : func_header statement 
+		 ;
+
+func_header : T_IDENT func_sig
+			| func_sig T_IDENT
+			;
+
+func_sig : T_IDENT param_group
+		 ;
+
+param_group : T_LPAREN T_RPAREN
+			| T_LPAREN param_list T_RPAREN
+			;
+
+param_list : typed_var
+		   | param_list T_COMMA typed_var
+		   ;
+
+typed_var : T_IDENT T_IDENT
+		  | T_IDENT T_IS T_IDENT
+		  ;
+
+statement : T_LBRACE statement_seq T_RBRACE
+		  | action T_SEMI
+		  | conditional
+		  ;
+
+statement_seq : %empty%
+			  | statement_seq statement
+			  ;
+
+action : T_RET expr
+	   | T_RET
+	   | func_call
+	   | T_LET T_IDENT initialization
+	   | T_LET typed_var initialization
+	   ;
+
+conditional : T_IF boolean_expr T_LBRACE statement_seq T_RBRACE else_block
+			| T_IF boolean_expr statement
+			;
+
+else_block : %empty%
+		   | T_ELSE T_LBRACE statement_seq T_RBRACE
+		   | T_ELSE conditional
+		   ;
+
+initialization : T_ASSIGN expr | T_LBRACE expr T_RBRACE ;
+
+expr : math_expr | bool_expr;
+
+math_expr : T_IDENT
+		  | T_INT
+		  | T_FLOAT
+		  | func_call
+		  | T_LPAREN math_expr T_RPAREN
+		  | math_expr binary_op_rhs
+		  ;
+
+bool_expr : T_IDENT
+		  | T_BOOL
+		  | func_call
+		  | T_NOT bool_expr
+		  | T_LPAREN bool_expr T_RPAREN
+		  | math_expr compare_op_rhs
+		  | bool_expr bool_op_rhs
+		  ;
+
+func_call : T_IDENT T_LPAREN arg_list T_RPAREN
+		  | T_LPAREN T_IDENT arg_list T_RPAREN
+		  | T_IDENT T_LPAREN T_RPAREN
+		  | T_IDENT expr
+		  ;
+
+arg_list : expr
+		 | arg_list T_COMMA expr
+		 ;
+
+bool_op_rhs : T_AND bool_expr
+			| T_OR bool_expr
+			;
+
+compare_op_rhs : T_EQ math_expr
+			   | T_NE math_expr
+			   | T_LE math_expr
+			   | T_LT math_expr
+			   | T_GE math_expr
+			   | T_GT math_expr
+			   ;
+
+binary_op_rhs : T_PLUS math_expr
+			  | T_MINUS math_expr
+			  | T_MULT math_expr
+			  | T_MOD math_expr
+			  | T_DIV math_expr
+			  ;
 
 %%
