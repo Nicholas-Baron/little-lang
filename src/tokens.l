@@ -78,7 +78,7 @@ extern "C" int yywrap(){ return 1; /* To prevent reading a second file */ }
 
 	/* Identifier */
 
-[a-zA-Z][a-zA-Z0-9_]*					save_tok; return T_IDENT;	
+[a-zA-Z][a-zA-Z0-9_]+					save_tok; return T_IDENT;
 
 
 	/* Error: Could not parse */
