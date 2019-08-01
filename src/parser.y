@@ -5,13 +5,11 @@
 
 	extern int yylex();
 
-	template<typename T>
-	using ptr = std::unique_ptr<T>;
 %}
 
 %union{
 	int token;
-	ptr<std::string> string;
+	std::string* string;
 
 
 
