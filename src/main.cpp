@@ -1,8 +1,30 @@
 #include "context_module.hpp"
 
-#include <iostream>
+#include "tokens.hpp"
 
-extern int yyparse();
+#include <fstream>
+#include <iostream>
+#include <sstream>
+
+/*
+extern struct yy_buffer_state;
+using YY_BUFFER_STATE = yy_buffer_state *;
+extern YY_BUFFER_STATE yy_scan_string(char * str);
+*/
+extern int			   yyparse();
+
+std::string read_file(const std::string & name) {
+
+	std::stringstream content;
+
+	{
+		std::ifstream file{name};
+		std::string   line;
+		while (getline(file, line)) { content << line << '\n'; }
+	}
+
+	return content.str();
+}
 
 int main(const int arg_count, const char * const * const args) {
 
@@ -20,6 +42,11 @@ int main(const int arg_count, const char * const * const args) {
 		return data;
 	}();
 
+	auto content = read_file(filename) + "\0\0";
+
+	auto buffer = yy_scan_string(content.data());
+	
+	yy_switch_to_buffer(buffer);
 	const auto parse_status = yyparse();
 
 	if (parse_status != 0) {
@@ -32,5 +59,8 @@ int main(const int arg_count, const char * const * const args) {
 			std::cerr << "Unknown error" << std::endl;
 		}
 	}
+
+	yy_delete_buffer(buffer);
+
 	context_module context{filename};
 }
