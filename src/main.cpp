@@ -42,7 +42,14 @@ int main(const int arg_count, const char * const * const args) {
 		return data;
 	}();
 
-	auto content = read_file(filename) + "\0\0";
+	auto content = read_file(filename) ;
+
+	if(content.empty()){
+		std::cerr << "File is empty" << std::endl;
+		return -1;
+	}else{
+//		content += "\0\0";
+	}
 
 	auto buffer = yy_scan_string(content.data());
 
