@@ -47,7 +47,7 @@
 
 program : top_lvl_seq function 
 
-top_lvl_seq : %empty% 
+top_lvl_seq : %empty
 			| top_lvl_item top_lvl_seq
 			;
 
@@ -85,7 +85,7 @@ statement : T_LBRACE statement_seq T_RBRACE
 		  | conditional
 		  ;
 
-statement_seq : %empty%
+statement_seq : %empty
 			  | statement_seq statement
 			  ;
 
@@ -100,7 +100,7 @@ conditional : T_IF boolean_expr T_LBRACE statement_seq T_RBRACE else_block
 			| T_IF boolean_expr statement
 			;
 
-else_block : %empty%
+else_block : %empty
 		   | T_ELSE T_LBRACE statement_seq T_RBRACE
 		   | T_ELSE conditional
 		   ;
