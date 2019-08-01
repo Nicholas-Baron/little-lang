@@ -1,7 +1,7 @@
 
-OUTPUT="littlec"
+OUTPUT=littlec
 LLVM_SETTINGS=$(llvm-config --cxxflags --ldflags --libs core native)
-COMPILE_FLAGS="-Wall -Wextra -std=c++17"
+COMPILE_FLAGS=-Wall -Wextra -std=c++17
 
 all: parser tokens 
 	clang++ -o ${OUTPUT} *.cpp ${LLVM_SETTINGS} ${COMPILE_FLAGS}
