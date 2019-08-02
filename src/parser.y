@@ -108,11 +108,11 @@ expr : logic_or_expr ;
 
 primary_expr : T_IDENT
 			 | func_call
-			 | T_INT
-			 | T_FLOAT
-			 | T_CHAR
-			 | T_BOOL
+			 | literal
 			 | T_LPAREN expr T_RPAREN
+			 ;
+
+literal : T_INT | T_FLOAT | T_CHAR | T_BOOL | T_STRING ; 
 
 unary_expr : primary_expr | T_NOT primary_expr ; 
 
@@ -149,7 +149,8 @@ logic_or_expr : logic_and_expr
 
 func_call : T_IDENT arg_group
 		  | T_LPAREN T_IDENT arg_list T_RPAREN
-		  | T_IDENT expr
+		  | T_IDENT func_call
+		  | T_IDENT literal
 		  ;
 
 arg_group : T_LPAREN arg_list T_RPAREN
