@@ -12,8 +12,10 @@ extern "C" int yywrap(){ return 1; /* To prevent reading a second file */ }
 
 %}
 
+%option yylineno
 %option warn
 %option nodefault
+%option noinput
 %option nounput
 %option header="tokens.hpp"
 
@@ -72,7 +74,6 @@ extern "C" int yywrap(){ return 1; /* To prevent reading a second file */ }
 "if"			return token(T_IF);
 "else"			return token(T_ELSE);
 
-
 	/* Literals */
 
 0|(-?[1-9][0-9_]*)|(0x[0-9A-Fa-f]+)		save_tok; return T_INT;
@@ -87,6 +88,6 @@ extern "C" int yywrap(){ return 1; /* To prevent reading a second file */ }
 
 
 	/* Error: Could not parse */
-.				printf("Unknown token!\n"); yyterminate();
+.				printf("Unknown text on line %d: %s!\n", yylineno, yytext); yyterminate();
 
 %%
