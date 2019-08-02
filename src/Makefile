@@ -6,7 +6,9 @@ all: parser tokens
 
 parser:
 	bison -d -o parser.cpp parser.y --report=state --graph -t -Wall
-	dot -Tpdf parser.dot -o parser.pdf
 
 tokens: parser
 	flex -o tokens.cpp tokens.l parser.hpp
+
+graph: parser
+	dot -Tpdf parser.dot -o parser.pdf
