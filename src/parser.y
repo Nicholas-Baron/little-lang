@@ -33,11 +33,9 @@
 
 // Precedence (lowest = first)
 
-%precedence T_OR T_AND
-%precedence T_NE T_EQ T_LT T_LE T_GT T_GE
+%precedence T_LT T_LE T_GT T_GE
 %precedence T_PLUS T_MINUS
 %precedence T_MULT T_MOD T_DIV
-%precedence T_NOT
 
 %start program
 
@@ -106,16 +104,48 @@ else_block : T_ELSE T_LBRACE statement_seq T_RBRACE
 
 initialization : T_ASSIGN expr | T_LBRACE expr T_RBRACE ;
 
-expr : T_IDENT
-	 | func_call
-	 | T_INT
-	 | T_FLOAT
-	 | T_CHAR
-	 | T_BOOL
-	 | T_LPAREN expr T_RPAREN
-	 | T_NOT expr
-	 | expr binary_op expr
-	 ;
+expr : logic_or_expr ;
+
+primary_expr : T_IDENT
+			 | func_call
+			 | T_INT
+			 | T_FLOAT
+			 | T_CHAR
+			 | T_BOOL
+			 | T_LPAREN expr T_RPAREN
+
+unary_expr : primary_expr | T_NOT primary_expr ; 
+
+multiply_expr : unary_expr 
+			  | multiply_expr T_MULT unary_expr
+			  | multiply_expr T_MOD unary_expr
+			  | multiply_expr T_DIV unary_expr
+			  ;
+
+additive_expr : multiply_expr
+			  | additive_expr T_PLUS multiply_expr
+			  | additive_expr T_MINUS multiply_expr
+			  ;
+
+relation_expr : additive_expr
+			  | additive_expr T_LE additive_expr
+			  | additive_expr T_LT additive_expr
+			  | additive_expr T_GE additive_expr
+			  | additive_expr T_GT additive_expr
+			  ;
+
+equality_expr : relation_expr
+			  | relation_expr T_EQ relation_expr
+			  | relation_expr T_NE relation_expr
+			  ;
+
+logic_and_expr : equality_expr
+			   | logic_and_expr T_AND equality_expr
+			   ;
+
+logic_or_expr : logic_and_expr
+			  | logic_or_expr T_OR logic_and_expr
+			  ;
 
 func_call : T_IDENT arg_group
 		  | T_LPAREN T_IDENT arg_list T_RPAREN
@@ -130,19 +160,5 @@ arg_list : expr
 		 | arg_list T_COMMA expr
 		 ;
 
-binary_op: T_AND 
-		 | T_OR 
-		 | T_EQ 
-		 | T_NE 
-		 | T_LE 
-		 | T_LT 
-		 | T_GE 
-		 | T_GT 
-		 | T_PLUS 
-		 | T_MINUS
-		 | T_MULT 
-		 | T_MOD 
-		 | T_DIV 
-		 ;
 
 %%
