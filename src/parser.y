@@ -1,11 +1,14 @@
 %{
 	#include <iostream>
 
-	inline void yyerror(const char* const msg){ std::cerr << msg << std::endl; }
-
 	extern int yylex();
+	extern const char* yytext;
+	extern int yylineno;	
+	inline void yyerror(const char* const msg){ std::cerr << "Error on line " << yylineno << ": " << msg << "\nText: " << yytext << std::endl; }
 
 %}
+
+%glr-parser
 
 %union{
 	int token;
@@ -30,12 +33,11 @@
 
 // Precedence (lowest = first)
 
-%right T_ASSIGN
-%left T_OR T_AND
-%left T_NE T_EQ T_LT T_LE T_GT T_GE
-%left T_PLUS T_MINUS
-%left T_MULT T_MOD T_DIV
-%right T_NOT
+%precedence T_OR T_AND
+%precedence T_NE T_EQ T_LT T_LE T_GT T_GE
+%precedence T_PLUS T_MINUS
+%precedence T_MULT T_MOD T_DIV
+%precedence T_NOT
 
 %start program
 
@@ -94,63 +96,53 @@ action : T_RET expr
 	   | T_LET typed_var initialization
 	   ;
 
-conditional : T_IF bool_expr T_LBRACE statement_seq T_RBRACE else_block
-			| T_IF bool_expr statement
+conditional : T_IF expr T_LBRACE statement_seq T_RBRACE else_block
+			| T_IF expr statement
 			;
 
-else_block : %empty
-		   | T_ELSE T_LBRACE statement_seq T_RBRACE
+else_block : T_ELSE T_LBRACE statement_seq T_RBRACE
 		   | T_ELSE conditional
 		   ;
 
 initialization : T_ASSIGN expr | T_LBRACE expr T_RBRACE ;
 
-expr : math_expr | bool_expr;
+expr : T_IDENT
+	 | func_call
+	 | T_INT
+	 | T_FLOAT
+	 | T_CHAR
+	 | T_BOOL
+	 | T_LPAREN expr T_RPAREN
+	 | T_NOT expr
+	 | expr binary_op expr
+	 ;
 
-math_expr : T_IDENT
-		  | T_INT
-		  | T_FLOAT
-		  | func_call
-		  | T_LPAREN math_expr T_RPAREN
-		  | math_expr binary_op_rhs
-		  ;
-
-bool_expr : T_IDENT
-		  | T_BOOL
-		  | func_call
-		  | T_NOT bool_expr
-		  | T_LPAREN bool_expr T_RPAREN
-		  | math_expr compare_op_rhs
-		  | bool_expr bool_op_rhs
-		  ;
-
-func_call : T_IDENT T_LPAREN arg_list T_RPAREN
+func_call : T_IDENT arg_group
 		  | T_LPAREN T_IDENT arg_list T_RPAREN
-		  | T_IDENT T_LPAREN T_RPAREN
 		  | T_IDENT expr
+		  ;
+
+arg_group : T_LPAREN arg_list T_RPAREN
+		  | T_LPAREN T_RPAREN
 		  ;
 
 arg_list : expr
 		 | arg_list T_COMMA expr
 		 ;
 
-bool_op_rhs : T_AND bool_expr
-			| T_OR bool_expr
-			;
-
-compare_op_rhs : T_EQ math_expr
-			   | T_NE math_expr
-			   | T_LE math_expr
-			   | T_LT math_expr
-			   | T_GE math_expr
-			   | T_GT math_expr
-			   ;
-
-binary_op_rhs : T_PLUS math_expr
-			  | T_MINUS math_expr
-			  | T_MULT math_expr
-			  | T_MOD math_expr
-			  | T_DIV math_expr
-			  ;
+binary_op: T_AND 
+		 | T_OR 
+		 | T_EQ 
+		 | T_NE 
+		 | T_LE 
+		 | T_LT 
+		 | T_GE 
+		 | T_GT 
+		 | T_PLUS 
+		 | T_MINUS
+		 | T_MULT 
+		 | T_MOD 
+		 | T_DIV 
+		 ;
 
 %%
