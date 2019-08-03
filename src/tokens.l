@@ -73,6 +73,8 @@ extern "C" int yywrap(){ return 1; /* To prevent reading a second file */ }
 "let"			return token(T_LET);
 "if"			return token(T_IF);
 "else"			return token(T_ELSE);
+"proc"			return token(T_PROC);
+"int"|"bool"|"float"|"char"|"auto" save_tok; return T_PRIM_TYPE;
 
 	/* Literals */
 

@@ -20,23 +20,23 @@
 
 // Token definitions
 
-%token <string> T_IDENT T_INT T_CHAR T_BOOL T_STRING T_FLOAT			// Regexes
-%token <token>	T_EQ T_NE T_LT T_GT T_LE T_GE 							// Comparisons
-%token <token>	T_LPAREN T_RPAREN T_LBRACE T_RBRACE T_LBRACK T_RBRACK	// Paired symbols
-%token <token>	T_PLUS T_MINUS T_DIV T_MULT T_MOD 						// Math symbols
-%token <token>	T_SCOPE T_COMMA T_IS T_SEMI								// Misc symbols
-%token <token>	T_NAMESPACE T_GLOBAL T_RET T_IF T_ELSE T_LET			// Reserved words
-%token <token>	T_AND T_OR T_NOT 										// Boolean operators
-%token <token>	T_ASSIGN
+%token <string> T_IDENT T_INT T_CHAR T_BOOL T_STRING T_FLOAT T_PRIM_TYPE 	// Regexes
+%token <token>	T_EQ T_NE T_LT T_GT T_LE T_GE 								// Comparisons
+%token <token>	T_LPAREN T_RPAREN T_LBRACE T_RBRACE T_LBRACK T_RBRACK		// Paired symbols
+%token <token>	T_PLUS T_MINUS T_DIV T_MULT T_MOD 							// Math symbols
+%token <token>	T_SCOPE T_COMMA T_IS T_SEMI									// Misc symbols
+%token <token>	T_NAMESPACE T_GLOBAL T_RET T_IF T_ELSE T_LET				// Reserved words
+%token <token>	T_AND T_OR T_NOT 											// Boolean operators
+%token <token>	T_ASSIGN T_PROC	
 
 // Types for non-terminals
 
 // Precedence (lowest = first)
 
-%precedence T_LT T_LE T_GT T_GE
+/*%precedence T_LT T_LE T_GT T_GE
 %precedence T_PLUS T_MINUS
 %precedence T_MULT T_MOD T_DIV
-
+*/
 %start program
 
 // {$$ = $1;} is already provided.
@@ -59,12 +59,13 @@ global : T_GLOBAL typed_var initialization T_SEMI
 function : func_header statement 
 		 ;
 
-func_header : T_IDENT func_sig
-			| func_sig T_IDENT
+func_header : ret_type func_sig
+			| func_sig ret_type 
 			;
 
-func_sig : T_IDENT param_group
-		 ;
+ret_type : type | T_PROC ;
+
+func_sig : T_IDENT param_group ;
 
 param_group : T_LPAREN T_RPAREN
 			| T_LPAREN param_list T_RPAREN
@@ -74,8 +75,8 @@ param_list : typed_var
 		   | param_list T_COMMA typed_var
 		   ;
 
-typed_var : T_IDENT T_IDENT
-		  | T_IDENT T_IS T_IDENT
+typed_var : type T_IDENT
+		  | T_IDENT T_IS type 
 		  ;
 
 statement : T_LBRACE statement_seq T_RBRACE
@@ -161,5 +162,6 @@ arg_list : expr
 		 | arg_list T_COMMA expr
 		 ;
 
+type : T_PRIM_TYPE | T_IDENT ;
 
 %%
