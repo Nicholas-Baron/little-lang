@@ -17,10 +17,12 @@
 
 %union{
 	int token;
-	std::string* string;
+	std::string * string;
 
-
+	Typed_Var * var_with_type;
 	Top_Level_Seq * top_lvl_items;
+	
+	std::vector<Typed_Var>* params;
 }
 
 // Token definitions
@@ -37,6 +39,8 @@
 // Types for non-terminals
 %nterm <string> literal type ret_type
 %type <top_lvl_items> top_lvl_seq
+%type <var_with_type> typed_var
+%type <params> param_list param_group
 
 %start program
 
@@ -68,16 +72,16 @@ ret_type : type | T_PROC { $$ = new std::string{"proc"}; } ;
 
 func_sig : T_IDENT param_group ;
 
-param_group : T_LPAREN T_RPAREN
-			| T_LPAREN param_list T_RPAREN
+param_group : T_LPAREN T_RPAREN { $$ = new std::vector<Typed_Var>{}; }
+			| T_LPAREN param_list T_RPAREN { $$ = $2; }
 			;
 
-param_list : typed_var
-		   | param_list T_COMMA typed_var
+param_list : typed_var { $$ = new std::vector<Typed_Var>{}; $$->push_back(std::move(*$1)); delete $1; }
+		   | param_list T_COMMA typed_var { $$ = $1; $$->push_back(std::move(*$3)); delete $3; }
 		   ;
 
-typed_var : type T_IDENT
-		  | T_IDENT T_IS type 
+typed_var : type T_IDENT 		{ $$ = new Typed_Var(std::move(*$2), std::move(*$1)); delete $1; delete $2; }
+		  | T_IDENT T_IS type 	{ $$ = new Typed_Var(std::move(*$1), std::move(*$3)); delete $1; delete $3; }
 		  ;
 
 statement : T_LBRACE statement_seq T_RBRACE

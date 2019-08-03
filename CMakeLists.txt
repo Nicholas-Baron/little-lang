@@ -46,7 +46,9 @@ add_custom_command(
 	USES_TERMINAL
 	)
 
-add_executable(littlec ${CMAKE_SOURCE_DIR}/src/main.cpp ${bison_output} ${flex_output})
+set(input_files ${CMAKE_SOURCE_DIR}/src/main.cpp ${CMAKE_SOURCE_DIR}/src/nodes.cpp ${bison_output} ${flex_output})
+
+add_executable(littlec ${input_files})
 target_compile_options(littlec PRIVATE -Wall ${LLVM_CONFIG})
 target_link_libraries(littlec ${LLVM_CONFIG})
 target_include_directories(littlec PRIVATE ${CMAKE_SOURCE_DIR}/src ${temp_dir})

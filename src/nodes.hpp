@@ -60,4 +60,17 @@ class Top_Level_Seq final : public Node {
 	std::vector<std::unique_ptr<Top_Level>> top_lvl_seq_;
 };
 
+class Typed_Var final {
+
+	std::string type_;
+	std::string name_;
+	
+   public:
+	Typed_Var(std::string&& name, std::string&& type)
+		: type_{type}, name_{name} {}
+	
+	const auto & name() const { return name_; }
+	const auto & type() const { return type_; }
+};
+
 #endif
