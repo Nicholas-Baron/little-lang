@@ -30,13 +30,8 @@
 %token <token>	T_ASSIGN T_PROC	
 
 // Types for non-terminals
+%token <string> literal type ret_type
 
-// Precedence (lowest = first)
-
-/*%precedence T_LT T_LE T_GT T_GE
-%precedence T_PLUS T_MINUS
-%precedence T_MULT T_MOD T_DIV
-*/
 %start program
 
 // {$$ = $1;} is already provided.
