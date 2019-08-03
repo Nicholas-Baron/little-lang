@@ -1,7 +1,7 @@
 %{
 	#include <iostream>
 
-	#include "node.hpp"
+	#include "nodes.hpp"
 
 	extern int yylex();
 	extern const char* yytext;
@@ -34,7 +34,7 @@
 %token <token>	T_ASSIGN T_PROC	
 
 // Types for non-terminals
-%token <string> literal type ret_type
+%nterm <string> literal type ret_type
 
 %start program
 
@@ -62,7 +62,7 @@ func_header : ret_type func_sig
 			| func_sig ret_type 
 			;
 
-ret_type : type | T_PROC ;
+ret_type : type | T_PROC { $$ = new std::string{"proc"}; } ;
 
 func_sig : T_IDENT param_group ;
 
