@@ -5,7 +5,10 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-project(Little_Compiler)
+project(
+	Little_Compiler
+	LANGUAGES CXX
+	)
 
 message(STATUS "Source dir is ${CMAKE_SOURCE_DIR}")
 
@@ -19,25 +22,27 @@ message(STATUS "LLVM options: ${LLVM_CONFIG}")
 
 set(temp_dir ${CMAKE_SOURCE_DIR}/temp)
 
+set(parser_header ${temp_dir}/parser.hpp)
 
 set(bison_input ${CMAKE_SOURCE_DIR}/src/parser.y)
 set(bison_output ${temp_dir}/parser.cpp)
 
 add_custom_command(
-	OUTPUT ${bison_output}
-	COMMAND ${BISON_EXECUTABLE} ${bison_input} -d --report=state -t --graph -Wall --output=${bison_output}
+	OUTPUT ${bison_output} ${parser_header}
+	COMMAND ${BISON_EXECUTABLE} ${bison_input} --defines=${parser_header} --report=state -t --graph -Wall --output=${bison_output}
 	COMMENT "Generating parser..."
 	USES_TERMINAL
 	)
 
-set(flex_input ${CMAKE_SOURCE_DIR}/src/tokens.l ${CMAKE_SOURCE_DIR}/src/parser.hpp)
+set(flex_input ${CMAKE_SOURCE_DIR}/src/tokens.l ${parser_header})
 set(flex_output ${temp_dir}/tokens.cpp)
 
 add_custom_command(
 	OUTPUT ${flex_output}
-	COMMAND ${FLEX_EXECUTABLE} --header-file=${CMAKE_SOURCE_DIR}/src/tokens.hpp -o ${flex_output} ${flex_input}
+	COMMAND ${FLEX_EXECUTABLE} --header-file=${temp_dir}/tokens.hpp -o ${flex_output} ${flex_input}
 	COMMENT "Generating tokenizer..."
-	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/src
+	WORKING_DIRECTORY ${temp_dir}
+	DEPENDS ${parser_header}
 	USES_TERMINAL
 	)
 
