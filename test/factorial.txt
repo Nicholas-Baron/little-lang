@@ -1,0 +1,9 @@
+int factorial(int input){
+	if(input <= 2){ return input; }
+	return input * factorial(input - 1);
+}
+
+global my_val is int = 25;
+
+int main()
+	(factorial my_val);
