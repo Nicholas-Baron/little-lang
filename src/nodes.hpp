@@ -64,13 +64,38 @@ class Typed_Var final {
 
 	std::string type_;
 	std::string name_;
-	
+
    public:
-	Typed_Var(std::string&& name, std::string&& type)
+	Typed_Var(std::string && name, std::string && type)
 		: type_{type}, name_{name} {}
-	
+
 	const auto & name() const { return name_; }
 	const auto & type() const { return type_; }
+};
+
+class Statement_Seq final : public Statement {
+   public:
+	Statement_Seq() = default;
+
+	Statement_Seq(const Statement_Seq &) = delete;
+	Statement_Seq & operator=(const Statement_Seq &) = delete;
+
+	Statement_Seq(Statement_Seq &&) = default;
+	Statement_Seq & operator=(Statement_Seq &&) = default;
+
+	~Statement_Seq() override = default;
+
+	void append(Statement * stmt) { statements.emplace_back(stmt); }
+
+	// The return value should not be used
+	llvm::Value * codegen(context_module & context) override {
+		for (const auto & entry : statements) { entry->codegen(context); }
+
+		return nullptr;
+	}
+
+   private:
+	std::vector<std::unique_ptr<Statement>> statements{};
 };
 
 #endif

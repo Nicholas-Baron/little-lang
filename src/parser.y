@@ -20,6 +20,10 @@
 	std::string * string;
 
 	Typed_Var * var_with_type;
+	
+	Statement * stmt;
+	
+	Statement_Seq * statements;
 	Top_Level_Seq * top_lvl_items;
 	
 	std::vector<Typed_Var>* params;
@@ -41,6 +45,8 @@
 %type <top_lvl_items> top_lvl_seq
 %type <var_with_type> typed_var
 %type <params> param_list param_group
+%type <statements> statement_seq
+%type <stmt> statement
 
 %start program
 
@@ -84,13 +90,13 @@ typed_var : type T_IDENT 		{ $$ = new Typed_Var(std::move(*$2), std::move(*$1));
 		  | T_IDENT T_IS type 	{ $$ = new Typed_Var(std::move(*$1), std::move(*$3)); delete $1; delete $3; }
 		  ;
 
-statement : T_LBRACE statement_seq T_RBRACE
+statement : T_LBRACE statement_seq T_RBRACE { $$ = $2; }
 		  | action T_SEMI
 		  | conditional
 		  ;
 
-statement_seq : %empty
-			  | statement_seq statement
+statement_seq : %empty { $$ = new Statement_Seq{}; }
+			  | statement_seq statement { $$ = $1; $$->append($2); }
 			  ;
 
 action : T_RET expr
