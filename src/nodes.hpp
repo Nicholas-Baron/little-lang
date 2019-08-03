@@ -29,11 +29,11 @@ class Top_Level_Seq final : public Node {
    public:
 	Top_Level_Seq() = default;
 
-	Top_Level_Seq(const Top_Level_Seq&) = delete;
-	Top_Level_Seq& operator=(const Top_Level_Seq &) = delete;
+	Top_Level_Seq(const Top_Level_Seq &) = delete;
+	Top_Level_Seq & operator=(const Top_Level_Seq &) = delete;
 
-	Top_Level_Seq(Top_Level_Seq&&)  = default;
-	Top_Level_Seq& operator=(Top_Level_Seq&&) = default;
+	Top_Level_Seq(Top_Level_Seq &&) = default;
+	Top_Level_Seq & operator=(Top_Level_Seq &&) = default;
 
 	~Top_Level_Seq() override = default;
 
@@ -48,10 +48,8 @@ class Top_Level_Seq final : public Node {
 	}
 
 	// The return value should not be used
-	llvm::Value * codegen(context_module& context) override {
-		for(const auto& item : top_lvl_seq_){
-			item->codegen(context);
-		}
+	llvm::Value * codegen(context_module & context) override {
+		for (const auto & item : top_lvl_seq_) { item->codegen(context); }
 
 		return nullptr;
 	}
