@@ -19,9 +19,10 @@
 	int token;
 	std::string * string;
 
-	Typed_Var * var_with_type;
-	
 	Statement * stmt;
+	Top_Level * top_lvl;
+
+	Typed_Var * var_with_type;
 	
 	Statement_Seq * statements;
 	Top_Level_Seq * top_lvl_items;
@@ -47,6 +48,7 @@
 %type <params> param_list param_group
 %type <statements> statement_seq
 %type <stmt> statement
+%type <top_lvl> top_lvl_item global function
 
 %start program
 
@@ -57,7 +59,7 @@
 program : top_lvl_seq function 
 
 top_lvl_seq : %empty { $$ = new Top_Level_Seq(); }
-			| top_lvl_seq top_lvl_item 
+			| top_lvl_seq top_lvl_item { $$ = $1; $$->append_item($2); }
 			;
 
 top_lvl_item : global
