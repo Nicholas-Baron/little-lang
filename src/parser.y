@@ -1,10 +1,14 @@
 %{
 	#include <iostream>
 
+	#include "node.hpp"
+
 	extern int yylex();
 	extern const char* yytext;
 	extern int yylineno;	
-	inline void yyerror(const char* const msg){ std::cerr << "Error on line " << yylineno << ": " << msg << "\nText: " << yytext << std::endl; }
+	inline void yyerror(const char* const msg){ 
+		std::cerr << "Error on line " << yylineno << ": " << msg << "\nText: " << yytext << std::endl; 
+	}
 
 %}
 
