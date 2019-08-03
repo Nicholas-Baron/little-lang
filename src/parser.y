@@ -47,7 +47,7 @@
 program : top_lvl_seq function 
 
 top_lvl_seq : %empty { $$ = new Top_Level_Seq(); }
-			| top_lvl_item top_lvl_seq
+			| top_lvl_seq top_lvl_item 
 			;
 
 top_lvl_item : global
