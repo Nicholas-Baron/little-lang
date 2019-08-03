@@ -12,12 +12,43 @@ class Node {
 	Node(const Node &) = delete;
 	Node & operator=(const Node &) = delete;
 
-	Node(Node &&)  = delete;
-	Node & operator=(Node &&) = delete;
+	Node(Node &&)  = default;
+	Node & operator=(Node &&) = default;
 
 	virtual ~Node() = default;
 
 	virtual llvm::Value * codegen(context_module & context) = 0;
+};
+
+// Base classes
+class Expression : public virtual Node {};
+class Statement : public virtual Node {};
+class Top_Level : public virtual Node {};
+
+class Top_Level_Seq final : public Node {
+   public:
+	Top_Level_Seq() = default;
+
+	Top_Level_Seq(const Top_Level_Seq&) = delete;
+	Top_Level_Seq& operator=(const Top_Level_Seq &) = delete;
+
+	Top_Level_Seq(Top_Level_Seq&&)  = default;
+	Top_Level_Seq& operator=(Top_Level_Seq&&) = default;
+
+	~Top_Level_Seq() override = default;
+
+	template<typename... args_t>
+	void append_item(args_t &&... args) {
+		top_lvl_seq_.emplace_back(args...);
+	}
+
+	Top_Level_Seq & operator+=(Top_Level * item) {
+		top_lvl_seq_.emplace_back(item);
+		return *this;
+	}
+
+   private:
+	std::vector<std::unique_ptr<Top_Level>> top_lvl_seq_;
 };
 
 #endif
