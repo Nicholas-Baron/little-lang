@@ -10,6 +10,7 @@
 		std::cerr << "Error on line " << yylineno << ": " << msg << "\nText: " << yytext << std::endl; 
 	}
 
+	Top_Level_Seq * module;
 %}
 
 %glr-parser
@@ -19,7 +20,7 @@
 	std::string* string;
 
 
-
+	Top_Level_Seq * top_lvl_items;
 }
 
 // Token definitions
@@ -35,6 +36,7 @@
 
 // Types for non-terminals
 %nterm <string> literal type ret_type
+%type <top_lvl_items> top_lvl_seq
 
 %start program
 
@@ -44,7 +46,7 @@
 
 program : top_lvl_seq function 
 
-top_lvl_seq : %empty
+top_lvl_seq : %empty { $$ = new Top_Level_Seq(); }
 			| top_lvl_item top_lvl_seq
 			;
 
