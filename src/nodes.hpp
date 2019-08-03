@@ -47,6 +47,15 @@ class Top_Level_Seq final : public Node {
 		return *this;
 	}
 
+	// The return value should not be used
+	llvm::Value * codegen(context_module& context) override {
+		for(const auto& item : top_lvl_seq_){
+			item->codegen(context);
+		}
+
+		return nullptr;
+	}
+
    private:
 	std::vector<std::unique_ptr<Top_Level>> top_lvl_seq_;
 };
