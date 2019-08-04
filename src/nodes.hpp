@@ -89,6 +89,20 @@ class Top_Level_Seq final : public Node {
 };
 
 // Statement classes
+
+class If_Statement final : public Statement {
+   public:
+	If_Statement(Expression * cond, Statement * on_true, Statement * on_false)
+		: condition(cond), true_branch(on_true), else_branch(on_false) {}
+
+	llvm::Value * codegen(context_module & context) override;
+
+   private:
+	std::unique_ptr<Expression> condition;
+	std::unique_ptr<Statement>  true_branch;
+	std::unique_ptr<Statement>  else_branch;
+};
+
 class Statement_Seq final : public Statement {
    public:
 	Statement_Seq() = default;

@@ -19,6 +19,7 @@
 	int token;
 	std::string * string;
 
+	Expression * expression;
 	Statement * stmt;
 	Top_Level * top_lvl;
 
@@ -44,7 +45,8 @@
 
 // Types for non-terminals
 %nterm <string> literal type ret_type
-%type <stmt> statement
+%type <expression> expr logic_or_expr logic_and_expr primary_expr
+%type <stmt> statement else_block conditional
 %type <top_lvl> top_lvl_item global function
 %type <func_head> func_header func_sig
 %type <var_with_type> typed_var
@@ -108,12 +110,12 @@ action : T_RET expr
 	   | T_LET typed_var initialization
 	   ;
 
-conditional : T_IF expr T_LBRACE statement_seq T_RBRACE else_block
-			| T_IF expr statement
+conditional : T_IF expr T_LBRACE statement_seq T_RBRACE else_block { $$ = new If_Statement($2, $4, $6); }
+			| T_IF expr statement	{ $$ = new If_Statement($2, $3, nullptr); }
 			;
 
-else_block : T_ELSE T_LBRACE statement_seq T_RBRACE
-		   | T_ELSE conditional
+else_block : T_ELSE T_LBRACE statement_seq T_RBRACE { $$ = $3; }
+		   | T_ELSE conditional { $$ = $2; }
 		   ;
 
 initialization : T_ASSIGN expr | T_LBRACE expr T_RBRACE ;

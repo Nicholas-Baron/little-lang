@@ -33,6 +33,11 @@ namespace {
 		}
 		return to_ret->second(context);
 	}
+
+	std::string temp_block_name() {
+		static unsigned num = 0;
+		return "block_" + std::to_string(num++);
+	}
 }  // namespace
 
 std::vector<Type *> Func_Header::param_types(context_module & context) {
@@ -58,6 +63,46 @@ FunctionType * Func_Header::full_type(context_module & context) {
 							 param_types(context), false);
 }
 
+Value * If_Statement::codegen(context_module & context) {
+
+	auto * cond		   = condition->codegen(context);
+	auto * start_block = context.builder().GetInsertBlock();
+
+	auto * then_block
+		= llvm::BasicBlock::Create(context.context(), temp_block_name());
+	context.builder().SetInsertPoint(then_block);
+	true_branch->codegen(context);
+
+	if (else_branch == nullptr) {
+
+		auto * merge_block
+			= llvm::BasicBlock::Create(context.context(), temp_block_name());
+
+		context.builder().SetInsertPoint(start_block);
+		auto * brancher
+			= context.builder().CreateCondBr(cond, then_block, merge_block);
+		context.builder().SetInsertPoint(merge_block);
+
+		return nullptr;
+	} else {
+		auto * else_block
+			= llvm::BasicBlock::Create(context.context(), temp_block_name());
+		else_branch->codegen(context);
+
+		auto * merge_block
+			= llvm::BasicBlock::Create(context.context(), temp_block_name());
+
+		context.builder().SetInsertPoint(start_block);
+		auto * brancher
+			= context.builder().CreateCondBr(cond, then_block, merge_block);
+		context.builder().SetInsertPoint(then_block);
+		context.builder().CreateBr(merge_block);
+		context.builder().SetInsertPoint(merge_block);
+
+		return nullptr;
+	}
+}
+
 Value * Function::codegen(context_module & context) {
 
 	auto * func_type = head_.full_type(context);
@@ -76,6 +121,12 @@ Value * Function::codegen(context_module & context) {
 			arg->setName(head_.arg(index).name());
 		}
 	}
+
+	auto * blk = llvm::BasicBlock::Create(context.context(),
+										  head_.name() + "_start", func);
+	context.builder().SetInsertPoint(blk);
+
+	body_->codegen(context);
 
 	return func;
 }
