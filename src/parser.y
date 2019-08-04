@@ -45,7 +45,8 @@
 
 // Types for non-terminals
 %nterm <string> literal type ret_type
-%type <expression> expr logic_or_expr logic_and_expr primary_expr
+%type <expression> expr logic_or_expr logic_and_expr primary_expr equality_expr
+%type <expression> unary_expr multiply_expr relation_expr additive_expr
 %type <stmt> statement else_block conditional
 %type <top_lvl> top_lvl_item global function
 %type <func_head> func_header func_sig
@@ -125,7 +126,7 @@ expr : logic_or_expr ;
 primary_expr : T_IDENT
 			 | func_call
 			 | literal
-			 | T_LPAREN expr T_RPAREN
+			 | T_LPAREN expr T_RPAREN { $$ = $2; }
 			 ;
 
 literal : T_INT | T_FLOAT | T_CHAR | T_BOOL | T_STRING ; 
