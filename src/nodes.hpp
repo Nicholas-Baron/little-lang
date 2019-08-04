@@ -96,4 +96,21 @@ class Statement_Seq final : public Statement {
 	std::vector<std::unique_ptr<Statement>> statements{};
 };
 
+class Func_Header final {
+   public:
+	Func_Header(std::string && name, std::vector<Typed_Var> && parameters)
+		: name_(std::move(name)), params(std::move(parameters)) {}
+
+	void set_ret_type(std::string && type) { ret_type = type; }
+
+	llvm::FunctionType * full_type(context_module & context);
+
+   private:
+	std::vector<llvm::Type *> param_types(context_module & context);
+
+	std::string			   name_;
+	std::vector<Typed_Var> params;
+	std::string			   ret_type{};
+};
+
 #endif

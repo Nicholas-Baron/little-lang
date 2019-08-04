@@ -22,6 +22,7 @@
 	Statement * stmt;
 	Top_Level * top_lvl;
 
+	Func_Header * func_head;
 	Typed_Var * var_with_type;
 	
 	Statement_Seq * statements;
@@ -45,6 +46,7 @@
 %nterm <string> literal type ret_type
 %type <stmt> statement
 %type <top_lvl> top_lvl_item global function
+%type <func_head> func_header func_sig
 %type <var_with_type> typed_var
 %type <statements> statement_seq
 %type <top_lvl_items> top_lvl_seq
@@ -62,9 +64,7 @@ top_lvl_seq : %empty { $$ = new Top_Level_Seq(); }
 			| top_lvl_seq top_lvl_item { $$ = $1; $$->append_item($2); }
 			;
 
-top_lvl_item : global
-			 | function
-			 ;
+top_lvl_item : global | function ;
 
 global : T_GLOBAL typed_var initialization T_SEMI
 	   ;
@@ -72,13 +72,13 @@ global : T_GLOBAL typed_var initialization T_SEMI
 function : func_header statement 
 		 ;
 
-func_header : ret_type func_sig
-			| func_sig ret_type 
+func_header : ret_type func_sig { $$ = $2; $$->set_ret_type(std::move(*$1)); delete $1; }
+			| func_sig ret_type { $$ = $1; $$->set_ret_type(std::move(*$2)); delete $2; }
 			;
 
 ret_type : type | T_PROC { $$ = new std::string{"proc"}; } ;
 
-func_sig : T_IDENT param_group ;
+func_sig : T_IDENT param_group { $$ = new Func_Header{std::move(*$1), std::move(*$2)}; delete $1; delete $2; } ;
 
 param_group : T_LPAREN T_RPAREN { $$ = new std::vector<Typed_Var>{}; }
 			| T_LPAREN param_list T_RPAREN { $$ = $2; }
