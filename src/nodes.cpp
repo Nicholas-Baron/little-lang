@@ -40,7 +40,7 @@ std::vector<Type *> Func_Header::param_types(context_module & context) {
 	to_ret.reserve(params.size());
 
 	for (const auto & param : params) {
-		to_ret.push_back(get_type_by_name(param.name(), context.context()));
+		to_ret.push_back(get_type_by_name(param.type(), context.context()));
 	}
 
 	return to_ret;
@@ -65,9 +65,18 @@ Value * Function::codegen(context_module & context) {
 		= llvm::Function::Create(func_type, llvm::Function::ExternalLinkage,
 								 head_.name(), &context.module());
 
+	/*
 	for (unsigned arg_index = 0; arg_index < func_type->getNumParams();
 		 arg_index++) {
 		(func->arg_begin() + arg_index)->setName(head_.arg(arg_index).name());
+	}
+*/
+	{
+		unsigned   index	= 0;
+		const auto args_end = func->arg_end();
+		for (auto arg = func->arg_begin(); arg != args_end; arg++, index++) {
+			arg->setName(head_.arg(index).name());
+		}
 	}
 
 	return func;

@@ -1,7 +1,9 @@
 #include "context_module.hpp"
+#include "nodes.hpp"
 
 #include "tokens.hpp"
 
+#include <cassert>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -11,7 +13,9 @@ extern struct yy_buffer_state;
 using YY_BUFFER_STATE = yy_buffer_state *;
 extern YY_BUFFER_STATE yy_scan_string(char * str);
 */
-extern int yyparse();
+
+extern Top_Level_Seq * module;
+extern int			   yyparse();
 
 std::string read_file(const std::string & name) {
 
@@ -68,4 +72,9 @@ int main(const int arg_count, const char * const * const args) {
 	yy_delete_buffer(buffer);
 
 	context_module context{filename};
+
+	assert(module != nullptr);
+	module->codegen(context);
+
+	context.dump();
 }
