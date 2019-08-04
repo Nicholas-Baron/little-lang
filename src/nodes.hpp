@@ -73,19 +73,14 @@ class Top_Level_Seq final : public Node {
 
 	~Top_Level_Seq() override = default;
 
-	template<typename... args_t>
-	void append_item(args_t &&... args) {
-		top_lvl_seq_.emplace_back(args...);
-	}
-
-	Top_Level_Seq & operator+=(Top_Level * item) {
-		top_lvl_seq_.emplace_back(item);
-		return *this;
-	}
+	void append(Top_Level * item) { top_lvl_seq_.emplace_back(item); }
 
 	// The return value should not be used
 	llvm::Value * codegen(context_module & context) override {
-		for (const auto & item : top_lvl_seq_) { item->codegen(context); }
+		for (const auto & item : top_lvl_seq_) {
+			assert(item != nullptr);
+			item->codegen(context);
+		}
 		return nullptr;
 	}
 

@@ -58,10 +58,10 @@
 
 %%
 
-program : top_lvl_seq function { module = $1; module->append_item($2); }
+program : top_lvl_seq function { module = $1; module->append($2); }
 
 top_lvl_seq : %empty { $$ = new Top_Level_Seq(); }
-			| top_lvl_seq top_lvl_item { $$ = $1; $$->append_item($2); }
+			| top_lvl_seq top_lvl_item { $$ = $1; $$->append($2); }
 			;
 
 top_lvl_item : global | function ;
