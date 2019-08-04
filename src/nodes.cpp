@@ -8,7 +8,7 @@
 #include <functional>
 #include <vector>
 
-using llvm::Type, llvm::LLVMContext, llvm::FunctionType;
+using llvm::Type, llvm::LLVMContext, llvm::FunctionType, llvm::Value;
 
 namespace {
 	Type * get_type_by_name(const std::string & name, LLVMContext & context) {
@@ -55,4 +55,20 @@ FunctionType * Func_Header::full_type(context_module & context) {
 
 	return FunctionType::get(get_type_by_name(ret_type, context.context()),
 							 param_types(context), false);
+}
+
+Value * Function::codegen(context_module & context) {
+
+	auto * func_type = head_.full_type(context);
+
+	auto * func
+		= llvm::Function::Create(func_type, llvm::Function::ExternalLinkage,
+								 head_.name(), &context.module());
+
+	for (unsigned arg_index = 0; arg_index < func_type->getNumParams();
+		 arg_index++) {
+		(func->arg_begin() + arg_index)->setName(head_.arg(arg_index).name());
+	}
+
+	return func;
 }

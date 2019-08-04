@@ -69,7 +69,7 @@ top_lvl_item : global | function ;
 global : T_GLOBAL typed_var initialization T_SEMI
 	   ;
 
-function : func_header statement 
+function : func_header statement { $$ = new Function{std::move(*$1), $2}; delete $1; }
 		 ;
 
 func_header : ret_type func_sig { $$ = $2; $$->set_ret_type(std::move(*$1)); delete $1; }

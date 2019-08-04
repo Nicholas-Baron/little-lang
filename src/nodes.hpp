@@ -28,6 +28,9 @@ class Func_Header final {
 
 	llvm::FunctionType * full_type(context_module & context);
 
+	const Typed_Var &   arg(unsigned index) const { return params.at(index); }
+	const std::string & name() const { return name_; }
+
    private:
 	std::vector<llvm::Type *> param_types(context_module & context);
 
@@ -36,7 +39,7 @@ class Func_Header final {
 	std::string			   ret_type{};
 };
 
-// Basic Node 
+// Basic Node
 class Node {
    public:
 	Node() = default;
@@ -115,6 +118,17 @@ class Statement_Seq final : public Statement {
 	std::vector<std::unique_ptr<Statement>> statements{};
 };
 
+// Top Level classes
+class Function final : public Top_Level {
+   public:
+	Function(Func_Header && head, Statement * body)
+		: head_(std::move(head)), body_(body) {}
 
+	llvm::Value * codegen(context_module & context) override;
+
+   private:
+	Func_Header				   head_;
+	std::unique_ptr<Statement> body_;
+};
 
 #endif
