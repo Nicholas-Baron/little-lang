@@ -1,5 +1,7 @@
 #!/bin/bash
 
+tools/format.sh
+
 OUTPUT_DIR="build"
 TEMP_DIR="temp"
 
