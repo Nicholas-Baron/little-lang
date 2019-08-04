@@ -5,6 +5,38 @@
 
 #include <llvm/IR/Value.h>
 
+// Classes that do not need Node
+class Typed_Var final {
+
+	std::string type_;
+	std::string name_;
+
+   public:
+	Typed_Var(std::string && name, std::string && type)
+		: type_{type}, name_{name} {}
+
+	const auto & name() const { return name_; }
+	const auto & type() const { return type_; }
+};
+
+class Func_Header final {
+   public:
+	Func_Header(std::string && name, std::vector<Typed_Var> && parameters)
+		: name_(std::move(name)), params(std::move(parameters)) {}
+
+	void set_ret_type(std::string && type) { ret_type = type; }
+
+	llvm::FunctionType * full_type(context_module & context);
+
+   private:
+	std::vector<llvm::Type *> param_types(context_module & context);
+
+	std::string			   name_;
+	std::vector<Typed_Var> params;
+	std::string			   ret_type{};
+};
+
+// Basic Node 
 class Node {
    public:
 	Node() = default;
@@ -25,6 +57,7 @@ class Expression : public virtual Node {};
 class Statement : public virtual Node {};
 class Top_Level : public virtual Node {};
 
+// Direct from Node classes
 class Top_Level_Seq final : public Node {
    public:
 	Top_Level_Seq() = default;
@@ -50,7 +83,6 @@ class Top_Level_Seq final : public Node {
 	// The return value should not be used
 	llvm::Value * codegen(context_module & context) override {
 		for (const auto & item : top_lvl_seq_) { item->codegen(context); }
-
 		return nullptr;
 	}
 
@@ -58,19 +90,7 @@ class Top_Level_Seq final : public Node {
 	std::vector<std::unique_ptr<Top_Level>> top_lvl_seq_;
 };
 
-class Typed_Var final {
-
-	std::string type_;
-	std::string name_;
-
-   public:
-	Typed_Var(std::string && name, std::string && type)
-		: type_{type}, name_{name} {}
-
-	const auto & name() const { return name_; }
-	const auto & type() const { return type_; }
-};
-
+// Statement classes
 class Statement_Seq final : public Statement {
    public:
 	Statement_Seq() = default;
@@ -88,7 +108,6 @@ class Statement_Seq final : public Statement {
 	// The return value should not be used
 	llvm::Value * codegen(context_module & context) override {
 		for (const auto & entry : statements) { entry->codegen(context); }
-
 		return nullptr;
 	}
 
@@ -96,21 +115,6 @@ class Statement_Seq final : public Statement {
 	std::vector<std::unique_ptr<Statement>> statements{};
 };
 
-class Func_Header final {
-   public:
-	Func_Header(std::string && name, std::vector<Typed_Var> && parameters)
-		: name_(std::move(name)), params(std::move(parameters)) {}
 
-	void set_ret_type(std::string && type) { ret_type = type; }
-
-	llvm::FunctionType * full_type(context_module & context);
-
-   private:
-	std::vector<llvm::Type *> param_types(context_module & context);
-
-	std::string			   name_;
-	std::vector<Typed_Var> params;
-	std::string			   ret_type{};
-};
 
 #endif
