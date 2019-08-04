@@ -5,6 +5,7 @@
 #include "llvm/IR/Type.h"
 
 #include <algorithm>
+#include <cassert>
 #include <functional>
 #include <vector>
 
@@ -61,20 +62,17 @@ Value * Function::codegen(context_module & context) {
 
 	auto * func_type = head_.full_type(context);
 
+	assert(func_type != nullptr);
+
 	auto * func
 		= llvm::Function::Create(func_type, llvm::Function::ExternalLinkage,
 								 head_.name(), &context.module());
 
-	/*
-	for (unsigned arg_index = 0; arg_index < func_type->getNumParams();
-		 arg_index++) {
-		(func->arg_begin() + arg_index)->setName(head_.arg(arg_index).name());
-	}
-*/
 	{
 		unsigned   index	= 0;
 		const auto args_end = func->arg_end();
 		for (auto arg = func->arg_begin(); arg != args_end; arg++, index++) {
+			assert(arg != nullptr);
 			arg->setName(head_.arg(index).name());
 		}
 	}
