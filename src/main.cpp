@@ -53,9 +53,14 @@ int main(const int arg_count, const char * const * const args) {
 		return -1;
 	}
 
+	std::cout << "Opened file. Initializing parser..." << std::endl;
+
 	auto buffer = yy_scan_string(content.data());
 
 	yy_switch_to_buffer(buffer);
+
+	std::cout << "Parsing " << filename << "..." << std::endl;
+
 	const auto parse_status = yyparse();
 
 	if (parse_status != 0) {
@@ -71,9 +76,13 @@ int main(const int arg_count, const char * const * const args) {
 
 	yy_delete_buffer(buffer);
 
+	std::cout << "Done parsing. Initializing LLVM..." << std::endl;
+
 	context_module context{filename};
 
 	assert(module != nullptr);
+
+	std::cout << "Generating code..." << std::endl;
 	module->codegen(context);
 
 	context.dump();
