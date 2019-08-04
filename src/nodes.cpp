@@ -63,6 +63,20 @@ FunctionType * Func_Header::full_type(context_module & context) {
 							 param_types(context), false);
 }
 
+Value * UnaryExpression::codegen(context_module & context) {
+
+	auto * op_value = expr->codegen(context);
+
+	switch (tok) {
+		case T_NOT:
+			return context.builder().CreateNot(op_value);
+	}
+
+	context.context().emitError("Token number " + std::to_string(tok)
+								+ " is not an implemented unary operation.");
+	return op_value;
+}
+
 Value * If_Statement::codegen(context_module & context) {
 
 	auto * cond		   = condition->codegen(context);

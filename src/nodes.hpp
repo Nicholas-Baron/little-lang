@@ -88,6 +88,18 @@ class Top_Level_Seq final : public Node {
 	std::vector<std::unique_ptr<Top_Level>> top_lvl_seq_;
 };
 
+class UnaryExpression final : public Expression {
+   public:
+	UnaryExpression(int token, Expression * operand)
+		: tok(token), expr(operand) {}
+
+	llvm::Value * codegen(context_module & context) override;
+
+   private:
+	int							tok;
+	std::unique_ptr<Expression> expr;
+};
+
 // Statement classes
 
 class If_Statement final : public Statement {

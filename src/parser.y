@@ -131,7 +131,7 @@ primary_expr : T_IDENT
 
 literal : T_INT | T_FLOAT | T_CHAR | T_BOOL | T_STRING ; 
 
-unary_expr : primary_expr | T_NOT primary_expr ; 
+unary_expr : primary_expr | T_NOT primary_expr { $$ = new UnaryExpression($1, $2); } ; 
 
 multiply_expr : unary_expr 
 			  | multiply_expr T_MULT unary_expr
