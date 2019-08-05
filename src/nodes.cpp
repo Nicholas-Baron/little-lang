@@ -124,8 +124,8 @@ Value * UnaryExpression::codegen(context_module & context) {
 	return op_value;
 }
 
-Value * comparison_expr(context_module & context, int tok, Value * left,
-						Value * right) {
+Value * comparison_expr(context_module & context, int tok, Value * const left,
+						Value * const right) {
 
 	if (left->getType() != right->getType()) {
 		context.context().emitError(
@@ -148,6 +148,8 @@ Value * comparison_expr(context_module & context, int tok, Value * left,
 		} else {
 			return context.builder().CreateFCmpOEQ(left, right);
 		}
+	} else if (tok == T_OR and is_int) {
+		return context.builder().CreateOr(left, right);
 	}
 
 	context.context().emitError(
@@ -173,6 +175,8 @@ Value * BinaryExpression::codegen(context_module & context) {
 		case T_LE:
 		case T_EQ:
 		case T_NE:
+		case T_OR:
+		case T_AND:
 			return comparison_expr(context, tok, left, right);
 	}
 
