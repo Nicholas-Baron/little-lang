@@ -5,6 +5,7 @@
 #include "llvm/IR/Type.h"
 
 #include <algorithm>
+#include <cctype>
 #include <cassert>
 #include <functional>
 #include <vector>
@@ -61,6 +62,41 @@ FunctionType * Func_Header::full_type(context_module & context) {
 
 	return FunctionType::get(get_type_by_name(ret_type, context.context()),
 							 param_types(context), false);
+}
+
+Value * UserValue::codegen(context_module & context){
+	auto first_char = val.at(0);
+
+	if(isdigit(first_char)){
+		// Some number
+		
+		if(val.find_first_of('x') != std::string::npos){
+			//Hex number
+		}else if(val.find_first_of('.') != std::string::npos){
+			// Floating point
+		} else {
+			// Decimal integer
+		}
+
+	} else if(first_char == '\''){
+		// A single character
+	} else if(first_char == '"'){
+		// A string
+	} else {
+		// Some identifier or bool
+		static const std::map<std::string. bool> valid_bools{
+			{"true", true}, {"True", true}, {"TRUE", true}, 
+			{"false", false}, {"False", false}, {"FALSE", false}
+		};
+
+		const auto bool_value = valid_bools.find(val);
+
+		if(bool_value != valid_bools.end()){
+			// Boolean value
+		}else{
+			// Identifier
+		}
+	}
 }
 
 Value * UnaryExpression::codegen(context_module & context) {

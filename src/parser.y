@@ -123,9 +123,9 @@ initialization : T_ASSIGN expr | T_LBRACE expr T_RBRACE ;
 
 expr : logic_or_expr ;
 
-primary_expr : T_IDENT
+primary_expr : T_IDENT { $$ = new UserValue(std::move(*$1)); delete $1; }
 			 | func_call
-			 | literal
+			 | literal { $$ = new UserValue(std::move(*$1)); delete $1; }
 			 | T_LPAREN expr T_RPAREN { $$ = $2; }
 			 ;
 
