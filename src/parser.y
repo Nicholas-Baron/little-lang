@@ -47,7 +47,7 @@
 %nterm <string> literal type ret_type
 %type <expression> expr logic_or_expr logic_and_expr primary_expr equality_expr
 %type <expression> unary_expr multiply_expr relation_expr additive_expr
-%type <stmt> statement else_block conditional
+%type <stmt> statement else_block conditional action
 %type <top_lvl> top_lvl_item global function
 %type <func_head> func_header func_sig
 %type <var_with_type> typed_var
@@ -104,8 +104,8 @@ statement_seq : %empty { $$ = new Statement_Seq{}; }
 			  | statement_seq statement { $$ = $1; $$->append($2); }
 			  ;
 
-action : T_RET expr
-	   | T_RET
+action : T_RET expr { $$ = new Return_Statement($2); }
+	   | T_RET { $$ = new Return_Statement(); }
 	   | func_call
 	   | T_LET T_IDENT initialization
 	   | T_LET typed_var initialization

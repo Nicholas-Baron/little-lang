@@ -163,6 +163,16 @@ class Statement_Seq final : public Statement {
 	std::vector<std::unique_ptr<Statement>> statements{};
 };
 
+class Return_Statement final : public Statement {
+   public:
+	explicit Return_Statement(Expression * val = nullptr) : value(val) {}
+
+	llvm::Value * codegen(context_module & context) override;
+
+   private:
+	std::unique_ptr<Expression> value;
+};
+
 // Top Level classes
 class Function final : public Top_Level {
    public:

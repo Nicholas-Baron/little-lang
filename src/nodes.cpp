@@ -212,6 +212,12 @@ Value * If_Statement::codegen(context_module & context) {
 		return nullptr;
 	}
 }
+Value * Return_Statement::codegen(context_module & context) {
+	if (value == nullptr) { return context.builder().CreateRetVoid(); }
+
+	auto * val = value->codegen(context);
+	return context.builder().CreateRet(val);
+}
 
 Value * Function::codegen(context_module & context) {
 
