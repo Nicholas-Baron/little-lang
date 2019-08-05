@@ -11,6 +11,7 @@ if [ -d $TEMP_DIR ]; then rm -Rf $TEMP_DIR; fi
 mkdir -p $OUTPUT_DIR $TEMP_DIR logs
 cd $OUTPUT_DIR || exit
 
+clear
 pwd
 
 (
