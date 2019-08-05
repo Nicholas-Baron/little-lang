@@ -134,34 +134,34 @@ literal : T_INT | T_FLOAT | T_CHAR | T_BOOL | T_STRING ;
 unary_expr : primary_expr | T_NOT primary_expr { $$ = new UnaryExpression($1, $2); } ; 
 
 multiply_expr : unary_expr 
-			  | multiply_expr T_MULT unary_expr
-			  | multiply_expr T_MOD unary_expr
-			  | multiply_expr T_DIV unary_expr
+			  | multiply_expr T_MULT unary_expr { $$ = new BinaryExpression($1, $2, $3); }
+			  | multiply_expr T_MOD unary_expr { $$ = new BinaryExpression($1, $2, $3); }
+			  | multiply_expr T_DIV unary_expr { $$ = new BinaryExpression($1, $2, $3); }
 			  ;
 
 additive_expr : multiply_expr
-			  | additive_expr T_PLUS multiply_expr
-			  | additive_expr T_MINUS multiply_expr
+			  | additive_expr T_PLUS multiply_expr { $$ = new BinaryExpression($1, $2, $3); }
+			  | additive_expr T_MINUS multiply_expr { $$ = new BinaryExpression($1, $2, $3); }
 			  ;
 
 relation_expr : additive_expr
-			  | additive_expr T_LE additive_expr
-			  | additive_expr T_LT additive_expr
-			  | additive_expr T_GE additive_expr
-			  | additive_expr T_GT additive_expr
+			  | additive_expr T_LE additive_expr { $$ = new BinaryExpression($1, $2, $3); }
+			  | additive_expr T_LT additive_expr { $$ = new BinaryExpression($1, $2, $3); }
+			  | additive_expr T_GE additive_expr { $$ = new BinaryExpression($1, $2, $3); }
+			  | additive_expr T_GT additive_expr { $$ = new BinaryExpression($1, $2, $3); }
 			  ;
 
 equality_expr : relation_expr
-			  | relation_expr T_EQ relation_expr
-			  | relation_expr T_NE relation_expr
+			  | relation_expr T_EQ relation_expr  { $$ = new BinaryExpression($1, $2, $3); }
+			  | relation_expr T_NE relation_expr { $$ = new BinaryExpression($1, $2, $3); }
 			  ;
 
 logic_and_expr : equality_expr
-			   | logic_and_expr T_AND equality_expr
+			   | logic_and_expr T_AND equality_expr { $$ = new BinaryExpression($1, $2, $3); }
 			   ;
 
 logic_or_expr : logic_and_expr
-			  | logic_or_expr T_OR logic_and_expr
+			  | logic_or_expr T_OR logic_and_expr { $$ = new BinaryExpression($1, $2, $3); }
 			  ;
 
 func_call : T_IDENT arg_group

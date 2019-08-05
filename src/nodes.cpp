@@ -77,6 +77,24 @@ Value * UnaryExpression::codegen(context_module & context) {
 	return op_value;
 }
 
+Value * BinaryExpression::codegen(context_module & context) {
+	auto * left  = lhs_->codegen(context);
+	auto * right = rhs_->codegen(context);
+
+	switch (tok) {
+		case T_PLUS:
+			return context.builder().CreateAdd(left, right);
+		case T_MINUS:
+			return context.builder().CreateSub(left, right);
+		case T_MULT:
+			return context.builder().CreateMul(left, right);
+	}
+
+	context.context().emitError("Token number " + std::to_string(tok)
+								+ " is not an implemented binary operation.");
+	return right;
+}
+
 Value * If_Statement::codegen(context_module & context) {
 
 	auto * cond		   = condition->codegen(context);
