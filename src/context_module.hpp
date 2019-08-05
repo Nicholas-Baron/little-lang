@@ -9,6 +9,17 @@
 
 #include <iostream>
 
+inline auto * find_local_value(llvm::Function *	func,
+							   const std::string & name) {
+	return func->getValueSymbolTable()->lookup(name);
+}
+
+inline void print_symbol_table(llvm::ValueSymbolTable * table) {
+	for (const auto & entry : *table) {
+		std::cout << entry.getKey().str() << std::endl;
+	}
+}
+
 class context_module {
 
 	llvm::LLVMContext context_{};
@@ -36,20 +47,19 @@ class context_module {
 
 	void dump() const { module_.print(llvm::dbgs(), nullptr); }
 
-	auto * find_first_class_value(const std::string & name) {
+	auto * find_first_class_value(const std::string & name) const {
 		return module_.getValueSymbolTable().lookup(name);
 	}
-};
 
-inline auto * find_local_value(llvm::Function *	func,
-							   const std::string & name) {
-	return func->getValueSymbolTable()->lookup(name);
-}
+	auto * find_value_in_current_scope(const std::string & name) {
+		auto * func = builder_.GetInsertBlock()->getParent();
 
-inline void print_symbol_table(llvm::ValueSymbolTable * table) {
-	for (const auto & entry : *table) {
-		std::cout << entry.getKey().str() << std::endl;
+		if (func != nullptr) {
+			return find_local_value(func, name);
+		} else {
+			return find_first_class_value(name);
+		}
 	}
-}
+};
 
 #endif
