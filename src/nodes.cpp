@@ -124,6 +124,30 @@ Value * UnaryExpression::codegen(context_module & context) {
 	return op_value;
 }
 
+Value * comparison_expr(context_module & context, int tok, Value * left,
+						Value * right) {
+
+	if (left->getType() != right->getType()) {
+		context.context().emitError(
+			"Current compiler does not support comparisons on differing "
+			"types.");
+		return context.builder().getFalse();
+	}
+
+	if (tok == T_LE) {
+		if (left->getType()->isIntegerTy()) {
+			return context.builder().CreateICmpSLE(left, right);
+		} else {
+			return context.builder().CreateFCmpOLE(left, right);
+		}
+	}
+
+	context.context().emitError(
+		"Token number " + std::to_string(tok)
+		+ " is not currently supported as a comparison.");
+	return context.builder().getFalse();
+}
+
 Value * BinaryExpression::codegen(context_module & context) {
 	auto * left  = lhs_->codegen(context);
 	auto * right = rhs_->codegen(context);
@@ -135,6 +159,13 @@ Value * BinaryExpression::codegen(context_module & context) {
 			return context.builder().CreateSub(left, right);
 		case T_MULT:
 			return context.builder().CreateMul(left, right);
+		case T_GE:
+		case T_GT:
+		case T_LT:
+		case T_LE:
+		case T_EQ:
+		case T_NE:
+			return comparison_expr(context, tok, left, right);
 	}
 
 	context.context().emitError("Token number " + std::to_string(tok)
