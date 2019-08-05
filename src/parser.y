@@ -30,6 +30,7 @@
 	Top_Level_Seq * top_lvl_items;
 	
 	std::vector<Typed_Var>* params;
+	std::vector<Expression*>* args;
 }
 
 // Token definitions
@@ -54,6 +55,7 @@
 %type <statements> statement_seq
 %type <top_lvl_items> top_lvl_seq
 %type <params> param_list param_group
+%type <args> arg_list arg_group
 
 %start program
 
@@ -170,12 +172,12 @@ func_call : T_IDENT arg_group
 		  | T_IDENT literal
 		  ;
 
-arg_group : T_LPAREN arg_list T_RPAREN
-		  | T_LPAREN T_RPAREN
+arg_group : T_LPAREN arg_list T_RPAREN { $$ = $2; }
+		  | T_LPAREN T_RPAREN { $$ = new std::vector<Expression*>{}; }
 		  ;
 
-arg_list : expr
-		 | arg_list T_COMMA expr
+arg_list : expr { $$ = new std::vector{$1}; }
+		 | arg_list T_COMMA expr { $$ = $1; $$->push_back($3); }
 		 ;
 
 type : T_PRIM_TYPE | T_IDENT ;
