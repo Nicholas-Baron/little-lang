@@ -2,11 +2,12 @@
 
 #include "parser.hpp"
 
+#include "llvm/ADT/APFloat.h"
 #include "llvm/IR/Type.h"
 
 #include <algorithm>
-#include <cctype>
 #include <cassert>
+#include <cctype>
 #include <functional>
 #include <vector>
 
@@ -64,37 +65,47 @@ FunctionType * Func_Header::full_type(context_module & context) {
 							 param_types(context), false);
 }
 
-Value * UserValue::codegen(context_module & context){
+Value * UserValue::codegen(context_module & context) {
 	auto first_char = val.at(0);
 
-	if(isdigit(first_char)){
+	using std::string;
+	if (isdigit(first_char) != 0) {
 		// Some number
-		
-		if(val.find_first_of('x') != std::string::npos){
-			//Hex number
-		}else if(val.find_first_of('.') != std::string::npos){
+
+		using std::stoi, std::stof;
+		if (val.find_first_of('x') != string::npos) {
+			// Hex number
+			static constexpr auto hex_base = 16;
+			return context.builder().getInt32(stoi(val, nullptr, hex_base));
+		} else if (val.find_first_of('.') != string::npos) {
 			// Floating point
+			return llvm::ConstantFP::get(context.context(),
+										 llvm::APFloat{stof(val)});
 		} else {
 			// Decimal integer
+			return context.builder().getInt32(stoi(val));
 		}
 
-	} else if(first_char == '\''){
+	} else if (first_char == '\'') {
 		// A single character
-	} else if(first_char == '"'){
+		return context.builder().getInt8(val[1]);
+	} else if (first_char == '"') {
 		// A string
+		return context.builder().CreateGlobalString(val);
 	} else {
 		// Some identifier or bool
-		static const std::map<std::string. bool> valid_bools{
-			{"true", true}, {"True", true}, {"TRUE", true}, 
-			{"false", false}, {"False", false}, {"FALSE", false}
-		};
+		static const std::map<string, bool> valid_bools{
+			{"true", true},   {"True", true},   {"TRUE", true},
+			{"false", false}, {"False", false}, {"FALSE", false}};
 
 		const auto bool_value = valid_bools.find(val);
 
-		if(bool_value != valid_bools.end()){
+		if (bool_value != valid_bools.end()) {
 			// Boolean value
-		}else{
+			return context.builder().getInt1(bool_value->second);
+		} else {
 			// Identifier
+			return context.find_value_in_current_scope(val);
 		}
 	}
 }

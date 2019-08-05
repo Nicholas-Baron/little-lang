@@ -90,16 +90,14 @@ class Top_Level_Seq final : public Node {
 
 // Expression classes
 
-class UserValue final : public Expression{
-	public:
-		UserValue(std::string&& value)
-			: val(value) {}
+class UserValue final : public Expression {
+   public:
+	UserValue(std::string && value) : val(value) {}
 
-		llvm::Value * codegen(context_module& context) override;
+	llvm::Value * codegen(context_module & context) override;
 
-	private:
-		std::string val;
-
+   private:
+	std::string val;
 };
 
 class UnaryExpression final : public Expression {
