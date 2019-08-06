@@ -7,7 +7,9 @@
 #include "llvm/IR/ValueSymbolTable.h"
 #include "llvm/Support/Debug.h"
 
+#include <algorithm>
 #include <iostream>
+#include <utility>
 
 inline auto * find_local_value(llvm::Function *	func,
 							   const std::string & name) {
@@ -38,7 +40,9 @@ class context_module {
 	llvm::Module	  module_;
 	llvm::IRBuilder<> builder_;
 
-	std::vector<std::map<std::string, llvm::Value *>> currently_alive_values{};
+	std::vector<
+		std::pair<llvm::Function *, std::map<std::string, llvm::Value *>>>
+		currently_alive_values{};
 
    public:
 	context_module() = delete;
@@ -66,8 +70,8 @@ class context_module {
 	auto * find_value_in_current_scope(const std::string & name) {
 		for (auto iter = currently_alive_values.rbegin();
 			 iter != currently_alive_values.rend(); iter++) {
-			auto found = iter->find(name);
-			if (found != iter->end()) { return found->second; }
+			auto found = iter->second.find(name);
+			if (found != iter->second.end()) { return found->second; }
 		}
 
 		auto * func = builder_.GetInsertBlock()->getParent();
@@ -84,10 +88,22 @@ class context_module {
 	void printError(const std::string & name) { context_.emitError(name); }
 
 	void register_value(const std::string & name, llvm::Value * val) {
-		currently_alive_values.back().emplace(name, val);
+		currently_alive_values.back().second.emplace(name, val);
 	}
 
-	void add_new_scope() { currently_alive_values.emplace_back(); }
+	auto * get_current_function() const {
+		return currently_alive_values.back().first;
+	}
+
+	void add_new_scope(llvm::Function * parent) {
+		if (parent == nullptr
+			and currently_alive_values.back().first != nullptr) {
+			parent = currently_alive_values.back().first;
+		}
+
+		currently_alive_values.emplace_back(
+			parent, std::map<std::string, llvm::Value *>{});
+	}
 
 	void remove_current_scope() { currently_alive_values.pop_back(); }
 };

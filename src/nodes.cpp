@@ -217,15 +217,16 @@ Value * If_Statement::codegen(context_module & context) {
 	auto * cond		   = condition->codegen(context);
 	auto * start_block = context.builder().GetInsertBlock();
 
-	auto * then_block
-		= llvm::BasicBlock::Create(context.context(), temp_block_name());
+	auto * then_block = llvm::BasicBlock::Create(
+		context.context(), temp_block_name(), context.get_current_function());
 	context.builder().SetInsertPoint(then_block);
 	true_branch->codegen(context);
 
 	if (else_branch == nullptr) {
 
 		auto * merge_block
-			= llvm::BasicBlock::Create(context.context(), temp_block_name());
+			= llvm::BasicBlock::Create(context.context(), temp_block_name(),
+									   context.get_current_function());
 
 		context.builder().SetInsertPoint(start_block);
 		auto * brancher
@@ -235,15 +236,18 @@ Value * If_Statement::codegen(context_module & context) {
 		return nullptr;
 	} else {
 		auto * else_block
-			= llvm::BasicBlock::Create(context.context(), temp_block_name());
+			= llvm::BasicBlock::Create(context.context(), temp_block_name(),
+									   context.get_current_function());
+		context.builder().SetInsertPoint(else_block);
 		else_branch->codegen(context);
 
 		auto * merge_block
-			= llvm::BasicBlock::Create(context.context(), temp_block_name());
+			= llvm::BasicBlock::Create(context.context(), temp_block_name(),
+									   context.get_current_function());
 
 		context.builder().SetInsertPoint(start_block);
 		auto * brancher
-			= context.builder().CreateCondBr(cond, then_block, merge_block);
+			= context.builder().CreateCondBr(cond, then_block, else_block);
 		context.builder().SetInsertPoint(then_block);
 		context.builder().CreateBr(merge_block);
 		context.builder().SetInsertPoint(merge_block);
@@ -268,7 +272,7 @@ Value * Function::codegen(context_module & context) {
 		= llvm::Function::Create(func_type, llvm::Function::ExternalLinkage,
 								 head_.name(), &context.module());
 
-	context.add_new_scope();
+	context.add_new_scope(func);
 
 	{
 		unsigned   index	= 0;
