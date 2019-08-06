@@ -23,6 +23,8 @@
 	Statement * stmt;
 	Top_Level * top_lvl;
 
+	FunctionCall * func_call;
+
 	Func_Header * func_head;
 	Typed_Var * var_with_type;
 	
@@ -50,6 +52,7 @@
 %type <expression> unary_expr multiply_expr relation_expr additive_expr
 %type <stmt> statement else_block conditional action
 %type <top_lvl> top_lvl_item global function
+%type <func_call> func_call
 %type <func_head> func_header func_sig
 %type <var_with_type> typed_var
 %type <statements> statement_seq
@@ -166,10 +169,10 @@ logic_or_expr : logic_and_expr
 			  | logic_or_expr T_OR logic_and_expr { $$ = new BinaryExpression($1, $2, $3); }
 			  ;
 
-func_call : T_IDENT arg_group
-		  | T_LPAREN T_IDENT arg_list T_RPAREN
-		  | T_IDENT func_call
-		  | T_IDENT literal
+func_call : T_IDENT arg_group { $$ = new FunctionCall(std::move(*$1), std::move(*$2)); delete $1; delete $2; }
+		  | T_LPAREN T_IDENT arg_list T_RPAREN { $$ = new FunctionCall(std::move(*$2), std::move(*$3)); delete $2; delete $3; }
+		  | T_IDENT func_call { $$ = new FunctionCall{std::move(*$1), {$2}}; delete $1; }
+		  | T_IDENT literal { $$ = new FunctionCall{std::move(*$1), {new UserValue(std::move(*$2))}}; delete $1; delete $2;}
 		  ;
 
 arg_group : T_LPAREN arg_list T_RPAREN { $$ = $2; }
