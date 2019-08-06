@@ -49,7 +49,8 @@
 // Types for non-terminals
 %nterm <string> literal type ret_type
 %type <expression> expr logic_or_expr logic_and_expr primary_expr equality_expr
-%type <expression> unary_expr multiply_expr relation_expr additive_expr
+%type <expression> unary_expr multiply_expr relation_expr additive_expr 
+%type <expression> initialization
 %type <stmt> statement else_block conditional action
 %type <top_lvl> top_lvl_item function
 %type <func_call> func_call
@@ -109,8 +110,8 @@ statement_seq : %empty { $$ = new Statement_Seq{}; }
 action : T_RET expr { $$ = new Return_Statement($2); }
 	   | T_RET { $$ = new Return_Statement(); }
 	   | func_call { $$ = dynamic_cast<Statement *>($1); }
-	   | T_LET T_IDENT initialization
-	   | T_LET typed_var initialization
+	   | T_LET T_IDENT initialization { $$ = new Let_Statement(std::move(*$2), $3); delete $2; }
+	   | T_LET typed_var initialization { $$ = new Let_Statement(std::move(*$2), $3); delete $2; }
 	   ;
 
 conditional : T_IF expr T_LBRACE statement_seq T_RBRACE else_block { $$ = new If_Statement($2, $4, $6); }
@@ -121,7 +122,7 @@ else_block : T_ELSE T_LBRACE statement_seq T_RBRACE { $$ = $3; }
 		   | T_ELSE conditional { $$ = $2; }
 		   ;
 
-initialization : T_ASSIGN expr | T_LBRACE expr T_RBRACE ;
+initialization : T_ASSIGN expr { $$ = $2; } | T_LBRACE expr T_RBRACE { $$ = $2; };
 
 expr : logic_or_expr ;
 
