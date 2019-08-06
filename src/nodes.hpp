@@ -124,6 +124,23 @@ class BinaryExpression final : public Expression {
 	int							tok;
 };
 
+// The FunctionCall class needs to be either a Expression or Statement
+// because calling a function could be a statement or part of an expression
+
+class FunctionCall final : public Statement, public Expression {
+   public:
+	FunctionCall(std::string && name, std::vector<Expression *> && args)
+		: name_(name) {
+		for (auto * arg : args) { args_.emplace_back(arg); }
+	}
+
+	llvm::Value * codegen(context_module & context) override;
+
+   private:
+	std::string								 name_;
+	std::vector<std::unique_ptr<Expression>> args_{};
+};
+
 // Statement classes
 
 class If_Statement final : public Statement {

@@ -185,6 +185,16 @@ Value * BinaryExpression::codegen(context_module & context) {
 	return right;
 }
 
+Value * FunctionCall::codegen(context_module & context) {
+	auto * callee = context.find_first_class_value(name_);
+
+	std::vector<Value *> arg_values{};
+	arg_values.reserve(args_.size());
+	for (auto & arg : args_) { arg_values.push_back(arg->codegen(context)); }
+
+	return context.builder().CreateCall(callee, arg_values);
+}
+
 Value * If_Statement::codegen(context_module & context) {
 
 	auto * cond		   = condition->codegen(context);
