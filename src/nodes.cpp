@@ -105,7 +105,12 @@ Value * UserValue::codegen(context_module & context) {
 			return context.builder().getInt1(bool_value->second);
 		} else {
 			// Identifier
-			return context.find_value_in_current_scope(val);
+			auto * value = context.find_value_in_current_scope(val);
+			if (value == nullptr) {
+				context.context().emitError("Could not find variable named |"
+											+ val + '|');
+			}
+			return value;
 		}
 	}
 }
@@ -161,6 +166,18 @@ Value * comparison_expr(context_module & context, int tok, Value * const left,
 Value * BinaryExpression::codegen(context_module & context) {
 	auto * left  = lhs_->codegen(context);
 	auto * right = rhs_->codegen(context);
+
+	if (left == nullptr) {
+		context.context().emitError("Token #" + std::to_string(tok)
+									+ " has a null left operand.");
+		return right;
+	}
+
+	if (right == nullptr) {
+		context.context().emitError("Token #" + std::to_string(tok)
+									+ " has a null right operand.");
+		return left;
+	}
 
 	switch (tok) {
 		case T_PLUS:
@@ -251,12 +268,19 @@ Value * Function::codegen(context_module & context) {
 		= llvm::Function::Create(func_type, llvm::Function::ExternalLinkage,
 								 head_.name(), &context.module());
 
+	context.add_new_scope();
+
 	{
 		unsigned   index	= 0;
 		const auto args_end = func->arg_end();
 		for (auto arg = func->arg_begin(); arg != args_end; arg++, index++) {
 			assert(arg != nullptr);
-			arg->setName(head_.arg(index).name());
+			const auto & arg_name = head_.arg(index).name();
+			assert(not arg_name.empty());
+			std::cout << "Arg named |" << arg_name << '|' << std::endl;
+			arg->setName(arg_name);
+
+			context.register_value(arg_name, arg);
 		}
 	}
 
@@ -266,5 +290,6 @@ Value * Function::codegen(context_module & context) {
 
 	body_->codegen(context);
 
+	context.remove_current_scope();
 	return func;
 }
