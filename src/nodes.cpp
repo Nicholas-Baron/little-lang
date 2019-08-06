@@ -255,6 +255,21 @@ Value * If_Statement::codegen(context_module & context) {
 		return nullptr;
 	}
 }
+
+Value * Let_Statement::codegen(context_module & context) {
+
+	auto * value = value_->codegen(context);
+	auto   type  = name_and_type.type();
+	if (type == "auto"
+		or get_type_by_name(type, context.context()) == value->getType()) {
+		value->setName(name_and_type.name());
+		return value;
+	}
+
+	context.printError("Casting is not supported at this time.");
+	return nullptr;
+}
+
 Value * Return_Statement::codegen(context_module & context) {
 	if (value == nullptr) { return context.builder().CreateRetVoid(); }
 

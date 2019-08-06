@@ -156,6 +156,21 @@ class If_Statement final : public Statement {
 	std::unique_ptr<Statement>  else_branch;
 };
 
+class Let_Statement final : public Statement {
+   public:
+	Let_Statement(std::string && name, Expression * value)
+		: name_and_type(std::forward<std::string>(name), "auto")
+		, value_(value) {}
+	Let_Statement(Typed_Var && typed_name, Expression * value)
+		: name_and_type(typed_name), value_(value) {}
+
+	llvm::Value * codegen(context_module & context) override;
+
+   private:
+	Typed_Var					name_and_type;
+	std::unique_ptr<Expression> value_;
+};
+
 class Statement_Seq final : public Statement {
    public:
 	Statement_Seq() = default;
