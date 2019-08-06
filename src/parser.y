@@ -108,7 +108,7 @@ statement_seq : %empty { $$ = new Statement_Seq{}; }
 
 action : T_RET expr { $$ = new Return_Statement($2); }
 	   | T_RET { $$ = new Return_Statement(); }
-	   | func_call
+	   | func_call { $$ = dynamic_cast<Statement *>($1); }
 	   | T_LET T_IDENT initialization
 	   | T_LET typed_var initialization
 	   ;
@@ -126,7 +126,7 @@ initialization : T_ASSIGN expr | T_LBRACE expr T_RBRACE ;
 expr : logic_or_expr ;
 
 primary_expr : T_IDENT { $$ = new UserValue(std::move(*$1)); delete $1; }
-			 | func_call
+			 | func_call { $$ = dynamic_cast<Expression*>($1); }
 			 | literal { $$ = new UserValue(std::move(*$1)); delete $1; }
 			 | T_LPAREN expr T_RPAREN { $$ = $2; }
 			 ;
