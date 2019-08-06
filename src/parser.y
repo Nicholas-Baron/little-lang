@@ -41,7 +41,7 @@
 %token <token>	T_LPAREN T_RPAREN T_LBRACE T_RBRACE T_LBRACK T_RBRACK		// Paired symbols
 %token <token>	T_PLUS T_MINUS T_DIV T_MULT T_MOD 							// Math symbols
 %token <token>	T_SCOPE T_COMMA T_IS T_SEMI									// Misc symbols
-%token <token>	T_NAMESPACE T_GLOBAL T_RET T_IF T_ELSE T_LET				// Reserved words
+%token <token>	T_NAMESPACE T_RET T_IF T_ELSE T_LET							// Reserved words
 %token <token>	T_AND T_OR T_NOT 											// Boolean operators
 %token <token>	T_ASSIGN T_PROC	
 %token <string> T_IDENT T_INT T_CHAR T_BOOL T_STRING T_FLOAT T_PRIM_TYPE 	// Regexes
@@ -51,7 +51,7 @@
 %type <expression> expr logic_or_expr logic_and_expr primary_expr equality_expr
 %type <expression> unary_expr multiply_expr relation_expr additive_expr
 %type <stmt> statement else_block conditional action
-%type <top_lvl> top_lvl_item global function
+%type <top_lvl> top_lvl_item function
 %type <func_call> func_call
 %type <func_head> func_header func_sig
 %type <var_with_type> typed_var
@@ -72,10 +72,7 @@ top_lvl_seq : %empty { $$ = new Top_Level_Seq(); }
 			| top_lvl_seq top_lvl_item { $$ = $1; $$->append($2); }
 			;
 
-top_lvl_item : global | function ;
-
-global : T_GLOBAL typed_var initialization T_SEMI
-	   ;
+top_lvl_item : function ;
 
 function : func_header statement { $$ = new Function{std::move(*$1), $2}; delete $1; }
 		 ;

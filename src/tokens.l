@@ -68,7 +68,6 @@ extern "C" int yywrap(){ return 1; /* To prevent reading a second file */ }
 	/* Reserved words */
 
 "namespace"		return token(T_NAMESPACE);
-"global"		return token(T_GLOBAL);
 "return"|"ret"	return token(T_RET);
 "let"			return token(T_LET);
 "if"			return token(T_IF);
