@@ -4,6 +4,7 @@
 
 #include "llvm/ADT/APFloat.h"
 #include "llvm/IR/Type.h"
+#include "llvm/IR/Verifier.h"
 
 #include <algorithm>
 #include <cassert>
@@ -310,5 +311,6 @@ Value * Function::codegen(context_module & context) {
 	body_->codegen(context);
 
 	context.remove_current_scope();
+	llvm::verifyFunction(*func, &llvm::dbgs());
 	return func;
 }

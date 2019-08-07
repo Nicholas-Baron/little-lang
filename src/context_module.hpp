@@ -5,6 +5,7 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/ValueSymbolTable.h"
+#include "llvm/IR/Verifier.h"
 #include "llvm/Support/Debug.h"
 
 #include <algorithm>
@@ -85,6 +86,7 @@ class context_module {
 		}
 	}
 
+	void verify_module() const { llvm::verifyModule(module_, &llvm::dbgs()); }
 	void printError(const std::string & name) { context_.emitError(name); }
 
 	void register_value(const std::string & name, llvm::Value * val) {
