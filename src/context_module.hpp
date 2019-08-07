@@ -14,18 +14,12 @@
 
 inline auto * find_local_value(llvm::Function *	func,
 							   const std::string & name) {
-	for (const auto & entry : *(func->getValueSymbolTable())) {
-		if (entry.getKey() == name) {
-			return entry.getValue();
-		} else {
-			unsigned index = 0;
-			for (; entry.getKey()[index] == name[index]
-				   and index < entry.getKey().size() and index < name.size();
-				 index++) {}
-			// std::cout << entry.getKey().str() << " and " << name
-			//		  << " differ at " << index << std::endl;
-		}
-	}
+	const auto & table = *(func->getValueSymbolTable());
+	const auto   iter  = std::find_if(
+		   table.begin(), table.end(),
+		   [&name](const auto & entry) { return name == entry.getKey(); });
+
+	if (iter != table.end()) { return iter->getValue(); }
 	return func->getValueSymbolTable()->lookup(name);
 }
 
@@ -77,13 +71,8 @@ class context_module {
 
 		auto * func = builder_.GetInsertBlock()->getParent();
 
-		if (func != nullptr) {
-			// std::cout << "Searching for " << name << " in function "
-			//		  << func->getName().str() << std::endl;
-			return find_local_value(func, name);
-		} else {
-			return find_first_class_value(name);
-		}
+		if (func != nullptr) { return find_local_value(func, name); }
+		return find_first_class_value(name);
 	}
 
 	void verify_module() const { llvm::verifyModule(module_, &llvm::dbgs()); }
