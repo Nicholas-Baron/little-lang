@@ -22,8 +22,8 @@ inline auto * find_local_value(llvm::Function *	func,
 			for (; entry.getKey()[index] == name[index]
 				   and index < entry.getKey().size() and index < name.size();
 				 index++) {}
-			std::cout << entry.getKey().str() << " and " << name
-					  << " differ at " << index << std::endl;
+			// std::cout << entry.getKey().str() << " and " << name
+			//		  << " differ at " << index << std::endl;
 		}
 	}
 	return func->getValueSymbolTable()->lookup(name);
@@ -78,8 +78,8 @@ class context_module {
 		auto * func = builder_.GetInsertBlock()->getParent();
 
 		if (func != nullptr) {
-			std::cout << "Searching for " << name << " in function "
-					  << func->getName().str() << std::endl;
+			// std::cout << "Searching for " << name << " in function "
+			//		  << func->getName().str() << std::endl;
 			return find_local_value(func, name);
 		} else {
 			return find_first_class_value(name);

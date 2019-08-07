@@ -297,7 +297,7 @@ Value * Function::codegen(context_module & context) {
 			assert(arg != nullptr);
 			const auto & arg_name = head_.arg(index).name();
 			assert(not arg_name.empty());
-			std::cout << "Arg named |" << arg_name << '|' << std::endl;
+			// std::cout << "Arg named |" << arg_name << '|' << std::endl;
 			arg->setName(arg_name);
 
 			context.register_value(arg_name, arg);
