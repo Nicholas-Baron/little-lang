@@ -3,4 +3,4 @@ fib(pos is int) int
 	else { return fib(pos - 2) + fib(pos - 1); }
 
 main() int
-	fib 5;
+	ret fib 5;
