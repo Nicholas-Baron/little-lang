@@ -15,8 +15,8 @@ class Typed_Var final {
 	Typed_Var(std::string && name, std::string && type)
 		: type_{type}, name_{name} {}
 
-	const auto & name() const { return name_; }
-	const auto & type() const { return type_; }
+	[[nodiscard]] const auto & name() const { return name_; }
+	[[nodiscard]] const auto & type() const { return type_; }
 };
 
 class Func_Header final {
@@ -28,8 +28,10 @@ class Func_Header final {
 
 	llvm::FunctionType * full_type(context_module & context);
 
-	const Typed_Var &   arg(unsigned index) const { return params.at(index); }
-	const std::string & name() const { return name_; }
+	[[nodiscard]] const Typed_Var & arg(unsigned index) const {
+		return params.at(index);
+	}
+	[[nodiscard]] const std::string & name() const { return name_; }
 
    private:
 	std::vector<llvm::Type *> param_types(context_module & context);
