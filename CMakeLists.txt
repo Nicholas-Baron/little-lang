@@ -49,7 +49,7 @@ add_custom_command(
 set(input_files ${CMAKE_SOURCE_DIR}/src/main.cpp ${CMAKE_SOURCE_DIR}/src/nodes.cpp ${bison_output} ${flex_output})
 
 add_executable(littlec ${input_files})
-target_compile_options(littlec PRIVATE -Wall -g ${LLVM_CONFIG})
+target_compile_options(littlec PRIVATE -Wall -Wextra -g ${LLVM_CONFIG} -Wno-unused-command-line-argument -Wno-unused-parameter)
 target_link_libraries(littlec ${LLVM_CONFIG})
 target_include_directories(littlec PRIVATE ${CMAKE_SOURCE_DIR}/src ${temp_dir})
 
