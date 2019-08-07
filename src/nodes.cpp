@@ -213,6 +213,10 @@ Value * FunctionCall::codegen(context_module & context) {
 	return context.builder().CreateCall(callee, arg_values);
 }
 
+bool terminated(llvm::BasicBlock * block) {
+	return block->back().isTerminator();
+}
+
 Value * If_Statement::codegen(context_module & context) {
 
 	auto * cond		   = condition->codegen(context);
@@ -229,9 +233,11 @@ Value * If_Statement::codegen(context_module & context) {
 			= llvm::BasicBlock::Create(context.context(), temp_block_name(),
 									   context.get_current_function());
 
-		context.builder().SetInsertPoint(start_block);
-		auto * brancher
-			= context.builder().CreateCondBr(cond, then_block, merge_block);
+		if (not terminated(start_block)) {
+			context.builder().SetInsertPoint(start_block);
+			auto * brancher
+				= context.builder().CreateCondBr(cond, then_block, merge_block);
+		}
 		context.builder().SetInsertPoint(merge_block);
 
 		return nullptr;
@@ -242,16 +248,22 @@ Value * If_Statement::codegen(context_module & context) {
 		context.builder().SetInsertPoint(else_block);
 		else_branch->codegen(context);
 
-		auto * merge_block
-			= llvm::BasicBlock::Create(context.context(), temp_block_name(),
-									   context.get_current_function());
-
 		context.builder().SetInsertPoint(start_block);
 		auto * brancher
 			= context.builder().CreateCondBr(cond, then_block, else_block);
-		context.builder().SetInsertPoint(then_block);
-		context.builder().CreateBr(merge_block);
-		context.builder().SetInsertPoint(merge_block);
+
+		if (not terminated(else_block) and not terminated(then_block)) {
+			auto * merge_block
+				= llvm::BasicBlock::Create(context.context(), temp_block_name(),
+										   context.get_current_function());
+			if (not terminated(then_block)) {
+				context.builder().SetInsertPoint(then_block);
+
+				context.builder().CreateBr(merge_block);
+			}
+
+			context.builder().SetInsertPoint(merge_block);
+		}
 
 		return nullptr;
 	}
