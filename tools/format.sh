@@ -1,5 +1,5 @@
 #!/bin/bash
 
-clang-format src/*.cpp -i
-clang-format src/*.hpp -i
+clang-format-8 src/*.cpp -i -verbose -style=file -fallback-style=none
+clang-format-8 src/*.hpp -i -verbose -style=file -fallback-style=none
 
