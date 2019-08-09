@@ -56,7 +56,7 @@
 %type <func_call> func_call
 %type <func_head> func_header func_sig
 %type <var_with_type> typed_var
-%type <statements> statement_seq
+%type <statements> statement_seq statement_block
 %type <top_lvl_items> top_lvl_seq
 %type <params> param_list param_group
 %type <args> arg_list arg_group
@@ -98,10 +98,9 @@ typed_var : type T_IDENT 		{ $$ = new Typed_Var(std::move(*$2), std::move(*$1));
 		  | T_IDENT T_IS type 	{ $$ = new Typed_Var(std::move(*$1), std::move(*$3)); delete $1; delete $3; }
 		  ;
 
-statement : T_LBRACE statement_seq T_RBRACE { $$ = $2; }
-		  | action T_SEMI
-		  | conditional
-		  ;
+statement : statement_block { $$ = dynamic_cast<Statement *>($1); } | action T_SEMI | conditional ;
+
+statement_block : T_LBRACE statement_seq T_RBRACE { $$ = $2; } ;
 
 statement_seq : %empty { $$ = new Statement_Seq{}; }
 			  | statement_seq statement { $$ = $1; $$->append($2); }
@@ -114,11 +113,11 @@ action : T_RET expr { $$ = new Return_Statement($2); }
 	   | T_LET typed_var initialization { $$ = new Let_Statement(std::move(*$2), $3); delete $2; }
 	   ;
 
-conditional : T_IF expr T_LBRACE statement_seq T_RBRACE else_block { $$ = new If_Statement($2, $4, $6); }
+conditional : T_IF expr statement_block else_block { $$ = new If_Statement($2, $3, $4); }
 			| T_IF expr statement	{ $$ = new If_Statement($2, $3, nullptr); }
 			;
 
-else_block : T_ELSE T_LBRACE statement_seq T_RBRACE { $$ = $3; }
+else_block : T_ELSE statement_block { $$ = $2; }
 		   | T_ELSE conditional { $$ = $2; }
 		   ;
 
