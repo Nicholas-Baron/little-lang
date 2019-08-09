@@ -175,8 +175,13 @@ Value * comparison_expr(context_module & context, int tok, Value * const left,
 			}
 	}
 
-	if (tok == T_OR and is_int) {
-		return context.builder().CreateOr(left, right);
+	if (is_int) {
+		switch (tok) {
+			case T_OR:
+				return context.builder().CreateOr(left, right);
+			case T_AND:
+				return context.builder().CreateAnd(left, right);
+		}
 	}
 
 	context.printError("Token number " + std::to_string(tok)
