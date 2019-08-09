@@ -20,7 +20,7 @@ inline auto * find_local_value(llvm::Function *	func,
 		   [&name](const auto & entry) { return name == entry.getKey(); });
 
 	if (iter != table.end()) { return iter->getValue(); }
-	return func->getValueSymbolTable()->lookup(name);
+	return table.lookup(name);
 }
 
 inline void print_symbol_table(llvm::ValueSymbolTable * table) {
@@ -78,7 +78,7 @@ class context_module {
 	void verify_module() const { llvm::verifyModule(module_, &llvm::dbgs()); }
 	void printError(const std::string & name) { context_.emitError(name); }
 
-	void register_value(const std::string & name, llvm::Value * val) {
+	void add_value_to_table(const std::string & name, llvm::Value * val) {
 		currently_alive_values.back().second.emplace(name, val);
 	}
 

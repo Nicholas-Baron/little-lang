@@ -312,7 +312,7 @@ Value * Function::codegen(context_module & context) {
 			// std::cout << "Arg named |" << arg_name << '|' << std::endl;
 			arg->setName(arg_name);
 
-			context.register_value(arg_name, arg);
+			context.add_value_to_table(arg_name, arg);
 		}
 	}
 
