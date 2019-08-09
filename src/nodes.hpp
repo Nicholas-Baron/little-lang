@@ -13,7 +13,7 @@ class Typed_Var final {
 
    public:
 	Typed_Var(std::string && name, std::string && type)
-		: type_{type}, name_{name} {}
+		: type_{std::move(type)}, name_{std::move(name)} {}
 
 	[[nodiscard]] const auto & name() const { return name_; }
 	[[nodiscard]] const auto & type() const { return type_; }
@@ -24,7 +24,7 @@ class Func_Header final {
 	Func_Header(std::string && name, std::vector<Typed_Var> && parameters)
 		: name_(std::move(name)), params(std::move(parameters)) {}
 
-	void set_ret_type(std::string && type) { ret_type = type; }
+	void set_ret_type(std::string && type) { ret_type = std::move(type); }
 
 	llvm::FunctionType * full_type(context_module & context);
 
@@ -94,7 +94,7 @@ class Top_Level_Seq final : public Node {
 
 class UserValue final : public Expression {
    public:
-	UserValue(std::string && value) : val(value) {}
+	UserValue(std::string && value) : val(std::move(value)) {}
 
 	llvm::Value * codegen(context_module & context) override;
 
@@ -132,7 +132,7 @@ class BinaryExpression final : public Expression {
 class FunctionCall final : public Statement, public Expression {
    public:
 	FunctionCall(std::string && name, std::vector<Expression *> && args)
-		: name_(name) {
+		: name_(std::move(name)) {
 		for (auto * arg : args) { args_.emplace_back(arg); }
 	}
 
@@ -161,10 +161,10 @@ class If_Statement final : public Statement {
 class Let_Statement final : public Statement {
    public:
 	Let_Statement(std::string && name, Expression * value)
-		: name_and_type(std::forward<std::string>(name), "auto")
-		, value_(value) {}
+		: name_and_type(std::move(name), "auto"), value_(value) {}
+
 	Let_Statement(Typed_Var && typed_name, Expression * value)
-		: name_and_type(typed_name), value_(value) {}
+		: name_and_type(std::move(typed_name)), value_(value) {}
 
 	llvm::Value * codegen(context_module & context) override;
 
