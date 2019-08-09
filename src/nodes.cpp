@@ -138,33 +138,35 @@ Value * comparison_expr(context_module & context, int tok, Value * const left,
 						Value * const right) {
 
 	if (left->getType() != right->getType()) {
-		context.context().emitError(
+		context.printError(
 			"Current compiler does not support comparisons on differing "
 			"types.");
 		return context.builder().getFalse();
 	}
 
-	// TODO: Move into a switch-case
-	bool is_int = left->getType()->isIntegerTy();
-	if (tok == T_LE) {
-		if (is_int) {
-			return context.builder().CreateICmpSLE(left, right);
-		} else {
-			return context.builder().CreateFCmpOLE(left, right);
-		}
-	} else if (tok == T_EQ) {
-		if (is_int) {
-			return context.builder().CreateICmpEQ(left, right);
-		} else {
-			return context.builder().CreateFCmpOEQ(left, right);
-		}
-	} else if (tok == T_OR and is_int) {
+	const bool is_int = left->getType()->isIntegerTy();
+	switch (tok) {
+		case T_LE:
+			if (is_int) {
+				return context.builder().CreateICmpSLE(left, right);
+			} else {
+				return context.builder().CreateFCmpOLE(left, right);
+			}
+
+		case T_EQ:
+			if (is_int) {
+				return context.builder().CreateICmpEQ(left, right);
+			} else {
+				return context.builder().CreateFCmpOEQ(left, right);
+			}
+	}
+
+	if (tok == T_OR and is_int) {
 		return context.builder().CreateOr(left, right);
 	}
 
-	context.context().emitError(
-		"Token number " + std::to_string(tok)
-		+ " is not currently supported as a comparison.");
+	context.printError("Token number " + std::to_string(tok)
+					   + " is not currently supported as a comparison.");
 	return context.builder().getFalse();
 }
 
