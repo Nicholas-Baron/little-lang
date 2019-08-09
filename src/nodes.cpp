@@ -153,6 +153,13 @@ Value * comparison_expr(context_module & context, int tok, Value * const left,
 				return context.builder().CreateFCmpOLE(left, right);
 			}
 
+		case T_GT:
+			if (is_int) {
+				return context.builder().CreateICmpSGT(left, right);
+			} else {
+				return context.builder().CreateFCmpOGT(left, right);
+			}
+
 		case T_EQ:
 			if (is_int) {
 				return context.builder().CreateICmpEQ(left, right);
