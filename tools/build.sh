@@ -15,6 +15,6 @@ clear
 pwd
 
 (
-	cmake ..
-	make -j
+	cmake -G Ninja ..
+	ninja
 ) 2>&1 | tee ../logs/build.txt
