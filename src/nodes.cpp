@@ -67,7 +67,17 @@ FunctionType * Func_Header::full_type(context_module & context) {
 }
 
 Value * UserValue::codegen(context_module & context) {
-	auto first_char = val.at(0);
+	const auto first_char = val.at(0);
+
+	switch (first_char) {
+		// A user-defined string
+		case '\"':
+			return context.builder().CreateGlobalString(val);
+
+		// A single character
+		case '\'':
+			return context.builder().getInt8(val[1]);
+	}
 
 	using std::string;
 	if (isdigit(first_char) != 0) {
@@ -78,42 +88,36 @@ Value * UserValue::codegen(context_module & context) {
 			// Hex number
 			static constexpr auto hex_base = 16;
 			return context.builder().getInt32(stoi(val, nullptr, hex_base));
-		} else if (val.find_first_of('.') != string::npos) {
+		}
+
+		if (val.find_first_of('.') != string::npos) {
 			// Floating point
 			return llvm::ConstantFP::get(context.context(),
 										 llvm::APFloat{stof(val)});
-		} else {
-			// Decimal integer
-			return context.builder().getInt32(stoi(val));
 		}
 
-	} else if (first_char == '\'') {
-		// A single character
-		return context.builder().getInt8(val[1]);
-	} else if (first_char == '"') {
-		// A string
-		return context.builder().CreateGlobalString(val);
-	} else {
-		// Some identifier or bool
-		static const std::map<string, bool> valid_bools{
-			{"true", true},   {"True", true},   {"TRUE", true},
-			{"false", false}, {"False", false}, {"FALSE", false}};
-
-		const auto bool_value = valid_bools.find(val);
-
-		if (bool_value != valid_bools.end()) {
-			// Boolean value
-			return context.builder().getInt1(bool_value->second);
-		} else {
-			// Identifier
-			auto * value = context.find_value_in_current_scope(val);
-			if (value == nullptr) {
-				context.context().emitError("Could not find variable named |"
-											+ val + '|');
-			}
-			return value;
-		}
+		// Decimal integer
+		return context.builder().getInt32(stoi(val));
 	}
+
+	// Some identifier or bool
+	static const std::map<string, bool> valid_bools{
+		{"true", true},   {"True", true},   {"TRUE", true},
+		{"false", false}, {"False", false}, {"FALSE", false}};
+
+	const auto bool_value = valid_bools.find(val);
+
+	if (bool_value != valid_bools.end()) {
+		// Boolean value
+		return context.builder().getInt1(bool_value->second);
+	}
+	// Identifier
+	auto * value = context.find_value_in_current_scope(val);
+	if (value == nullptr) {
+		context.context().emitError("Could not find variable named |" + val
+									+ '|');
+	}
+	return value;
 }
 
 Value * UnaryExpression::codegen(context_module & context) {
