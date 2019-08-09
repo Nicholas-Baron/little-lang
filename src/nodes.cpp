@@ -58,8 +58,7 @@ std::vector<Type *> Func_Header::param_types(context_module & context) {
 FunctionType * Func_Header::full_type(context_module & context) {
 
 	if (ret_type.empty() or ret_type == "auto") {
-		context.context().emitError(name_
-									+ " does not have a known return type");
+		context.printError(name_ + " does not have a known return type");
 	}
 
 	return FunctionType::get(get_type_by_name(ret_type, context.context()),
@@ -114,8 +113,7 @@ Value * UserValue::codegen(context_module & context) {
 	// Identifier
 	auto * value = context.find_value_in_current_scope(val);
 	if (value == nullptr) {
-		context.context().emitError("Could not find variable named |" + val
-									+ '|');
+		context.printError("Could not find variable named " + val);
 	}
 	return value;
 }
@@ -129,8 +127,8 @@ Value * UnaryExpression::codegen(context_module & context) {
 			return context.builder().CreateNot(op_value);
 	}
 
-	context.context().emitError("Token number " + std::to_string(tok)
-								+ " is not an implemented unary operation.");
+	context.printError("Token number " + std::to_string(tok)
+					   + " is not an implemented unary operation.");
 	return op_value;
 }
 
@@ -194,14 +192,14 @@ Value * BinaryExpression::codegen(context_module & context) {
 	auto * right = rhs_->codegen(context);
 
 	if (left == nullptr) {
-		context.context().emitError("Token #" + std::to_string(tok)
-									+ " has a null left operand.");
+		context.printError("Token #" + std::to_string(tok)
+						   + " has a null left operand.");
 		return right;
 	}
 
 	if (right == nullptr) {
-		context.context().emitError("Token #" + std::to_string(tok)
-									+ " has a null right operand.");
+		context.printError("Token #" + std::to_string(tok)
+						   + " has a null right operand.");
 		return left;
 	}
 
@@ -223,8 +221,8 @@ Value * BinaryExpression::codegen(context_module & context) {
 			return comparison_expr(context, tok, left, right);
 	}
 
-	context.context().emitError("Token number " + std::to_string(tok)
-								+ " is not an implemented binary operation.");
+	context.printError("Token number " + std::to_string(tok)
+					   + " is not an implemented binary operation.");
 	return right;
 }
 
