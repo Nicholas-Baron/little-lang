@@ -1,6 +1,7 @@
 #ifndef _LOCATION_HPP
 #define _LOCATION_HPP
 
+#include <iosfwd>
 #include <utility>
 
 class Location final {
@@ -29,6 +30,10 @@ class Location final {
 		return start_pos == rhs.start_pos and end_pos == rhs.end_pos;
 	}
 
+	constexpr bool oneline() const noexcept {
+		return start_pos.first == end_pos.first;
+	}
+
    private:
 	// Line first
 	std::pair<int, int> start_pos;
@@ -55,5 +60,7 @@ constexpr bool operator<(const Location & lhs, const Location & rhs) noexcept {
 
 	return lhs.last_column() < rhs.last_column();
 }
+
+std::ostream & operator<<(std::ostream & lhs, const Location & rhs);
 
 #endif
