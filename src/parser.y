@@ -11,18 +11,21 @@
 		std::cerr << "Error on line " << yylineno << ": " << msg << "\nText: " << yytext << std::endl; 
 	}
 
-	[[nodiscard]] Location make_loc(const YYLTYPE& yy_loc){
-		return Location{
-			yy_loc.first_line, yy_loc.first_column,
-			yy_loc.last_line, yy_loc.last_column
-		};
-	}
-
 	Top_Level_Seq * module;
 %}
 
 %glr-parser
 %locations
+
+%code provides {
+
+	[[nodiscard]] inline Location make_loc(const YYLTYPE& yy_loc){
+		return Location{
+			yy_loc.first_line, yy_loc.first_column,
+			yy_loc.last_line, yy_loc.last_column
+		};
+	}
+}
 
 %union{
 	int token;
