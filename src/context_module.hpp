@@ -1,6 +1,8 @@
 #ifndef _CONTEXT_MODULE_HPP
 #define _CONTEXT_MODULE_HPP
 
+#include "location.hpp"
+
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
@@ -9,7 +11,7 @@
 #include "llvm/Support/Debug.h"
 
 #include <algorithm>
-#include <iostream>
+#include <sstream>
 #include <utility>
 
 inline auto * find_local_value(llvm::Function *	func,
@@ -23,13 +25,7 @@ inline auto * find_local_value(llvm::Function *	func,
 	return table.lookup(name);
 }
 
-inline void print_symbol_table(llvm::ValueSymbolTable * table) {
-	for (const auto & entry : *table) {
-		std::cout << entry.getKey().str() << std::endl;
-	}
-}
-
-class context_module {
+class context_module final {
 
 	llvm::LLVMContext context_{};
 	llvm::Module	  module_;
@@ -76,7 +72,17 @@ class context_module {
 	}
 
 	void verify_module() const { llvm::verifyModule(module_, &llvm::dbgs()); }
-	void printError(const std::string & name) { context_.emitError(name); }
+
+	void printError(const std::string & name, const Location * loc = nullptr) {
+
+		if (loc == nullptr) {
+			context_.emitError(name);
+		} else {
+			std::stringstream to_print{};
+			to_print << *loc << " : " << name;
+			context_.emitError(to_print.str());
+		}
+	}
 
 	void add_value_to_table(const std::string & name, llvm::Value * val) {
 		currently_alive_values.back().second.emplace(name, val);
