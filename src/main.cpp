@@ -2,6 +2,7 @@
 #include "nodes.hpp"
 #include "settings.hpp"
 
+#include "parser.hpp"
 #include "tokens.hpp"
 
 #include <cassert>
