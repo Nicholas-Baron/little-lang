@@ -11,7 +11,6 @@
 #include <sstream>
 
 extern std::unique_ptr<Top_Level_Seq> module;
-extern int							  yyparse();
 
 std::string read_file(const std::string & name) {
 
