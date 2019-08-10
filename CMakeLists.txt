@@ -46,7 +46,7 @@ add_custom_command(
 	USES_TERMINAL
 	)
 
-set(input_files ${CMAKE_SOURCE_DIR}/src/main.cpp ${CMAKE_SOURCE_DIR}/src/nodes.cpp ${CMAKE_SOURCE_DIR}/src/location.cpp ${bison_output} ${flex_output})
+set(input_files ${CMAKE_SOURCE_DIR}/src/main.cpp ${CMAKE_SOURCE_DIR}/src/nodes.cpp ${CMAKE_SOURCE_DIR}/src/location.cpp ${CMAKE_SOURCE_DIR}/src/context_module.cpp ${bison_output} ${flex_output})
 
 add_executable(littlec ${input_files})
 target_compile_options(littlec PRIVATE -Wall -Wextra -g ${LLVM_CONFIG} -Wno-unused-command-line-argument -Wno-unused-parameter)

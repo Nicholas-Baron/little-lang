@@ -6,24 +6,12 @@
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
-#include "llvm/IR/ValueSymbolTable.h"
 #include "llvm/IR/Verifier.h"
-#include "llvm/Support/Debug.h"
 
-#include <algorithm>
 #include <sstream>
 #include <utility>
 
-inline auto * find_local_value(llvm::Function *	func,
-							   const std::string & name) {
-	const auto & table = *(func->getValueSymbolTable());
-	const auto   iter  = std::find_if(
-		   table.begin(), table.end(),
-		   [&name](const auto & entry) { return name == entry.getKey(); });
-
-	if (iter != table.end()) { return iter->getValue(); }
-	return table.lookup(name);
-}
+llvm::Value * find_local_value(llvm::Function * func, const std::string & name);
 
 class context_module final {
 
@@ -52,11 +40,9 @@ class context_module final {
 	auto & module() { return module_; }
 	auto & builder() { return builder_; }
 
-	void dump() const { module_.print(llvm::dbgs(), nullptr); }
+	void dump() const;
 
-	auto * find_first_class_value(const std::string & name) const {
-		return module_.getValueSymbolTable().lookup(name);
-	}
+	llvm::Value * find_first_class_value(const std::string & name) const;
 
 	auto * find_value_in_current_scope(const std::string & name) {
 		for (auto iter = currently_alive_values.rbegin();
@@ -71,7 +57,7 @@ class context_module final {
 		return find_first_class_value(name);
 	}
 
-	void verify_module() const { llvm::verifyModule(module_, &llvm::dbgs()); }
+	void verify_module() const;
 
 	void printError(const std::string & name, const Location * loc = nullptr) {
 
