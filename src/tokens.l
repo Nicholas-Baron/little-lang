@@ -7,8 +7,19 @@
 
 #define save_tok yylval.string = new std::string{yytext, static_cast<size_t>(yyleng)}
 #define token(t) (yylval.token = t)
+#define YY_USER_ACTION record_location(); 
 
 extern "C" int yywrap(){ return 1; /* To prevent reading a second file */ }
+int yycolumn = 1;
+
+extern "C" void record_location(){
+	
+	yylloc.first_line = yylloc.last_line = yylineno; 
+	yylloc.first_column = yycolumn;
+	yylloc.last_column = yycolumn + (yyleng - 1);
+	yycolumn += yyleng;
+
+}
 
 %}
 

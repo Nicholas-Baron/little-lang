@@ -14,6 +14,7 @@
 %}
 
 %glr-parser
+%locations
 
 %union{
 	int token;
@@ -75,7 +76,7 @@ top_lvl_seq : %empty { $$ = new Top_Level_Seq(); }
 
 top_lvl_item : function ;
 
-function : func_header statement { $$ = new Function{std::move(*$1), $2}; delete $1; }
+function : func_header statement { $$ = new Function{std::move(*$1), $2}; delete $1; std::cout << "Found a function on line " << @1.first_line << std::endl; }
 		 ;
 
 func_header : ret_type func_sig { $$ = $2; $$->set_ret_type(std::move(*$1)); delete $1; }
