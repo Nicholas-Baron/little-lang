@@ -1,5 +1,6 @@
 %{
 	#include <iostream>
+	#include <memory>
 
 	#include "location.hpp"
 	#include "nodes.hpp"
@@ -11,7 +12,7 @@
 		std::cerr << "Error on line " << yylineno << ": " << msg << "\nText: " << yytext << std::endl; 
 	}
 
-	Top_Level_Seq * module;
+	std::unique_ptr<Top_Level_Seq> module;
 %}
 
 %glr-parser
@@ -79,7 +80,10 @@
 
 %%
 
-program : top_lvl_seq function { module = $1; module->append($2); module->set_location(make_loc(@$)); }
+program : top_lvl_seq function { 
+			module = std::unique_ptr<Top_Level_Seq>($1); module->append($2); module->set_location(make_loc(@$)); 
+		}
+		;
 
 top_lvl_seq : %empty { $$ = new Top_Level_Seq(); $$->set_location(make_loc(@$)); }
 			| top_lvl_seq top_lvl_item { 

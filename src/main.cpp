@@ -8,14 +8,8 @@
 #include <iostream>
 #include <sstream>
 
-/*
-extern struct yy_buffer_state;
-using YY_BUFFER_STATE = yy_buffer_state *;
-extern YY_BUFFER_STATE yy_scan_string(char * str);
-*/
-
-extern Top_Level_Seq * module;
-extern int			   yyparse();
+extern std::unique_ptr<Top_Level_Seq> module;
+extern int							  yyparse();
 
 std::string read_file(const std::string & name) {
 
