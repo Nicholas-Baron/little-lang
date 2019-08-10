@@ -15,7 +15,7 @@ message(STATUS "Source dir is ${CMAKE_SOURCE_DIR}")
 find_package(FLEX REQUIRED)
 find_package(BISON REQUIRED)
 
-execute_process(COMMAND llvm-config --cxxflags --ldflags --libs core native OUTPUT_VARIABLE LLVM_CONFIG)
+execute_process(COMMAND llvm-config-8 --cxxflags --ldflags --libs core native OUTPUT_VARIABLE LLVM_CONFIG)
 string(REGEX REPLACE "[\n\t ]+" " " LLVM_CONFIG ${LLVM_CONFIG})
 separate_arguments(LLVM_CONFIG)
 message(STATUS "LLVM options: ${LLVM_CONFIG}")
@@ -46,7 +46,8 @@ add_custom_command(
 	USES_TERMINAL
 	)
 
-set(input_files ${CMAKE_SOURCE_DIR}/src/main.cpp ${CMAKE_SOURCE_DIR}/src/nodes.cpp ${CMAKE_SOURCE_DIR}/src/location.cpp ${CMAKE_SOURCE_DIR}/src/context_module.cpp ${bison_output} ${flex_output})
+set(proj_files ${CMAKE_SOURCE_DIR}/src/main.cpp ${CMAKE_SOURCE_DIR}/src/nodes.cpp ${CMAKE_SOURCE_DIR}/src/location.cpp ${CMAKE_SOURCE_DIR}/src/context_module.cpp)
+set(input_files ${bison_output} ${flex_output} ${proj_files})
 
 add_executable(littlec ${input_files})
 target_compile_options(littlec PRIVATE -Wall -Wextra -g ${LLVM_CONFIG} -Wno-unused-command-line-argument -Wno-unused-parameter)
