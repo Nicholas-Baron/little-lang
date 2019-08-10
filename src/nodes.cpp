@@ -335,7 +335,6 @@ Value * Function::codegen(context_module & context) {
 			assert(arg != nullptr);
 			const auto & arg_name = head_.arg(index).name();
 			assert(not arg_name.empty());
-			// std::cout << "Arg named |" << arg_name << '|' << std::endl;
 			arg->setName(arg_name);
 
 			context.add_value_to_table(arg_name, arg);
@@ -344,6 +343,7 @@ Value * Function::codegen(context_module & context) {
 
 	auto * blk = llvm::BasicBlock::Create(context.context(),
 										  head_.name() + "_start", func);
+
 	context.builder().SetInsertPoint(blk);
 
 	body_->codegen(context);
