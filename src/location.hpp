@@ -6,6 +6,8 @@
 class Location final {
 
    public:
+	constexpr Location() : Location(0, 0, 0, 0) {}
+
 	explicit constexpr Location(int start_line, int start_col, int end_line,
 								int end_col)
 		: start_pos(start_line, start_col), end_pos(end_line, end_col) {}
