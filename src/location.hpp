@@ -26,11 +26,12 @@ class Location final {
 		return end_pos.second;
 	}
 
-	constexpr bool operator==(const Location & rhs) const noexcept {
+	[[nodiscard]] constexpr bool operator==(const Location & rhs) const
+		noexcept {
 		return start_pos == rhs.start_pos and end_pos == rhs.end_pos;
 	}
 
-	constexpr bool oneline() const noexcept {
+	[[nodiscard]] constexpr bool oneline() const noexcept {
 		return start_pos.first == end_pos.first;
 	}
 
