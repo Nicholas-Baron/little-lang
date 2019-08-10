@@ -1,5 +1,6 @@
 #include "context_module.hpp"
 #include "nodes.hpp"
+#include "settings.hpp"
 
 #include "tokens.hpp"
 

@@ -46,11 +46,11 @@ add_custom_command(
 	USES_TERMINAL
 	)
 
-set(proj_files ${CMAKE_SOURCE_DIR}/src/main.cpp ${CMAKE_SOURCE_DIR}/src/nodes.cpp ${CMAKE_SOURCE_DIR}/src/location.cpp ${CMAKE_SOURCE_DIR}/src/context_module.cpp)
+set(proj_files ${CMAKE_SOURCE_DIR}/src/main.cpp ${CMAKE_SOURCE_DIR}/src/nodes.cpp ${CMAKE_SOURCE_DIR}/src/location.cpp ${CMAKE_SOURCE_DIR}/src/context_module.cpp ${CMAKE_SOURCE_DIR}/src/settings.cpp)
 set(input_files ${bison_output} ${flex_output} ${proj_files})
 
 add_executable(littlec ${input_files})
 target_compile_options(littlec PRIVATE -Wall -Wextra -g ${LLVM_CONFIG} -Wno-unused-command-line-argument -Wno-unused-parameter)
 target_link_libraries(littlec ${LLVM_CONFIG})
-target_include_directories(littlec PRIVATE ${CMAKE_SOURCE_DIR}/src ${temp_dir})
+target_include_directories(littlec PRIVATE ${CMAKE_SOURCE_DIR}/src ${temp_dir} ${CMAKE_SOURCE_DIR}/external)
 
