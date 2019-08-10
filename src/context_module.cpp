@@ -1,6 +1,7 @@
 #include "context_module.hpp"
 
 #include "llvm/IR/ValueSymbolTable.h"
+#include "llvm/IR/Verifier.h"
 #include "llvm/Support/Debug.h"
 
 #include <algorithm>
