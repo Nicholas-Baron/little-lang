@@ -12,14 +12,15 @@
 #include <functional>
 #include <vector>
 
-using llvm::Type, llvm::LLVMContext, llvm::FunctionType, llvm::Value;
+using llvm::Type, llvm::FunctionType, llvm::Value;
 
 namespace {
-	Type * get_type_by_name(const std::string & name, LLVMContext & context) {
+	Type * get_type_by_name(const std::string & name, context_module & context,
+							Location * loc = nullptr) {
 
 		// TODO: Move into the context_module
 		static const std::vector<
-			std::pair<std::string, std::function<Type *(LLVMContext &)>>>
+			std::pair<std::string, std::function<Type *(llvm::LLVMContext &)>>>
 			primitive_types{{"int", Type::getInt32Ty},
 							{"float", Type::getFloatTy},
 							{"void", Type::getVoidTy},
@@ -31,10 +32,10 @@ namespace {
 			[&name](const auto & entry) { return entry.first == name; });
 
 		if (to_ret == primitive_types.end()) {
-			context.emitError(name + " is an unknown type");
+			context.printError(name + " is an unknown type", loc);
 			return nullptr;
 		}
-		return to_ret->second(context);
+		return to_ret->second(context.context());
 	}
 
 	std::string temp_block_name() {
@@ -49,7 +50,7 @@ std::vector<Type *> Func_Header::param_types(context_module & context) {
 	to_ret.reserve(params.size());
 
 	for (const auto & param : params) {
-		to_ret.push_back(get_type_by_name(param.type(), context.context()));
+		to_ret.push_back(get_type_by_name(param.type(), context));
 	}
 
 	return to_ret;
@@ -58,10 +59,11 @@ std::vector<Type *> Func_Header::param_types(context_module & context) {
 FunctionType * Func_Header::full_type(context_module & context) {
 
 	if (ret_type.empty() or ret_type == "auto") {
-		context.printError(name_ + " does not have a known return type");
+		context.printError(name_ + " does not have a known return type",
+						   &location());
 	}
 
-	return FunctionType::get(get_type_by_name(ret_type, context.context()),
+	return FunctionType::get(get_type_by_name(ret_type, context),
 							 param_types(context), false);
 }
 
@@ -113,7 +115,7 @@ Value * UserValue::codegen(context_module & context) {
 	// Identifier
 	auto * value = context.find_value_in_current_scope(val);
 	if (value == nullptr) {
-		context.printError("Could not find variable named " + val);
+		context.printError("Could not find variable named " + val, &location());
 	}
 	return value;
 }
@@ -128,17 +130,19 @@ Value * UnaryExpression::codegen(context_module & context) {
 	}
 
 	context.printError("Token number " + std::to_string(tok)
-					   + " is not an implemented unary operation.");
+						   + " is not an implemented unary operation.",
+					   &location());
 	return op_value;
 }
 
 Value * comparison_expr(context_module & context, int tok, Value * const left,
-						Value * const right) {
+						Value * const right, const Location * loc) {
 
 	if (left->getType() != right->getType()) {
 		context.printError(
 			"Current compiler does not support comparisons on differing "
-			"types.");
+			"types.",
+			loc);
 		return context.builder().getFalse();
 	}
 
@@ -183,7 +187,8 @@ Value * comparison_expr(context_module & context, int tok, Value * const left,
 	}
 
 	context.printError("Token number " + std::to_string(tok)
-					   + " is not currently supported as a comparison.");
+						   + " is not currently supported as a comparison.",
+					   loc);
 	return context.builder().getFalse();
 }
 
@@ -192,14 +197,16 @@ Value * BinaryExpression::codegen(context_module & context) {
 	auto * right = rhs_->codegen(context);
 
 	if (left == nullptr) {
-		context.printError("Token #" + std::to_string(tok)
-						   + " has a null left operand.");
+		context.printError(
+			"Token #" + std::to_string(tok) + " has a null left operand.",
+			&location());
 		return right;
 	}
 
 	if (right == nullptr) {
-		context.printError("Token #" + std::to_string(tok)
-						   + " has a null right operand.");
+		context.printError(
+			"Token #" + std::to_string(tok) + " has a null right operand.",
+			&location());
 		return left;
 	}
 
@@ -218,11 +225,12 @@ Value * BinaryExpression::codegen(context_module & context) {
 		case T_NE:
 		case T_OR:
 		case T_AND:
-			return comparison_expr(context, tok, left, right);
+			return comparison_expr(context, tok, left, right, &location());
 	}
 
 	context.printError("Token number " + std::to_string(tok)
-					   + " is not an implemented binary operation.");
+						   + " is not an implemented binary operation.",
+					   &location());
 	return right;
 }
 
@@ -292,13 +300,12 @@ Value * Let_Statement::codegen(context_module & context) {
 
 	auto * value = value_->codegen(context);
 	auto   type  = name_and_type.type();
-	if (type == "auto"
-		or get_type_by_name(type, context.context()) == value->getType()) {
+	if (type == "auto" or get_type_by_name(type, context) == value->getType()) {
 		value->setName(name_and_type.name());
 		return value;
 	}
 
-	context.printError("Casting is not supported at this time.");
+	context.printError("Casting is not supported at this time.", &location());
 	return nullptr;
 }
 
