@@ -2,10 +2,12 @@
 #define _NODE_HPP
 
 #include "context_module.hpp"
+#include "location.hpp"
 
 #include <llvm/IR/Value.h>
 
 // Classes that do not need Node
+
 class Typed_Var final {
 
 	std::string type_;
