@@ -7,7 +7,6 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 
-#include <sstream>
 #include <utility>
 
 llvm::Value * find_local_value(llvm::Function * func, const std::string & name);
@@ -58,16 +57,7 @@ class context_module final {
 
 	void verify_module() const;
 
-	void printError(const std::string & name, const Location * loc = nullptr) {
-
-		if (loc == nullptr) {
-			context_.emitError(name);
-		} else {
-			std::stringstream to_print{};
-			to_print << *loc << " : " << name;
-			context_.emitError(to_print.str());
-		}
-	}
+	void printError(const std::string & name, const Location * loc = nullptr);
 
 	void add_value_to_table(const std::string & name, llvm::Value * val) {
 		currently_alive_values.back().second.emplace(name, val);

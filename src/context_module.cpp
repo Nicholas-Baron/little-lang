@@ -5,6 +5,7 @@
 #include "llvm/Support/Debug.h"
 
 #include <algorithm>
+#include <sstream>
 
 using llvm::Value;
 
@@ -26,4 +27,28 @@ Value * context_module::find_first_class_value(const std::string & name) const {
 
 void context_module::verify_module() const {
 	llvm::verifyModule(module_, &llvm::dbgs());
+}
+void context_module::printError(const std::string & name,
+								const Location *	loc) {
+
+	if (loc == nullptr) {
+		context_.emitError(name);
+	} else {
+		std::stringstream to_print{};
+		to_print << *loc << " : " << name;
+		context_.emitError(to_print.str());
+	}
+}
+
+llvm::Function * context_module::find_function(const std::string & name,
+											   const std::string & location) {
+
+	for (const auto & entry : processed_functions) {
+		if (name == entry.first->getName() and location == entry.second) {
+			return entry.first;
+		}
+	}
+
+	printError("Could not find function " + location + name);
+	return nullptr;
 }
