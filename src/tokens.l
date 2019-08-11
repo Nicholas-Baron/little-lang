@@ -63,7 +63,6 @@ extern "C" void record_location(){
 
 	/* Miscellaneous Symbols */
 
-"::"			return token(T_SCOPE);
 ","				return token(T_COMMA);
 ";"				return token(T_SEMI);
 
@@ -78,7 +77,6 @@ extern "C" void record_location(){
 
 	/* Reserved words */
 
-"namespace"		return token(T_NAMESPACE);
 "return"|"ret"	return token(T_RET);
 "let"			return token(T_LET);
 "if"			return token(T_IF);
