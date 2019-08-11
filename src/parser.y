@@ -82,12 +82,12 @@
 
 %%
 
-program : top_lvl_seq function { 
-			module = std::unique_ptr<Top_Level_Seq>($1); module->append($2); module->set_location(make_loc(@$)); 
+program : top_lvl_seq { 
+			module = std::unique_ptr<Top_Level_Seq>($1); module->set_location(make_loc(@$)); 
 		}
 		;
 
-top_lvl_seq : %empty { $$ = new Top_Level_Seq(); $$->set_location(make_loc(@$)); }
+top_lvl_seq : top_lvl_item { $$ = new Top_Level_Seq(); $$->append($1); $$->set_location(make_loc(@$)); }
 			| top_lvl_seq top_lvl_item { 
 				$$ = $1; $$->append($2); $$->set_location(make_loc(@$));
 			}
