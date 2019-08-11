@@ -26,6 +26,8 @@
 			yy_loc.last_line, yy_loc.last_column
 		};
 	}
+
+	static_assert(sizeof(YYSTYPE) <= sizeof(int *), "The Bison union is not of trivial size.");
 }
 
 %union{
