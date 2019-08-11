@@ -7,7 +7,9 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 
+#include <map>
 #include <utility>
+#include <vector>
 
 llvm::Value * find_local_value(llvm::Function * func, const std::string & name);
 
@@ -21,10 +23,11 @@ class context_module final {
 		std::pair<llvm::Function *, std::map<std::string, llvm::Value *>>>
 		currently_alive_values{};
 
+	std::map<std::string, llvm::Type *> valid_types;
+
    public:
 	context_module() = delete;
-	explicit context_module(const std::string & name)
-		: module_{name, context_}, builder_{context_} {}
+	explicit context_module(const std::string & name);
 
 	context_module(const context_module &) = delete;
 	context_module & operator=(const context_module &) = delete;
@@ -78,6 +81,14 @@ class context_module final {
 	}
 
 	void remove_current_scope() { currently_alive_values.pop_back(); }
+
+	llvm::Type * find_type(const std::string & name, const Location * loc) {
+
+		const auto iter = valid_types.find(name);
+		if (iter != valid_types.end()) { return iter->second; }
+		printError(name + " is an unknown type", loc);
+		return nullptr;
+	}
 };
 
 #endif

@@ -15,29 +15,6 @@
 using llvm::Type, llvm::FunctionType, llvm::Value;
 
 namespace {
-	Type * get_type_by_name(const std::string & name, context_module & context,
-							Location * loc = nullptr) {
-
-		// TODO: Move into the context_module
-		static const std::vector<
-			std::pair<std::string, std::function<Type *(llvm::LLVMContext &)>>>
-			primitive_types{{"int", Type::getInt32Ty},
-							{"float", Type::getFloatTy},
-							{"void", Type::getVoidTy},
-							{"bool", Type::getInt1Ty},
-							{"char", Type::getInt8Ty}};
-
-		const auto to_ret = std::find_if(
-			primitive_types.begin(), primitive_types.end(),
-			[&name](const auto & entry) { return entry.first == name; });
-
-		if (to_ret == primitive_types.end()) {
-			context.printError(name + " is an unknown type", loc);
-			return nullptr;
-		}
-		return to_ret->second(context.context());
-	}
-
 	std::string temp_block_name() {
 		static unsigned num = 0;
 		return "block_" + std::to_string(num++);
@@ -50,7 +27,7 @@ std::vector<Type *> Func_Header::param_types(context_module & context) {
 	to_ret.reserve(params.size());
 
 	for (const auto & param : params) {
-		to_ret.push_back(get_type_by_name(param.type(), context));
+		to_ret.push_back(context.find_type(param.type(), &loc));
 	}
 
 	return to_ret;
@@ -63,7 +40,7 @@ FunctionType * Func_Header::full_type(context_module & context) {
 						   &location());
 	}
 
-	return FunctionType::get(get_type_by_name(ret_type, context),
+	return FunctionType::get(context.find_type(ret_type, &location()),
 							 param_types(context), false);
 }
 
@@ -300,7 +277,8 @@ Value * Let_Statement::codegen(context_module & context) {
 
 	auto * value = value_->codegen(context);
 	auto   type  = name_and_type.type();
-	if (type == "auto" or get_type_by_name(type, context) == value->getType()) {
+	if (type == "auto"
+		or context.find_type(type, &location()) == value->getType()) {
 		value->setName(name_and_type.name());
 		return value;
 	}

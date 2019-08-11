@@ -7,7 +7,7 @@
 #include <algorithm>
 #include <sstream>
 
-using llvm::Value;
+using llvm::Value, llvm::Type;
 
 Value * find_local_value(llvm::Function * func, const std::string & name) {
 	const auto & table = *(func->getValueSymbolTable());
@@ -18,6 +18,17 @@ Value * find_local_value(llvm::Function * func, const std::string & name) {
 	if (iter != table.end()) { return iter->getValue(); }
 	return table.lookup(name);
 }
+
+context_module::context_module(const std::string & name)
+	: module_{name, context_}
+	, builder_{context_}
+	, valid_types{{"int", Type::getInt32Ty(context_)},
+				  {"float", Type::getFloatTy(context_)},
+				  {"proc", Type::getVoidTy(context_)},
+				  {"bool", Type::getInt1Ty(context_)},
+				  {"char", Type::getInt8Ty(context_)}}
+
+{}
 
 void context_module::dump() const { module_.print(llvm::dbgs(), nullptr); }
 
