@@ -121,6 +121,8 @@ else_block : T_ELSE statement_block { $$ = $2; }
 
 initialization : T_ASSIGN expr { $$ = $2; } | T_LBRACE expr T_RBRACE { $$ = $2; };
 
+literal : T_INT | T_FLOAT | T_CHAR | T_BOOL | T_STRING ; 
+
 expr : logic_or_expr ;
 
 primary_expr : T_IDENT { $$ = new UserValue(std::move(*$1)); delete $1; }
@@ -128,8 +130,6 @@ primary_expr : T_IDENT { $$ = new UserValue(std::move(*$1)); delete $1; }
 			 | literal { $$ = new UserValue(std::move(*$1)); delete $1; }
 			 | T_LPAREN expr T_RPAREN { $$ = $2; }
 			 ;
-
-literal : T_INT | T_FLOAT | T_CHAR | T_BOOL | T_STRING ; 
 
 unary_expr : primary_expr | T_NOT primary_expr { $$ = new UnaryExpression($1, $2); } ; 
 
