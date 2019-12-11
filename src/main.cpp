@@ -1,6 +1,8 @@
 #include "context_module.hpp"
 #include "nodes.hpp"
+#include "settings.hpp"
 
+#include "parser.hpp"
 #include "tokens.hpp"
 
 #include <cassert>
@@ -8,14 +10,7 @@
 #include <iostream>
 #include <sstream>
 
-/*
-extern struct yy_buffer_state;
-using YY_BUFFER_STATE = yy_buffer_state *;
-extern YY_BUFFER_STATE yy_scan_string(char * str);
-*/
-
-extern Top_Level_Seq * module;
-extern int			   yyparse();
+extern std::unique_ptr<Top_Level_Seq> module;
 
 std::string read_file(const std::string & name) {
 
@@ -30,38 +25,15 @@ std::string read_file(const std::string & name) {
 	return content.str();
 }
 
-int main(const int arg_count, const char * const * const args) {
+bool parse_file(const std::string & content) {
 
-	const auto filename = [&]() -> std::string {
-		const char * name = nullptr;
-		for (int i = 1; i < arg_count; i++) {
-			if (args[i][0] != '-') { name = args[i]; }
-		}
-
-		if (name != nullptr) { return {name}; }
-
-		std::cout << "Enter a file to compile: " << std::flush;
-		std::string data;
-		std::cin >> data;
-		return data;
-	}();
-
-	auto content = read_file(filename);
-
-	if (content.empty()) {
-		std::cerr << "File is empty" << std::endl;
-		return -1;
-	}
-
-	// std::cout << "Opened file. Initializing parser..." << std::endl;
-
-	auto buffer = yy_scan_string(content.data());
+	auto buffer = yy_scan_string(content.c_str());
 
 	yy_switch_to_buffer(buffer);
 
-	// std::cout << "Parsing " << filename << "..." << std::endl;
-
 	const auto parse_status = yyparse();
+
+	yy_delete_buffer(buffer);
 
 	if (parse_status != 0) {
 		std::cerr << "Parsing error: ";
@@ -72,17 +44,36 @@ int main(const int arg_count, const char * const * const args) {
 		} else {
 			std::cerr << "Unknown error" << std::endl;
 		}
+		return false;
 	}
 
-	yy_delete_buffer(buffer);
+	return true;
+}
 
-	// std::cout << "Done parsing. Initializing LLVM..." << std::endl;
+int main(const int arg_count, const char * const * const args) {
+
+	auto command_line = read_settings(arg_count, args);
+
+	const auto & filename = command_line->file_to_read;
+
+	auto content = read_file(filename);
+
+	if (content.empty()) {
+		std::cerr << "File is empty" << std::endl;
+		return -1;
+	}
+
+	auto success = parse_file(content);
+
+	if (not success) {
+		std::cerr << "Failed to parse " << filename << std::endl;
+		return -1;
+	}
 
 	context_module context{filename};
 
 	assert(module != nullptr);
 
-	// std::cout << "Generating code..." << std::endl;
 	module->codegen(context);
 
 	context.dump();

@@ -2,21 +2,28 @@
 #define _NODE_HPP
 
 #include "context_module.hpp"
+#include "location.hpp"
 
 #include <llvm/IR/Value.h>
 
 // Classes that do not need Node
+
 class Typed_Var final {
-
-	std::string type_;
-	std::string name_;
-
    public:
 	Typed_Var(std::string && name, std::string && type)
 		: type_{std::move(type)}, name_{std::move(name)} {}
 
 	[[nodiscard]] const auto & name() const { return name_; }
 	[[nodiscard]] const auto & type() const { return type_; }
+
+	void set_location(const Location & loc_new) { loc = loc_new; }
+
+	[[nodiscard]] const auto & location() const noexcept { return loc; }
+
+   private:
+	std::string type_;
+	std::string name_;
+	Location	loc{};
 };
 
 class Func_Header final {
@@ -33,12 +40,17 @@ class Func_Header final {
 	}
 	[[nodiscard]] const std::string & name() const { return name_; }
 
+	void set_location(const Location & loc_new) { loc = loc_new; }
+
+	[[nodiscard]] const auto & location() const noexcept { return loc; }
+
    private:
 	std::vector<llvm::Type *> param_types(context_module & context);
 
 	std::string			   name_;
 	std::vector<Typed_Var> params;
 	std::string			   ret_type{};
+	Location			   loc{};
 };
 
 // Basic Node
@@ -55,6 +67,13 @@ class Node {
 	virtual ~Node() = default;
 
 	virtual llvm::Value * codegen(context_module & context) = 0;
+
+	void set_location(const Location & loc_new) { loc = loc_new; }
+
+	[[nodiscard]] const auto & location() const noexcept { return loc; }
+
+   private:
+	Location loc{};
 };
 
 // Base classes

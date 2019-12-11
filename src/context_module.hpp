@@ -1,35 +1,19 @@
 #ifndef _CONTEXT_MODULE_HPP
 #define _CONTEXT_MODULE_HPP
 
+#include "location.hpp"
+
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
-#include "llvm/IR/ValueSymbolTable.h"
-#include "llvm/IR/Verifier.h"
-#include "llvm/Support/Debug.h"
 
-#include <algorithm>
-#include <iostream>
+#include <map>
 #include <utility>
+#include <vector>
 
-inline auto * find_local_value(llvm::Function *	func,
-							   const std::string & name) {
-	const auto & table = *(func->getValueSymbolTable());
-	const auto   iter  = std::find_if(
-		   table.begin(), table.end(),
-		   [&name](const auto & entry) { return name == entry.getKey(); });
+llvm::Value * find_local_value(llvm::Function * func, const std::string & name);
 
-	if (iter != table.end()) { return iter->getValue(); }
-	return table.lookup(name);
-}
-
-inline void print_symbol_table(llvm::ValueSymbolTable * table) {
-	for (const auto & entry : *table) {
-		std::cout << entry.getKey().str() << std::endl;
-	}
-}
-
-class context_module {
+class context_module final {
 
 	llvm::LLVMContext context_{};
 	llvm::Module	  module_;
@@ -39,10 +23,11 @@ class context_module {
 		std::pair<llvm::Function *, std::map<std::string, llvm::Value *>>>
 		currently_alive_values{};
 
+	std::map<std::string, llvm::Type *> valid_types;
+
    public:
 	context_module() = delete;
-	explicit context_module(const std::string & name)
-		: module_{name, context_}, builder_{context_} {}
+	explicit context_module(const std::string & name);
 
 	context_module(const context_module &) = delete;
 	context_module & operator=(const context_module &) = delete;
@@ -56,11 +41,9 @@ class context_module {
 	auto & module() { return module_; }
 	auto & builder() { return builder_; }
 
-	void dump() const { module_.print(llvm::dbgs(), nullptr); }
+	void dump() const;
 
-	auto * find_first_class_value(const std::string & name) const {
-		return module_.getValueSymbolTable().lookup(name);
-	}
+	llvm::Value * find_first_class_value(const std::string & name) const;
 
 	auto * find_value_in_current_scope(const std::string & name) {
 		for (auto iter = currently_alive_values.rbegin();
@@ -75,8 +58,9 @@ class context_module {
 		return find_first_class_value(name);
 	}
 
-	void verify_module() const { llvm::verifyModule(module_, &llvm::dbgs()); }
-	void printError(const std::string & name) { context_.emitError(name); }
+	void verify_module() const;
+
+	void printError(const std::string & name, const Location * loc = nullptr);
 
 	void add_value_to_table(const std::string & name, llvm::Value * val) {
 		currently_alive_values.back().second.emplace(name, val);
@@ -97,6 +81,14 @@ class context_module {
 	}
 
 	void remove_current_scope() { currently_alive_values.pop_back(); }
+
+	llvm::Type * find_type(const std::string & name, const Location * loc) {
+
+		const auto iter = valid_types.find(name);
+		if (iter != valid_types.end()) { return iter->second; }
+		printError(name + " is an unknown type", loc);
+		return nullptr;
+	}
 };
 
 #endif
