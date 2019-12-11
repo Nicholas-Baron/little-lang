@@ -1,9 +1,9 @@
 int factorial(int input){
 	if(input <= 2){ return input; }
-	return input * factorial(input - 1);
+	return input * factorial . (input - 1);
 }
 
 int my_val() ret 25;
 
 int main()
-	ret factorial my_val();
+	ret factorial . my_val . ();

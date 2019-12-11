@@ -65,6 +65,7 @@ extern "C" void record_location(){
 
 ","				return token(T_COMMA);
 ";"				return token(T_SEMI);
+"."				return token(T_DOT);
 
 	/* Symbols w/ word alternates */
 

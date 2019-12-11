@@ -54,7 +54,7 @@
 %token <token>	T_EQ T_NE T_LT T_GT T_LE T_GE 								// Comparisons
 %token <token>	T_LPAREN T_RPAREN T_LBRACE T_RBRACE T_LBRACK T_RBRACK		// Paired symbols
 %token <token>	T_PLUS T_MINUS T_DIV T_MULT T_MOD 							// Math symbols
-%token <token>	T_COMMA T_IS T_SEMI									// Misc symbols
+%token <token>	T_COMMA T_IS T_SEMI T_DOT									// Misc symbols
 %token <token>	T_RET T_IF T_ELSE T_LET							// Reserved words
 %token <token>	T_AND T_OR T_NOT 											// Boolean operators
 %token <token>	T_ASSIGN T_PROC	
@@ -174,10 +174,10 @@ expr  : T_IDENT { $$ = new UserValue(std::move(*$1)); delete $1; $$->set_locatio
 	  | expr T_OR expr { $$ = new BinaryExpression($1, $2, $3); $$->set_location(make_loc(@$));  }
 	  ;
 
-func_call : T_IDENT arg_group { $$ = new FunctionCall(std::move(*$1), std::move(*$2)); delete $1; delete $2; $$->set_location(make_loc(@$));  }
+func_call : T_IDENT T_DOT arg_group { $$ = new FunctionCall(std::move(*$1), std::move(*$3)); delete $1; delete $3; $$->set_location(make_loc(@$));  }
 		  | T_LPAREN T_IDENT arg_list T_RPAREN { $$ = new FunctionCall(std::move(*$2), std::move(*$3)); delete $2; delete $3; $$->set_location(make_loc(@$));  }
-		  | T_IDENT func_call { $$ = new FunctionCall{std::move(*$1), {$2}}; delete $1; $$->set_location(make_loc(@$));  }
-		  | T_IDENT literal { $$ = new FunctionCall{std::move(*$1), {new UserValue(std::move(*$2))}}; delete $1; delete $2; $$->set_location(make_loc(@$)); }
+		  | T_IDENT T_DOT func_call { $$ = new FunctionCall{std::move(*$1), {$3}}; delete $1; $$->set_location(make_loc(@$));  }
+		  /* | T_IDENT literal { $$ = new FunctionCall{std::move(*$1), {new UserValue(std::move(*$2))}}; delete $1; delete $2; $$->set_location(make_loc(@$)); } */
 		  ;
 
 arg_group : T_LPAREN arg_list T_RPAREN { $$ = $2; }
