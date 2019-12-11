@@ -62,8 +62,7 @@
 
 // Types for non-terminals
 %nterm <string> literal type ret_type
-%type <expression> expr logic_or_expr logic_and_expr primary_expr equality_expr
-%type <expression> unary_expr multiply_expr relation_expr additive_expr 
+%type <expression> expr 
 %type <expression> initialization
 %type <stmt> statement else_block conditional action
 %type <top_lvl> top_lvl_item function
@@ -76,6 +75,13 @@
 %type <args> arg_list arg_group
 
 %start program
+
+%left T_OR
+%left T_AND
+%nonassoc T_LE T_LT T_GE T_GT T_EQ T_NE
+%left T_PLUS T_MINUS
+%left T_MOD T_DIV T_MULT
+%precedence T_NOT
 
 // {$$ = $1;} is already provided.
 
@@ -148,48 +154,25 @@ initialization : T_ASSIGN expr { $$ = $2;  $$->set_location(make_loc(@$)); }
 
 literal : T_INT | T_FLOAT | T_CHAR | T_BOOL | T_STRING ; 
 
-expr : logic_or_expr ;
-
-primary_expr : T_IDENT { $$ = new UserValue(std::move(*$1)); delete $1; $$->set_location(make_loc(@$));  }
-			 | func_call { $$ = dynamic_cast<Expression*>($1); $$->set_location(make_loc(@$));  }
-			 | literal { $$ = new UserValue(std::move(*$1)); delete $1; $$->set_location(make_loc(@$));  }
-			 | T_LPAREN expr T_RPAREN { $$ = $2; $$->set_location(make_loc(@$));  }
-			 ;
-
-literal : T_INT | T_FLOAT | T_CHAR | T_BOOL | T_STRING ; 
-
-unary_expr : primary_expr | T_NOT primary_expr { $$ = new UnaryExpression($1, $2); $$->set_location(make_loc(@$));  } ; 
-
-multiply_expr : unary_expr 
-			  | multiply_expr T_MULT unary_expr { $$ = new BinaryExpression($1, $2, $3); $$->set_location(make_loc(@$));  }
-			  | multiply_expr T_MOD unary_expr { $$ = new BinaryExpression($1, $2, $3); $$->set_location(make_loc(@$));  }
-			  | multiply_expr T_DIV unary_expr { $$ = new BinaryExpression($1, $2, $3); $$->set_location(make_loc(@$));  }
-			  ;
-
-additive_expr : multiply_expr
-			  | additive_expr T_PLUS multiply_expr { $$ = new BinaryExpression($1, $2, $3); $$->set_location(make_loc(@$));  }
-			  | additive_expr T_MINUS multiply_expr { $$ = new BinaryExpression($1, $2, $3); $$->set_location(make_loc(@$));  }
-			  ;
-
-relation_expr : additive_expr
-			  | additive_expr T_LE additive_expr { $$ = new BinaryExpression($1, $2, $3); $$->set_location(make_loc(@$));  }
-			  | additive_expr T_LT additive_expr { $$ = new BinaryExpression($1, $2, $3); $$->set_location(make_loc(@$));  }
-			  | additive_expr T_GE additive_expr { $$ = new BinaryExpression($1, $2, $3); $$->set_location(make_loc(@$));  }
-			  | additive_expr T_GT additive_expr { $$ = new BinaryExpression($1, $2, $3); $$->set_location(make_loc(@$));  }
-			  ;
-
-equality_expr : relation_expr
-			  | relation_expr T_EQ relation_expr  { $$ = new BinaryExpression($1, $2, $3); $$->set_location(make_loc(@$));  }
-			  | relation_expr T_NE relation_expr { $$ = new BinaryExpression($1, $2, $3); $$->set_location(make_loc(@$));  }
-			  ;
-
-logic_and_expr : equality_expr
-			   | logic_and_expr T_AND equality_expr { $$ = new BinaryExpression($1, $2, $3); $$->set_location(make_loc(@$));  }
-			   ;
-
-logic_or_expr : logic_and_expr
-			  | logic_or_expr T_OR logic_and_expr { $$ = new BinaryExpression($1, $2, $3); $$->set_location(make_loc(@$));  }
-			  ;
+expr  : T_IDENT { $$ = new UserValue(std::move(*$1)); delete $1; $$->set_location(make_loc(@$));  }
+      | func_call { $$ = dynamic_cast<Expression*>($1); $$->set_location(make_loc(@$));  }
+      | literal { $$ = new UserValue(std::move(*$1)); delete $1; $$->set_location(make_loc(@$));  }
+      | T_LPAREN expr T_RPAREN { $$ = $2; $$->set_location(make_loc(@$));  }                        
+	  | T_NOT expr { $$ = new UnaryExpression($1, $2); $$->set_location(make_loc(@$));  } 
+	  | expr T_MULT expr { $$ = new BinaryExpression($1, $2, $3); $$->set_location(make_loc(@$));  }
+	  | expr T_MOD  expr { $$ = new BinaryExpression($1, $2, $3); $$->set_location(make_loc(@$));  }
+	  | expr T_DIV  expr { $$ = new BinaryExpression($1, $2, $3); $$->set_location(make_loc(@$));  }
+	  | expr T_PLUS  expr { $$ = new BinaryExpression($1, $2, $3); $$->set_location(make_loc(@$));  }
+	  | expr T_MINUS expr { $$ = new BinaryExpression($1, $2, $3); $$->set_location(make_loc(@$));  }
+	  | expr T_LE expr { $$ = new BinaryExpression($1, $2, $3); $$->set_location(make_loc(@$));  }
+	  | expr T_LT expr { $$ = new BinaryExpression($1, $2, $3); $$->set_location(make_loc(@$));  }
+	  | expr T_GE expr { $$ = new BinaryExpression($1, $2, $3); $$->set_location(make_loc(@$));  }
+	  | expr T_GT expr { $$ = new BinaryExpression($1, $2, $3); $$->set_location(make_loc(@$));  }
+	  | expr T_EQ expr { $$ = new BinaryExpression($1, $2, $3); $$->set_location(make_loc(@$));  }
+	  | expr T_NE expr { $$ = new BinaryExpression($1, $2, $3); $$->set_location(make_loc(@$));  }
+	  | expr T_AND expr { $$ = new BinaryExpression($1, $2, $3); $$->set_location(make_loc(@$));  }
+	  | expr T_OR expr { $$ = new BinaryExpression($1, $2, $3); $$->set_location(make_loc(@$));  }
+	  ;
 
 func_call : T_IDENT arg_group { $$ = new FunctionCall(std::move(*$1), std::move(*$2)); delete $1; delete $2; $$->set_location(make_loc(@$));  }
 		  | T_LPAREN T_IDENT arg_list T_RPAREN { $$ = new FunctionCall(std::move(*$2), std::move(*$3)); delete $2; delete $3; $$->set_location(make_loc(@$));  }
