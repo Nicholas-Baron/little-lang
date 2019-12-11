@@ -13,8 +13,6 @@
 	Top_Level_Seq * module;
 %}
 
-%glr-parser
-
 %union{
 	int token;
 	std::string * string;
