@@ -15,7 +15,6 @@
 	std::unique_ptr<Top_Level_Seq> module;
 %}
 
-%glr-parser
 %locations
 
 %code provides {
@@ -146,6 +145,8 @@ else_block : T_ELSE statement_block { $$ = $2; $$->set_location(make_loc(@$));  
 initialization : T_ASSIGN expr { $$ = $2;  $$->set_location(make_loc(@$)); } 
 			   | T_LBRACE expr T_RBRACE { $$ = $2; $$->set_location(make_loc(@$));  }
 			   ;
+
+literal : T_INT | T_FLOAT | T_CHAR | T_BOOL | T_STRING ; 
 
 expr : logic_or_expr ;
 
