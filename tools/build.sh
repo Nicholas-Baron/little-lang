@@ -1,12 +1,12 @@
-#!/bin/bash
+#!/bin/sh
 
 tools/format.sh
 
 OUTPUT_DIR="build"
 TEMP_DIR="temp"
 
-if [ -d $OUTPUT_DIR ]; then rm -Rf $OUTPUT_DIR; fi
-if [ -d $TEMP_DIR ]; then rm -Rf $TEMP_DIR; fi
+[ -d $OUTPUT_DIR ] && rm -Rf $OUTPUT_DIR
+[ -d $TEMP_DIR ] && rm -Rf $TEMP_DIR
 
 mkdir -p $OUTPUT_DIR $TEMP_DIR logs
 cd $OUTPUT_DIR || exit
