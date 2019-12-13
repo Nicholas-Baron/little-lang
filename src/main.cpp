@@ -38,12 +38,15 @@ bool parse_file(const std::string & content) {
 	if (parse_status != 0) {
 		std::cerr << "Parsing error: ";
 		if (parse_status == 1) {
-			std::cerr << "Syntax error found!" << std::endl;
+			std::cerr << "Syntax error found!";
 		} else if (parse_status == 2) {
-			std::cerr << "Exhausted memory!" << std::endl;
+			std::cerr << "Exhausted memory!";
 		} else {
-			std::cerr << "Unknown error" << std::endl;
+			std::cerr << "Unknown error";
 		}
+
+		std::cerr << std::endl;
+
 		return false;
 	}
 
@@ -52,27 +55,27 @@ bool parse_file(const std::string & content) {
 
 int main(const int arg_count, const char * const * const args) {
 
-	auto command_line = read_settings(arg_count, args);
+	const auto command_line = read_settings(arg_count, args);
 
 	const auto & filename = command_line->file_to_read;
 
-	auto content = read_file(filename);
+	const auto content = read_file(filename);
 
 	if (content.empty()) {
 		std::cerr << "File is empty" << std::endl;
 		return -1;
 	}
 
-	auto success = parse_file(content);
+	const auto success = parse_file(content);
 
 	if (not success) {
 		std::cerr << "Failed to parse " << filename << std::endl;
 		return -1;
 	}
 
-	context_module context{filename};
-
 	assert(module != nullptr);
+
+	context_module context{filename};
 
 	module->codegen(context);
 
