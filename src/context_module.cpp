@@ -2,10 +2,11 @@
 
 #include "llvm/IR/ValueSymbolTable.h"
 #include "llvm/IR/Verifier.h"
-#include "llvm/Support/Debug.h"
+#include "llvm/Support/raw_ostream.h"
 
-#include <algorithm>
-#include <sstream>
+#include <algorithm>  // find_if
+#include <iostream>   // cout
+#include <sstream>	// stringstream
 
 using llvm::Value, llvm::Type;
 
@@ -30,7 +31,15 @@ context_module::context_module(const std::string & name)
 
 {}
 
-void context_module::dump() const { module_.print(llvm::dbgs(), nullptr); }
+void context_module::dump() const {
+	std::string to_print;
+	{
+		llvm::raw_string_ostream stream(to_print);
+		module_.print(stream, nullptr);
+	}
+
+	std::cout << to_print << std::endl;
+}
 
 Value * context_module::find_first_class_value(const std::string & name) const {
 	return module_.getValueSymbolTable().lookup(name);
