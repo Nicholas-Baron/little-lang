@@ -1,10 +1,12 @@
-#!/bin/bash
+#!/bin/sh
 
-tools/build.sh || exit
+COMPILER="build/littlec"
+
+[ -f $COMPILER ] || tools/build.sh || exit
 
 for file in ./test/*; do
 	echo "Testing $file..."
-	/usr/bin/time -v build/littlec "$file"
+	/usr/bin/time -v $COMPILER "$file"
 	printf "\n"
 done
 
