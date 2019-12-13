@@ -3,5 +3,4 @@ fib(pos is int) int
 	else if pos > 1 and pos < 5 { ret pos - 1; }
 	else { return (fib pos - 2) + (fib pos - 1); }
 
-main() int
-	ret (fib 5);
+main() int = (fib 5)

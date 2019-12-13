@@ -103,6 +103,9 @@ top_lvl_item : function ;
 function : func_header statement { 
 		 	$$ = new Function{std::move(*$1), $2}; delete $1; $$->set_location(make_loc(@$)); 
 		 }
+		 | func_header T_ASSIGN expr {
+			$$ = new Function{std::move(*$1), new Return_Statement{$3}}; delete $1; $$->set_location(make_loc(@$));
+		 }
 		 ;
 
 func_header : ret_type func_sig { $$ = $2; $$->set_ret_type(std::move(*$1)); delete $1; $$->set_location(make_loc(@$)); }
