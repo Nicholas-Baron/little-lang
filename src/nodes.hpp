@@ -195,6 +195,7 @@ class Let_Statement final : public Statement {
 class Statement_Seq final : public Statement {
    public:
 	Statement_Seq() = default;
+	Statement_Seq(Statement * stmt) : Statement_Seq() { append(stmt); }
 
 	Statement_Seq(const Statement_Seq &) = delete;
 	Statement_Seq & operator=(const Statement_Seq &) = delete;
