@@ -46,11 +46,11 @@ bool parse_file(const std::string & content) {
 		}
 
 		std::cerr << std::endl;
-
-		return false;
 	}
 
-	return true;
+	/* According to bison, a yyparse() result of 0 is successful.
+	 * (ie: read all input) */
+	return parse_status == 0;
 }
 
 int main(const int arg_count, const char * const * const args) {
