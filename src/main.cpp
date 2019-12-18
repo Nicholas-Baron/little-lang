@@ -62,7 +62,7 @@ int main(const int arg_count, const char * const * const args) {
 	const auto content = read_file(filename);
 
 	if (content.empty()) {
-		std::cerr << "File is empty" << std::endl;
+		std::cerr << "Input file is empty -> nothing to parse" << std::endl;
 		return -1;
 	}
 
