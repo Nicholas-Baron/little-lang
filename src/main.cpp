@@ -66,9 +66,8 @@ int main(const int arg_count, const char * const * const args) {
 		return -1;
 	}
 
-	const auto success = parse_file(content);
-
-	if (not success) {
+	// If the file could not be parsed, leave the program immediately.
+	if (not parse_file(content)) {
 		std::cerr << "Failed to parse " << filename << std::endl;
 		return -1;
 	}
