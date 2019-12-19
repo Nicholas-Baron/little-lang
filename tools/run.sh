@@ -4,6 +4,5 @@
 
 [ -f "build/littlec" ] || tools/build.sh || exit
 
-LLVM_IR=$(build/littlec $1)
-echo "$LLVM_IR" | llc-8 - --x86-asm-syntax=intel -O=2 -filetype=obj -o "$1.o"
+build/littlec $1 | llc-8 - --x86-asm-syntax=intel -O=2 -filetype=obj -o "$1.o"
 
