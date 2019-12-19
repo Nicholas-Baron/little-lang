@@ -51,13 +51,13 @@
 
 // Token definitions
 
-%token <token>	T_EQ T_NE T_LT T_GT T_LE T_GE 								// Comparisons
-%token <token>	T_LPAREN T_RPAREN T_LBRACE T_RBRACE T_LBRACK T_RBRACK		// Paired symbols
-%token <token>	T_PLUS T_MINUS T_DIV T_MULT T_MOD 							// Math symbols
-%token <token>	T_COMMA T_IS T_SEMI T_DOT									// Misc symbols
-%token <token>	T_RET T_IF T_ELSE T_LET							// Reserved words
-%token <token>	T_AND T_OR T_NOT 											// Boolean operators
-%token <token>	T_ASSIGN T_PROC	
+%token <token>	T_EQ "==" T_NE "!=" T_LT "<" T_GT ">" T_LE "<=" T_GE  ">="				// Comparisons
+%token <token>	T_LPAREN "(" T_RPAREN ")" T_LBRACE "{" T_RBRACE "}" T_LBRACK T_RBRACK	// Paired symbols
+%token <token>	T_PLUS "+" T_MINUS "-" T_DIV "/" T_MULT "*" T_MOD "%"					// Math symbols
+%token <token>	T_COMMA "," T_IS "is" T_SEMI ";" T_DOT "."								// Misc symbols
+%token <token>	T_RET "return" T_IF "if" T_ELSE "else" T_LET "let"						// Reserved words
+%token <token>	T_AND "and" T_OR "or" T_NOT "not" 										// Boolean operators
+%token <token>	T_ASSIGN "=" T_PROC	"proc"
 %token <string> T_IDENT T_INT T_CHAR T_BOOL T_STRING T_FLOAT T_PRIM_TYPE 	// Regexes
 
 // Types for non-terminals
