@@ -10,16 +10,19 @@ project(
 	LANGUAGES CXX
 	)
 
-message(STATUS "Source dir is ${CMAKE_SOURCE_DIR}")
-
+# Flex and Bison are needed
 find_package(FLEX REQUIRED)
 find_package(BISON REQUIRED)
 
+# Format the LLVM flags
 execute_process(COMMAND llvm-config-9 --cxxflags --ldflags --libs core native OUTPUT_VARIABLE LLVM_CONFIG)
 string(REGEX REPLACE "[\n\t ]+" " " LLVM_CONFIG "${LLVM_CONFIG}")
 
 separate_arguments(LLVM_CONFIG)
+
+# Status messages
 message(STATUS "LLVM options: ${LLVM_CONFIG}")
+message(STATUS "Source dir: ${CMAKE_SOURCE_DIR}")
 
 set(temp_dir ${CMAKE_SOURCE_DIR}/temp)
 
