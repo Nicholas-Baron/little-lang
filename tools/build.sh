@@ -10,11 +10,10 @@ TEMP_DIR="temp"
 
 mkdir -p $OUTPUT_DIR $TEMP_DIR logs
 cd $OUTPUT_DIR || exit
-
 clear
-pwd
 
 (
-	cmake -G Ninja ..
-	ninja
+	pwd
+	cmake -G "Unix Makefiles" ..
+	make -j$(nproc)
 ) 2>&1 | tee ../logs/build.txt
