@@ -15,7 +15,7 @@ message(STATUS "Source dir is ${CMAKE_SOURCE_DIR}")
 find_package(FLEX REQUIRED)
 find_package(BISON REQUIRED)
 
-execute_process(COMMAND llvm-config-8 --cxxflags --ldflags --libs core native OUTPUT_VARIABLE LLVM_CONFIG)
+execute_process(COMMAND llvm-config-9 --cxxflags --ldflags --libs core native OUTPUT_VARIABLE LLVM_CONFIG)
 string(REGEX REPLACE "[\n\t ]+" " " LLVM_CONFIG "${LLVM_CONFIG}")
 
 separate_arguments(LLVM_CONFIG)
