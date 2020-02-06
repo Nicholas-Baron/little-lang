@@ -17,23 +17,24 @@ find_package(BISON REQUIRED)
 # Format the LLVM flags
 execute_process(COMMAND llvm-config-9 --cxxflags --ldflags --libs core native OUTPUT_VARIABLE LLVM_CONFIG)
 string(REGEX REPLACE "[\n\t ]+" " " LLVM_CONFIG "${LLVM_CONFIG}")
-
 separate_arguments(LLVM_CONFIG)
 
 # Status messages
 message(STATUS "LLVM options: ${LLVM_CONFIG}")
 message(STATUS "Source dir: ${CMAKE_SOURCE_DIR}")
 
+# the directory for temporary files
 set(temp_dir ${CMAKE_SOURCE_DIR}/temp)
-
+# the header from Bison
 set(parser_header ${temp_dir}/parser.hpp)
-
+# the bison spec file
 set(bison_input ${CMAKE_SOURCE_DIR}/src/parser.y)
+# the main output of bison
 set(bison_output ${temp_dir}/parser.cpp)
 
 add_custom_command(
 	OUTPUT ${bison_output} ${parser_header}
-	COMMAND ${BISON_EXECUTABLE} ${bison_input} --defines=${parser_header} --report=state -t --graph -Wall --output=${bison_output}
+	COMMAND ${BISON_EXECUTABLE} ${bison_input} --defines=${parser_header} --report=state --graph --debug -Wall --output=${bison_output}
 	COMMENT "Generating parser..."
 	USES_TERMINAL
 	)
