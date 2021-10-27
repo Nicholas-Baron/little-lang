@@ -25,7 +25,7 @@ message(STATUS "LLVM options: ${LLVM_CONFIG}")
 message(STATUS "Source dir: ${CMAKE_SOURCE_DIR}")
 
 # the directory for temporary files
-set(temp_dir ${CMAKE_SOURCE_DIR}/temp)
+set(temp_dir ${CMAKE_BINARY_DIR}/temp)
 # the header from Bison
 set(parser_header ${temp_dir}/parser.hpp)
 # the bison spec file
