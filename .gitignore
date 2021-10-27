@@ -1,3 +1,5 @@
 build/
 temp/
 logs/
+.cache/
+compile_commands.json

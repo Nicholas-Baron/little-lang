@@ -1,9 +1,10 @@
 cmake_minimum_required(VERSION 3.1)
 
 set(CMAKE_CXX_COMPILER clang++)
+set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
+set(CMAKE_EXPORT_COMPILE_COMMANDS YES)
 
 project(
 	Little_Compiler
@@ -65,3 +66,9 @@ target_compile_options(littlec PRIVATE -Wall -Wextra -Og ${LLVM_CONFIG} -Wno-unu
 target_link_libraries(littlec ${LLVM_CONFIG})
 target_include_directories(littlec PRIVATE ${CMAKE_SOURCE_DIR}/src ${temp_dir} ${CMAKE_SOURCE_DIR}/external)
 
+add_custom_target(
+    copy-compile-commands ALL
+    ${CMAKE_COMMAND} -E copy_if_different
+        ${CMAKE_BINARY_DIR}/compile_commands.json
+        ${CMAKE_CURRENT_LIST_DIR}
+    )
