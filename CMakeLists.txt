@@ -60,9 +60,25 @@ set(proj_files
 	${CMAKE_SOURCE_DIR}/src/settings.cpp
 	)
 
+add_compile_options(-Wall)
+add_compile_options(-Wextra)
+add_compile_options(-Werror)
+add_compile_options(-Wcast-qual)
+add_compile_options(-Wdeprecated-copy)
+add_compile_options(-Wformat=2)
+add_compile_options(-Wimplicit-fallthrough)
+add_compile_options(-Wmisleading-indentation)
+add_compile_options(-Wmissing-declarations)
+add_compile_options(-Wnon-virtual-dtor)
+add_compile_options(-Wundef)
+add_compile_options(-Wunused)
+add_compile_options(-Wwrite-strings)
+
 add_executable(littlec ${bison_output} ${flex_output} ${proj_files})
 
-target_compile_options(littlec PRIVATE -Wall -Wextra -Og ${LLVM_CONFIG} -Wno-unused-command-line-argument -Wno-unused-parameter)
+target_compile_options(littlec
+	PRIVATE -Og ${LLVM_CONFIG} -Wno-unused-command-line-argument -Wno-unused-parameter
+	)
 target_link_libraries(littlec ${LLVM_CONFIG})
 target_include_directories(littlec PRIVATE ${CMAKE_SOURCE_DIR}/src ${temp_dir} ${CMAKE_SOURCE_DIR}/external)
 
