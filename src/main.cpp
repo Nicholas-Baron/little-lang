@@ -1,4 +1,5 @@
 #include "context_module.hpp"
+#include "emit_asm.hpp"
 #include "nodes.hpp"
 #include "parser.hpp"
 #include "settings.hpp"
@@ -73,9 +74,14 @@ int main(const int arg_count, const char * const * const args) {
 
     assert(module != nullptr);
 
+    auto target_triple = init_llvm_targets();
+
     context_module context{filename};
+    context.module().setTargetTriple(target_triple);
 
     module->codegen(context);
 
     context.dump();
+
+    emit_asm(std::move(context), std::move(target_triple));
 }
