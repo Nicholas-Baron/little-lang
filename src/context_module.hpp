@@ -23,7 +23,8 @@ class context_module final {
 		std::pair<llvm::Function *, std::map<std::string, llvm::Value *>>>
 		currently_alive_values{};
 
-	std::map<std::string, llvm::Type *> valid_types;
+	std::map<std::string, llvm::Type *>		valid_types;
+	std::map<std::string, llvm::Function *> functions;
 
    public:
 	context_module() = delete;
@@ -68,6 +69,16 @@ class context_module final {
 
 	auto * get_current_function() const {
 		return currently_alive_values.back().first;
+	}
+
+	void register_function(std::string name, llvm::Function * func) {
+		functions.emplace(std::move(name), func);
+	}
+
+	llvm::Function * find_function(const std::string & name) {
+		auto iter = functions.find(name);
+		assert(iter != functions.end());
+		return iter->second;
 	}
 
 	void add_new_scope(llvm::Function * parent) {

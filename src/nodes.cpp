@@ -212,7 +212,7 @@ Value * BinaryExpression::codegen(context_module & context) {
 }
 
 Value * FunctionCall::codegen(context_module & context) {
-	auto * callee = context.find_first_class_value(name_);
+	auto * callee = context.find_function(name_);
 
 	std::vector<Value *> arg_values{};
 	arg_values.reserve(args_.size());
@@ -304,6 +304,7 @@ Value * Function::codegen(context_module & context) {
 		= llvm::Function::Create(func_type, llvm::Function::ExternalLinkage,
 								 head_.name(), &context.module());
 
+	context.register_function(head_.name(), func);
 	context.add_new_scope(func);
 
 	{
