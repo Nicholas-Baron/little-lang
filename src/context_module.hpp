@@ -15,7 +15,7 @@ llvm::Value * find_local_value(llvm::Function * func, const std::string & name);
 class context_module final {
 
     llvm::LLVMContext context_{};
-    llvm::Module module_;
+    std::unique_ptr<llvm::Module> module_;
     llvm::IRBuilder<> builder_;
 
     std::vector<std::pair<llvm::Function *, std::map<std::string, llvm::Value *>>>
@@ -37,8 +37,13 @@ class context_module final {
     ~context_module() noexcept = default;
 
     auto & context() { return context_; }
-    auto & module() { return module_; }
+    llvm::Module & module() {
+        assert(module_ != nullptr);
+        return *module_;
+    }
     auto & builder() { return builder_; }
+
+    std::unique_ptr<llvm::Module> take_module() && { return std::move(module_); }
 
     void dump() const;
 

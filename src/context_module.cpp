@@ -20,7 +20,7 @@ Value * find_local_value(llvm::Function * func, const std::string & name) {
 }
 
 context_module::context_module(const std::string & name)
-    : module_{name, context_}
+    : module_{std::make_unique<llvm::Module>(name, context_)}
     , builder_{context_}
     , valid_types{{"int", Type::getInt32Ty(context_)},
                   {"float", Type::getFloatTy(context_)},
@@ -34,17 +34,17 @@ void context_module::dump() const {
     std::string to_print;
     {
         llvm::raw_string_ostream stream(to_print);
-        module_.print(stream, nullptr);
+        module_->print(stream, nullptr);
     }
 
     std::cout << to_print << std::endl;
 }
 
 Value * context_module::find_first_class_value(const std::string & name) const {
-    return module_.getValueSymbolTable().lookup(name);
+    return module_->getValueSymbolTable().lookup(name);
 }
 
-void context_module::verify_module() const { llvm::verifyModule(module_, &llvm::dbgs()); }
+void context_module::verify_module() const { llvm::verifyModule(*module_, &llvm::dbgs()); }
 void context_module::printError(const std::string & name, const Location * loc) {
 
     if (loc == nullptr) {
