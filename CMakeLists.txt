@@ -56,6 +56,7 @@ set(proj_files
 	${CMAKE_SOURCE_DIR}/src/main.cpp
 	${CMAKE_SOURCE_DIR}/src/context_module.cpp
 	${CMAKE_SOURCE_DIR}/src/emit_asm.cpp
+	${CMAKE_SOURCE_DIR}/src/jit.cpp
 	${CMAKE_SOURCE_DIR}/src/location.cpp
 	${CMAKE_SOURCE_DIR}/src/nodes.cpp
 	${CMAKE_SOURCE_DIR}/src/settings.cpp

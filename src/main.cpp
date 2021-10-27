@@ -1,5 +1,6 @@
 #include "context_module.hpp"
 #include "emit_asm.hpp"
+#include "jit.hpp"
 #include "nodes.hpp"
 #include "parser.hpp"
 #include "settings.hpp"
@@ -83,5 +84,7 @@ int main(const int arg_count, const char * const * const args) {
 
     context.dump();
 
-    emit_asm(std::move(context), std::move(target_triple));
+    auto module_result = run_module(std::move(context));
+    std::cout << "Module returned " << module_result << std::endl;
+    // emit_asm(std::move(context), std::move(target_triple));
 }
