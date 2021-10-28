@@ -289,7 +289,6 @@ Value * Function::codegen(context_module & context) {
     auto * func = llvm::Function::Create(func_type, llvm::Function::ExternalLinkage, head_.name(),
                                          &context.module());
 
-    context.register_function(head_.name(), func);
     context.add_new_scope(func);
 
     {
