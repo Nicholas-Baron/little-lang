@@ -65,6 +65,7 @@ set(proj_files
 add_compile_options(-Wall)
 add_compile_options(-Wextra)
 add_compile_options(-Werror)
+add_compile_options(-Wpedantic)
 add_compile_options(-Wcast-qual)
 add_compile_options(-Wdeprecated-copy)
 add_compile_options(-Wformat=2)
