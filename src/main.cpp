@@ -7,34 +7,16 @@
 #include "tokens.hpp"
 
 #include <cassert>
+#include <cstdio>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 
 extern std::unique_ptr<Top_Level_Seq> module;
 
-std::string read_file(const std::string & name) {
-
-    std::stringstream content;
-
-    {
-        std::ifstream file{name};
-        std::string line;
-        while (getline(file, line)) { content << line << '\n'; }
-    }
-
-    return content.str();
-}
-
-bool parse_file(const std::string & content) {
-
-    auto buffer = yy_scan_string(content.c_str());
-
-    yy_switch_to_buffer(buffer);
+static bool parse_file() {
 
     const auto parse_status = yyparse();
-
-    yy_delete_buffer(buffer);
 
     if (parse_status != 0) {
         std::cerr << "Parsing error: ";
@@ -60,15 +42,15 @@ int main(const int arg_count, const char * const * const args) {
 
     const auto & filename = command_line->file_to_read;
 
-    const auto content = read_file(filename);
+    yyin = fopen(filename.c_str(), "r");
 
-    if (content.empty()) {
-        std::cerr << "Input file is empty -> nothing to parse" << std::endl;
+    if (yyin == nullptr) {
+        std::cerr << filename << " cannot be opened." << std::endl;
         return -1;
     }
 
     // If the file could not be parsed, leave the program immediately.
-    if (not parse_file(content)) {
+    if (not parse_file()) {
         std::cerr << "Failed to parse " << filename << std::endl;
         return -1;
     }
