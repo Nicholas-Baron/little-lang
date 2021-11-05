@@ -7,6 +7,7 @@
 struct Settings {
     std::string file_to_read;
     bool print_version{false};
+    bool simulate;
 };
 
 std::shared_ptr<Settings> read_settings(int arg_count, const char * const * args);
