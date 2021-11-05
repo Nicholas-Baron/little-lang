@@ -7,6 +7,9 @@
 
 [[nodiscard]] std::string init_llvm_targets();
 
-void emit_asm(context_module && context, std::string && target_triple);
+[[nodiscard]] std::string make_output_name(const std::string &);
+
+void emit_asm(context_module && context, std::string && target_triple,
+              std::string && output_filename);
 
 #endif

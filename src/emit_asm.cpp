@@ -24,7 +24,16 @@ std::string init_llvm_targets() {
     return sys::getDefaultTargetTriple();
 }
 
-void emit_asm(context_module && context, std::string && target_triple) {
+[[nodiscard]] std::string make_output_name(const std::string & input) {
+    auto last_dot = input.find_last_of('.');
+    auto last_slash = input.find_last_of('/') + 1;
+    auto base_filename = input.substr(last_slash, last_dot - last_slash);
+    assert(not base_filename.empty());
+    return base_filename + ".o";
+}
+
+void emit_asm(context_module && context, std::string && target_triple,
+              std::string && output_filename) {
 
     std::string error;
     const auto * target = llvm::TargetRegistry::lookupTarget(target_triple, error);
@@ -43,9 +52,7 @@ void emit_asm(context_module && context, std::string && target_triple) {
 
     context.module().setDataLayout(target_machine->createDataLayout());
 
-    const auto * output_filename = "main.o";
     std::error_code ec;
-
     llvm::raw_fd_ostream dest{output_filename, ec, llvm::sys::fs::OF_None};
 
     if (ec) {

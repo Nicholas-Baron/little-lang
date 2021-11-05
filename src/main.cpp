@@ -80,6 +80,6 @@ int main(const int arg_count, const char * const * const args) {
         auto module_result = run_module(std::move(context));
         std::cout << "Module returned " << module_result << std::endl;
     } else {
-        emit_asm(std::move(context), std::move(target_triple));
+        emit_asm(std::move(context), std::move(target_triple), make_output_name(filename));
     }
 }
