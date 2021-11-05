@@ -24,6 +24,8 @@ conan_cmake_run(CONANFILE conanfile.txt
         BUILD missing
 		)
 
+enable_testing()
+
 # Flex and Bison are needed
 find_package(FLEX REQUIRED)
 find_package(BISON REQUIRED)
@@ -56,6 +58,7 @@ add_compile_options(-Wunused)
 add_compile_options(-Wwrite-strings)
 
 add_subdirectory(src)
+add_subdirectory(test)
 
 add_custom_target(
     copy-compile-commands ALL

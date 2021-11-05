@@ -25,21 +25,33 @@ add_custom_command(
 	)
 
 set(proj_files
-	main.cpp
 	context_module.cpp
 	emit_asm.cpp
 	jit.cpp
 	location.cpp
 	nodes.cpp
 	settings.cpp
+	${bison_output}
+	${flex_output}
 	)
 
-add_executable(littlec ${bison_output} ${flex_output} ${proj_files})
-
+# the actual executable
+add_executable(littlec main.cpp ${proj_files})
 target_compile_options(littlec
 	PRIVATE -Og ${LLVM_CONFIG} -Wno-unused-command-line-argument -Wno-unused-parameter
 	)
 target_link_libraries(littlec ${LLVM_CONFIG} CONAN_PKG::lyra)
 target_include_directories(littlec
 	PRIVATE ${CMAKE_SOURCE_DIR}/src ${temp_dir} CONAN_PKG::lyra
+	)
+
+# the library for testing
+add_library(littlec_lib ${proj_files})
+target_compile_options(littlec_lib
+	PUBLIC -Og ${LLVM_CONFIG} -Wno-unused-command-line-argument -Wno-unused-parameter
+	)
+target_link_libraries(littlec_lib ${LLVM_CONFIG} CONAN_PKG::lyra)
+target_include_directories(littlec_lib
+	PUBLIC ${CMAKE_SOURCE_DIR}/src ${temp_dir}
+	PRIVATE CONAN_PKG::lyra
 	)
