@@ -76,7 +76,10 @@ int main(const int arg_count, const char * const * const args) {
 
     context.dump();
 
-    auto module_result = run_module(std::move(context));
-    std::cout << "Module returned " << module_result << std::endl;
-    // emit_asm(std::move(context), std::move(target_triple));
+    if (command_line->simulate) {
+        auto module_result = run_module(std::move(context));
+        std::cout << "Module returned " << module_result << std::endl;
+    } else {
+        emit_asm(std::move(context), std::move(target_triple));
+    }
 }
