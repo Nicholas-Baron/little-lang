@@ -98,6 +98,8 @@ Value * UnaryExpression::codegen(context_module & context) {
     switch (tok) {
     case T_NOT:
         return context.builder().CreateNot(op_value);
+    case T_MINUS:
+        return context.builder().CreateNeg(op_value);
     }
 
     context.printError("Token number " + std::to_string(tok)

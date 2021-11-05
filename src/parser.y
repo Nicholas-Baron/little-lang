@@ -164,6 +164,7 @@ expr  : T_IDENT { $$ = new UserValue(std::move(*$1)); delete $1; set_loc($$, @$)
       | literal { $$ = new UserValue(std::move(*$1)); delete $1; set_loc($$, @$);  }
       | T_LPAREN expr T_RPAREN { $$ = $2; set_loc($$, @$);  }
       | T_NOT expr { $$ = new UnaryExpression($1, $2); set_loc($$, @$);  }
+      | T_MINUS expr { $$ = new UnaryExpression($1, $2); set_loc($$, @$); } %prec T_NOT
       | expr T_MULT expr { $$ = new BinaryExpression($1, $2, $3); set_loc($$, @$);  }
       | expr T_MOD  expr { $$ = new BinaryExpression($1, $2, $3); set_loc($$, @$);  }
       | expr T_DIV  expr { $$ = new BinaryExpression($1, $2, $3); set_loc($$, @$);  }
@@ -179,10 +180,12 @@ expr  : T_IDENT { $$ = new UserValue(std::move(*$1)); delete $1; set_loc($$, @$)
       | expr T_OR expr { $$ = new BinaryExpression($1, $2, $3); set_loc($$, @$);  }
       ;
 
-func_call : T_IDENT T_DOT arg_group { $$ = new FunctionCall(std::move(*$1), std::move(*$3)); delete $1; delete $3; set_loc($$, @$);  }
-          | T_LPAREN T_IDENT arg_list T_RPAREN { $$ = new FunctionCall(std::move(*$2), std::move(*$3)); delete $2; delete $3; set_loc($$, @$);  }
-          | T_IDENT T_DOT func_call { $$ = new FunctionCall{std::move(*$1), {$3}}; delete $1; set_loc($$, @$);  }
-          /* | T_IDENT literal { $$ = new FunctionCall{std::move(*$1), {new UserValue(std::move(*$2))}}; delete $1; delete $2; set_loc($$, @$); } */
+func_call : T_IDENT arg_group {
+            $$ = new FunctionCall(std::move(*$1), std::move(*$2)); delete $1; delete $2; set_loc($$, @$);
+          }
+          | T_IDENT T_DOT func_call {
+            $$ = new FunctionCall{std::move(*$1), {$3}}; delete $1; set_loc($$, @$);
+          }
           ;
 
 arg_group : T_LPAREN arg_list T_RPAREN { $$ = $2; }
