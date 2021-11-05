@@ -39,7 +39,7 @@ add_executable(littlec ${bison_output} ${flex_output} ${proj_files})
 target_compile_options(littlec
 	PRIVATE -Og ${LLVM_CONFIG} -Wno-unused-command-line-argument -Wno-unused-parameter
 	)
-target_link_libraries(littlec ${LLVM_CONFIG} CONAN_PKG::clara)
+target_link_libraries(littlec ${LLVM_CONFIG} CONAN_PKG::lyra)
 target_include_directories(littlec
-	PRIVATE ${CMAKE_SOURCE_DIR}/src ${temp_dir} CONAN_PKG::clara
+	PRIVATE ${CMAKE_SOURCE_DIR}/src ${temp_dir} CONAN_PKG::lyra
 	)

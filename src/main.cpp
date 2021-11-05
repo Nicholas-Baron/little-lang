@@ -40,7 +40,17 @@ int main(const int arg_count, const char * const * const args) {
 
     const auto command_line = read_settings(arg_count, args);
 
+    // TODO: Move into settings parser
+    if (command_line->print_version) {
+        std::cout << *args << "\nVersion: 0.0.1" << std::endl;
+        return 0;
+    }
+
     const auto & filename = command_line->file_to_read;
+    if (filename.empty()) {
+        std::cerr << "Input file not specified." << std::endl;
+        return 1;
+    }
 
     yyin = fopen(filename.c_str(), "r");
 

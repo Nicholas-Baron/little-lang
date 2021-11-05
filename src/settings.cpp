@@ -1,26 +1,27 @@
 #include "settings.hpp"
 
-#include "clara.hpp"
+#include "lyra/lyra.hpp"
 
 #include <iostream>
 
 std::shared_ptr<Settings> read_settings(int arg_count, const char * const * args) {
 
-    Settings settings{};
+    auto settings = std::make_shared<Settings>();
 
-    using namespace clara;
+    auto print_help = false;
 
-    auto cli = Opt(settings.print_version,
-                   "print version")["-V"]["--version"]("Print the version of the compiler")
-             | Arg(settings.file_to_read, "input file")("The source code to compile")
-             | Help(settings.print_help);
+    auto cli = lyra::help(print_help) | lyra::opt(settings->print_version)["--version"]["-V"]
+             | lyra::arg(settings->file_to_read, "file to read");
 
-    auto result = cli.parse(Args(arg_count, args));
-
-    if (not result) {
+    if (auto result = cli.parse({arg_count, args}); not result) {
         std::cerr << "Error in command line : " << result.errorMessage() << std::endl;
         exit(1);
     }
 
-    return std::make_shared<Settings>(settings);
+    if (print_help) {
+        std::cout << cli << std::endl;
+        exit(0);
+    }
+
+    return settings;
 }
