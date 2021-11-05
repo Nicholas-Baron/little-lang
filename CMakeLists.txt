@@ -11,6 +11,19 @@ project(
 	LANGUAGES CXX
 	)
 
+find_program(CONAN conan)
+if(NOT CONAN)
+	message(FATAL_ERROR "Could not find conan package manager.")
+endif()
+
+include(${CMAKE_SOURCE_DIR}/cmake/conan.cmake)
+
+conan_check(VERSION 1.14.4 REQUIRED)
+conan_cmake_run(CONANFILE conanfile.txt
+        BASIC_SETUP CMAKE_TARGETS
+        BUILD missing
+		)
+
 # Flex and Bison are needed
 find_package(FLEX REQUIRED)
 find_package(BISON REQUIRED)
