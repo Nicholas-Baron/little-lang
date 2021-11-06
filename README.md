@@ -6,3 +6,5 @@ A LLVM compiler for a small, functional language
 - Bison
 - Clang-Format
 - Clang-Tidy
+- CMake
+- Conan
