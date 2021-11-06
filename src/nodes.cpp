@@ -216,9 +216,7 @@ Value * If_Statement::codegen(context_module & context) {
     auto * cond = condition->codegen(context);
     auto * start_block = context.builder().GetInsertBlock();
 
-    auto * then_block = llvm::BasicBlock::Create(context.context(), temp_block_name(),
-                                                 context.get_current_function());
-    context.builder().SetInsertPoint(then_block);
+    auto * then_block = context.create_new_insertion_point(temp_block_name());
     true_branch->codegen(context);
 
     if (else_branch == nullptr) {
@@ -234,9 +232,7 @@ Value * If_Statement::codegen(context_module & context) {
 
         return nullptr;
     }
-    auto * else_block = llvm::BasicBlock::Create(context.context(), temp_block_name(),
-                                                 context.get_current_function());
-    context.builder().SetInsertPoint(else_block);
+    auto * else_block = context.create_new_insertion_point(temp_block_name());
     else_branch->codegen(context);
 
     context.builder().SetInsertPoint(start_block);
@@ -300,9 +296,7 @@ Value * Function::codegen(context_module & context) {
         }
     }
 
-    auto * blk = llvm::BasicBlock::Create(context.context(), head_.name() + "_start", func);
-
-    context.builder().SetInsertPoint(blk);
+    context.create_new_insertion_point(head_.name() + "_start");
 
     body_->codegen(context);
 

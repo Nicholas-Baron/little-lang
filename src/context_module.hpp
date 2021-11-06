@@ -81,6 +81,12 @@ class context_module final {
         currently_alive_values.emplace_back(parent, std::map<std::string, llvm::Value *>{});
     }
 
+    llvm::BasicBlock * create_new_insertion_point(const std::string & block_name) {
+        auto * block = llvm::BasicBlock::Create(context(), block_name, get_current_function());
+        builder().SetInsertPoint(block);
+        return block;
+    }
+
     void remove_current_scope() { currently_alive_values.pop_back(); }
 
     llvm::Type * find_type(const std::string & name, const Location * loc) {
