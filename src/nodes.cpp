@@ -1,28 +1,83 @@
 #include "nodes.hpp"
 
-#include "llvm/ADT/APFloat.h"
+// #include "llvm/ADT/APFloat.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Verifier.h"
 #include "parser.hpp"
 
-#include <algorithm>
 #include <cassert>
-#include <cctype>
-#include <functional>
+#include <cctype> // isdigit
 #include <vector>
 
 using llvm::Type, llvm::FunctionType, llvm::Value;
 
 namespace {
-    std::string temp_block_name() {
+    [[nodiscard]] std::string temp_block_name() {
         static unsigned num = 0;
         return "block_" + std::to_string(num++);
+    }
+
+    [[nodiscard]] bool terminated(llvm::BasicBlock * block) { return block->back().isTerminator(); }
+
+    [[nodiscard]] Value * comparison_expr(context_module & context, int tok, Value * const left,
+                                          Value * const right, const Location * loc) {
+
+        if (left->getType() != right->getType()) {
+            context.printError("Current compiler does not support comparisons on differing types.",
+                               loc);
+            return context.builder().getFalse();
+        }
+
+        const bool is_int = left->getType()->isIntegerTy();
+        switch (tok) {
+        case T_LE:
+            if (is_int) {
+                return context.builder().CreateICmpSLE(left, right);
+            } else {
+                return context.builder().CreateFCmpOLE(left, right);
+            }
+
+        case T_LT:
+            if (is_int) {
+                return context.builder().CreateICmpSLT(left, right);
+            } else {
+                return context.builder().CreateFCmpOLT(left, right);
+            }
+
+        case T_GT:
+            if (is_int) {
+                return context.builder().CreateICmpSGT(left, right);
+            } else {
+                return context.builder().CreateFCmpOGT(left, right);
+            }
+
+        case T_EQ:
+            if (is_int) {
+                return context.builder().CreateICmpEQ(left, right);
+            } else {
+                return context.builder().CreateFCmpOEQ(left, right);
+            }
+        }
+
+        if (is_int) {
+            switch (tok) {
+            case T_OR:
+                return context.builder().CreateOr(left, right);
+            case T_AND:
+                return context.builder().CreateAnd(left, right);
+            }
+        }
+
+        context.printError("Token number " + std::to_string(tok)
+                               + " is not currently supported as a comparison.",
+                           loc);
+        return context.builder().getFalse();
     }
 } // namespace
 
 std::vector<Type *> Func_Header::param_types(context_module & context) {
 
-    std::vector<Type *> to_ret{};
+    std::vector<Type *> to_ret;
     to_ret.reserve(params.size());
 
     for (const auto & param : params) { to_ret.push_back(context.find_type(param.type(), &loc)); }
@@ -52,18 +107,17 @@ Value * UserValue::codegen(context_module & context) {
         return context.builder().getInt8(val[1]);
     }
 
-    using std::string;
     if (isdigit(first_char) != 0) {
         // Some number
 
         using std::stoi, std::stof;
-        if (val.find_first_of('x') != string::npos) {
+        if (val.find_first_of('x') != std::string::npos) {
             // Hex number
             static constexpr auto hex_base = 16;
             return context.builder().getInt32(stoi(val, nullptr, hex_base));
         }
 
-        if (val.find_first_of('.') != string::npos) {
+        if (val.find_first_of('.') != std::string::npos) {
             // Floating point
             return llvm::ConstantFP::get(context.context(), llvm::APFloat{stof(val)});
         }
@@ -73,16 +127,15 @@ Value * UserValue::codegen(context_module & context) {
     }
 
     // Some identifier or bool
-    static const std::map<string, bool> valid_bools{{"true", true},   {"True", true},
-                                                    {"TRUE", true},   {"false", false},
-                                                    {"False", false}, {"FALSE", false}};
+    static const std::map<std::string, bool> valid_bools{{"true", true},   {"True", true},
+                                                         {"TRUE", true},   {"false", false},
+                                                         {"False", false}, {"FALSE", false}};
 
-    const auto bool_value = valid_bools.find(val);
-
-    if (bool_value != valid_bools.end()) {
+    if (const auto bool_value = valid_bools.find(val); bool_value != valid_bools.end()) {
         // Boolean value
         return context.builder().getInt1(bool_value->second);
     }
+
     // Identifier
     auto * value = context.find_value_in_current_scope(val);
     if (value == nullptr) {
@@ -106,62 +159,6 @@ Value * UnaryExpression::codegen(context_module & context) {
                            + " is not an implemented unary operation.",
                        &location());
     return op_value;
-}
-
-Value * comparison_expr(context_module & context, int tok, Value * const left, Value * const right,
-                        const Location * loc) {
-
-    if (left->getType() != right->getType()) {
-        context.printError("Current compiler does not support comparisons on differing "
-                           "types.",
-                           loc);
-        return context.builder().getFalse();
-    }
-
-    const bool is_int = left->getType()->isIntegerTy();
-    switch (tok) {
-    case T_LE:
-        if (is_int) {
-            return context.builder().CreateICmpSLE(left, right);
-        } else {
-            return context.builder().CreateFCmpOLE(left, right);
-        }
-
-    case T_LT:
-        if (is_int) {
-            return context.builder().CreateICmpSLT(left, right);
-        } else {
-            return context.builder().CreateFCmpOLT(left, right);
-        }
-
-    case T_GT:
-        if (is_int) {
-            return context.builder().CreateICmpSGT(left, right);
-        } else {
-            return context.builder().CreateFCmpOGT(left, right);
-        }
-
-    case T_EQ:
-        if (is_int) {
-            return context.builder().CreateICmpEQ(left, right);
-        } else {
-            return context.builder().CreateFCmpOEQ(left, right);
-        }
-    }
-
-    if (is_int) {
-        switch (tok) {
-        case T_OR:
-            return context.builder().CreateOr(left, right);
-        case T_AND:
-            return context.builder().CreateAnd(left, right);
-        }
-    }
-
-    context.printError("Token number " + std::to_string(tok)
-                           + " is not currently supported as a comparison.",
-                       loc);
-    return context.builder().getFalse();
 }
 
 Value * BinaryExpression::codegen(context_module & context) {
@@ -213,8 +210,6 @@ Value * FunctionCall::codegen(context_module & context) {
 
     return context.builder().CreateCall(callee, arg_values);
 }
-
-bool terminated(llvm::BasicBlock * block) { return block->back().isTerminator(); }
 
 Value * If_Statement::codegen(context_module & context) {
 
@@ -278,8 +273,7 @@ Value * Let_Statement::codegen(context_module & context) {
 Value * Return_Statement::codegen(context_module & context) {
     if (value == nullptr) { return context.builder().CreateRetVoid(); }
 
-    auto * val = value->codegen(context);
-    return context.builder().CreateRet(val);
+    return context.builder().CreateRet(value->codegen(context));
 }
 
 Value * Function::codegen(context_module & context) {
@@ -295,8 +289,8 @@ Value * Function::codegen(context_module & context) {
 
     {
         unsigned index = 0;
-        const auto args_end = func->arg_end();
-        for (auto arg = func->arg_begin(); arg != args_end; arg++, index++) {
+        auto * const args_end = func->arg_end();
+        for (auto * arg = func->arg_begin(); arg != args_end; arg++, index++) {
             assert(arg != nullptr);
             const auto & arg_name = head_.arg(index).name();
             assert(not arg_name.empty());
