@@ -43,6 +43,8 @@ class Func_Header final {
 
     [[nodiscard]] const auto & location() const noexcept { return loc; }
 
+    void add_parameters(context_module &, llvm::Function &) const;
+
   private:
     std::vector<llvm::Type *> param_types(context_module & context);
 

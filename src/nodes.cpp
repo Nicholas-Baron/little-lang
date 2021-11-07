@@ -312,6 +312,20 @@ Value * Return_Statement::codegen(context_module & context) {
     return context.builder().CreateRet(value->codegen(context));
 }
 
+void Func_Header::add_parameters(context_module & context, llvm::Function & func) const {
+
+    unsigned index = 0;
+    auto * const args_end = func.arg_end();
+    for (auto * arg = func.arg_begin(); arg != args_end; arg++, index++) {
+        assert(arg != nullptr);
+        const auto & arg_name = this->arg(index).name();
+        assert(not arg_name.empty());
+
+        arg->setName(arg_name);
+        context.add_value_to_table(arg_name, arg);
+    }
+}
+
 Value * Function::codegen(context_module & context) {
 
     auto * func_type = head_.full_type(context);
@@ -321,20 +335,9 @@ Value * Function::codegen(context_module & context) {
     auto * func = llvm::Function::Create(func_type, llvm::Function::ExternalLinkage, head_.name(),
                                          &context.module());
 
-    context.add_new_scope(func);
+    context.add_new_scope();
 
-    {
-        unsigned index = 0;
-        auto * const args_end = func->arg_end();
-        for (auto * arg = func->arg_begin(); arg != args_end; arg++, index++) {
-            assert(arg != nullptr);
-            const auto & arg_name = head_.arg(index).name();
-            assert(not arg_name.empty());
-            arg->setName(arg_name);
-
-            context.add_value_to_table(arg_name, arg);
-        }
-    }
+    head_.add_parameters(context, *func);
 
     context.create_new_insertion_point(head_.name() + "_start", func);
 

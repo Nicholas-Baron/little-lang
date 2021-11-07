@@ -20,9 +20,7 @@ class context_module final {
     std::unique_ptr<llvm::Module> module_;
     llvm::IRBuilder<> builder_;
 
-    // TODO: this is probably wrong
-    std::vector<std::pair<llvm::Function *, std::map<std::string, llvm::Value *>>>
-        currently_alive_values{};
+    std::vector<std::map<std::string, llvm::Value *>> currently_alive_values;
 
     std::map<std::string, llvm::Type *> valid_types;
 
@@ -54,8 +52,7 @@ class context_module final {
     auto * find_value_in_current_scope(const std::string & name) {
         for (auto iter = currently_alive_values.rbegin(); iter != currently_alive_values.rend();
              iter++) {
-            auto found = iter->second.find(name);
-            if (found != iter->second.end()) { return found->second; }
+            if (auto found = iter->find(name); found != iter->end()) { return found->second; }
         }
 
         auto * func = builder_.GetInsertBlock()->getParent();
@@ -69,7 +66,7 @@ class context_module final {
     void printError(const std::string & name, std::optional<Location> loc = std::nullopt);
 
     void add_value_to_table(const std::string & name, llvm::Value * val) {
-        currently_alive_values.back().second.emplace(name, val);
+        currently_alive_values.back().emplace(name, val);
     }
 
     [[nodiscard]] llvm::Function * get_current_function() const {
@@ -80,12 +77,8 @@ class context_module final {
 
     llvm::Function * find_function(const std::string & name) { return module_->getFunction(name); }
 
-    void add_new_scope(llvm::Function * parent) {
-        if (parent == nullptr and currently_alive_values.back().first != nullptr) {
-            parent = currently_alive_values.back().first;
-        }
-
-        currently_alive_values.emplace_back(parent, std::map<std::string, llvm::Value *>{});
+    void add_new_scope() {
+        currently_alive_values.emplace_back(std::map<std::string, llvm::Value *>{});
     }
 
     llvm::BasicBlock * create_new_insertion_point(const std::string & block_name,
