@@ -16,9 +16,11 @@ llvm::Value * find_local_value(llvm::Function * func, const std::string & name);
 class context_module final {
 
     llvm::LLVMContext context_{};
+    // NOTE: This field is never null, but is out of line to allow the module to be moved from us.
     std::unique_ptr<llvm::Module> module_;
     llvm::IRBuilder<> builder_;
 
+    // TODO: this is probably wrong
     std::vector<std::pair<llvm::Function *, std::map<std::string, llvm::Value *>>>
         currently_alive_values{};
 
@@ -43,7 +45,7 @@ class context_module final {
     }
     auto & builder() { return builder_; }
 
-    std::unique_ptr<llvm::Module> take_module() && { return std::move(module_); }
+    std::unique_ptr<llvm::Module> take_module() && noexcept { return std::move(module_); }
 
     void dump() const;
 
@@ -70,8 +72,10 @@ class context_module final {
         currently_alive_values.back().second.emplace(name, val);
     }
 
-    [[nodiscard]] auto * get_current_function() const {
-        return currently_alive_values.back().first;
+    [[nodiscard]] llvm::Function * get_current_function() const {
+        auto * current_block = builder_.GetInsertBlock();
+        assert(current_block != nullptr);
+        return current_block->getParent();
     }
 
     llvm::Function * find_function(const std::string & name) { return module_->getFunction(name); }
@@ -84,8 +88,10 @@ class context_module final {
         currently_alive_values.emplace_back(parent, std::map<std::string, llvm::Value *>{});
     }
 
-    llvm::BasicBlock * create_new_insertion_point(const std::string & block_name) {
-        auto * block = llvm::BasicBlock::Create(context(), block_name, get_current_function());
+    llvm::BasicBlock * create_new_insertion_point(const std::string & block_name,
+                                                  llvm::Function * parent = nullptr) {
+        auto * block = llvm::BasicBlock::Create(
+            context(), block_name, parent != nullptr ? parent : get_current_function());
         builder().SetInsertPoint(block);
         return block;
     }

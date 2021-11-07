@@ -4,19 +4,15 @@
 #include "llvm/IR/Verifier.h"
 #include "llvm/Support/raw_ostream.h"
 
-#include <algorithm> // find_if
-#include <iostream>  // cout
-#include <sstream>   // stringstream
+#include <iostream> // cout
+#include <sstream>  // stringstream
 
 using llvm::Value, llvm::Type;
 
 Value * find_local_value(llvm::Function * func, const std::string & name) {
-    const auto & table = *(func->getValueSymbolTable());
-    const auto iter = std::find_if(table.begin(), table.end(),
-                                   [&name](const auto & entry) { return name == entry.getKey(); });
-
-    if (iter != table.end()) { return iter->getValue(); }
-    return table.lookup(name);
+    const auto * table = func->getValueSymbolTable();
+    assert(table != nullptr);
+    return table->lookup(name);
 }
 
 context_module::context_module(const std::string & name)

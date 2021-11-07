@@ -341,7 +341,7 @@ Value * Function::codegen(context_module & context) {
         }
     }
 
-    context.create_new_insertion_point(head_.name() + "_start");
+    context.create_new_insertion_point(head_.name() + "_start", func);
 
     body_->codegen(context);
 
