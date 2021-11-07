@@ -102,7 +102,7 @@ program : top_lvl_seq {
         }
         ;
 
-top_lvl_seq : top_lvl_item { $$ = new Top_Level_Seq; $$->append($1); set_loc($$, @$); }
+top_lvl_seq : top_lvl_item { $$ = new Top_Level_Seq{$1}; set_loc($$, @$); }
             | top_lvl_seq top_lvl_item {
                 $$ = $1; $$->append($2); set_loc($$, @$);
             }

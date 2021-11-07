@@ -86,6 +86,10 @@ class Top_Level : public virtual Node {};
 class Top_Level_Seq final : public Node {
   public:
     Top_Level_Seq() = default;
+    Top_Level_Seq(Top_Level * first_item)
+        : Top_Level_Seq{} {
+        append(first_item);
+    }
 
     Top_Level_Seq(const Top_Level_Seq &) = delete;
     Top_Level_Seq & operator=(const Top_Level_Seq &) = delete;
