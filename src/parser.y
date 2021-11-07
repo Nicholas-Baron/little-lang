@@ -3,16 +3,14 @@
     #include <memory>
 
     #include "location.hpp"
-    #include "nodes.hpp"
 
     extern int yylex();
     extern const char* yytext;
     extern int yylineno;
-    inline void yyerror(const char* const msg){
+    static void yyerror(const char* const msg){
         std::cerr << "Error on line " << yylineno << ": " << msg << "\nText: " << yytext << std::endl;
     }
 
-    std::unique_ptr<Top_Level_Seq> module;
 %}
 
 %locations
@@ -21,20 +19,22 @@
     #include <string>
     #include <vector>
 
-    #include "location.hpp"
     #include "nodes.hpp"
 }
 
 %code provides {
+    static_assert(sizeof(YYSTYPE) <= sizeof(int *), "The Bison union is not of trivial size.");
+}
 
-    [[nodiscard]] inline Location make_loc(const YYLTYPE& yy_loc){
+%code {
+    std::unique_ptr<Top_Level_Seq> module;
+
+    [[nodiscard]] static Location make_loc(const YYLTYPE& yy_loc){
         return Location{
             yy_loc.first_line, yy_loc.first_column,
             yy_loc.last_line, yy_loc.last_column
         };
     }
-
-    static_assert(sizeof(YYSTYPE) <= sizeof(int *), "The Bison union is not of trivial size.");
 
     #define set_loc(item, loc) (item)->set_location(make_loc(loc))
 }

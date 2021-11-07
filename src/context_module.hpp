@@ -47,7 +47,7 @@ class context_module final {
 
     void dump() const;
 
-    llvm::Value * find_first_class_value(const std::string & name) const;
+    [[nodiscard]] llvm::Value * find_first_class_value(const std::string & name) const;
 
     auto * find_value_in_current_scope(const std::string & name) {
         for (auto iter = currently_alive_values.rbegin(); iter != currently_alive_values.rend();
@@ -70,7 +70,9 @@ class context_module final {
         currently_alive_values.back().second.emplace(name, val);
     }
 
-    auto * get_current_function() const { return currently_alive_values.back().first; }
+    [[nodiscard]] auto * get_current_function() const {
+        return currently_alive_values.back().first;
+    }
 
     llvm::Function * find_function(const std::string & name) { return module_->getFunction(name); }
 
