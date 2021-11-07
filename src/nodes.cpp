@@ -1,6 +1,5 @@
 #include "nodes.hpp"
 
-// #include "llvm/ADT/APFloat.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Verifier.h"
 #include "parser.hpp"
@@ -59,20 +58,52 @@ namespace {
             }
         }
 
-        if (is_int) {
-            switch (tok) {
-            case T_OR:
-                return context.builder().CreateOr(left, right);
-            case T_AND:
-                return context.builder().CreateAnd(left, right);
-            }
-        }
-
         context.printError("Token number " + std::to_string(tok)
                                + " is not currently supported as a comparison.",
                            loc);
         return context.builder().getFalse();
     }
+
+    [[nodiscard]] Value * short_circuit(context_module & context, Expression * lhs, int tok,
+                                        Expression * rhs, const Location * loc) {
+
+        assert(tok == T_AND or tok == T_OR);
+        auto * left = lhs->codegen(context);
+
+        auto * rhs_block = llvm::BasicBlock::Create(context.context(), temp_block_name(),
+                                                    context.get_current_function());
+
+        auto * merge_block = llvm::BasicBlock::Create(context.context(), temp_block_name(),
+                                                      context.get_current_function());
+
+        // add a check to short circuit
+        // short on false if anding, short on true if oring
+
+        // if (true && rhs) -> should eval rhs
+        auto * on_true = tok == T_AND ? rhs_block : merge_block;
+
+        // if (false || rhs) -> should eval rhs
+        auto * on_false = tok == T_OR ? rhs_block : merge_block;
+        assert(on_true != on_false);
+
+        context.builder().CreateCondBr(left, on_true, on_false);
+
+        context.builder().SetInsertPoint(rhs_block);
+        auto * right = rhs->codegen(context);
+        context.builder().CreateBr(merge_block);
+
+        context.builder().SetInsertPoint(merge_block);
+        switch (tok) {
+        case T_AND:
+            return context.builder().CreateAnd(left, right);
+        case T_OR:
+            return context.builder().CreateOr(left, right);
+        default:
+            context.printError("Unimplemented shortcircuiting token " + std::to_string(tok), loc);
+            assert(false);
+        }
+    }
+
 } // namespace
 
 std::vector<Type *> Func_Header::param_types(context_module & context) {
@@ -161,7 +192,28 @@ Value * UnaryExpression::codegen(context_module & context) {
     return op_value;
 }
 
+bool BinaryExpression::is_comparison() const noexcept {
+    switch (tok) {
+    case T_GE:
+    case T_GT:
+    case T_LT:
+    case T_LE:
+    case T_EQ:
+    case T_NE:
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool BinaryExpression::is_shortcircuiting() const noexcept { return tok == T_OR or tok == T_AND; }
+
 Value * BinaryExpression::codegen(context_module & context) {
+
+    if (is_shortcircuiting()) {
+        return short_circuit(context, lhs_.get(), tok, rhs_.get(), &location());
+    }
+
     auto * left = lhs_->codegen(context);
     auto * right = rhs_->codegen(context);
 
@@ -177,6 +229,8 @@ Value * BinaryExpression::codegen(context_module & context) {
         return left;
     }
 
+    if (is_comparison()) { return comparison_expr(context, tok, left, right, &location()); }
+
     switch (tok) {
     case T_PLUS:
         return context.builder().CreateAdd(left, right);
@@ -184,21 +238,12 @@ Value * BinaryExpression::codegen(context_module & context) {
         return context.builder().CreateSub(left, right);
     case T_MULT:
         return context.builder().CreateMul(left, right);
-    case T_GE:
-    case T_GT:
-    case T_LT:
-    case T_LE:
-    case T_EQ:
-    case T_NE:
-    case T_OR:
-    case T_AND:
-        return comparison_expr(context, tok, left, right, &location());
     }
 
     context.printError("Token number " + std::to_string(tok)
                            + " is not an implemented binary operation.",
                        &location());
-    return right;
+    return nullptr;
 }
 
 Value * FunctionCall::codegen(context_module & context) {

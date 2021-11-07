@@ -144,6 +144,9 @@ class BinaryExpression final : public Expression {
     llvm::Value * codegen(context_module & context) override;
 
   private:
+    [[nodiscard]] bool is_comparison() const noexcept;
+    [[nodiscard]] bool is_shortcircuiting() const noexcept;
+
     std::unique_ptr<Expression> lhs_, rhs_;
     int tok;
 };
