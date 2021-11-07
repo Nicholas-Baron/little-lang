@@ -89,6 +89,14 @@ class context_module final {
         return block;
     }
 
+    llvm::Function * create_new_function(llvm::FunctionType * func_type, const std::string & name) {
+
+        auto * func = llvm::Function::Create(func_type, llvm::Function::ExternalLinkage, name,
+                                             module_.get());
+        add_new_scope();
+        return func;
+    }
+
     void remove_current_scope() { currently_alive_values.pop_back(); }
 
     llvm::Type * find_type(const std::string & name, std::optional<Location> loc) {

@@ -332,18 +332,12 @@ Value * Function::codegen(context_module & context) {
 
     assert(func_type != nullptr);
 
-    auto * func = llvm::Function::Create(func_type, llvm::Function::ExternalLinkage, head_.name(),
-                                         &context.module());
-
-    context.add_new_scope();
-
-    head_.add_parameters(context, *func);
-
+    auto * func = context.create_new_function(func_type, head_.name());
     context.create_new_insertion_point(head_.name() + "_start", func);
-
+    head_.add_parameters(context, *func);
     body_->codegen(context);
-
     context.remove_current_scope();
+
     llvm::verifyFunction(*func, &llvm::dbgs());
     return func;
 }
