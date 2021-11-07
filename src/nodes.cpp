@@ -65,10 +65,11 @@ namespace {
     }
 
     [[nodiscard]] Value * short_circuit(context_module & context, Expression * lhs, int tok,
-                                        Expression * rhs, std::optional<Location> loc) {
+                                        Expression * rhs) {
 
         assert(tok == T_AND or tok == T_OR);
         auto * left = lhs->codegen(context);
+        auto * lhs_block = context.builder().GetInsertBlock();
 
         auto * rhs_block = llvm::BasicBlock::Create(context.context(), temp_block_name(),
                                                     context.get_current_function());
@@ -93,15 +94,11 @@ namespace {
         context.builder().CreateBr(merge_block);
 
         context.builder().SetInsertPoint(merge_block);
-        switch (tok) {
-        case T_AND:
-            return context.builder().CreateAnd(left, right);
-        case T_OR:
-            return context.builder().CreateOr(left, right);
-        default:
-            context.printError("Unimplemented shortcircuiting token " + std::to_string(tok), loc);
-            assert(false);
-        }
+        auto * phi = context.builder().CreatePHI(left->getType(), 2);
+        phi->addIncoming(left, lhs_block);
+        phi->addIncoming(right, rhs_block);
+
+        return phi;
     }
 
 } // namespace
@@ -210,9 +207,7 @@ bool BinaryExpression::is_shortcircuiting() const noexcept { return tok == T_OR 
 
 Value * BinaryExpression::codegen(context_module & context) {
 
-    if (is_shortcircuiting()) {
-        return short_circuit(context, lhs_.get(), tok, rhs_.get(), location());
-    }
+    if (is_shortcircuiting()) { return short_circuit(context, lhs_.get(), tok, rhs_.get()); }
 
     auto * left = lhs_->codegen(context);
     auto * right = rhs_->codegen(context);
