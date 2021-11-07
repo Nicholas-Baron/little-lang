@@ -17,6 +17,14 @@
 
 %locations
 
+%code requires {
+    #include <string>
+    #include <vector>
+
+    #include "location.hpp"
+    #include "nodes.hpp"
+}
+
 %code provides {
 
     [[nodiscard]] inline Location make_loc(const YYLTYPE& yy_loc){
