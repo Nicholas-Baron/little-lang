@@ -76,7 +76,7 @@ number -?([1-9][0-9]*|0)
 "not"|"!"       return token(T_NOT);
 "equals"|"=="   return token(T_EQ);
 "equal"|"="     return token(T_ASSIGN);
-"is"            return token(T_IS);
+"is"|":"        return token(T_IS);
 
     /* Reserved words */
 
