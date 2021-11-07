@@ -48,7 +48,7 @@
     Top_Level_Seq * top_lvl_items;
 
     std::vector<Typed_Var>* params;
-    std::vector<Expression*>* args;
+    std::vector<std::unique_ptr<Expression>>* args;
 }
 
 // Token definitions
@@ -184,16 +184,21 @@ func_call : T_IDENT arg_group {
             $$ = new FunctionCall(std::move(*$1), std::move(*$2)); delete $1; delete $2; set_loc($$, @$);
           }
           | T_IDENT T_DOT func_call {
-            $$ = new FunctionCall{std::move(*$1), {$3}}; delete $1; set_loc($$, @$);
+            std::vector<std::unique_ptr<Expression>> args;
+            args.emplace_back($3);
+            $$ = new FunctionCall{std::move(*$1), std::move(args)}; delete $1; set_loc($$, @$);
           }
           ;
 
 arg_group : T_LPAREN arg_list T_RPAREN { $$ = $2; }
-          | T_LPAREN T_RPAREN { $$ = new std::vector<Expression*>; }
+          | T_LPAREN T_RPAREN { $$ = new std::vector<std::unique_ptr<Expression>>; }
           ;
 
-arg_list : expr { $$ = new std::vector{$1}; }
-         | arg_list T_COMMA expr { $$ = $1; $$->push_back($3); }
+arg_list : expr {
+            $$ = new std::vector<std::unique_ptr<Expression>>;
+            $$->emplace_back($1);
+         }
+         | arg_list T_COMMA expr { $$ = $1; $$->emplace_back($3); }
          ;
 
 type : T_PRIM_TYPE | T_IDENT ;

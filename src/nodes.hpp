@@ -153,10 +153,9 @@ class BinaryExpression final : public Expression {
 
 class FunctionCall final : public Statement, public Expression {
   public:
-    FunctionCall(std::string && name, std::vector<Expression *> && args)
-        : name_(std::move(name)) {
-        for (auto * arg : args) { args_.emplace_back(arg); }
-    }
+    FunctionCall(std::string && name, std::vector<std::unique_ptr<Expression>> && args)
+        : name_(std::move(name))
+        , args_{std::move(args)} {}
 
     llvm::Value * codegen(context_module & context) override;
 
