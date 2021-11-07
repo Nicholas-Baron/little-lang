@@ -1,11 +1,11 @@
 ---
-Checks:          'clang-diagnostic-*,clang-analyzer-*,-*,clang-analyzer-*,misc-*,modernize-*,performance-*,readability-*,portability-*'
+Checks:          '-*,clang-analyzer-*,misc-*,modernize-*,-modernize-use-trailing-return-type,performance-*,readability-*,portability-*'
 WarningsAsErrors: ''
 HeaderFilterRegex: './src/*'
 AnalyzeTemporaryDtors: false
 FormatStyle:     none
 User:            nick
-CheckOptions:    
+CheckOptions:
   - key:             cert-dcl16-c.NewSuffixes
     value:           'L;LL;LU;LLU'
   - key:             cppcoreguidelines-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic
