@@ -31,6 +31,7 @@ context_module::context_module(const std::string & name)
 {}
 
 void context_module::dump() const {
+    // TODO: move away from std::cout?
     std::string to_print;
     {
         llvm::raw_string_ostream stream(to_print);
@@ -45,12 +46,12 @@ Value * context_module::find_first_class_value(const std::string & name) const {
 }
 
 void context_module::verify_module() const { llvm::verifyModule(*module_, &llvm::dbgs()); }
-void context_module::printError(const std::string & name, const Location * loc) {
+void context_module::printError(const std::string & name, std::optional<Location> loc) {
 
-    if (loc == nullptr) {
+    if (loc == std::nullopt) {
         context_.emitError(name);
     } else {
-        std::stringstream to_print{};
+        std::stringstream to_print;
         to_print << *loc << " : " << name;
         context_.emitError(to_print.str());
     }

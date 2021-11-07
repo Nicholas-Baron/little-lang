@@ -7,6 +7,7 @@
 #include "location.hpp"
 
 #include <map>
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -63,7 +64,7 @@ class context_module final {
 
     void verify_module() const;
 
-    void printError(const std::string & name, const Location * loc = nullptr);
+    void printError(const std::string & name, std::optional<Location> loc = std::nullopt);
 
     void add_value_to_table(const std::string & name, llvm::Value * val) {
         currently_alive_values.back().second.emplace(name, val);
@@ -89,7 +90,7 @@ class context_module final {
 
     void remove_current_scope() { currently_alive_values.pop_back(); }
 
-    llvm::Type * find_type(const std::string & name, const Location * loc) {
+    llvm::Type * find_type(const std::string & name, std::optional<Location> loc) {
 
         const auto iter = valid_types.find(name);
         if (iter != valid_types.end()) { return iter->second; }

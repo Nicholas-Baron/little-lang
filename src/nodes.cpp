@@ -19,7 +19,7 @@ namespace {
     [[nodiscard]] bool terminated(llvm::BasicBlock * block) { return block->back().isTerminator(); }
 
     [[nodiscard]] Value * comparison_expr(context_module & context, int tok, Value * const left,
-                                          Value * const right, const Location * loc) {
+                                          Value * const right, std::optional<Location> loc) {
 
         if (left->getType() != right->getType()) {
             context.printError("Current compiler does not support comparisons on differing types.",
@@ -65,7 +65,7 @@ namespace {
     }
 
     [[nodiscard]] Value * short_circuit(context_module & context, Expression * lhs, int tok,
-                                        Expression * rhs, const Location * loc) {
+                                        Expression * rhs, std::optional<Location> loc) {
 
         assert(tok == T_AND or tok == T_OR);
         auto * left = lhs->codegen(context);
@@ -111,7 +111,7 @@ std::vector<Type *> Func_Header::param_types(context_module & context) {
     std::vector<Type *> to_ret;
     to_ret.reserve(params.size());
 
-    for (const auto & param : params) { to_ret.push_back(context.find_type(param.type(), &loc)); }
+    for (const auto & param : params) { to_ret.push_back(context.find_type(param.type(), loc)); }
 
     return to_ret;
 }
@@ -119,10 +119,10 @@ std::vector<Type *> Func_Header::param_types(context_module & context) {
 FunctionType * Func_Header::full_type(context_module & context) {
 
     if (ret_type.empty() or ret_type == "auto") {
-        context.printError(name_ + " does not have a known return type", &location());
+        context.printError(name_ + " does not have a known return type", location());
     }
 
-    return FunctionType::get(context.find_type(ret_type, &location()), param_types(context), false);
+    return FunctionType::get(context.find_type(ret_type, location()), param_types(context), false);
 }
 
 Value * UserValue::codegen(context_module & context) {
@@ -170,7 +170,7 @@ Value * UserValue::codegen(context_module & context) {
     // Identifier
     auto * value = context.find_value_in_current_scope(val);
     if (value == nullptr) {
-        context.printError("Could not find variable named " + val, &location());
+        context.printError("Could not find variable named " + val, location());
     }
     return value;
 }
@@ -188,7 +188,7 @@ Value * UnaryExpression::codegen(context_module & context) {
 
     context.printError("Token number " + std::to_string(tok)
                            + " is not an implemented unary operation.",
-                       &location());
+                       location());
     return op_value;
 }
 
@@ -211,7 +211,7 @@ bool BinaryExpression::is_shortcircuiting() const noexcept { return tok == T_OR 
 Value * BinaryExpression::codegen(context_module & context) {
 
     if (is_shortcircuiting()) {
-        return short_circuit(context, lhs_.get(), tok, rhs_.get(), &location());
+        return short_circuit(context, lhs_.get(), tok, rhs_.get(), location());
     }
 
     auto * left = lhs_->codegen(context);
@@ -219,17 +219,17 @@ Value * BinaryExpression::codegen(context_module & context) {
 
     if (left == nullptr) {
         context.printError("Token #" + std::to_string(tok) + " has a null left operand.",
-                           &location());
+                           location());
         return right;
     }
 
     if (right == nullptr) {
         context.printError("Token #" + std::to_string(tok) + " has a null right operand.",
-                           &location());
+                           location());
         return left;
     }
 
-    if (is_comparison()) { return comparison_expr(context, tok, left, right, &location()); }
+    if (is_comparison()) { return comparison_expr(context, tok, left, right, location()); }
 
     switch (tok) {
     case T_PLUS:
@@ -242,7 +242,7 @@ Value * BinaryExpression::codegen(context_module & context) {
 
     context.printError("Token number " + std::to_string(tok)
                            + " is not an implemented binary operation.",
-                       &location());
+                       location());
     return nullptr;
 }
 
@@ -302,12 +302,12 @@ Value * Let_Statement::codegen(context_module & context) {
 
     auto * value = value_->codegen(context);
     auto type = name_and_type.type();
-    if (type == "auto" or context.find_type(type, &location()) == value->getType()) {
+    if (type == "auto" or context.find_type(type, location()) == value->getType()) {
         value->setName(name_and_type.name());
         return value;
     }
 
-    context.printError("Casting is not supported at this time.", &location());
+    context.printError("Casting is not supported at this time.", location());
     return nullptr;
 }
 
