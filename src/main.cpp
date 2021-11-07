@@ -36,6 +36,28 @@ static bool parse_file() {
     return parse_status == 0;
 }
 
+static std::unique_ptr<Top_Level_Seq> read_module(const std::string & filename) {
+    if (filename.empty()) {
+        std::cerr << "Input file not specified." << std::endl;
+        return nullptr;
+    }
+
+    yyin = fopen(filename.c_str(), "r");
+
+    if (yyin == nullptr) {
+        std::cerr << filename << " cannot be opened." << std::endl;
+        return nullptr;
+    }
+
+    // If the file could not be parsed, leave the program immediately.
+    if (not parse_file()) {
+        std::cerr << "Failed to parse " << filename << std::endl;
+        return nullptr;
+    }
+
+    return std::move(module);
+}
+
 int main(const int arg_count, const char * const * const args) {
 
     const auto command_line = read_settings(arg_count, args);
@@ -47,38 +69,23 @@ int main(const int arg_count, const char * const * const args) {
     }
 
     const auto & filename = command_line->file_to_read;
-    if (filename.empty()) {
-        std::cerr << "Input file not specified." << std::endl;
-        return 1;
-    }
-
-    yyin = fopen(filename.c_str(), "r");
-
-    if (yyin == nullptr) {
-        std::cerr << filename << " cannot be opened." << std::endl;
-        return -1;
-    }
-
-    // If the file could not be parsed, leave the program immediately.
-    if (not parse_file()) {
-        std::cerr << "Failed to parse " << filename << std::endl;
-        return -1;
-    }
-
-    assert(module != nullptr);
 
     auto target_triple = init_llvm_targets();
 
     context_module context{filename};
     context.module().setTargetTriple(target_triple);
 
-    module->codegen(context);
+    // TODO: Add include/import system
+    auto parsed_module = read_module(filename);
+    if (parsed_module == nullptr) { return -1; }
+
+    parsed_module->codegen(context);
 
     context.dump();
 
     if (command_line->simulate) {
-        auto module_result = run_module(std::move(context));
-        std::cout << "Module returned " << module_result << std::endl;
+        auto parsed_module_result = run_module(std::move(context));
+        std::cout << "parsed_module returned " << parsed_module_result << std::endl;
     } else {
         emit_asm(std::move(context), std::move(target_triple), make_output_name(filename));
     }
