@@ -260,4 +260,17 @@ class Function final : public Top_Level {
     std::unique_ptr<Statement> body_;
 };
 
+class Constant final : public Top_Level {
+  public:
+    Constant(Typed_Var && name_and_type, Expression * expr)
+        : name_and_type(std::move(name_and_type))
+        , expr{expr} {}
+
+    llvm::Value * codegen(context_module & /*context*/) override;
+
+  private:
+    Typed_Var name_and_type;
+    std::unique_ptr<Expression> expr;
+};
+
 #endif

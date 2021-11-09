@@ -341,3 +341,8 @@ Value * Function::codegen(context_module & context) {
     llvm::verifyFunction(*func, &llvm::dbgs());
     return func;
 }
+
+Value * Constant::codegen(context_module & /*context*/) {
+    llvm::errs() << "Codegen for constants is not implemented\n";
+    return nullptr;
+}

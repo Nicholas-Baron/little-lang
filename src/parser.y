@@ -110,7 +110,7 @@ top_lvl_seq : top_lvl_item { $$ = new Top_Level_Seq{$1}; set_loc($$, @$); }
 
 top_lvl_item : function | constant ;
 
-constant : T_CONST typed_var initialization { $$ = nullptr; std::cout << "Constants are not implemented yet." << std::endl; exit(1); }
+constant : T_CONST typed_var initialization { $$ = new Constant{std::move(*$2), $3}; delete $2; set_loc($$, @$); }
          ;
 
 function : func_header statement {
