@@ -42,6 +42,11 @@ Value * context_module::find_first_class_value(const std::string & name) const {
 }
 
 void context_module::verify_module() const { llvm::verifyModule(*module_, &llvm::dbgs()); }
+
+llvm::FunctionCallee context_module::find_function(const std::string & name) {
+    return module_->getFunction(name);
+}
+
 void context_module::printError(const std::string & name, std::optional<Location> loc) {
 
     if (loc == std::nullopt) {

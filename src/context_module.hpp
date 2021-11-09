@@ -75,7 +75,7 @@ class context_module final {
         return current_block->getParent();
     }
 
-    llvm::Function * find_function(const std::string & name) { return module_->getFunction(name); }
+    llvm::FunctionCallee find_function(const std::string & name);
 
     void add_new_scope() {
         currently_alive_values.emplace_back(std::map<std::string, llvm::Value *>{});

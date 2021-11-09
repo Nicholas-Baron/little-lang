@@ -242,7 +242,7 @@ Value * BinaryExpression::codegen(context_module & context) {
 }
 
 Value * FunctionCall::codegen(context_module & context) {
-    auto * callee = context.find_function(name_);
+    auto callee = context.find_function(name_);
 
     std::vector<Value *> arg_values{};
     arg_values.reserve(args_.size());
