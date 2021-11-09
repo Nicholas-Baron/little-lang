@@ -61,21 +61,21 @@
 
 // Token definitions
 
-%token <token>    T_EQ "==" T_NE "!=" T_LT "<" T_GT ">" T_LE "<=" T_GE  ">="                // Comparisons
-%token <token>    T_LPAREN "(" T_RPAREN ")" T_LBRACE "{" T_RBRACE "}" T_LBRACK T_RBRACK    // Paired symbols
-%token <token>    T_PLUS "+" T_MINUS "-" T_DIV "/" T_MULT "*" T_MOD "%"                    // Math symbols
-%token <token>    T_COMMA "," T_IS "is" T_SEMI ";" T_DOT "."                                // Misc symbols
-%token <token>    T_RET "return" T_IF "if" T_ELSE "else" T_LET "let"                        // Reserved words
-%token <token>    T_AND "and" T_OR "or" T_NOT "not"                                         // Boolean operators
-%token <token>    T_ASSIGN "=" T_PROC    "proc"
-%token <string> T_IDENT T_INT T_CHAR T_BOOL T_STRING T_FLOAT T_PRIM_TYPE     // Regexes
+%token <token>    T_EQ "==" T_NE "!=" T_LT "<" T_GT ">" T_LE "<=" T_GE  ">="             // Comparisons
+%token <token>    T_LPAREN "(" T_RPAREN ")" T_LBRACE "{" T_RBRACE "}" T_LBRACK T_RBRACK  // Paired symbols
+%token <token>    T_PLUS "+" T_MINUS "-" T_DIV "/" T_MULT "*" T_MOD "%"                  // Math symbols
+%token <token>    T_COMMA "," T_IS "is" T_SEMI ";" T_DOT "."                             // Misc symbols
+%token <token>    T_RET "return" T_IF "if" T_ELSE "else" T_LET "let" T_CONST "const"     // Reserved words
+%token <token>    T_AND "and" T_OR "or" T_NOT "not"                                      // Boolean operators
+%token <token>    T_ASSIGN "=" T_PROC "proc"
+%token <string>   T_IDENT T_INT T_CHAR T_BOOL T_STRING T_FLOAT T_PRIM_TYPE               // Regexes
 
 // Types for non-terminals
 %nterm <string> literal type ret_type
 %type <expression> expr
 %type <expression> initialization
 %type <stmt> statement else_block conditional action
-%type <top_lvl> top_lvl_item function
+%type <top_lvl> top_lvl_item function constant
 %type <func_call> func_call
 %type <func_head> func_header func_sig
 %type <var_with_type> typed_var
@@ -108,7 +108,10 @@ top_lvl_seq : top_lvl_item { $$ = new Top_Level_Seq{$1}; set_loc($$, @$); }
             }
             ;
 
-top_lvl_item : function ;
+top_lvl_item : function | constant ;
+
+constant : T_CONST typed_var initialization { $$ = nullptr; std::cout << "Constants are not implemented yet." << std::endl; exit(1); }
+         ;
 
 function : func_header statement {
              $$ = new Function{std::move(*$1), $2}; delete $1; set_loc($$, @$);
@@ -122,7 +125,9 @@ func_header : ret_type func_sig { $$ = $2; $$->set_ret_type(std::move(*$1)); del
             | func_sig ret_type { $$ = $1; $$->set_ret_type(std::move(*$2)); delete $2; set_loc($$, @$); }
             ;
 
-ret_type : type | T_PROC { $$ = new std::string{"proc"}; } ;
+ret_type : type
+         | T_PROC { $$ = new std::string{"proc"}; }
+         ;
 
 func_sig : T_IDENT param_group { $$ = new Func_Header{std::move(*$1), std::move(*$2)}; delete $1; delete $2; set_loc($$, @$); } ;
 
