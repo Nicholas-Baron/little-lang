@@ -5,12 +5,13 @@
 #include "parser.hpp"
 #include "settings.hpp"
 #include "tokens.hpp"
+#include <sys/wait.h> // waitpid
 
 #include <cassert>
-#include <cstdio>
-#include <fstream>
+#include <cstdio>  // fopen
+#include <cstring> // strcpy
 #include <iostream>
-#include <sstream>
+#include <unistd.h> // execve
 
 extern std::unique_ptr<Top_Level_Seq> module;
 
@@ -58,6 +59,43 @@ static std::unique_ptr<Top_Level_Seq> read_module(const std::string & filename) 
     return std::move(module);
 }
 
+static bool exec_command(std::vector<std::string> && cmd) {
+
+    std::cout << "[CMD] ";
+    for (const auto & arg : cmd) { std::cout << arg << ' '; }
+    std::cout << std::endl;
+
+    if (auto pid = fork(); pid == 0) {
+        // in child
+
+        std::vector<char *> args;
+        args.reserve(cmd.size());
+        for (auto & arg : cmd) { args.emplace_back(strcpy(new char[arg.size() + 1], arg.c_str())); }
+        args.push_back(nullptr);
+
+        if (execvp(args[0], args.data()) == -1) {
+            perror("execvp");
+            exit(-1);
+        } else {
+            exit(0);
+        }
+    } else if (pid == -1) {
+        perror("fork");
+        return false;
+    } else {
+
+        int wait_status;
+        if (waitpid(pid, &wait_status, 0) != pid) {
+            perror("waitpid");
+            return false;
+        }
+
+        if (not WIFEXITED(wait_status)) { return false; }
+
+        return WEXITSTATUS(wait_status) == 0;
+    }
+}
+
 int main(const int arg_count, const char * const * const args) {
 
     const auto command_line = read_settings(arg_count, args);
@@ -87,6 +125,12 @@ int main(const int arg_count, const char * const * const args) {
         auto parsed_module_result = run_module(std::move(context));
         std::cout << "parsed_module returned " << parsed_module_result << std::endl;
     } else {
-        emit_asm(std::move(context), std::move(target_triple), make_output_name(filename));
+        auto output_name = make_output_name(filename);
+        emit_asm(std::move(context), std::move(target_triple), std::string{output_name});
+
+        auto program_name = output_name.substr(0, output_name.find_last_of('.'));
+
+        // TODO: Get away from C's standard library
+        exec_command({"gcc", "-static", "-o", std::move(program_name), std::move(output_name)});
     }
 }
