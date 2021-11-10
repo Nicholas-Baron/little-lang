@@ -7,7 +7,8 @@ set(bison_output ${temp_dir}/parser.cpp)
 
 add_custom_command(
 	OUTPUT ${bison_output} ${parser_header}
-	COMMAND ${BISON_EXECUTABLE} ${bison_input} --defines=${parser_header} --report=state --graph --debug -Wall --output=${bison_output}
+	COMMAND ${BISON_EXECUTABLE} ${bison_input} --defines=${parser_header} --verbose -Wall --output=${bison_output}
+	WORKING_DIRECTORY ${temp_dir}
 	COMMENT "Generating parser..."
 	DEPENDS ${bison_input}
 	USES_TERMINAL VERBATIM
@@ -21,7 +22,7 @@ add_custom_command(
 	COMMAND ${FLEX_EXECUTABLE} --header-file=${temp_dir}/tokens.hpp -o ${flex_output} ${flex_input}
 	COMMENT "Generating tokenizer..."
 	WORKING_DIRECTORY ${temp_dir}
-	DEPENDS ${parser_header} ${flex_input}
+	DEPENDS ${flex_input}
 	USES_TERMINAL VERBATIM
 	)
 
