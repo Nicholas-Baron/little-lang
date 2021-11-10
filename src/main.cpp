@@ -1,10 +1,9 @@
 #include "context_module.hpp"
 #include "emit_asm.hpp"
 #include "jit.hpp"
-#include "nodes.hpp"
-#include "parser.hpp"
+#include "parser.hpp" // yyparse
 #include "settings.hpp"
-#include "tokens.hpp"
+#include "tokens.hpp" // yyin
 #include <sys/wait.h> // waitpid
 
 #include <cassert>
