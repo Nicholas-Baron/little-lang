@@ -4,3 +4,4 @@ logs/
 .cache/
 compile_commands.json
 todo.txt
+includes.svg

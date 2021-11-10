@@ -1,4 +1,14 @@
 #!/bin/bash
 
-tools/external/cinclude2dot --src src/ --include external/,temp/,/usr/lib/llvm-8/include,/usr/include/c++/8 | unflatten -l5 -f | dot -Tpdf -o temp/includes_src.pdf
-tools/external/cinclude2dot --src temp/ --include src/,/usr/lib/llvm-8/include,/usr/include/c++/8,/usr/include | unflatten -l5 -f | dot -Tpdf -o temp/includes_temp.pdf
+
+llvm_flags=$(llvm-config --cxxflags --ldflags --libs core native | grep -o '/[^ ]*' | grep 'include')
+
+touch lol.cpp
+cpp_lib=$(clang++ -c lol.cpp -v 2>&1 | grep '^[ ]*/.*include' | tr '\n' ',' | tr -d ' ')
+rm -f lol.o lol.cpp &
+
+# echo "LLVM: $llvm_flags"
+# echo "Clang: $cpp_lib"
+
+tools/external/cinclude2dot --src src/ --include build/temp/,$llvm_flags,$cpp_lib | dot -Tsvg -o includes.svg
+chrome includes.svg 2>&1 >/dev/null &
