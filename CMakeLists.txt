@@ -59,6 +59,7 @@ add_compile_options(-Wnon-virtual-dtor)
 add_compile_options(-Wundef)
 add_compile_options(-Wunused)
 add_compile_options(-Wwrite-strings)
+add_compile_options(-ftime-trace)
 
 add_subdirectory(src)
 add_subdirectory(test)
