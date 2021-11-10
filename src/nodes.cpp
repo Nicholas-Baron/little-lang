@@ -4,6 +4,7 @@
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Verifier.h"
 #include "parser.hpp"
+#include <llvm/IR/GlobalVariable.h>
 
 #include <cassert>
 #include <cctype> // isdigit
@@ -438,6 +439,12 @@ Value * Function::codegen(context_module & context) {
 
 Value * Constant::codegen(context_module & context) {
     auto * value = expr->compile_time_codegen(context);
-    context.insert_constant(name_and_type.name(), value);
-    return context.builder().Insert(value, name_and_type.name());
+    auto * global = new llvm::GlobalVariable{context.module(),
+                                             value->getType(),
+                                             true,
+                                             llvm::GlobalVariable::LinkageTypes::ExternalLinkage,
+                                             value,
+                                             name_and_type.name()};
+    context.insert_constant(name_and_type.name(), global);
+    return nullptr;
 }

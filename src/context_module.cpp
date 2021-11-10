@@ -41,7 +41,7 @@ Value * context_module::find_first_class_value(const std::string & name) const {
     return module_->getValueSymbolTable().lookup(name);
 }
 
-void context_module::verify_module() const { llvm::verifyModule(*module_, &llvm::dbgs()); }
+void context_module::verify_module() const { llvm::verifyModule(*module_, &llvm::errs()); }
 
 llvm::FunctionCallee context_module::find_function(const std::string & name) {
     return module_->getFunction(name);

@@ -56,7 +56,13 @@ class context_module final {
             if (auto found = iter->find(name); found != iter->end()) { return found->second; }
         }
 
-        if (auto iter = constants.find(name); iter != constants.end()) { return iter->second; }
+        if (auto iter = constants.find(name); iter != constants.end()) {
+            if (iter->second->getType()->isPointerTy()) {
+                return builder().CreateLoad(iter->second->getType()->getPointerElementType(),
+                                            iter->second);
+            }
+            return iter->second;
+        }
 
         auto * func = builder_.GetInsertBlock()->getParent();
 

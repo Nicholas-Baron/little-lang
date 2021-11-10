@@ -119,6 +119,7 @@ int main(const int arg_count, const char * const * const args) {
 
     parsed_module->codegen(context);
 
+    context.verify_module();
     context.dump();
 
     if (command_line->simulate) {
