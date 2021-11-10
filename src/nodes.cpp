@@ -1,5 +1,6 @@
 #include "nodes.hpp"
 
+#include "context_module.hpp"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Verifier.h"
 #include "parser.hpp"
@@ -122,6 +123,32 @@ FunctionType * Func_Header::full_type(context_module & context) {
     return FunctionType::get(context.find_type(ret_type, location()), param_types(context), false);
 }
 
+llvm::ConstantInt * UserValue::as_i32(context_module & context) const {
+    static constexpr auto hex_base = 16;
+    static constexpr auto dec_base = 10;
+    auto base = val.find_first_of('x') != std::string::npos ? hex_base : dec_base;
+    return context.builder().getInt32(std::stoi(val, nullptr, base));
+}
+
+llvm::ConstantInt * UserValue::as_bool(context_module & context) const {
+
+    static const std::map<std::string, bool> valid_bools{{"true", true},   {"True", true},
+                                                         {"TRUE", true},   {"false", false},
+                                                         {"False", false}, {"FALSE", false}};
+
+    auto iter = valid_bools.find(val);
+    assert(iter != valid_bools.end());
+    return context.builder().getInt1(iter->second);
+}
+
+bool UserValue::is_bool() const {
+
+    static constexpr std::array valid_bools{"true", "True", "TRUE", "false", "False", "FALSE"};
+
+    return std::find(valid_bools.begin(), valid_bools.end(), val) != valid_bools.end();
+}
+
+// TODO: Remove duplication
 Value * UserValue::codegen(context_module & context) {
     const auto first_char = val.at(0);
 
@@ -139,30 +166,17 @@ Value * UserValue::codegen(context_module & context) {
         // Some number
 
         using std::stoi, std::stof;
-        if (val.find_first_of('x') != std::string::npos) {
-            // Hex number
-            static constexpr auto hex_base = 16;
-            return context.builder().getInt32(stoi(val, nullptr, hex_base));
-        }
-
         if (val.find_first_of('.') != std::string::npos) {
             // Floating point
             return llvm::ConstantFP::get(context.context(), llvm::APFloat{stof(val)});
         }
 
         // Decimal integer
-        return context.builder().getInt32(stoi(val));
+        return as_i32(context);
     }
 
     // Some identifier or bool
-    static const std::map<std::string, bool> valid_bools{{"true", true},   {"True", true},
-                                                         {"TRUE", true},   {"false", false},
-                                                         {"False", false}, {"FALSE", false}};
-
-    if (const auto bool_value = valid_bools.find(val); bool_value != valid_bools.end()) {
-        // Boolean value
-        return context.builder().getInt1(bool_value->second);
-    }
+    if (is_bool()) { return as_bool(context); }
 
     // Identifier
     auto * value = context.find_value_in_current_scope(val);
@@ -170,6 +184,40 @@ Value * UserValue::codegen(context_module & context) {
         context.printError("Could not find variable named " + val, location());
     }
     return value;
+}
+
+llvm::Constant * UserValue::compile_time_codegen(context_module & context) {
+
+    const auto first_char = val.at(0);
+
+    switch (first_char) {
+    // A user-defined string
+    case '\"':
+        return context.builder().CreateGlobalString(val);
+
+    // A single character
+    case '\'':
+        return context.builder().getInt8(val[1]);
+    }
+
+    if (isdigit(first_char) != 0) {
+        // Some number
+
+        using std::stoi, std::stof;
+        if (val.find_first_of('.') != std::string::npos) {
+            // Floating point
+            return llvm::ConstantFP::get(context.context(), llvm::APFloat{stof(val)});
+        }
+
+        // Decimal integer
+        return as_i32(context);
+    }
+
+    // Some identifier or bool
+    if (is_bool()) { return as_bool(context); }
+
+    // some identifier
+    return context.get_constant(val);
 }
 
 Value * UnaryExpression::codegen(context_module & context) {
@@ -185,6 +233,21 @@ Value * UnaryExpression::codegen(context_module & context) {
 
     context.printError("Token number " + std::to_string(tok)
                            + " is not an implemented unary operation.",
+                       location());
+    return op_value;
+}
+
+llvm::Constant * UnaryExpression::compile_time_codegen(context_module & context) {
+    auto * op_value = expr->compile_time_codegen(context);
+    switch (tok) {
+    case T_NOT:
+        return llvm::ConstantExpr::getNot(op_value);
+    case T_MINUS:
+        return op_value->getType()->isFloatingPointTy() ? llvm::ConstantExpr::getFNeg(op_value)
+                                                        : llvm::ConstantExpr::getNeg(op_value);
+    }
+    context.printError("Token number " + std::to_string(tok)
+                           + " is not an implemented compile time unary operation.",
                        location());
     return op_value;
 }
@@ -233,6 +296,37 @@ Value * BinaryExpression::codegen(context_module & context) {
         return context.builder().CreateSub(left, right);
     case T_MULT:
         return context.builder().CreateMul(left, right);
+    }
+
+    context.printError("Token number " + std::to_string(tok)
+                           + " is not an implemented binary operation.",
+                       location());
+    return nullptr;
+}
+
+llvm::Constant * BinaryExpression::compile_time_codegen(context_module & context) {
+    auto * left = lhs_->compile_time_codegen(context);
+    auto * right = rhs_->compile_time_codegen(context);
+
+    if (left == nullptr) {
+        context.printError("Token #" + std::to_string(tok) + " has a null left operand.",
+                           location());
+        return right;
+    }
+
+    if (right == nullptr) {
+        context.printError("Token #" + std::to_string(tok) + " has a null right operand.",
+                           location());
+        return left;
+    }
+
+    switch (tok) {
+    case T_PLUS:
+        return llvm::ConstantExpr::getAdd(left, right);
+    case T_MINUS:
+        return llvm::ConstantExpr::getSub(left, right);
+    case T_MULT:
+        return llvm::ConstantExpr::getMul(left, right);
     }
 
     context.printError("Token number " + std::to_string(tok)
@@ -342,7 +436,8 @@ Value * Function::codegen(context_module & context) {
     return func;
 }
 
-Value * Constant::codegen(context_module & /*context*/) {
-    llvm::errs() << "Codegen for constants is not implemented\n";
-    return nullptr;
+Value * Constant::codegen(context_module & context) {
+    auto * value = expr->compile_time_codegen(context);
+    context.insert_constant(name_and_type.name(), value);
+    return context.builder().Insert(value, name_and_type.name());
 }

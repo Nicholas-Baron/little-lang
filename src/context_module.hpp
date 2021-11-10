@@ -23,6 +23,7 @@ class context_module final {
     std::vector<std::map<std::string, llvm::Value *>> currently_alive_values;
 
     std::map<std::string, llvm::Type *> valid_types;
+    std::map<std::string, llvm::Constant *> constants;
 
   public:
     context_module() = delete;
@@ -49,11 +50,13 @@ class context_module final {
 
     [[nodiscard]] llvm::Value * find_first_class_value(const std::string & name) const;
 
-    auto * find_value_in_current_scope(const std::string & name) {
+    llvm::Value * find_value_in_current_scope(const std::string & name) {
         for (auto iter = currently_alive_values.rbegin(); iter != currently_alive_values.rend();
              iter++) {
             if (auto found = iter->find(name); found != iter->end()) { return found->second; }
         }
+
+        if (auto iter = constants.find(name); iter != constants.end()) { return iter->second; }
 
         auto * func = builder_.GetInsertBlock()->getParent();
 
@@ -104,6 +107,18 @@ class context_module final {
         const auto iter = valid_types.find(name);
         if (iter != valid_types.end()) { return iter->second; }
         printError(name + " is an unknown type", loc);
+        return nullptr;
+    }
+
+    void insert_constant(std::string name, llvm::Constant * value) {
+        constants.emplace(std::move(name), value);
+    }
+
+    llvm::Constant * get_constant(const std::string & name) {
+        auto iter = constants.find(name);
+        if (iter != constants.end()) { return iter->second; }
+
+        printError("Could not find constant " + name);
         return nullptr;
     }
 };

@@ -78,7 +78,10 @@ class Node {
 };
 
 // Base classes
-class Expression : public virtual Node {};
+class Expression : public virtual Node {
+  public:
+    virtual llvm::Constant * compile_time_codegen(context_module &) = 0;
+};
 class Statement : public virtual Node {};
 class Top_Level : public virtual Node {};
 
@@ -122,8 +125,14 @@ class UserValue final : public Expression {
         : val(std::move(value)) {}
 
     llvm::Value * codegen(context_module & context) override;
+    llvm::Constant * compile_time_codegen(context_module & context) override;
 
   private:
+    [[nodiscard]] llvm::ConstantInt * as_i32(context_module &) const;
+    [[nodiscard]] llvm::ConstantInt * as_bool(context_module &) const;
+
+    [[nodiscard]] bool is_bool() const;
+
     std::string val;
 };
 
@@ -134,6 +143,7 @@ class UnaryExpression final : public Expression {
         , expr(operand) {}
 
     llvm::Value * codegen(context_module & context) override;
+    llvm::Constant * compile_time_codegen(context_module & context) override;
 
   private:
     int tok;
@@ -148,6 +158,8 @@ class BinaryExpression final : public Expression {
         , tok(op) {}
 
     llvm::Value * codegen(context_module & context) override;
+
+    llvm::Constant * compile_time_codegen(context_module & context) override;
 
   private:
     [[nodiscard]] bool is_comparison() const noexcept;
@@ -167,6 +179,10 @@ class FunctionCall final : public Statement, public Expression {
         , args_{std::move(args)} {}
 
     llvm::Value * codegen(context_module & context) override;
+    llvm::ConstantExpr * compile_time_codegen(context_module & context) override {
+        context.printError("Function call cannot be done in a compile time context", location());
+        return nullptr;
+    }
 
   private:
     std::string name_;
