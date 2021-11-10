@@ -11,8 +11,6 @@
 #include <utility>
 #include <vector>
 
-llvm::Value * find_local_value(llvm::Function * func, const std::string & name);
-
 class context_module final {
 
     llvm::LLVMContext context_{};
@@ -50,25 +48,7 @@ class context_module final {
 
     [[nodiscard]] llvm::Value * find_first_class_value(const std::string & name) const;
 
-    llvm::Value * find_value_in_current_scope(const std::string & name) {
-        for (auto iter = currently_alive_values.rbegin(); iter != currently_alive_values.rend();
-             iter++) {
-            if (auto found = iter->find(name); found != iter->end()) { return found->second; }
-        }
-
-        if (auto iter = constants.find(name); iter != constants.end()) {
-            if (iter->second->getType()->isPointerTy()) {
-                return builder().CreateLoad(iter->second->getType()->getPointerElementType(),
-                                            iter->second);
-            }
-            return iter->second;
-        }
-
-        auto * func = builder_.GetInsertBlock()->getParent();
-
-        if (func != nullptr) { return find_local_value(func, name); }
-        return find_first_class_value(name);
-    }
+    llvm::Value * find_value_in_current_scope(const std::string & name);
 
     void verify_module() const;
 

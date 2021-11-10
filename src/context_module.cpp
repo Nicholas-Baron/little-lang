@@ -41,6 +41,26 @@ Value * context_module::find_first_class_value(const std::string & name) const {
     return module_->getValueSymbolTable().lookup(name);
 }
 
+llvm::Value * context_module::find_value_in_current_scope(const std::string & name) {
+    for (auto iter = currently_alive_values.rbegin(); iter != currently_alive_values.rend();
+         iter++) {
+        if (auto found = iter->find(name); found != iter->end()) { return found->second; }
+    }
+
+    if (auto iter = constants.find(name); iter != constants.end()) {
+        if (iter->second->getType()->isPointerTy()) {
+            return builder().CreateLoad(iter->second->getType()->getPointerElementType(),
+                                        iter->second);
+        }
+        return iter->second;
+    }
+
+    auto * func = builder_.GetInsertBlock()->getParent();
+
+    if (func != nullptr) { return find_local_value(func, name); }
+    return find_first_class_value(name);
+}
+
 void context_module::verify_module() const { llvm::verifyModule(*module_, &llvm::errs()); }
 
 llvm::FunctionCallee context_module::find_function(const std::string & name) {
