@@ -10,7 +10,7 @@ add_custom_command(
 	COMMAND ${BISON_EXECUTABLE} ${bison_input} --defines=${parser_header} --report=state --graph --debug -Wall --output=${bison_output}
 	COMMENT "Generating parser..."
 	DEPENDS ${bison_input}
-	USES_TERMINAL
+	USES_TERMINAL VERBATIM
 	)
 
 set(flex_input ${CMAKE_SOURCE_DIR}/src/tokens.l ${parser_header})
@@ -22,7 +22,7 @@ add_custom_command(
 	COMMENT "Generating tokenizer..."
 	WORKING_DIRECTORY ${temp_dir}
 	DEPENDS ${parser_header} ${flex_input}
-	USES_TERMINAL
+	USES_TERMINAL VERBATIM
 	)
 
 set(proj_files
