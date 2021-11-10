@@ -58,11 +58,13 @@ static std::unique_ptr<Top_Level_Seq> read_module(const std::string & filename) 
     return std::move(module);
 }
 
-static bool exec_command(std::vector<std::string> && cmd) {
+static bool exec_command(std::vector<std::string> && cmd, bool debug) {
 
-    std::cout << "[CMD] ";
-    for (const auto & arg : cmd) { std::cout << arg << ' '; }
-    std::cout << std::endl;
+    if (debug) {
+        std::cout << "[CMD] ";
+        for (const auto & arg : cmd) { std::cout << arg << ' '; }
+        std::cout << std::endl;
+    }
 
     if (auto pid = fork(); pid == 0) {
         // in child
@@ -119,7 +121,8 @@ int main(const int arg_count, const char * const * const args) {
     parsed_module->codegen(context);
 
     context.verify_module();
-    context.dump();
+
+    if (command_line->debug) { context.dump(); }
 
     if (command_line->simulate) {
         auto parsed_module_result = run_module(std::move(context));
@@ -131,6 +134,7 @@ int main(const int arg_count, const char * const * const args) {
         auto program_name = output_name.substr(0, output_name.find_last_of('.'));
 
         // TODO: Get away from C's standard library
-        exec_command({"gcc", "-static", "-o", std::move(program_name), std::move(output_name)});
+        exec_command({"gcc", "-static", "-o", std::move(program_name), std::move(output_name)},
+                     command_line->debug);
     }
 }

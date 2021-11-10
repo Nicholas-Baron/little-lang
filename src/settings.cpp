@@ -12,6 +12,7 @@ std::shared_ptr<Settings> read_settings(int arg_count, const char * const * args
 
     auto cli = lyra::help(print_help) | lyra::opt(settings->print_version)["--version"]["-V"]
              | lyra::opt(settings->simulate)["--sim"]
+             | lyra::opt(settings->debug)["--debug"]
              | lyra::arg(settings->file_to_read, "file to read");
 
     if (auto result = cli.parse({arg_count, args}); not result) {
