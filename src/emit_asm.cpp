@@ -63,7 +63,7 @@ void emit_asm(context_module && context, std::string && target_triple,
 
     {
         // new pass manager
-        PassBuilder pb{false, target_machine};
+        PassBuilder pb{target_machine};
 
         LoopAnalysisManager lam;
         FunctionAnalysisManager fam;
