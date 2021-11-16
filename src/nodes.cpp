@@ -13,6 +13,90 @@
 using llvm::Type, llvm::FunctionType, llvm::Value;
 
 namespace {
+    // TODO: Test this?
+    [[nodiscard]] std::string tok_to_string(int tok) {
+        switch (tok) {
+        default:
+            return "[Internal Bison Value]";
+        case T_EQ:
+            return "T_EQ";
+        case T_NE:
+            return "T_NE";
+        case T_LT:
+            return "T_LT";
+        case T_GT:
+            return "T_GT";
+        case T_LE:
+            return "T_LE";
+        case T_GE:
+            return "T_GE";
+        case T_LPAREN:
+            return "T_LPAREN";
+        case T_RPAREN:
+            return "T_RPAREN";
+        case T_LBRACE:
+            return "T_LBRACE";
+        case T_RBRACE:
+            return "T_RBRACE";
+        case T_LBRACK:
+            return "T_LBRACK";
+        case T_RBRACK:
+            return "T_RBRACK";
+        case T_PLUS:
+            return "T_PLUS";
+        case T_MINUS:
+            return "T_MINUS";
+        case T_DIV:
+            return "T_DIV";
+        case T_MULT:
+            return "T_MULT";
+        case T_MOD:
+            return "T_MOD";
+        case T_COMMA:
+            return "T_COMMA";
+        case T_IS:
+            return "T_IS";
+        case T_SEMI:
+            return "T_SEMI";
+        case T_DOT:
+            return "T_DOT";
+        case T_RET:
+            return "T_RET";
+        case T_IF:
+            return "T_IF";
+        case T_ELSE:
+            return "T_ELSE";
+        case T_LET:
+            return "T_LET";
+        case T_CONST:
+            return "T_CONST";
+        case T_AND:
+            return "T_AND";
+        case T_OR:
+            return "T_OR";
+        case T_NOT:
+            return "T_NOT";
+        case T_ASSIGN:
+            return "T_ASSIGN";
+        case T_PROC:
+            return "T_PROC";
+        case T_IDENT:
+            return "T_IDENT";
+        case T_INT:
+            return "T_INT";
+        case T_CHAR:
+            return "T_CHAR";
+        case T_BOOL:
+            return "T_BOOL";
+        case T_STRING:
+            return "T_STRING";
+        case T_FLOAT:
+            return "T_FLOAT";
+        case T_PRIM_TYPE:
+            return "T_PRIM_TYPE";
+        }
+    }
+
     [[nodiscard]] std::string temp_block_name() {
         static unsigned num = 0;
         return "block_" + std::to_string(num++);
@@ -60,7 +144,7 @@ namespace {
             }
         }
 
-        context.printError("Token number " + std::to_string(tok)
+        context.printError("Token number " + tok_to_string(tok)
                                + " is not currently supported as a comparison.",
                            loc);
         return context.builder().getFalse();
@@ -106,6 +190,7 @@ namespace {
     const std::map<std::string, bool> valid_bools{{"true", true},   {"True", true},
                                                   {"TRUE", true},   {"false", false},
                                                   {"False", false}, {"FALSE", false}};
+
 } // namespace
 
 std::vector<Type *> Func_Header::param_types(context_module & context) {
@@ -225,7 +310,7 @@ Value * UnaryExpression::codegen(context_module & context) {
         return context.builder().CreateNeg(op_value);
     }
 
-    context.printError("Token number " + std::to_string(tok)
+    context.printError("Token number " + tok_to_string(tok)
                            + " is not an implemented unary operation.",
                        location());
     return op_value;
@@ -240,7 +325,7 @@ llvm::Constant * UnaryExpression::compile_time_codegen(context_module & context)
         return op_value->getType()->isFloatingPointTy() ? llvm::ConstantExpr::getFNeg(op_value)
                                                         : llvm::ConstantExpr::getNeg(op_value);
     }
-    context.printError("Token number " + std::to_string(tok)
+    context.printError("Token number " + tok_to_string(tok)
                            + " is not an implemented compile time unary operation.",
                        location());
     return op_value;
@@ -270,13 +355,13 @@ Value * BinaryExpression::codegen(context_module & context) {
     auto * right = rhs_->codegen(context);
 
     if (left == nullptr) {
-        context.printError("Token #" + std::to_string(tok) + " has a null left operand.",
+        context.printError("Token #" + tok_to_string(tok) + " has a null left operand.",
                            location());
         return right;
     }
 
     if (right == nullptr) {
-        context.printError("Token #" + std::to_string(tok) + " has a null right operand.",
+        context.printError("Token #" + tok_to_string(tok) + " has a null right operand.",
                            location());
         return left;
     }
@@ -292,7 +377,7 @@ Value * BinaryExpression::codegen(context_module & context) {
         return context.builder().CreateMul(left, right);
     }
 
-    context.printError("Token number " + std::to_string(tok)
+    context.printError("Token number " + tok_to_string(tok)
                            + " is not an implemented binary operation.",
                        location());
     return nullptr;
@@ -303,13 +388,13 @@ llvm::Constant * BinaryExpression::compile_time_codegen(context_module & context
     auto * right = rhs_->compile_time_codegen(context);
 
     if (left == nullptr) {
-        context.printError("Token #" + std::to_string(tok) + " has a null left operand.",
+        context.printError("Token #" + tok_to_string(tok) + " has a null left operand.",
                            location());
         return right;
     }
 
     if (right == nullptr) {
-        context.printError("Token #" + std::to_string(tok) + " has a null right operand.",
+        context.printError("Token #" + tok_to_string(tok) + " has a null right operand.",
                            location());
         return left;
     }
@@ -323,7 +408,7 @@ llvm::Constant * BinaryExpression::compile_time_codegen(context_module & context
         return llvm::ConstantExpr::getMul(left, right);
     }
 
-    context.printError("Token number " + std::to_string(tok)
+    context.printError("Token number " + tok_to_string(tok)
                            + " is not an implemented binary operation.",
                        location());
     return nullptr;
