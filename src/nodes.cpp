@@ -103,6 +103,9 @@ namespace {
         return phi;
     }
 
+    const std::map<std::string, bool> valid_bools{{"true", true},   {"True", true},
+                                                  {"TRUE", true},   {"false", false},
+                                                  {"False", false}, {"FALSE", false}};
 } // namespace
 
 std::vector<Type *> Func_Header::param_types(context_module & context) {
@@ -132,22 +135,12 @@ llvm::ConstantInt * UserValue::as_i32(context_module & context) const {
 }
 
 llvm::ConstantInt * UserValue::as_bool(context_module & context) const {
-
-    static const std::map<std::string, bool> valid_bools{{"true", true},   {"True", true},
-                                                         {"TRUE", true},   {"false", false},
-                                                         {"False", false}, {"FALSE", false}};
-
     auto iter = valid_bools.find(val);
     assert(iter != valid_bools.end());
     return context.builder().getInt1(iter->second);
 }
 
-bool UserValue::is_bool() const {
-
-    static constexpr std::array valid_bools{"true", "True", "TRUE", "false", "False", "FALSE"};
-
-    return std::find(valid_bools.begin(), valid_bools.end(), val) != valid_bools.end();
-}
+bool UserValue::is_bool() const { return valid_bools.find(val) != valid_bools.end(); }
 
 // TODO: Remove duplication
 Value * UserValue::codegen(context_module & context) {
