@@ -3,6 +3,7 @@
 
 #include "context_module.hpp"
 #include "location.hpp"
+#include "utils/move_copy.hpp"
 #include <llvm/IR/Value.h>
 
 // Classes that do not need Node
@@ -59,11 +60,9 @@ class Node {
   public:
     Node() = default;
 
-    Node(const Node &) = delete;
-    Node & operator=(const Node &) = delete;
+    non_copyable(Node);
 
-    Node(Node &&) = default;
-    Node & operator=(Node &&) = default;
+    movable(Node);
 
     virtual ~Node() = default;
 
@@ -99,11 +98,9 @@ class Top_Level_Seq final : public Node {
         append(first_item);
     }
 
-    Top_Level_Seq(const Top_Level_Seq &) = delete;
-    Top_Level_Seq & operator=(const Top_Level_Seq &) = delete;
+    non_copyable(Top_Level_Seq);
 
-    Top_Level_Seq(Top_Level_Seq &&) = default;
-    Top_Level_Seq & operator=(Top_Level_Seq &&) = default;
+    movable(Top_Level_Seq);
 
     ~Top_Level_Seq() override = default;
 
@@ -129,6 +126,10 @@ class UserValue final : public Expression {
     UserValue(std::string && value)
         : val(std::move(value)) {}
 
+    non_copyable(UserValue);
+
+    movable(UserValue);
+
     llvm::Value * codegen(context_module & context) override;
     llvm::Constant * compile_time_codegen(context_module & context) override;
 
@@ -147,6 +148,10 @@ class UnaryExpression final : public Expression {
         : tok(token)
         , expr(operand) {}
 
+    non_copyable(UnaryExpression);
+
+    movable(UnaryExpression);
+
     llvm::Value * codegen(context_module & context) override;
     llvm::Constant * compile_time_codegen(context_module & context) override;
 
@@ -161,6 +166,10 @@ class BinaryExpression final : public Expression {
         : lhs_(lhs)
         , rhs_(rhs)
         , tok(op) {}
+
+    non_copyable(BinaryExpression);
+
+    movable(BinaryExpression);
 
     llvm::Value * codegen(context_module & context) override;
 
@@ -183,6 +192,10 @@ class FunctionCall final : public Statement, public Expression {
         : name_(std::move(name))
         , args_{std::move(args)} {}
 
+    non_copyable(FunctionCall);
+
+    movable(FunctionCall);
+
     llvm::Value * codegen(context_module & context) override;
     llvm::ConstantExpr * compile_time_codegen(context_module & context) override {
         context.printError("Function call cannot be done in a compile time context", location());
@@ -203,6 +216,10 @@ class If_Statement final : public Statement {
         , true_branch(on_true)
         , else_branch(on_false) {}
 
+    non_copyable(If_Statement);
+
+    movable(If_Statement);
+
     llvm::Value * codegen(context_module & context) override;
 
   private:
@@ -221,6 +238,10 @@ class Let_Statement final : public Statement {
         : name_and_type(std::move(typed_name))
         , value_(value) {}
 
+    non_copyable(Let_Statement);
+
+    movable(Let_Statement);
+
     llvm::Value * codegen(context_module & context) override;
 
   private:
@@ -236,11 +257,9 @@ class Statement_Seq final : public Statement {
         append(stmt);
     }
 
-    Statement_Seq(const Statement_Seq &) = delete;
-    Statement_Seq & operator=(const Statement_Seq &) = delete;
+    non_copyable(Statement_Seq);
 
-    Statement_Seq(Statement_Seq &&) = default;
-    Statement_Seq & operator=(Statement_Seq &&) = default;
+    movable(Statement_Seq);
 
     ~Statement_Seq() override = default;
 
@@ -261,6 +280,10 @@ class Return_Statement final : public Statement {
     explicit Return_Statement(Expression * val = nullptr)
         : value(val) {}
 
+    non_copyable(Return_Statement);
+
+    movable(Return_Statement);
+
     llvm::Value * codegen(context_module & context) override;
 
   private:
@@ -274,6 +297,10 @@ class Function final : public Top_Level {
         : head_(std::move(head))
         , body_(body) {}
 
+    non_copyable(Function);
+
+    movable(Function);
+
     llvm::Value * codegen(context_module & context) override;
 
   private:
@@ -286,6 +313,10 @@ class Constant final : public Top_Level {
     Constant(Typed_Var && name_and_type, Expression * expr)
         : name_and_type(std::move(name_and_type))
         , expr{expr} {}
+
+    non_copyable(Constant);
+
+    movable(Constant);
 
     llvm::Value * codegen(context_module & /*context*/) override;
 
