@@ -12,6 +12,7 @@ MaxEmptyLinesToKeep: 1
 AlignOperands: AlignAfterOperator
 AlignTrailingComments: true
 AlignAfterOpenBracket: Align
+AlignEscapedNewlines: Left
 
 # Allowed shortenings
 AllowShortBlocksOnASingleLine: true
