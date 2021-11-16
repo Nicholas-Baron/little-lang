@@ -85,6 +85,11 @@ class Expression : public virtual Node {
 class Statement : public virtual Node {};
 class Top_Level : public virtual Node {};
 
+// Utility types aliases
+using expr_ptr = std::unique_ptr<Expression>;
+using stmt_ptr = std::unique_ptr<Statement>;
+using top_lvl_ptr = std::unique_ptr<Top_Level>;
+
 // Direct from Node classes
 class Top_Level_Seq final : public Node {
   public:
@@ -114,7 +119,7 @@ class Top_Level_Seq final : public Node {
     }
 
   private:
-    std::vector<std::unique_ptr<Top_Level>> top_lvl_seq_;
+    std::vector<top_lvl_ptr> top_lvl_seq_;
 };
 
 // Expression classes
@@ -147,7 +152,7 @@ class UnaryExpression final : public Expression {
 
   private:
     int tok;
-    std::unique_ptr<Expression> expr;
+    expr_ptr expr;
 };
 
 class BinaryExpression final : public Expression {
@@ -165,7 +170,7 @@ class BinaryExpression final : public Expression {
     [[nodiscard]] bool is_comparison() const noexcept;
     [[nodiscard]] bool is_shortcircuiting() const noexcept;
 
-    std::unique_ptr<Expression> lhs_, rhs_;
+    expr_ptr lhs_, rhs_;
     int tok;
 };
 
@@ -174,7 +179,7 @@ class BinaryExpression final : public Expression {
 
 class FunctionCall final : public Statement, public Expression {
   public:
-    FunctionCall(std::string && name, std::vector<std::unique_ptr<Expression>> && args)
+    FunctionCall(std::string && name, std::vector<expr_ptr> && args)
         : name_(std::move(name))
         , args_{std::move(args)} {}
 
@@ -186,7 +191,7 @@ class FunctionCall final : public Statement, public Expression {
 
   private:
     std::string name_;
-    std::vector<std::unique_ptr<Expression>> args_{};
+    std::vector<expr_ptr> args_{};
 };
 
 // Statement classes
@@ -201,9 +206,9 @@ class If_Statement final : public Statement {
     llvm::Value * codegen(context_module & context) override;
 
   private:
-    std::unique_ptr<Expression> condition;
-    std::unique_ptr<Statement> true_branch;
-    std::unique_ptr<Statement> else_branch;
+    expr_ptr condition;
+    stmt_ptr true_branch;
+    stmt_ptr else_branch;
 };
 
 class Let_Statement final : public Statement {
@@ -220,7 +225,7 @@ class Let_Statement final : public Statement {
 
   private:
     Typed_Var name_and_type;
-    std::unique_ptr<Expression> value_;
+    expr_ptr value_;
 };
 
 class Statement_Seq final : public Statement {
@@ -248,7 +253,7 @@ class Statement_Seq final : public Statement {
     }
 
   private:
-    std::vector<std::unique_ptr<Statement>> statements{};
+    std::vector<stmt_ptr> statements{};
 };
 
 class Return_Statement final : public Statement {
@@ -259,7 +264,7 @@ class Return_Statement final : public Statement {
     llvm::Value * codegen(context_module & context) override;
 
   private:
-    std::unique_ptr<Expression> value;
+    expr_ptr value;
 };
 
 // Top Level classes
@@ -273,7 +278,7 @@ class Function final : public Top_Level {
 
   private:
     Func_Header head_;
-    std::unique_ptr<Statement> body_;
+    stmt_ptr body_;
 };
 
 class Constant final : public Top_Level {
@@ -286,7 +291,7 @@ class Constant final : public Top_Level {
 
   private:
     Typed_Var name_and_type;
-    std::unique_ptr<Expression> expr;
+    expr_ptr expr;
 };
 
 #endif
