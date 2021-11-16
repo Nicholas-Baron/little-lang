@@ -5,6 +5,7 @@
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "location.hpp"
+#include "utils/move_copy.hpp"
 
 #include <map>
 #include <optional>
@@ -27,11 +28,9 @@ class context_module final {
     context_module() = delete;
     explicit context_module(const std::string & name);
 
-    context_module(const context_module &) = delete;
-    context_module & operator=(const context_module &) = delete;
+    non_copyable(context_module);
 
-    context_module(context_module &&) = delete;
-    context_module & operator=(context_module &&) = delete;
+    non_movable(context_module);
 
     ~context_module() noexcept = default;
 
