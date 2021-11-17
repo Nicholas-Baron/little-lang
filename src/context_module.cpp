@@ -89,6 +89,21 @@ llvm::Type * context_module::get_identifer_type(const std::string & name) {
         return func->getFunctionType();
     }
 
+    // checked the typed names
+    if (auto iter = typed_vars.find(name); iter != typed_vars.end()) { return iter->second; }
+
     // check locals
     return find_value_in_current_scope(name)->getType();
+}
+
+bool context_module::bind_type(std::string name, llvm::Type * type) {
+    if (auto iter = typed_vars.find(name); iter != typed_vars.end()) {
+        if (iter->second == type) { return true; }
+        printError(name + " is being assigned a different type. Failing type check");
+        return false;
+    }
+
+    typed_vars.emplace(std::move(name), type);
+
+    return true;
 }

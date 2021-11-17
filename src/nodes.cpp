@@ -580,3 +580,15 @@ Value * Constant::codegen(context_module & context) {
     context.insert_constant(name_and_type.name(), global);
     return nullptr;
 }
+
+bool Constant::type_check(context_module & context) {
+    auto * named_type = context.find_type(name_and_type.type(), location());
+    auto * expr_type = expr->type_check(context);
+
+    if (expr_type == nullptr) {
+        context.printError("Could not type check constant " + name_and_type.name(), location());
+        return false;
+    }
+
+    return named_type == expr_type;
+}

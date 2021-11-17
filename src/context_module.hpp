@@ -19,6 +19,7 @@ class context_module final {
     std::unique_ptr<llvm::Module> module_;
     llvm::IRBuilder<> builder_;
 
+    std::map<std::string, llvm::Type *> typed_vars;
     std::vector<std::map<std::string, llvm::Value *>> currently_alive_values;
 
     std::map<std::string, llvm::Type *> valid_types;
@@ -108,6 +109,10 @@ class context_module final {
     }
 
     llvm::Type * get_identifer_type(const std::string &);
+
+    [[nodiscard]] bool bind_type(std::string, llvm::Type *);
+
+    void clean_type_bindings() { typed_vars.clear(); }
 };
 
 #endif

@@ -83,8 +83,14 @@ class Expression : public virtual Node {
 
     virtual llvm::Type * type_check(context_module &) = 0;
 };
-class Statement : public virtual Node {};
-class Top_Level : public virtual Node {};
+class Statement : public virtual Node {
+  public:
+    [[nodiscard]] virtual bool type_check(context_module &) = 0;
+};
+class Top_Level : public virtual Node {
+  public:
+    [[nodiscard]] virtual bool type_check(context_module &) = 0;
+};
 
 // Utility types aliases
 using expr_ptr = std::unique_ptr<Expression>;
@@ -115,6 +121,14 @@ class Top_Level_Seq final : public Node {
             item->codegen(context);
         }
         return nullptr;
+    }
+
+    [[nodiscard]] bool type_check(context_module & context) {
+        for (auto & item : top_lvl_seq_) {
+            assert(item != nullptr);
+            if (not item->type_check(context)) { return false; }
+        }
+        return true;
     }
 
   private:
@@ -242,6 +256,11 @@ class If_Statement final : public Statement {
 
     llvm::Value * codegen(context_module & context) override;
 
+    bool type_check(context_module & context) override {
+        return condition->type_check(context) != nullptr and true_branch->type_check(context)
+           and (else_branch == nullptr or else_branch->type_check(context));
+    }
+
   private:
     expr_ptr condition;
     stmt_ptr true_branch;
@@ -263,6 +282,21 @@ class Let_Statement final : public Statement {
     movable(Let_Statement);
 
     llvm::Value * codegen(context_module & context) override;
+
+    bool type_check(context_module & context) override {
+        auto * expr_type = value_->type_check(context);
+        if (expr_type == nullptr) { return false; }
+
+        auto * decl_type = context.find_type(name_and_type.type(), location());
+
+        if (decl_type == nullptr or expr_type != decl_type) {
+            context.printError("Let-binding for " + name_and_type.name() + " could not type check.",
+                               location());
+            return false;
+        }
+
+        return context.bind_type(name_and_type.name(), expr_type);
+    }
 
   private:
     Typed_Var name_and_type;
@@ -291,6 +325,13 @@ class Statement_Seq final : public Statement {
         return nullptr;
     }
 
+    bool type_check(context_module & context) override {
+        for (const auto & entry : statements) {
+            if (not entry->type_check(context)) { return false; }
+        }
+        return true;
+    }
+
   private:
     std::vector<stmt_ptr> statements{};
 };
@@ -305,6 +346,13 @@ class Return_Statement final : public Statement {
     movable(Return_Statement);
 
     llvm::Value * codegen(context_module & context) override;
+
+    bool type_check(context_module & context) override {
+        auto * expr_type
+            = value != nullptr ? value->type_check(context) : context.builder().getVoidTy();
+        auto * decl_type = context.get_identifer_type("return");
+        return expr_type == decl_type;
+    }
 
   private:
     expr_ptr value;
@@ -323,6 +371,19 @@ class Function final : public Top_Level {
 
     llvm::Value * codegen(context_module & context) override;
 
+    bool type_check(context_module & context) override {
+        context.clean_type_bindings();
+        auto * full_type = head_.full_type(context);
+        for (auto i = 0U; i < full_type->getNumParams(); ++i) {
+            if (not context.bind_type(head_.arg(i).name(), full_type->getParamType(i))) {
+                return false;
+            }
+        }
+        auto bind_return = context.bind_type("return", full_type->getReturnType());
+        assert(bind_return);
+        return body_->type_check(context);
+    }
+
   private:
     Func_Header head_;
     stmt_ptr body_;
@@ -339,6 +400,8 @@ class Constant final : public Top_Level {
     movable(Constant);
 
     llvm::Value * codegen(context_module & /*context*/) override;
+
+    bool type_check(context_module &) override;
 
   private:
     Typed_Var name_and_type;
