@@ -97,6 +97,27 @@ using expr_ptr = std::unique_ptr<Expression>;
 using stmt_ptr = std::unique_ptr<Statement>;
 using top_lvl_ptr = std::unique_ptr<Top_Level>;
 
+// Stores the function call data.
+// is facaded by func_call_expr and func_call_stmt
+class func_call_data final {
+  public:
+    func_call_data(std::string && name, std::vector<expr_ptr> && args)
+        : name_(std::move(name))
+        , args_{std::move(args)} {}
+
+    non_copyable(func_call_data);
+
+    movable(func_call_data);
+
+    llvm::Value * codegen(context_module & context);
+
+    llvm::Type * type_check(context_module &, Location);
+
+  private:
+    std::string name_;
+    std::vector<expr_ptr> args_{};
+};
+
 // Direct from Node classes
 class Top_Level_Seq final : public Node {
   public:
@@ -215,30 +236,24 @@ class BinaryExpression final : public Expression {
     int tok;
 };
 
-// The FunctionCall class needs to be either a Expression or Statement
-// because calling a function could be a statement or part of an expression
-
-class FunctionCall final : public Statement, public Expression {
+class func_call_expr final : public Expression {
   public:
-    FunctionCall(std::string && name, std::vector<expr_ptr> && args)
-        : name_(std::move(name))
-        , args_{std::move(args)} {}
+    explicit func_call_expr(func_call_data && data)
+        : data{std::move(data)} {}
 
-    non_copyable(FunctionCall);
+    llvm::Value * codegen(context_module & context) override { return data.codegen(context); }
 
-    movable(FunctionCall);
-
-    llvm::Value * codegen(context_module & context) override;
     llvm::ConstantExpr * compile_time_codegen(context_module & context) override {
         context.printError("Function call cannot be done in a compile time context", location());
         return nullptr;
     }
 
-    llvm::Type * type_check(context_module &) override;
+    llvm::Type * type_check(context_module & context) override {
+        return data.type_check(context, location());
+    }
 
   private:
-    std::string name_;
-    std::vector<expr_ptr> args_{};
+    func_call_data data;
 };
 
 // Statement classes
@@ -334,6 +349,22 @@ class Statement_Seq final : public Statement {
 
   private:
     std::vector<stmt_ptr> statements{};
+};
+
+class func_call_stmt final : public Statement {
+  public:
+    explicit func_call_stmt(func_call_data && data)
+        : data{std::move(data)} {}
+
+    llvm::Value * codegen(context_module & context) override { return data.codegen(context); }
+
+    bool type_check(context_module & context) override {
+        // TODO: We may want to allow dropping return values
+        return data.type_check(context, location()) == context.builder().getVoidTy();
+    }
+
+  private:
+    func_call_data data;
 };
 
 class Return_Statement final : public Statement {

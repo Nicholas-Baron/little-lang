@@ -47,7 +47,7 @@
     Statement * stmt;
     Top_Level * top_lvl;
 
-    FunctionCall * func_call;
+    func_call_data * func_call;
 
     Func_Header * func_head;
     Typed_Var * var_with_type;
@@ -153,7 +153,7 @@ statement_seq : %empty { $$ = new Statement_Seq; set_loc($$, @$); }
 
 action : T_RET expr { $$ = new Return_Statement($2); set_loc($$, @$);}
        | T_RET { $$ = new Return_Statement; set_loc($$, @$);}
-       | func_call { $$ = dynamic_cast<Statement *>($1); set_loc($$, @$);}
+       | func_call { $$ = new func_call_stmt(std::move(*$1)); delete $1; set_loc($$, @$);}
        | T_LET T_IDENT initialization { $$ = new Let_Statement(std::move(*$2), $3); delete $2; set_loc($$, @$); }
        | T_LET typed_var initialization { $$ = new Let_Statement(std::move(*$2), $3); delete $2; set_loc($$, @$); }
        ;
@@ -173,7 +173,7 @@ initialization : T_ASSIGN expr { $$ = $2;  set_loc($$, @$); }
 literal : T_INT | T_FLOAT | T_CHAR | T_BOOL | T_STRING ;
 
 expr  : T_IDENT { $$ = new UserValue(std::move(*$1)); delete $1; set_loc($$, @$);  }
-      | func_call { $$ = dynamic_cast<Expression*>($1); set_loc($$, @$);  }
+      | func_call { $$ = new func_call_expr(std::move(*$1)); delete $1; set_loc($$, @$);  }
       | literal { $$ = new UserValue(std::move(*$1)); delete $1; set_loc($$, @$);  }
       | T_LPAREN expr T_RPAREN { $$ = $2; set_loc($$, @$);  }
       | T_NOT expr { $$ = new UnaryExpression($1, $2); set_loc($$, @$);  }
@@ -194,12 +194,14 @@ expr  : T_IDENT { $$ = new UserValue(std::move(*$1)); delete $1; set_loc($$, @$)
       ;
 
 func_call : T_IDENT arg_group {
-            $$ = new FunctionCall(std::move(*$1), std::move(*$2)); delete $1; delete $2; set_loc($$, @$);
+            $$ = new func_call_data(std::move(*$1), std::move(*$2)); delete $1; delete $2;
           }
           | T_IDENT T_DOT func_call {
             std::vector<std::unique_ptr<Expression>> args;
-            args.emplace_back($3);
-            $$ = new FunctionCall{std::move(*$1), std::move(args)}; delete $1; set_loc($$, @$);
+            args.emplace_back(std::make_unique<func_call_expr>(std::move(*$3)));
+            $$ = new func_call_data{std::move(*$1), std::move(args)};
+			delete $1;
+			delete $3;
           }
           ;
 

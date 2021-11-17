@@ -120,6 +120,11 @@ int main(const int arg_count, const char * const * const args) {
 
     parsed_module->codegen(context);
 
+    if (not parsed_module->type_check(context)) {
+        std::cout << "Failed to type check" << std::endl;
+        return 1;
+    }
+
     context.verify_module();
 
     if (command_line->debug) { context.dump(); }

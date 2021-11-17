@@ -447,7 +447,7 @@ llvm::Constant * BinaryExpression::compile_time_codegen(context_module & context
     return nullptr;
 }
 
-Value * FunctionCall::codegen(context_module & context) {
+Value * func_call_data::codegen(context_module & context) {
     auto callee = context.find_function(name_);
 
     std::vector<Value *> arg_values{};
@@ -457,20 +457,21 @@ Value * FunctionCall::codegen(context_module & context) {
     return context.builder().CreateCall(callee, arg_values);
 }
 
-llvm::Type * FunctionCall::type_check(context_module & context) {
+llvm::Type * func_call_data::type_check(context_module & context, Location loc) {
 
     auto * func_type
         = llvm::dyn_cast_or_null<llvm::FunctionType>(context.get_identifer_type(name_));
 
     if (func_type == nullptr or func_type->getNumParams() != args_.size()) {
         context.printError("Could not type check " + name_ + ", as it is not declared.",
-                           location());
+                           std::move(loc));
         return nullptr;
     }
 
     for (auto i = 0U; i < args_.size(); ++i) {
         if (func_type->getParamType(i) != args_[i]->type_check(context)) {
-            context.printError("Arg #" + std::to_string(i) + " did not type check.", location());
+            context.printError("Arg #" + std::to_string(i) + " did not type check.",
+                               std::move(loc));
             return nullptr;
         }
     }
