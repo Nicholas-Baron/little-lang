@@ -1,10 +1,10 @@
 #include "nodes.hpp"
 
 #include "context_module.hpp"
-#include "llvm/IR/Type.h"
-#include "llvm/IR/Verifier.h"
 #include "parser.hpp"
 #include <llvm/IR/GlobalVariable.h>
+#include <llvm/IR/Type.h>
+#include <llvm/IR/Verifier.h>
 
 #include <cassert>
 #include <cctype> // isdigit
@@ -299,6 +299,39 @@ llvm::Constant * UserValue::compile_time_codegen(context_module & context) {
     return context.get_constant(val);
 }
 
+Type * UserValue::type_check(context_module & context) {
+    const auto first_char = val.at(0);
+
+    switch (first_char) {
+    // A user-defined string
+    case '\"':
+        return context.builder().getInt8PtrTy();
+
+    // A single character
+    case '\'':
+        return context.builder().getInt8Ty();
+    }
+
+    if (isdigit(first_char) != 0) {
+        // Some number
+
+        using std::stoi, std::stof;
+        if (val.find_first_of('.') != std::string::npos) {
+            // Floating point
+            return context.builder().getFloatTy();
+        }
+
+        // Decimal integer
+        return context.builder().getInt32Ty();
+    }
+
+    // Some identifier or bool
+    if (is_bool()) { return context.builder().getInt1Ty(); }
+
+    // some identifier
+    return context.get_identifer_type(val);
+}
+
 Value * UnaryExpression::codegen(context_module & context) {
 
     auto * op_value = expr->codegen(context);
@@ -422,6 +455,27 @@ Value * FunctionCall::codegen(context_module & context) {
     for (auto & arg : args_) { arg_values.push_back(arg->codegen(context)); }
 
     return context.builder().CreateCall(callee, arg_values);
+}
+
+llvm::Type * FunctionCall::type_check(context_module & context) {
+
+    auto * func_type
+        = llvm::dyn_cast_or_null<llvm::FunctionType>(context.get_identifer_type(name_));
+
+    if (func_type == nullptr or func_type->getNumParams() != args_.size()) {
+        context.printError("Could not type check " + name_ + ", as it is not declared.",
+                           location());
+        return nullptr;
+    }
+
+    for (auto i = 0U; i < args_.size(); ++i) {
+        if (func_type->getParamType(i) != args_[i]->type_check(context)) {
+            context.printError("Arg #" + std::to_string(i) + " did not type check.", location());
+            return nullptr;
+        }
+    }
+
+    return func_type->getReturnType();
 }
 
 Value * If_Statement::codegen(context_module & context) {

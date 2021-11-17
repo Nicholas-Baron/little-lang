@@ -80,6 +80,8 @@ class Node {
 class Expression : public virtual Node {
   public:
     virtual llvm::Constant * compile_time_codegen(context_module &) = 0;
+
+    virtual llvm::Type * type_check(context_module &) = 0;
 };
 class Statement : public virtual Node {};
 class Top_Level : public virtual Node {};
@@ -133,6 +135,8 @@ class UserValue final : public Expression {
     llvm::Value * codegen(context_module & context) override;
     llvm::Constant * compile_time_codegen(context_module & context) override;
 
+    llvm::Type * type_check(context_module &) override;
+
   private:
     [[nodiscard]] llvm::ConstantInt * as_i32(context_module &) const;
     [[nodiscard]] llvm::ConstantInt * as_bool(context_module &) const;
@@ -154,6 +158,7 @@ class UnaryExpression final : public Expression {
 
     llvm::Value * codegen(context_module & context) override;
     llvm::Constant * compile_time_codegen(context_module & context) override;
+    llvm::Type * type_check(context_module & context) override { return expr->type_check(context); }
 
   private:
     int tok;
@@ -174,6 +179,19 @@ class BinaryExpression final : public Expression {
     llvm::Value * codegen(context_module & context) override;
 
     llvm::Constant * compile_time_codegen(context_module & context) override;
+
+    llvm::Type * type_check(context_module & context) override {
+        auto * lhs_type = lhs_->type_check(context);
+        auto * rhs_type = rhs_->type_check(context);
+
+        if (lhs_type != rhs_type) {
+            context.printError("Failed to type check binary expression", location());
+            return nullptr;
+        }
+
+        if (is_comparison()) { return context.builder().getInt1Ty(); }
+        return lhs_type;
+    }
 
   private:
     [[nodiscard]] bool is_comparison() const noexcept;
@@ -201,6 +219,8 @@ class FunctionCall final : public Statement, public Expression {
         context.printError("Function call cannot be done in a compile time context", location());
         return nullptr;
     }
+
+    llvm::Type * type_check(context_module &) override;
 
   private:
     std::string name_;

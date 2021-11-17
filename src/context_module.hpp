@@ -106,6 +106,8 @@ class context_module final {
         printError("Could not find constant " + name);
         return nullptr;
     }
+
+    llvm::Type * get_identifer_type(const std::string &);
 };
 
 #endif
