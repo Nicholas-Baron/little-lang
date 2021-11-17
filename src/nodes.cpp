@@ -469,7 +469,14 @@ llvm::Type * func_call_data::type_check(context_module & context, Location loc) 
     }
 
     for (auto i = 0U; i < args_.size(); ++i) {
-        if (func_type->getParamType(i) != args_[i]->type_check(context)) {
+        auto * expected_type = func_type->getParamType(i);
+        auto * found_type = args_[i]->type_check(context);
+        if (expected_type != found_type) {
+            llvm::errs() << "Expected: ";
+            expected_type->print(llvm::errs());
+            llvm::errs() << "\nFound: ";
+            found_type->print(llvm::errs());
+            llvm::errs() << '\n';
             context.printError("Arg #" + std::to_string(i) + " did not type check.",
                                std::move(loc));
             return nullptr;
@@ -591,5 +598,5 @@ bool Constant::type_check(context_module & context) {
         return false;
     }
 
-    return named_type == expr_type;
+    return named_type == expr_type and context.bind_type(name_and_type.name(), expr_type);
 }

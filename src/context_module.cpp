@@ -79,18 +79,20 @@ void context_module::printError(const std::string & name, std::optional<Location
 }
 
 llvm::Type * context_module::get_identifer_type(const std::string & name) {
+    // checked the typed names
+    if (auto iter = typed_vars.find(name); iter != typed_vars.end()) {
+        return iter->second;
+    }
+
     // check constants
     if (auto iter = constants.find(name); iter != constants.end()) {
-        return iter->second->getType();
+        return iter->second->getType()->getPointerElementType();
     }
 
     // check functions
     if (auto * func = module().getFunction(name); func != nullptr) {
         return func->getFunctionType();
     }
-
-    // checked the typed names
-    if (auto iter = typed_vars.find(name); iter != typed_vars.end()) { return iter->second; }
 
     // check locals
     return find_value_in_current_scope(name)->getType();
