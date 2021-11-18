@@ -1,6 +1,7 @@
 #ifndef _NODE_HPP
 #define _NODE_HPP
 
+#include "base_nodes.hpp"
 #include "context_module.hpp"
 #include "location.hpp"
 #include "nodes_forward.hpp"
@@ -55,48 +56,6 @@ class Func_Header final {
     std::string ret_type{};
     Location loc{};
 };
-
-// Basic Node
-class Node {
-  public:
-    Node() = default;
-
-    non_copyable(Node);
-
-    movable(Node);
-
-    virtual ~Node() = default;
-
-    virtual llvm::Value * codegen(context_module & context) = 0;
-
-    void set_location(const Location & loc_new) { loc = loc_new; }
-
-    [[nodiscard]] const auto & location() const noexcept { return loc; }
-
-  private:
-    Location loc{};
-};
-
-// Base classes
-class Expression : public virtual Node {
-  public:
-    virtual llvm::Constant * compile_time_codegen(context_module &) = 0;
-
-    virtual llvm::Type * type_check(context_module &) = 0;
-};
-class Statement : public virtual Node {
-  public:
-    [[nodiscard]] virtual bool type_check(context_module &) = 0;
-};
-class Top_Level : public virtual Node {
-  public:
-    [[nodiscard]] virtual bool type_check(context_module &) = 0;
-};
-
-// Utility types aliases
-using expr_ptr = std::unique_ptr<Expression>;
-using stmt_ptr = std::unique_ptr<Statement>;
-using top_lvl_ptr = std::unique_ptr<Top_Level>;
 
 // Stores the function call data.
 // is facaded by func_call_expr and func_call_stmt
