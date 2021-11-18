@@ -7,11 +7,11 @@
 // Classes relating to top level items
 
 namespace ast {
-    // TODO: Nested modules will make this extend from Top_Level
-    class top_level_sequence final : public Node {
+    // TODO: Nested modules will make this extend from top_level
+    class top_level_sequence final : public node {
       public:
         top_level_sequence() = default;
-        top_level_sequence(Top_Level * first_item)
+        top_level_sequence(top_level * first_item)
             : top_level_sequence{} {
             append(first_item);
         }
@@ -22,7 +22,7 @@ namespace ast {
 
         ~top_level_sequence() override = default;
 
-        void append(Top_Level * item) { top_lvl_seq_.emplace_back(item); }
+        void append(top_level * item) { top_lvl_seq_.emplace_back(item); }
 
         // The return value should not be used
         llvm::Value * codegen(context_module & context) override {
@@ -48,7 +48,7 @@ namespace ast {
     // TODO: make this class a member of func_decl and shorten the name
     class func_header final {
       public:
-        func_header(std::string && name, std::vector<Typed_Var> && parameters)
+        func_header(std::string && name, std::vector<typed_identifier> && parameters)
             : name_(std::move(name))
             , params(std::move(parameters)) {}
 
@@ -56,7 +56,7 @@ namespace ast {
 
         llvm::FunctionType * full_type(context_module & context);
 
-        [[nodiscard]] const Typed_Var & arg(unsigned index) const { return params.at(index); }
+        [[nodiscard]] const typed_identifier & arg(unsigned index) const { return params.at(index); }
         [[nodiscard]] const std::string & name() const { return name_; }
 
         void set_location(const Location & loc_new) { loc = loc_new; }
@@ -69,15 +69,15 @@ namespace ast {
         std::vector<llvm::Type *> param_types(context_module & context);
 
         std::string name_;
-        std::vector<Typed_Var> params;
+        std::vector<typed_identifier> params;
         std::string ret_type{};
         Location loc{};
     };
 
     // Top Level classes
-    class func_decl final : public Top_Level {
+    class func_decl final : public top_level {
       public:
-        func_decl(func_header && head, Statement * body)
+        func_decl(func_header && head, stmt * body)
             : head_(std::move(head))
             , body_(body) {}
 
@@ -94,9 +94,9 @@ namespace ast {
         stmt_ptr body_;
     };
 
-    class const_decl final : public Top_Level {
+    class const_decl final : public top_level {
       public:
-        const_decl(Typed_Var && name_and_type, Expression * expr)
+        const_decl(typed_identifier && name_and_type, expr * expr)
             : name_and_type(std::move(name_and_type))
             , expr{expr} {}
 
@@ -109,7 +109,7 @@ namespace ast {
         bool type_check(context_module & context) override;
 
       private:
-        Typed_Var name_and_type;
+        typed_identifier name_and_type;
         expr_ptr expr;
     };
 } // namespace ast

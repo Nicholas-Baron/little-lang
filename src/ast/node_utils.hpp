@@ -12,9 +12,9 @@
 // but not nodes themselves
 
 namespace ast {
-    class Typed_Var final {
+    class typed_identifier final {
       public:
-        Typed_Var(std::string && name, std::string && type)
+        typed_identifier(std::string && name, std::string && type)
             : type_{std::move(type)}
             , name_{std::move(name)} {}
 

@@ -9,19 +9,19 @@
 
 #include <memory> // unique_ptr
 
-// This file should contain only Node and any *abstract* child of it.
+// This file should contain only node and any *abstract* child of it.
 
-// Basic Node
+// Basic node
 namespace ast {
-    class Node {
+    class node {
       public:
-        Node() = default;
+        node() = default;
 
-        non_copyable(Node);
+        non_copyable(node);
 
-        movable(Node);
+        movable(node);
 
-        virtual ~Node() = default;
+        virtual ~node() = default;
 
         virtual llvm::Value * codegen(context_module & context) = 0;
 
@@ -34,25 +34,25 @@ namespace ast {
     };
 
     // Base classes
-    class Expression : public virtual Node {
+    class expr : public virtual node {
       public:
         virtual llvm::Constant * compile_time_codegen(context_module &) = 0;
 
         virtual llvm::Type * type_check(context_module &) = 0;
     };
-    class Statement : public virtual Node {
+    class stmt : public virtual node {
       public:
         [[nodiscard]] virtual bool type_check(context_module &) = 0;
     };
-    class Top_Level : public virtual Node {
+    class top_level : public virtual node {
       public:
         [[nodiscard]] virtual bool type_check(context_module &) = 0;
     };
 
     // Utility types aliases
-    using expr_ptr = std::unique_ptr<Expression>;
-    using stmt_ptr = std::unique_ptr<Statement>;
-    using top_lvl_ptr = std::unique_ptr<Top_Level>;
+    using expr_ptr = std::unique_ptr<expr>;
+    using stmt_ptr = std::unique_ptr<stmt>;
+    using top_lvl_ptr = std::unique_ptr<top_level>;
 } // namespace ast
 
 #endif

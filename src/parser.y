@@ -44,19 +44,19 @@
     int token;
     std::string * string;
 
-    ast::Expression * expression;
-    ast::Statement * stmt;
-    ast::Top_Level * top_lvl;
+    ast::expr * expression;
+    ast::stmt * stmt;
+    ast::top_level * top_lvl;
 
     ast::func_call_data * func_call;
 
     ast::func_header * func_head;
-    ast::Typed_Var * var_with_type;
+    ast::typed_identifier * var_with_type;
 
     ast::stmt_sequence * stmts;
     ast::top_level_sequence * top_lvl_items;
 
-    std::vector<ast::Typed_Var>* params;
+    std::vector<ast::typed_identifier>* params;
     std::vector<ast::expr_ptr>* args;
 }
 
@@ -132,19 +132,19 @@ ret_type : type
 
 func_sig : T_IDENT param_group { $$ = new func_header{std::move(*$1), std::move(*$2)}; delete $1; delete $2; set_loc($$, @$); } ;
 
-param_group : T_LPAREN T_RPAREN { $$ = new std::vector<Typed_Var>; }
+param_group : T_LPAREN T_RPAREN { $$ = new std::vector<typed_identifier>; }
             | T_LPAREN param_list T_RPAREN { $$ = $2; }
             ;
 
-param_list : typed_var { $$ = new std::vector<Typed_Var>{std::move(*$1)}; delete $1; }
+param_list : typed_var { $$ = new std::vector<typed_identifier>{std::move(*$1)}; delete $1; }
            | param_list T_COMMA typed_var { $$ = $1; $$->push_back(std::move(*$3)); delete $3; }
            ;
 
-typed_var : type T_IDENT         { $$ = new Typed_Var(std::move(*$2), std::move(*$1)); delete $1; delete $2; set_loc($$, @$); }
-          | T_IDENT T_IS type     { $$ = new Typed_Var(std::move(*$1), std::move(*$3)); delete $1; delete $3; set_loc($$, @$); }
+typed_var : type T_IDENT         { $$ = new typed_identifier(std::move(*$2), std::move(*$1)); delete $1; delete $2; set_loc($$, @$); }
+          | T_IDENT T_IS type     { $$ = new typed_identifier(std::move(*$1), std::move(*$3)); delete $1; delete $3; set_loc($$, @$); }
           ;
 
-stmt : stmt_block { $$ = dynamic_cast<Statement *>($1); } | action T_SEMI | conditional ;
+stmt : stmt_block { $$ = dynamic_cast<stmt *>($1); } | action T_SEMI | conditional ;
 
 stmt_block : T_LBRACE stmt_seq T_RBRACE { $$ = $2; set_loc($$, @$); } ;
 
@@ -198,7 +198,7 @@ func_call : T_IDENT arg_group {
             $$ = new func_call_data(std::move(*$1), std::move(*$2)); delete $1; delete $2;
           }
           | T_IDENT T_DOT func_call {
-            std::vector<std::unique_ptr<Expression>> args;
+            std::vector<std::unique_ptr<expr>> args;
             args.emplace_back(std::make_unique<func_call_expr>(std::move(*$3)));
             $$ = new func_call_data{std::move(*$1), std::move(args)};
 			delete $1;
@@ -207,11 +207,11 @@ func_call : T_IDENT arg_group {
           ;
 
 arg_group : T_LPAREN arg_list T_RPAREN { $$ = $2; }
-          | T_LPAREN T_RPAREN { $$ = new std::vector<std::unique_ptr<Expression>>; }
+          | T_LPAREN T_RPAREN { $$ = new std::vector<std::unique_ptr<expr>>; }
           ;
 
 arg_list : expr {
-            $$ = new std::vector<std::unique_ptr<Expression>>;
+            $$ = new std::vector<std::unique_ptr<expr>>;
             $$->emplace_back($1);
          }
          | arg_list T_COMMA expr { $$ = $1; $$->emplace_back($3); }

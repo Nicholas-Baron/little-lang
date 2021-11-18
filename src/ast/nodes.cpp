@@ -156,8 +156,8 @@ namespace ast {
             return context.builder().getFalse();
         }
 
-        [[nodiscard]] Value * short_circuit(context_module & context, Expression * lhs, int tok,
-                                            Expression * rhs) {
+        [[nodiscard]] Value * short_circuit(context_module & context, expr * lhs, int tok,
+                                            expr * rhs) {
 
             assert(tok == T_AND or tok == T_OR);
             auto * left = lhs->codegen(context);

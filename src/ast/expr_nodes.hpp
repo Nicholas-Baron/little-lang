@@ -6,10 +6,10 @@
 #include "location.hpp"
 #include "node_utils.hpp"
 
-// Expression node classes
+// expr node classes
 
 namespace ast {
-    class user_val final : public Expression {
+    class user_val final : public expr {
       public:
         user_val(std::string && value)
             : val(std::move(value)) {}
@@ -32,9 +32,9 @@ namespace ast {
         std::string val;
     };
 
-    class unary_expr final : public Expression {
+    class unary_expr final : public expr {
       public:
-        unary_expr(int token, Expression * operand)
+        unary_expr(int token, expr * operand)
             : tok(token)
             , expr(operand) {}
 
@@ -53,9 +53,9 @@ namespace ast {
         expr_ptr expr;
     };
 
-    class binary_expr final : public Expression {
+    class binary_expr final : public expr {
       public:
-        binary_expr(Expression * lhs, int op, Expression * rhs)
+        binary_expr(expr * lhs, int op, expr * rhs)
             : lhs_(lhs)
             , rhs_(rhs)
             , tok(op) {}
@@ -89,7 +89,7 @@ namespace ast {
         int tok;
     };
 
-    class func_call_expr final : public Expression {
+    class func_call_expr final : public expr {
       public:
         explicit func_call_expr(func_call_data && data)
             : data{std::move(data)} {}
