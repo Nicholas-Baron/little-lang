@@ -19,7 +19,7 @@
     #include <string>
     #include <vector>
 
-    #include "nodes.hpp"
+    #include <ast/nodes.hpp>
 }
 
 %code provides {

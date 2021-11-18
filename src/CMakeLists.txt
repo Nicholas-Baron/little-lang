@@ -31,7 +31,7 @@ set(proj_files
 	emit_asm.cpp
 	jit.cpp
 	location.cpp
-	nodes.cpp
+	ast/nodes.cpp
 	settings.cpp
 	${bison_output}
 	${flex_output}
