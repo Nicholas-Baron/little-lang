@@ -1,6 +1,7 @@
 #include "nodes.hpp"
 
 #include "context_module.hpp"
+#include "expr_nodes.hpp"
 #include "parser.hpp"
 #include <llvm/IR/GlobalVariable.h>
 #include <llvm/IR/Type.h>

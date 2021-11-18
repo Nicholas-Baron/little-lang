@@ -20,6 +20,7 @@
     #include <vector>
 
     #include <ast/nodes.hpp>
+    #include <ast/expr_nodes.hpp>
 }
 
 %code provides {
