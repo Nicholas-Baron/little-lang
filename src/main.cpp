@@ -12,7 +12,7 @@
 #include <iostream>
 #include <unistd.h> // execve
 
-extern std::unique_ptr<Top_Level_Seq> module;
+extern std::unique_ptr<ast::Top_Level_Seq> module;
 
 static bool parse_file() {
 
@@ -36,7 +36,7 @@ static bool parse_file() {
     return parse_status == 0;
 }
 
-static std::unique_ptr<Top_Level_Seq> read_module(const std::string & filename) {
+static auto read_module(const std::string & filename) -> decltype(module) {
     if (filename.empty()) {
         std::cerr << "Input file not specified." << std::endl;
         return nullptr;

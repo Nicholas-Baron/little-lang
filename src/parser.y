@@ -27,6 +27,7 @@
 }
 
 %code {
+	using namespace ast;
     std::unique_ptr<Top_Level_Seq> module;
 
     [[nodiscard]] static Location make_loc(const YYLTYPE& yy_loc){
@@ -43,20 +44,20 @@
     int token;
     std::string * string;
 
-    Expression * expression;
-    Statement * stmt;
-    Top_Level * top_lvl;
+    ast::Expression * expression;
+    ast::Statement * stmt;
+    ast::Top_Level * top_lvl;
 
-    func_call_data * func_call;
+    ast::func_call_data * func_call;
 
-    Func_Header * func_head;
-    Typed_Var * var_with_type;
+    ast::Func_Header * func_head;
+    ast::Typed_Var * var_with_type;
 
-    Statement_Seq * statements;
-    Top_Level_Seq * top_lvl_items;
+    ast::Statement_Seq * statements;
+    ast::Top_Level_Seq * top_lvl_items;
 
-    std::vector<Typed_Var>* params;
-    std::vector<std::unique_ptr<Expression>>* args;
+    std::vector<ast::Typed_Var>* params;
+    std::vector<ast::expr_ptr>* args;
 }
 
 // Token definitions

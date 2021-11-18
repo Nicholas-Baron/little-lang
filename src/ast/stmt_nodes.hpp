@@ -6,135 +6,138 @@
 
 // Statement classes
 
-class If_Statement final : public Statement {
-  public:
-    If_Statement(Expression * cond, Statement * on_true, Statement * on_false)
-        : condition(cond)
-        , true_branch(on_true)
-        , else_branch(on_false) {}
+namespace ast {
+    class If_Statement final : public Statement {
+      public:
+        If_Statement(Expression * cond, Statement * on_true, Statement * on_false)
+            : condition(cond)
+            , true_branch(on_true)
+            , else_branch(on_false) {}
 
-    non_copyable(If_Statement);
+        non_copyable(If_Statement);
 
-    movable(If_Statement);
+        movable(If_Statement);
 
-    llvm::Value * codegen(context_module & context) override;
+        llvm::Value * codegen(context_module & context) override;
 
-    bool type_check(context_module & context) override {
-        return condition->type_check(context) != nullptr and true_branch->type_check(context)
-           and (else_branch == nullptr or else_branch->type_check(context));
-    }
-
-  private:
-    expr_ptr condition;
-    stmt_ptr true_branch;
-    stmt_ptr else_branch;
-};
-
-class Let_Statement final : public Statement {
-  public:
-    Let_Statement(std::string && name, Expression * value)
-        : name_and_type(std::move(name), "auto")
-        , value_(value) {}
-
-    Let_Statement(Typed_Var && typed_name, Expression * value)
-        : name_and_type(std::move(typed_name))
-        , value_(value) {}
-
-    non_copyable(Let_Statement);
-
-    movable(Let_Statement);
-
-    llvm::Value * codegen(context_module & context) override;
-
-    bool type_check(context_module & context) override {
-        auto * expr_type = value_->type_check(context);
-        if (expr_type == nullptr) { return false; }
-
-        auto * decl_type = context.find_type(name_and_type.type(), location());
-
-        if (decl_type == nullptr or expr_type != decl_type) {
-            context.printError("Let-binding for " + name_and_type.name() + " could not type check.",
-                               location());
-            return false;
+        bool type_check(context_module & context) override {
+            return condition->type_check(context) != nullptr and true_branch->type_check(context)
+               and (else_branch == nullptr or else_branch->type_check(context));
         }
 
-        return context.bind_type(name_and_type.name(), expr_type);
-    }
+      private:
+        expr_ptr condition;
+        stmt_ptr true_branch;
+        stmt_ptr else_branch;
+    };
 
-  private:
-    Typed_Var name_and_type;
-    expr_ptr value_;
-};
+    class Let_Statement final : public Statement {
+      public:
+        Let_Statement(std::string && name, Expression * value)
+            : name_and_type(std::move(name), "auto")
+            , value_(value) {}
 
-class Statement_Seq final : public Statement {
-  public:
-    Statement_Seq() = default;
-    Statement_Seq(Statement * stmt)
-        : Statement_Seq() {
-        append(stmt);
-    }
+        Let_Statement(Typed_Var && typed_name, Expression * value)
+            : name_and_type(std::move(typed_name))
+            , value_(value) {}
 
-    non_copyable(Statement_Seq);
+        non_copyable(Let_Statement);
 
-    movable(Statement_Seq);
+        movable(Let_Statement);
 
-    ~Statement_Seq() override = default;
+        llvm::Value * codegen(context_module & context) override;
 
-    void append(Statement * stmt) { statements.emplace_back(stmt); }
+        bool type_check(context_module & context) override {
+            auto * expr_type = value_->type_check(context);
+            if (expr_type == nullptr) { return false; }
 
-    // The return value should not be used
-    llvm::Value * codegen(context_module & context) override {
-        for (const auto & entry : statements) { entry->codegen(context); }
-        return nullptr;
-    }
+            auto * decl_type = context.find_type(name_and_type.type(), location());
 
-    bool type_check(context_module & context) override {
-        for (const auto & entry : statements) {
-            if (not entry->type_check(context)) { return false; }
+            if (decl_type == nullptr or expr_type != decl_type) {
+                context.printError("Let-binding for " + name_and_type.name()
+                                       + " could not type check.",
+                                   location());
+                return false;
+            }
+
+            return context.bind_type(name_and_type.name(), expr_type);
         }
-        return true;
-    }
 
-  private:
-    std::vector<stmt_ptr> statements{};
-};
+      private:
+        Typed_Var name_and_type;
+        expr_ptr value_;
+    };
 
-class func_call_stmt final : public Statement {
-  public:
-    explicit func_call_stmt(func_call_data && data)
-        : data{std::move(data)} {}
+    class Statement_Seq final : public Statement {
+      public:
+        Statement_Seq() = default;
+        Statement_Seq(Statement * stmt)
+            : Statement_Seq() {
+            append(stmt);
+        }
 
-    llvm::Value * codegen(context_module & context) override { return data.codegen(context); }
+        non_copyable(Statement_Seq);
 
-    bool type_check(context_module & context) override {
-        // TODO: We may want to allow dropping return values
-        return data.type_check(context, location()) == context.builder().getVoidTy();
-    }
+        movable(Statement_Seq);
 
-  private:
-    func_call_data data;
-};
+        ~Statement_Seq() override = default;
 
-class Return_Statement final : public Statement {
-  public:
-    explicit Return_Statement(Expression * val = nullptr)
-        : value(val) {}
+        void append(Statement * stmt) { statements.emplace_back(stmt); }
 
-    non_copyable(Return_Statement);
+        // The return value should not be used
+        llvm::Value * codegen(context_module & context) override {
+            for (const auto & entry : statements) { entry->codegen(context); }
+            return nullptr;
+        }
 
-    movable(Return_Statement);
+        bool type_check(context_module & context) override {
+            for (const auto & entry : statements) {
+                if (not entry->type_check(context)) { return false; }
+            }
+            return true;
+        }
 
-    llvm::Value * codegen(context_module & context) override;
+      private:
+        std::vector<stmt_ptr> statements{};
+    };
 
-    bool type_check(context_module & context) override {
-        auto * expr_type
-            = value != nullptr ? value->type_check(context) : context.builder().getVoidTy();
-        auto * decl_type = context.get_identifer_type("return");
-        return expr_type == decl_type;
-    }
+    class func_call_stmt final : public Statement {
+      public:
+        explicit func_call_stmt(func_call_data && data)
+            : data{std::move(data)} {}
 
-  private:
-    expr_ptr value;
-};
+        llvm::Value * codegen(context_module & context) override { return data.codegen(context); }
+
+        bool type_check(context_module & context) override {
+            // TODO: We may want to allow dropping return values
+            return data.type_check(context, location()) == context.builder().getVoidTy();
+        }
+
+      private:
+        func_call_data data;
+    };
+
+    class Return_Statement final : public Statement {
+      public:
+        explicit Return_Statement(Expression * val = nullptr)
+            : value(val) {}
+
+        non_copyable(Return_Statement);
+
+        movable(Return_Statement);
+
+        llvm::Value * codegen(context_module & context) override;
+
+        bool type_check(context_module & context) override {
+            auto * expr_type
+                = value != nullptr ? value->type_check(context) : context.builder().getVoidTy();
+            auto * decl_type = context.get_identifer_type("return");
+            return expr_type == decl_type;
+        }
+
+      private:
+        expr_ptr value;
+    };
+} // namespace ast
 
 #endif
