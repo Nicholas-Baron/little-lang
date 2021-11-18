@@ -21,6 +21,7 @@
 
     #include <ast/nodes.hpp>
     #include <ast/expr_nodes.hpp>
+    #include <ast/stmt_nodes.hpp>
 }
 
 %code provides {

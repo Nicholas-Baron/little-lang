@@ -3,6 +3,7 @@
 #include "context_module.hpp"
 #include "expr_nodes.hpp"
 #include "parser.hpp"
+#include "stmt_nodes.hpp"
 #include <llvm/IR/GlobalVariable.h>
 #include <llvm/IR/Type.h>
 #include <llvm/IR/Verifier.h>
