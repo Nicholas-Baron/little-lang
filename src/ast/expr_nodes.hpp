@@ -1,7 +1,10 @@
 #ifndef EXPR_NODES_HPP
 #define EXPR_NODES_HPP
 
-#include "nodes.hpp"
+#include "base_nodes.hpp"
+#include "context_module.hpp"
+#include "location.hpp"
+#include "node_utils.hpp"
 
 // Expression node classes
 

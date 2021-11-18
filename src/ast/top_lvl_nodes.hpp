@@ -2,7 +2,7 @@
 #define TOP_LVL_NODES_HPP
 
 #include "base_nodes.hpp"
-#include "nodes.hpp"
+#include "node_utils.hpp"
 
 // Classes relating to top level items
 

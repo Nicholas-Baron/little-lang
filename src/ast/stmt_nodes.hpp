@@ -2,7 +2,7 @@
 #define STMT_NODES_HPP
 
 #include "base_nodes.hpp"
-#include "nodes.hpp"
+#include "node_utils.hpp"
 
 // Statement classes
 
