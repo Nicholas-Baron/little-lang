@@ -3,6 +3,7 @@
 
 #include "context_module.hpp"
 #include "location.hpp"
+#include "nodes_forward.hpp"
 #include "utils/move_copy.hpp"
 #include <llvm/IR/Value.h>
 
