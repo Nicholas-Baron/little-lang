@@ -3,5 +3,5 @@ temp/
 logs/
 .cache/
 compile_commands.json
-todo.txt
+todo.*
 includes.svg
