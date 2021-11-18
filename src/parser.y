@@ -28,7 +28,7 @@
 
 %code {
 	using namespace ast;
-    std::unique_ptr<Top_Level_Seq> module;
+    std::unique_ptr<top_level_sequence> module;
 
     [[nodiscard]] static Location make_loc(const YYLTYPE& yy_loc){
         return Location{
@@ -50,11 +50,11 @@
 
     ast::func_call_data * func_call;
 
-    ast::Func_Header * func_head;
+    ast::func_header * func_head;
     ast::Typed_Var * var_with_type;
 
     ast::stmt_sequence * stmts;
-    ast::Top_Level_Seq * top_lvl_items;
+    ast::top_level_sequence * top_lvl_items;
 
     std::vector<ast::Typed_Var>* params;
     std::vector<ast::expr_ptr>* args;
@@ -76,7 +76,7 @@
 %type <expression> expr
 %type <expression> initialization
 %type <stmt> stmt else_block conditional action
-%type <top_lvl> top_lvl_item function constant
+%type <top_lvl> top_lvl_item function const_decl
 %type <func_call> func_call
 %type <func_head> func_header func_sig
 %type <var_with_type> typed_var
@@ -99,26 +99,26 @@
 %%
 
 program : top_lvl_seq {
-            module = std::unique_ptr<Top_Level_Seq>($1); set_loc(module, @$);
+            module = std::unique_ptr<top_level_sequence>($1); set_loc(module, @$);
         }
         ;
 
-top_lvl_seq : top_lvl_item { $$ = new Top_Level_Seq{$1}; set_loc($$, @$); }
+top_lvl_seq : top_lvl_item { $$ = new top_level_sequence{$1}; set_loc($$, @$); }
             | top_lvl_seq top_lvl_item {
                 $$ = $1; $$->append($2); set_loc($$, @$);
             }
             ;
 
-top_lvl_item : function | constant ;
+top_lvl_item : function | const_decl ;
 
-constant : T_CONST typed_var initialization { $$ = new Constant{std::move(*$2), $3}; delete $2; set_loc($$, @$); }
+const_decl : T_CONST typed_var initialization { $$ = new const_decl{std::move(*$2), $3}; delete $2; set_loc($$, @$); }
          ;
 
 function : func_header stmt {
-             $$ = new Function{std::move(*$1), $2}; delete $1; set_loc($$, @$);
+             $$ = new func_decl{std::move(*$1), $2}; delete $1; set_loc($$, @$);
          }
          | func_header T_ASSIGN expr {
-            $$ = new Function{std::move(*$1), new return_stmt{$3}}; delete $1; set_loc($$, @$);
+            $$ = new func_decl{std::move(*$1), new return_stmt{$3}}; delete $1; set_loc($$, @$);
          }
          ;
 
@@ -130,7 +130,7 @@ ret_type : type
          | T_PROC { $$ = new std::string{"proc"}; }
          ;
 
-func_sig : T_IDENT param_group { $$ = new Func_Header{std::move(*$1), std::move(*$2)}; delete $1; delete $2; set_loc($$, @$); } ;
+func_sig : T_IDENT param_group { $$ = new func_header{std::move(*$1), std::move(*$2)}; delete $1; delete $2; set_loc($$, @$); } ;
 
 param_group : T_LPAREN T_RPAREN { $$ = new std::vector<Typed_Var>; }
             | T_LPAREN param_list T_RPAREN { $$ = $2; }

@@ -2,10 +2,10 @@
 #define NODES_FORWARD_HPP
 
 namespace ast {
-    class Constant;
+    class const_decl;
     class Expression;
-    class Func_Header;
-    class Function;
+    class func_header;
+    class func_decl;
     class if_stmt;
     class let_stmt;
     class Node;
@@ -13,7 +13,7 @@ namespace ast {
     class Statement;
     class stmt_sequence;
     class Top_Level;
-    class Top_Level_Seq;
+    class top_level_sequence;
     class Typed_Var;
     class binary_expr;
     class func_call_data;

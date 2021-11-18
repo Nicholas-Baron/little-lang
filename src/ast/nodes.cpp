@@ -199,7 +199,7 @@ namespace ast {
 
     } // namespace
 
-    std::vector<Type *> Func_Header::param_types(context_module & context) {
+    std::vector<Type *> func_header::param_types(context_module & context) {
 
         std::vector<Type *> to_ret;
         to_ret.reserve(params.size());
@@ -211,7 +211,7 @@ namespace ast {
         return to_ret;
     }
 
-    FunctionType * Func_Header::full_type(context_module & context) {
+    FunctionType * func_header::full_type(context_module & context) {
 
         if (ret_type.empty() or ret_type == "auto") {
             context.printError(name_ + " does not have a known return type", location());
@@ -556,7 +556,7 @@ namespace ast {
         return context.builder().CreateRet(value->codegen(context));
     }
 
-    void Func_Header::add_parameters(context_module & context, llvm::Function & func) const {
+    void func_header::add_parameters(context_module & context, llvm::Function & func) const {
 
         unsigned index = 0;
         auto * const args_end = func.arg_end();
@@ -570,7 +570,7 @@ namespace ast {
         }
     }
 
-    bool Function::type_check(context_module & context) {
+    bool func_decl::type_check(context_module & context) {
         context.clean_type_bindings();
         auto * full_type = head_.full_type(context);
         for (auto i = 0U; i < full_type->getNumParams(); ++i) {
@@ -583,7 +583,7 @@ namespace ast {
         return body_->type_check(context);
     }
 
-    Value * Function::codegen(context_module & context) {
+    Value * func_decl::codegen(context_module & context) {
 
         auto * func_type = head_.full_type(context);
 
@@ -599,7 +599,7 @@ namespace ast {
         return func;
     }
 
-    Value * Constant::codegen(context_module & context) {
+    Value * const_decl::codegen(context_module & context) {
         auto * value = expr->compile_time_codegen(context);
         auto * global
             = new llvm::GlobalVariable{context.module(),
@@ -612,7 +612,7 @@ namespace ast {
         return nullptr;
     }
 
-    bool Constant::type_check(context_module & context) {
+    bool const_decl::type_check(context_module & context) {
         auto * named_type = context.find_type(name_and_type.type(), location());
         auto * expr_type = expr->type_check(context);
 

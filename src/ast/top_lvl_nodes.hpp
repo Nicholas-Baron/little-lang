@@ -8,19 +8,19 @@
 
 namespace ast {
     // TODO: Nested modules will make this extend from Top_Level
-    class Top_Level_Seq final : public Node {
+    class top_level_sequence final : public Node {
       public:
-        Top_Level_Seq() = default;
-        Top_Level_Seq(Top_Level * first_item)
-            : Top_Level_Seq{} {
+        top_level_sequence() = default;
+        top_level_sequence(Top_Level * first_item)
+            : top_level_sequence{} {
             append(first_item);
         }
 
-        non_copyable(Top_Level_Seq);
+        non_copyable(top_level_sequence);
 
-        movable(Top_Level_Seq);
+        movable(top_level_sequence);
 
-        ~Top_Level_Seq() override = default;
+        ~top_level_sequence() override = default;
 
         void append(Top_Level * item) { top_lvl_seq_.emplace_back(item); }
 
@@ -45,10 +45,10 @@ namespace ast {
         std::vector<top_lvl_ptr> top_lvl_seq_;
     };
 
-    // TODO: make this class a member of Function and shorten the name
-    class Func_Header final {
+    // TODO: make this class a member of func_decl and shorten the name
+    class func_header final {
       public:
-        Func_Header(std::string && name, std::vector<Typed_Var> && parameters)
+        func_header(std::string && name, std::vector<Typed_Var> && parameters)
             : name_(std::move(name))
             , params(std::move(parameters)) {}
 
@@ -75,34 +75,34 @@ namespace ast {
     };
 
     // Top Level classes
-    class Function final : public Top_Level {
+    class func_decl final : public Top_Level {
       public:
-        Function(Func_Header && head, Statement * body)
+        func_decl(func_header && head, Statement * body)
             : head_(std::move(head))
             , body_(body) {}
 
-        non_copyable(Function);
+        non_copyable(func_decl);
 
-        movable(Function);
+        movable(func_decl);
 
         llvm::Value * codegen(context_module & context) override;
 
         bool type_check(context_module & context) override;
 
       private:
-        Func_Header head_;
+        func_header head_;
         stmt_ptr body_;
     };
 
-    class Constant final : public Top_Level {
+    class const_decl final : public Top_Level {
       public:
-        Constant(Typed_Var && name_and_type, Expression * expr)
+        const_decl(Typed_Var && name_and_type, Expression * expr)
             : name_and_type(std::move(name_and_type))
             , expr{expr} {}
 
-        non_copyable(Constant);
+        non_copyable(const_decl);
 
-        movable(Constant);
+        movable(const_decl);
 
         llvm::Value * codegen(context_module & context) override;
 

@@ -4,7 +4,7 @@
 
 #include <string>
 
-extern std::unique_ptr<ast::Top_Level_Seq> module;
+extern std::unique_ptr<ast::top_level_sequence> module;
 
 static int run_parser(std::string && data) {
 
