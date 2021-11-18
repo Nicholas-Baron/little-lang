@@ -40,7 +40,7 @@ set(proj_files
 # the actual executable
 add_executable(littlec main.cpp ${proj_files})
 target_compile_options(littlec
-	PRIVATE -Og ${LLVM_CONFIG} -Wno-unused-command-line-argument -Wno-unused-parameter
+	PRIVATE -O2 ${LLVM_CONFIG} -Wno-unused-command-line-argument -Wno-unused-parameter
 	)
 target_link_libraries(littlec ${LLVM_CONFIG} CONAN_PKG::lyra)
 target_include_directories(littlec
