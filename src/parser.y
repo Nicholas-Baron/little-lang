@@ -173,25 +173,25 @@ initialization : T_ASSIGN expr { $$ = $2;  set_loc($$, @$); }
 
 literal : T_INT | T_FLOAT | T_CHAR | T_BOOL | T_STRING ;
 
-expr  : T_IDENT { $$ = new UserValue(std::move(*$1)); delete $1; set_loc($$, @$);  }
+expr  : T_IDENT { $$ = new user_val(std::move(*$1)); delete $1; set_loc($$, @$);  }
       | func_call { $$ = new func_call_expr(std::move(*$1)); delete $1; set_loc($$, @$);  }
-      | literal { $$ = new UserValue(std::move(*$1)); delete $1; set_loc($$, @$);  }
+      | literal { $$ = new user_val(std::move(*$1)); delete $1; set_loc($$, @$);  }
       | T_LPAREN expr T_RPAREN { $$ = $2; set_loc($$, @$);  }
-      | T_NOT expr { $$ = new UnaryExpression($1, $2); set_loc($$, @$);  }
-      | T_MINUS expr { $$ = new UnaryExpression($1, $2); set_loc($$, @$); } %prec T_NOT
-      | expr T_MULT expr { $$ = new BinaryExpression($1, $2, $3); set_loc($$, @$);  }
-      | expr T_MOD  expr { $$ = new BinaryExpression($1, $2, $3); set_loc($$, @$);  }
-      | expr T_DIV  expr { $$ = new BinaryExpression($1, $2, $3); set_loc($$, @$);  }
-      | expr T_PLUS  expr { $$ = new BinaryExpression($1, $2, $3); set_loc($$, @$);  }
-      | expr T_MINUS expr { $$ = new BinaryExpression($1, $2, $3); set_loc($$, @$);  }
-      | expr T_LE expr { $$ = new BinaryExpression($1, $2, $3); set_loc($$, @$);  }
-      | expr T_LT expr { $$ = new BinaryExpression($1, $2, $3); set_loc($$, @$);  }
-      | expr T_GE expr { $$ = new BinaryExpression($1, $2, $3); set_loc($$, @$);  }
-      | expr T_GT expr { $$ = new BinaryExpression($1, $2, $3); set_loc($$, @$);  }
-      | expr T_EQ expr { $$ = new BinaryExpression($1, $2, $3); set_loc($$, @$);  }
-      | expr T_NE expr { $$ = new BinaryExpression($1, $2, $3); set_loc($$, @$);  }
-      | expr T_AND expr { $$ = new BinaryExpression($1, $2, $3); set_loc($$, @$);  }
-      | expr T_OR expr { $$ = new BinaryExpression($1, $2, $3); set_loc($$, @$);  }
+      | T_NOT expr { $$ = new unary_expr($1, $2); set_loc($$, @$);  }
+      | T_MINUS expr { $$ = new unary_expr($1, $2); set_loc($$, @$); } %prec T_NOT
+      | expr T_MULT expr { $$ = new binary_expr($1, $2, $3); set_loc($$, @$);  }
+      | expr T_MOD  expr { $$ = new binary_expr($1, $2, $3); set_loc($$, @$);  }
+      | expr T_DIV  expr { $$ = new binary_expr($1, $2, $3); set_loc($$, @$);  }
+      | expr T_PLUS  expr { $$ = new binary_expr($1, $2, $3); set_loc($$, @$);  }
+      | expr T_MINUS expr { $$ = new binary_expr($1, $2, $3); set_loc($$, @$);  }
+      | expr T_LE expr { $$ = new binary_expr($1, $2, $3); set_loc($$, @$);  }
+      | expr T_LT expr { $$ = new binary_expr($1, $2, $3); set_loc($$, @$);  }
+      | expr T_GE expr { $$ = new binary_expr($1, $2, $3); set_loc($$, @$);  }
+      | expr T_GT expr { $$ = new binary_expr($1, $2, $3); set_loc($$, @$);  }
+      | expr T_EQ expr { $$ = new binary_expr($1, $2, $3); set_loc($$, @$);  }
+      | expr T_NE expr { $$ = new binary_expr($1, $2, $3); set_loc($$, @$);  }
+      | expr T_AND expr { $$ = new binary_expr($1, $2, $3); set_loc($$, @$);  }
+      | expr T_OR expr { $$ = new binary_expr($1, $2, $3); set_loc($$, @$);  }
       ;
 
 func_call : T_IDENT arg_group {

@@ -9,14 +9,14 @@
 // Expression node classes
 
 namespace ast {
-    class UserValue final : public Expression {
+    class user_val final : public Expression {
       public:
-        UserValue(std::string && value)
+        user_val(std::string && value)
             : val(std::move(value)) {}
 
-        non_copyable(UserValue);
+        non_copyable(user_val);
 
-        movable(UserValue);
+        movable(user_val);
 
         llvm::Value * codegen(context_module & context) override;
         llvm::Constant * compile_time_codegen(context_module & context) override;
@@ -32,15 +32,15 @@ namespace ast {
         std::string val;
     };
 
-    class UnaryExpression final : public Expression {
+    class unary_expr final : public Expression {
       public:
-        UnaryExpression(int token, Expression * operand)
+        unary_expr(int token, Expression * operand)
             : tok(token)
             , expr(operand) {}
 
-        non_copyable(UnaryExpression);
+        non_copyable(unary_expr);
 
-        movable(UnaryExpression);
+        movable(unary_expr);
 
         llvm::Value * codegen(context_module & context) override;
         llvm::Constant * compile_time_codegen(context_module & context) override;
@@ -53,16 +53,16 @@ namespace ast {
         expr_ptr expr;
     };
 
-    class BinaryExpression final : public Expression {
+    class binary_expr final : public Expression {
       public:
-        BinaryExpression(Expression * lhs, int op, Expression * rhs)
+        binary_expr(Expression * lhs, int op, Expression * rhs)
             : lhs_(lhs)
             , rhs_(rhs)
             , tok(op) {}
 
-        non_copyable(BinaryExpression);
+        non_copyable(binary_expr);
 
-        movable(BinaryExpression);
+        movable(binary_expr);
 
         llvm::Value * codegen(context_module & context) override;
 

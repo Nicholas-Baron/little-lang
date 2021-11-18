@@ -221,23 +221,23 @@ namespace ast {
                                  false);
     }
 
-    llvm::ConstantInt * UserValue::as_i32(context_module & context) const {
+    llvm::ConstantInt * user_val::as_i32(context_module & context) const {
         static constexpr auto hex_base = 16;
         static constexpr auto dec_base = 10;
         auto base = val.find_first_of('x') != std::string::npos ? hex_base : dec_base;
         return context.builder().getInt32(std::stoi(val, nullptr, base));
     }
 
-    llvm::ConstantInt * UserValue::as_bool(context_module & context) const {
+    llvm::ConstantInt * user_val::as_bool(context_module & context) const {
         auto iter = valid_bools.find(val);
         assert(iter != valid_bools.end());
         return context.builder().getInt1(iter->second);
     }
 
-    bool UserValue::is_bool() const { return valid_bools.find(val) != valid_bools.end(); }
+    bool user_val::is_bool() const { return valid_bools.find(val) != valid_bools.end(); }
 
     // TODO: Remove duplication
-    Value * UserValue::codegen(context_module & context) {
+    Value * user_val::codegen(context_module & context) {
         const auto first_char = val.at(0);
 
         switch (first_char) {
@@ -274,7 +274,7 @@ namespace ast {
         return value;
     }
 
-    llvm::Constant * UserValue::compile_time_codegen(context_module & context) {
+    llvm::Constant * user_val::compile_time_codegen(context_module & context) {
 
         const auto first_char = val.at(0);
 
@@ -308,7 +308,7 @@ namespace ast {
         return context.get_constant(val);
     }
 
-    Type * UserValue::type_check(context_module & context) {
+    Type * user_val::type_check(context_module & context) {
         const auto first_char = val.at(0);
 
         switch (first_char) {
@@ -341,7 +341,7 @@ namespace ast {
         return context.get_identifer_type(val);
     }
 
-    Value * UnaryExpression::codegen(context_module & context) {
+    Value * unary_expr::codegen(context_module & context) {
 
         auto * op_value = expr->codegen(context);
 
@@ -358,7 +358,7 @@ namespace ast {
         return op_value;
     }
 
-    llvm::Constant * UnaryExpression::compile_time_codegen(context_module & context) {
+    llvm::Constant * unary_expr::compile_time_codegen(context_module & context) {
         auto * op_value = expr->compile_time_codegen(context);
         switch (tok) {
         case T_NOT:
@@ -373,7 +373,7 @@ namespace ast {
         return op_value;
     }
 
-    bool BinaryExpression::is_comparison() const noexcept {
+    bool binary_expr::is_comparison() const noexcept {
         switch (tok) {
         case T_GE:
         case T_GT:
@@ -387,11 +387,9 @@ namespace ast {
         }
     }
 
-    bool BinaryExpression::is_shortcircuiting() const noexcept {
-        return tok == T_OR or tok == T_AND;
-    }
+    bool binary_expr::is_shortcircuiting() const noexcept { return tok == T_OR or tok == T_AND; }
 
-    Value * BinaryExpression::codegen(context_module & context) {
+    Value * binary_expr::codegen(context_module & context) {
 
         if (is_shortcircuiting()) { return short_circuit(context, lhs_.get(), tok, rhs_.get()); }
 
@@ -427,7 +425,7 @@ namespace ast {
         return nullptr;
     }
 
-    llvm::Constant * BinaryExpression::compile_time_codegen(context_module & context) {
+    llvm::Constant * binary_expr::compile_time_codegen(context_module & context) {
         auto * left = lhs_->compile_time_codegen(context);
         auto * right = rhs_->compile_time_codegen(context);
 
