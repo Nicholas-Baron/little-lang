@@ -80,9 +80,7 @@ void context_module::printError(const std::string & name, std::optional<Location
 
 llvm::Type * context_module::get_identifer_type(const std::string & name) {
     // checked the typed names
-    if (auto iter = typed_vars.find(name); iter != typed_vars.end()) {
-        return iter->second;
-    }
+    if (auto iter = typed_vars.find(name); iter != typed_vars.end()) { return iter->second; }
 
     // check constants
     if (auto iter = constants.find(name); iter != constants.end()) {

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1)
+cmake_minimum_required(VERSION 3.7)
 
 set(CMAKE_CXX_COMPILER clang++)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -60,6 +60,9 @@ add_compile_options(-Wundef)
 add_compile_options(-Wunused)
 add_compile_options(-Wwrite-strings)
 add_compile_options(-ftime-trace)
+if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "13")
+	add_compile_options(-Wreserved-identifier)
+endif()
 
 add_subdirectory(src)
 add_subdirectory(test)
