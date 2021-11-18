@@ -4,6 +4,7 @@
 #include "expr_nodes.hpp"
 #include "parser.hpp"
 #include "stmt_nodes.hpp"
+#include "top_lvl_nodes.hpp"
 #include <llvm/IR/GlobalVariable.h>
 #include <llvm/IR/Type.h>
 #include <llvm/IR/Verifier.h>
@@ -561,6 +562,19 @@ void Func_Header::add_parameters(context_module & context, llvm::Function & func
         arg->setName(arg_name);
         context.add_value_to_table(arg_name, arg);
     }
+}
+
+bool Function::type_check(context_module & context) {
+    context.clean_type_bindings();
+    auto * full_type = head_.full_type(context);
+    for (auto i = 0U; i < full_type->getNumParams(); ++i) {
+        if (not context.bind_type(head_.arg(i).name(), full_type->getParamType(i))) {
+            return false;
+        }
+    }
+    auto bind_return = context.bind_type("return", full_type->getReturnType());
+    assert(bind_return);
+    return body_->type_check(context);
 }
 
 Value * Function::codegen(context_module & context) {
