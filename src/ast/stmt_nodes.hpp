@@ -7,16 +7,16 @@
 // Statement classes
 
 namespace ast {
-    class If_Statement final : public Statement {
+    class if_stmt final : public Statement {
       public:
-        If_Statement(Expression * cond, Statement * on_true, Statement * on_false)
+        if_stmt(Expression * cond, Statement * on_true, Statement * on_false)
             : condition(cond)
             , true_branch(on_true)
             , else_branch(on_false) {}
 
-        non_copyable(If_Statement);
+        non_copyable(if_stmt);
 
-        movable(If_Statement);
+        movable(if_stmt);
 
         llvm::Value * codegen(context_module & context) override;
 
@@ -31,19 +31,19 @@ namespace ast {
         stmt_ptr else_branch;
     };
 
-    class Let_Statement final : public Statement {
+    class let_stmt final : public Statement {
       public:
-        Let_Statement(std::string && name, Expression * value)
+        let_stmt(std::string && name, Expression * value)
             : name_and_type(std::move(name), "auto")
             , value_(value) {}
 
-        Let_Statement(Typed_Var && typed_name, Expression * value)
+        let_stmt(Typed_Var && typed_name, Expression * value)
             : name_and_type(std::move(typed_name))
             , value_(value) {}
 
-        non_copyable(Let_Statement);
+        non_copyable(let_stmt);
 
-        movable(Let_Statement);
+        movable(let_stmt);
 
         llvm::Value * codegen(context_module & context) override;
 
@@ -68,37 +68,37 @@ namespace ast {
         expr_ptr value_;
     };
 
-    class Statement_Seq final : public Statement {
+    class stmt_sequence final : public Statement {
       public:
-        Statement_Seq() = default;
-        Statement_Seq(Statement * stmt)
-            : Statement_Seq() {
+        stmt_sequence() = default;
+        stmt_sequence(Statement * stmt)
+            : stmt_sequence() {
             append(stmt);
         }
 
-        non_copyable(Statement_Seq);
+        non_copyable(stmt_sequence);
 
-        movable(Statement_Seq);
+        movable(stmt_sequence);
 
-        ~Statement_Seq() override = default;
+        ~stmt_sequence() override = default;
 
-        void append(Statement * stmt) { statements.emplace_back(stmt); }
+        void append(Statement * stmt) { stmts.emplace_back(stmt); }
 
         // The return value should not be used
         llvm::Value * codegen(context_module & context) override {
-            for (const auto & entry : statements) { entry->codegen(context); }
+            for (const auto & entry : stmts) { entry->codegen(context); }
             return nullptr;
         }
 
         bool type_check(context_module & context) override {
-            for (const auto & entry : statements) {
+            for (const auto & entry : stmts) {
                 if (not entry->type_check(context)) { return false; }
             }
             return true;
         }
 
       private:
-        std::vector<stmt_ptr> statements{};
+        std::vector<stmt_ptr> stmts{};
     };
 
     class func_call_stmt final : public Statement {
@@ -117,14 +117,14 @@ namespace ast {
         func_call_data data;
     };
 
-    class Return_Statement final : public Statement {
+    class return_stmt final : public Statement {
       public:
-        explicit Return_Statement(Expression * val = nullptr)
+        explicit return_stmt(Expression * val = nullptr)
             : value(val) {}
 
-        non_copyable(Return_Statement);
+        non_copyable(return_stmt);
 
-        movable(Return_Statement);
+        movable(return_stmt);
 
         llvm::Value * codegen(context_module & context) override;
 

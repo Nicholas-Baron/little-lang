@@ -495,7 +495,7 @@ namespace ast {
         return func_type->getReturnType();
     }
 
-    Value * If_Statement::codegen(context_module & context) {
+    Value * if_stmt::codegen(context_module & context) {
 
         auto * cond = condition->codegen(context);
         auto * start_block = context.builder().GetInsertBlock();
@@ -537,7 +537,7 @@ namespace ast {
         return nullptr;
     }
 
-    Value * Let_Statement::codegen(context_module & context) {
+    Value * let_stmt::codegen(context_module & context) {
 
         auto * value = value_->codegen(context);
         auto type = name_and_type.type();
@@ -550,7 +550,7 @@ namespace ast {
         return nullptr;
     }
 
-    Value * Return_Statement::codegen(context_module & context) {
+    Value * return_stmt::codegen(context_module & context) {
         if (value == nullptr) { return context.builder().CreateRetVoid(); }
 
         return context.builder().CreateRet(value->codegen(context));

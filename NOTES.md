@@ -7,6 +7,10 @@ The key words "must", "must not", "required", "shall", "shall not", "should", "s
 Classes should follow the C++ standard library's capitalization rules,
 that is all lowercase with underscores separating words (e.g. snakecase).
 
+Certain abbreviations should be used in naming:
+ - `stmt` for statement
+ - `expr` for expression
+
 ## Namespaces
 Namespaces should have their own folder and should be named like that folder.
 Namespaces may have a forward declaration header,

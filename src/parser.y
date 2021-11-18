@@ -53,7 +53,7 @@
     ast::Func_Header * func_head;
     ast::Typed_Var * var_with_type;
 
-    ast::Statement_Seq * statements;
+    ast::stmt_sequence * stmts;
     ast::Top_Level_Seq * top_lvl_items;
 
     std::vector<ast::Typed_Var>* params;
@@ -75,12 +75,12 @@
 %nterm <string> literal type ret_type
 %type <expression> expr
 %type <expression> initialization
-%type <stmt> statement else_block conditional action
+%type <stmt> stmt else_block conditional action
 %type <top_lvl> top_lvl_item function constant
 %type <func_call> func_call
 %type <func_head> func_header func_sig
 %type <var_with_type> typed_var
-%type <statements> statement_seq statement_block
+%type <stmts> stmt_seq stmt_block
 %type <top_lvl_items> top_lvl_seq
 %type <params> param_list param_group
 %type <args> arg_list arg_group
@@ -114,11 +114,11 @@ top_lvl_item : function | constant ;
 constant : T_CONST typed_var initialization { $$ = new Constant{std::move(*$2), $3}; delete $2; set_loc($$, @$); }
          ;
 
-function : func_header statement {
+function : func_header stmt {
              $$ = new Function{std::move(*$1), $2}; delete $1; set_loc($$, @$);
          }
          | func_header T_ASSIGN expr {
-            $$ = new Function{std::move(*$1), new Return_Statement{$3}}; delete $1; set_loc($$, @$);
+            $$ = new Function{std::move(*$1), new return_stmt{$3}}; delete $1; set_loc($$, @$);
          }
          ;
 
@@ -144,26 +144,26 @@ typed_var : type T_IDENT         { $$ = new Typed_Var(std::move(*$2), std::move(
           | T_IDENT T_IS type     { $$ = new Typed_Var(std::move(*$1), std::move(*$3)); delete $1; delete $3; set_loc($$, @$); }
           ;
 
-statement : statement_block { $$ = dynamic_cast<Statement *>($1); } | action T_SEMI | conditional ;
+stmt : stmt_block { $$ = dynamic_cast<Statement *>($1); } | action T_SEMI | conditional ;
 
-statement_block : T_LBRACE statement_seq T_RBRACE { $$ = $2; set_loc($$, @$); } ;
+stmt_block : T_LBRACE stmt_seq T_RBRACE { $$ = $2; set_loc($$, @$); } ;
 
-statement_seq : %empty { $$ = new Statement_Seq; set_loc($$, @$); }
-              | statement_seq statement { $$ = $1; $$->append($2); set_loc($$, @$); }
-              ;
+stmt_seq : %empty { $$ = new stmt_sequence; set_loc($$, @$); }
+         | stmt_seq stmt { $$ = $1; $$->append($2); set_loc($$, @$); }
+         ;
 
-action : T_RET expr { $$ = new Return_Statement($2); set_loc($$, @$);}
-       | T_RET { $$ = new Return_Statement; set_loc($$, @$);}
+action : T_RET expr { $$ = new return_stmt($2); set_loc($$, @$);}
+       | T_RET { $$ = new return_stmt; set_loc($$, @$);}
        | func_call { $$ = new func_call_stmt(std::move(*$1)); delete $1; set_loc($$, @$);}
-       | T_LET T_IDENT initialization { $$ = new Let_Statement(std::move(*$2), $3); delete $2; set_loc($$, @$); }
-       | T_LET typed_var initialization { $$ = new Let_Statement(std::move(*$2), $3); delete $2; set_loc($$, @$); }
+       | T_LET T_IDENT initialization { $$ = new let_stmt(std::move(*$2), $3); delete $2; set_loc($$, @$); }
+       | T_LET typed_var initialization { $$ = new let_stmt(std::move(*$2), $3); delete $2; set_loc($$, @$); }
        ;
 
-conditional : T_IF expr statement_block else_block { $$ = new If_Statement($2, $3, $4); set_loc($$, @$); }
-            | T_IF expr statement    { $$ = new If_Statement($2, $3, nullptr); set_loc($$, @$); }
+conditional : T_IF expr stmt_block else_block { $$ = new if_stmt($2, $3, $4); set_loc($$, @$); }
+            | T_IF expr stmt    { $$ = new if_stmt($2, $3, nullptr); set_loc($$, @$); }
             ;
 
-else_block : T_ELSE statement_block { $$ = $2; set_loc($$, @$);  }
+else_block : T_ELSE stmt_block { $$ = $2; set_loc($$, @$);  }
            | T_ELSE conditional { $$ = $2; set_loc($$, @$);  }
            ;
 

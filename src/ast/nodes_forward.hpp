@@ -6,12 +6,12 @@ namespace ast {
     class Expression;
     class Func_Header;
     class Function;
-    class If_Statement;
-    class Let_Statement;
+    class if_stmt;
+    class let_stmt;
     class Node;
-    class Return_Statement;
+    class return_stmt;
     class Statement;
-    class Statement_Seq;
+    class stmt_sequence;
     class Top_Level;
     class Top_Level_Seq;
     class Typed_Var;
