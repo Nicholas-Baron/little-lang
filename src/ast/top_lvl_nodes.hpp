@@ -56,7 +56,9 @@ namespace ast {
 
         llvm::FunctionType * full_type(context_module & context);
 
-        [[nodiscard]] const typed_identifier & arg(unsigned index) const { return params.at(index); }
+        [[nodiscard]] const typed_identifier & arg(unsigned index) const {
+            return params.at(index);
+        }
         [[nodiscard]] const std::string & name() const { return name_; }
 
         void set_location(const Location & loc_new) { loc = loc_new; }
