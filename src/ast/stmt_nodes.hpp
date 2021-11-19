@@ -18,6 +18,8 @@ namespace ast {
 
         movable(if_stmt);
 
+        make_visitable;
+
         llvm::Value * codegen(context_module & context) override;
 
         bool type_check(context_module & context) override {
@@ -44,6 +46,8 @@ namespace ast {
         non_copyable(let_stmt);
 
         movable(let_stmt);
+
+        make_visitable;
 
         llvm::Value * codegen(context_module & context) override;
 
@@ -84,6 +88,8 @@ namespace ast {
 
         void append(stmt * stmt) { stmts.emplace_back(stmt); }
 
+        make_visitable;
+
         // The return value should not be used
         llvm::Value * codegen(context_module & context) override {
             for (const auto & entry : stmts) { entry->codegen(context); }
@@ -106,6 +112,8 @@ namespace ast {
         explicit func_call_stmt(func_call_data && data)
             : data{std::move(data)} {}
 
+        make_visitable;
+
         llvm::Value * codegen(context_module & context) override { return data.codegen(context); }
 
         bool type_check(context_module & context) override {
@@ -125,6 +133,8 @@ namespace ast {
         non_copyable(return_stmt);
 
         movable(return_stmt);
+
+        make_visitable;
 
         llvm::Value * codegen(context_module & context) override;
 

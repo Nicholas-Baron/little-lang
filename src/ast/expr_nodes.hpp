@@ -18,6 +18,8 @@ namespace ast {
 
         movable(user_val);
 
+        make_visitable;
+
         llvm::Value * codegen(context_module & context) override;
         llvm::Constant * compile_time_codegen(context_module & context) override;
 
@@ -42,6 +44,8 @@ namespace ast {
 
         movable(unary_expr);
 
+        make_visitable;
+
         llvm::Value * codegen(context_module & context) override;
         llvm::Constant * compile_time_codegen(context_module & context) override;
         llvm::Type * type_check(context_module & context) override {
@@ -63,6 +67,8 @@ namespace ast {
         non_copyable(binary_expr);
 
         movable(binary_expr);
+
+        make_visitable;
 
         llvm::Value * codegen(context_module & context) override;
 
@@ -93,6 +99,8 @@ namespace ast {
       public:
         explicit func_call_expr(func_call_data && data)
             : data{std::move(data)} {}
+
+        make_visitable;
 
         llvm::Value * codegen(context_module & context) override { return data.codegen(context); }
 

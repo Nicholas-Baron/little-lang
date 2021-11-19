@@ -5,6 +5,7 @@
 #include "location.hpp"
 #include "nodes_forward.hpp"
 #include "utils/move_copy.hpp"
+#include "visitor/visitor_base.hpp"
 #include <llvm/IR/Value.h>
 
 #include <memory> // unique_ptr
@@ -22,6 +23,11 @@ namespace ast {
         movable(node);
 
         virtual ~node() = default;
+
+        virtual void accept(visitor::visitor_base &) = 0;
+
+#define make_visitable \
+    void accept(visitor::visitor_base & visitor) override { visitor.visit(*this); }
 
         virtual llvm::Value * codegen(context_module & context) = 0;
 

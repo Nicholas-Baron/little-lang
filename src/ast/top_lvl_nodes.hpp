@@ -22,6 +22,8 @@ namespace ast {
 
         ~top_level_sequence() override = default;
 
+        make_visitable;
+
         void append(top_level * item) { top_lvl_seq_.emplace_back(item); }
 
         // The return value should not be used
@@ -87,6 +89,8 @@ namespace ast {
 
         movable(func_decl);
 
+        make_visitable;
+
         llvm::Value * codegen(context_module & context) override;
 
         bool type_check(context_module & context) override;
@@ -105,6 +109,8 @@ namespace ast {
         non_copyable(const_decl);
 
         movable(const_decl);
+
+        make_visitable;
 
         llvm::Value * codegen(context_module & context) override;
 
