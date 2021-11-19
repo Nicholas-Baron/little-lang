@@ -1,26 +1,34 @@
 #ifndef NODES_FORWARD_HPP
 #define NODES_FORWARD_HPP
 
+// clang-format off
+#define ast_nodes                 \
+    __node(binary_expr)           \
+    __node(const_decl)            \
+    __node(expr)                  \
+    __node(func_call_data)        \
+    __node(func_call_expr)        \
+    __node(func_call_stmt)        \
+    __node(func_decl)             \
+    __node(func_header)           \
+    __node(if_stmt)               \
+    __node(let_stmt)              \
+    __node(node)                  \
+    __node(return_stmt)           \
+    __node(stmt)                  \
+    __node(stmt_sequence)         \
+    __node(top_level)             \
+    __node(top_level_sequence)    \
+    __node(typed_identifier)      \
+    __node(unary_expr)            \
+    __node(user_val)
+
+// clang-format on
+
 namespace ast {
-    class binary_expr;
-    class const_decl;
-    class expr;
-    class func_call_data;
-    class func_call_expr;
-    class func_call_stmt;
-    class func_decl;
-    class func_header;
-    class if_stmt;
-    class let_stmt;
-    class node;
-    class return_stmt;
-    class stmt;
-    class stmt_sequence;
-    class top_level;
-    class top_level_sequence;
-    class typed_identifier;
-    class unary_expr;
-    class user_val;
+#define __node(name) class name;
+    ast_nodes
+#undef __node
 } // namespace ast
 
 #endif
