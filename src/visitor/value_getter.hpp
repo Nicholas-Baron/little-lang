@@ -6,7 +6,8 @@
 
 namespace visitor {
     // NOTE: visitor_impl cannot be tested, as it is incomplete at the time of instantiation.
-    template<typename visitor_impl, typename visitable, typename result_t> class value_getter {
+    template<typename visitor_impl, typename visitable, typename result_t>
+    class value_getter {
       public:
         static_assert(std::is_class_v<visitable>, "we must visit classes");
         static result_t get_value(visitable & n) {

@@ -21,6 +21,8 @@ AllowShortIfStatementsOnASingleLine: Always
 AllowShortLoopsOnASingleLine: true
 BreakBeforeBraces: Attach
 
+AlwaysBreakTemplateDeclarations: Yes
+
 BreakConstructorInitializers: BeforeComma
 DerivePointerAlignment: false
 PointerAlignment: Middle
