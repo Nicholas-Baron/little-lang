@@ -5,6 +5,7 @@
 #include "parser.hpp" // yyparse
 #include "settings.hpp"
 #include "tokens.hpp" // yyin
+#include "visitor/codegen.hpp"
 #include "visitor/printer.hpp"
 #include <sys/wait.h> // waitpid
 
@@ -60,6 +61,7 @@ static auto read_module(const std::string & filename) -> decltype(module) {
     return std::move(module);
 }
 
+/*
 static bool exec_command(std::vector<std::string> && cmd, bool debug) {
 
     if (debug) {
@@ -98,6 +100,7 @@ static bool exec_command(std::vector<std::string> && cmd, bool debug) {
         return WEXITSTATUS(wait_status) == 0;
     }
 }
+*/
 
 int main(const int arg_count, const char * const * const args) {
 
@@ -111,11 +114,6 @@ int main(const int arg_count, const char * const * const args) {
 
     const auto & filename = command_line->file_to_read;
 
-    auto target_triple = init_llvm_targets();
-
-    context_module context{filename};
-    context.module().setTargetTriple(target_triple);
-
     // TODO: Add include/import system
     auto parsed_module = read_module(filename);
     if (parsed_module == nullptr) { return -1; }
@@ -125,17 +123,21 @@ int main(const int arg_count, const char * const * const args) {
         parsed_module->accept(printer_visitor);
     }
 
-    parsed_module->codegen(context);
+    visitor::codegen codegen_visitor{filename};
+    codegen_visitor.visit(*parsed_module);
 
+    /*
     if (not parsed_module->type_check(context)) {
         std::cout << "Failed to type check" << std::endl;
         return 1;
     }
+    */
 
-    context.verify_module();
+    codegen_visitor.verify_module();
 
-    if (command_line->debug) { context.dump(); }
+    if (command_line->debug) { codegen_visitor.dump(); }
 
+    /*
     if (command_line->simulate) {
         auto parsed_module_result = run_module(std::move(context));
         std::cout << "parsed_module returned " << parsed_module_result << std::endl;
@@ -149,4 +151,5 @@ int main(const int arg_count, const char * const * const args) {
         exec_command({"gcc", "-static", "-o", std::move(program_name), std::move(output_name)},
                      command_line->debug);
     }
+    */
 }
