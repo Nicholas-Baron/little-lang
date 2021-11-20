@@ -5,7 +5,7 @@
 #include "parser.hpp" // yyparse
 #include "settings.hpp"
 #include "tokens.hpp" // yyin
-#include "visitor/codegen.hpp"
+#include "visitor/printer.hpp"
 #include <sys/wait.h> // waitpid
 
 #include <cassert>
@@ -120,8 +120,10 @@ int main(const int arg_count, const char * const * const args) {
     auto parsed_module = read_module(filename);
     if (parsed_module == nullptr) { return -1; }
 
-    visitor::codegen codegen_visitor{filename};
-    parsed_module->accept(codegen_visitor);
+    if (command_line->debug) {
+        visitor::printer printer_visitor{filename};
+        parsed_module->accept(printer_visitor);
+    }
 
     parsed_module->codegen(context);
 

@@ -28,19 +28,13 @@ namespace visitor {
         ast_nodes
 #undef __node
 
-        std::unique_ptr<llvm::Module> take_module() && noexcept { return std::move(ir_module); }
-        // clang-format on
-
         void verify_module() const;
+
         void dump() const;
+        // clang-format on
 
       private:
         void printError(const std::string & name, std::optional<Location> loc = std::nullopt);
-
-        // Keep these behind unique_ptr to allow for moving the visitor
-        std::unique_ptr<llvm::LLVMContext> context;
-        std::unique_ptr<llvm::Module> ir_module;
-        std::unique_ptr<llvm::IRBuilder<>> ir_builder;
     };
 } // namespace visitor
 

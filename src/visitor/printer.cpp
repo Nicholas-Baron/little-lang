@@ -93,10 +93,7 @@ namespace visitor {
         }
     } // namespace
 
-    printer::printer(const std::string & name)
-        : context{std::make_unique<llvm::LLVMContext>()}
-        , ir_module{std::make_unique<llvm::Module>(name, *context)}
-        , ir_builder{std::make_unique<llvm::IRBuilder<>>(*context)} {}
+    printer::printer(const std::string & name) { std::cout << "Module " << name << std::endl; }
 
     void printer::visit(ast::binary_expr & binary_expr) {
 

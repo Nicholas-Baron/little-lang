@@ -33,6 +33,7 @@ set(proj_files
 	location.cpp
 	ast/nodes.cpp
 	visitor/codegen.cpp
+	visitor/printer.cpp
 	settings.cpp
 	${bison_output}
 	${flex_output}
