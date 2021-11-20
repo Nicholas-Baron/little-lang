@@ -35,12 +35,16 @@ namespace visitor {
         void dump() const;
 
       private:
+        llvm::Type * find_type(const std::string & name,
+                               std::optional<Location> loc = std::nullopt);
         void printError(const std::string & name, std::optional<Location> loc = std::nullopt);
 
         // Keep these behind unique_ptr to allow for moving the visitor
         std::unique_ptr<llvm::LLVMContext> context;
         std::unique_ptr<llvm::Module> ir_module;
         std::unique_ptr<llvm::IRBuilder<>> ir_builder;
+
+        std::map<std::string, llvm::Type *> types;
     };
 } // namespace visitor
 
