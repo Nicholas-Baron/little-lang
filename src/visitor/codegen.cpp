@@ -1,7 +1,9 @@
 #include "codegen.hpp"
 
 #include "ast/nodes.hpp"
+#include "emit_asm.hpp"
 #include "parser.hpp" // token names (should not be needed here)
+#include <llvm/IR/Verifier.h>
 
 #include <iostream>
 
@@ -96,7 +98,23 @@ namespace visitor {
     codegen::codegen(const std::string & name)
         : context{std::make_unique<llvm::LLVMContext>()}
         , ir_module{std::make_unique<llvm::Module>(name, *context)}
-        , ir_builder{std::make_unique<llvm::IRBuilder<>>(*context)} {}
+        , ir_builder{std::make_unique<llvm::IRBuilder<>>(*context)} {
+
+        ir_module->setTargetTriple(init_llvm_targets());
+    }
+
+    void codegen::dump() const {
+        // TODO: move away from std::cout?
+        std::string to_print;
+        {
+            llvm::raw_string_ostream stream(to_print);
+            ir_module->print(stream, nullptr);
+        }
+
+        std::cout << to_print << std::endl;
+    }
+
+    void codegen::verify_module() const { llvm::verifyModule(*ir_module, &llvm::errs()); }
 
     void codegen::visit(ast::binary_expr & binary_expr) {
 
