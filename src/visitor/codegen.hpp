@@ -45,6 +45,7 @@ namespace visitor {
         std::unique_ptr<llvm::IRBuilder<>> ir_builder;
 
         std::map<std::string, llvm::Type *> types;
+        std::vector<std::map<std::string, llvm::Value *>> active_values;
     };
 } // namespace visitor
 

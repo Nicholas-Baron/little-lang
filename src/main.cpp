@@ -118,10 +118,12 @@ int main(const int arg_count, const char * const * const args) {
     auto parsed_module = read_module(filename);
     if (parsed_module == nullptr) { return -1; }
 
+	/*
     if (command_line->debug) {
         visitor::printer printer_visitor{filename};
         parsed_module->accept(printer_visitor);
     }
+	*/
 
     visitor::codegen codegen_visitor{filename};
     codegen_visitor.visit(*parsed_module);
