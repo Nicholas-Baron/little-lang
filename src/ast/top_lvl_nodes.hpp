@@ -11,7 +11,7 @@ namespace ast {
     class top_level_sequence final : public node {
       public:
         top_level_sequence() = default;
-        top_level_sequence(top_level * first_item)
+        explicit top_level_sequence(top_level * first_item)
             : top_level_sequence{} {
             append(first_item);
         }
@@ -24,11 +24,11 @@ namespace ast {
 
         make_visitable;
 
-        void append(top_level * item) { top_lvl_seq_.emplace_back(item); }
+        void append(top_level * item) { items.emplace_back(item); }
 
         // The return value should not be used
         llvm::Value * codegen(context_module & context) override {
-            for (const auto & item : top_lvl_seq_) {
+            for (const auto & item : items) {
                 assert(item != nullptr);
                 item->codegen(context);
             }
@@ -36,15 +36,14 @@ namespace ast {
         }
 
         [[nodiscard]] bool type_check(context_module & context) {
-            for (auto & item : top_lvl_seq_) {
+            for (auto & item : items) {
                 assert(item != nullptr);
                 if (not item->type_check(context)) { return false; }
             }
             return true;
         }
 
-      private:
-        std::vector<top_lvl_ptr> top_lvl_seq_;
+        std::vector<top_lvl_ptr> items;
     };
 
     // TODO: make this class a member of func_decl and shorten the name
@@ -54,13 +53,18 @@ namespace ast {
             : name_(std::move(name))
             , params(std::move(parameters)) {}
 
-        void set_ret_type(std::string && type) { ret_type = std::move(type); }
+        void set_ret_type(std::string && type) { ret_type_ = std::move(type); }
+
+        [[nodiscard]] const auto & ret_type() const { return ret_type_; }
 
         llvm::FunctionType * full_type(context_module & context);
 
         [[nodiscard]] const typed_identifier & arg(unsigned index) const {
             return params.at(index);
         }
+
+        [[nodiscard]] size_t param_count() const { return params.size(); }
+
         [[nodiscard]] const std::string & name() const { return name_; }
 
         void set_location(const Location & loc_new) { loc = loc_new; }
@@ -74,7 +78,7 @@ namespace ast {
 
         std::string name_;
         std::vector<typed_identifier> params;
-        std::string ret_type{};
+        std::string ret_type_{};
         Location loc{};
     };
 
@@ -82,8 +86,8 @@ namespace ast {
     class func_decl final : public top_level {
       public:
         func_decl(func_header && head, stmt * body)
-            : head_(std::move(head))
-            , body_(body) {}
+            : head(std::move(head))
+            , body(body) {}
 
         non_copyable(func_decl);
 
@@ -95,9 +99,8 @@ namespace ast {
 
         bool type_check(context_module & context) override;
 
-      private:
-        func_header head_;
-        stmt_ptr body_;
+        func_header head;
+        stmt_ptr body;
     };
 
     class const_decl final : public top_level {
@@ -116,7 +119,6 @@ namespace ast {
 
         bool type_check(context_module & context) override;
 
-      private:
         typed_identifier name_and_type;
         expr_ptr expr;
     };

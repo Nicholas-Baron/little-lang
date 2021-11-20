@@ -213,11 +213,11 @@ namespace ast {
 
     FunctionType * func_header::full_type(context_module & context) {
 
-        if (ret_type.empty() or ret_type == "auto") {
+        if (ret_type().empty() or ret_type() == "auto") {
             context.printError(name_ + " does not have a known return type", location());
         }
 
-        return FunctionType::get(context.find_type(ret_type, location()), param_types(context),
+        return FunctionType::get(context.find_type(ret_type(), location()), param_types(context),
                                  false);
     }
 
@@ -572,27 +572,27 @@ namespace ast {
 
     bool func_decl::type_check(context_module & context) {
         context.clean_type_bindings();
-        auto * full_type = head_.full_type(context);
+        auto * full_type = head.full_type(context);
         for (auto i = 0U; i < full_type->getNumParams(); ++i) {
-            if (not context.bind_type(head_.arg(i).name(), full_type->getParamType(i))) {
+            if (not context.bind_type(head.arg(i).name(), full_type->getParamType(i))) {
                 return false;
             }
         }
         auto bind_return = context.bind_type("return", full_type->getReturnType());
         assert(bind_return);
-        return body_->type_check(context);
+        return body->type_check(context);
     }
 
     Value * func_decl::codegen(context_module & context) {
 
-        auto * func_type = head_.full_type(context);
+        auto * func_type = head.full_type(context);
 
         assert(func_type != nullptr);
 
-        auto * func = context.create_new_function(func_type, head_.name());
-        context.create_new_insertion_point(head_.name() + "_start", func);
-        head_.add_parameters(context, *func);
-        body_->codegen(context);
+        auto * func = context.create_new_function(func_type, head.name());
+        context.create_new_insertion_point(head.name() + "_start", func);
+        head.add_parameters(context, *func);
+        body->codegen(context);
         context.remove_current_scope();
 
         llvm::verifyFunction(*func, &llvm::dbgs());
