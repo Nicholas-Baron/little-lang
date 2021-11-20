@@ -4,6 +4,7 @@
 #include "emit_asm.hpp"
 #include "parser.hpp" // token names (should not be needed here)
 #include <llvm/IR/BasicBlock.h>
+#include <llvm/IR/Constants.h>
 #include <llvm/IR/Verifier.h>
 
 #include <iostream>
@@ -95,6 +96,10 @@ namespace visitor {
                 return "T_PRIM_TYPE";
             }
         }
+
+        const std::map<std::string, bool> valid_bools{{"true", true},   {"True", true},
+                                                      {"TRUE", true},   {"false", false},
+                                                      {"False", false}, {"FALSE", false}};
     } // namespace
 
     codegen::codegen(const std::string & name)
@@ -121,6 +126,15 @@ namespace visitor {
         std::cout << to_print << std::endl;
     }
 
+    llvm::Value * codegen::find_alive_value(const std::string & name) const {
+        // Walk backwards thru scopes
+        for (auto scope = active_values.rbegin(); scope != active_values.rend(); ++scope) {
+            if (auto iter = scope->find(name); iter != scope->end()) { return iter->second; }
+        }
+        printError("Could not find value " + name);
+        return nullptr;
+    }
+
     llvm::Type * codegen::find_type(const std::string & name, std::optional<Location> loc) {
 
         const auto iter = types.find(name);
@@ -131,7 +145,7 @@ namespace visitor {
 
     void codegen::verify_module() const { llvm::verifyModule(*ir_module, &llvm::errs()); }
 
-    void codegen::printError(const std::string & name, std::optional<Location> loc) {
+    void codegen::printError(const std::string & name, std::optional<Location> loc) const {
         if (loc == std::nullopt) {
             context->emitError(name);
         } else {
@@ -230,7 +244,7 @@ namespace visitor {
         auto * start_block = ir_builder->GetInsertBlock();
         auto * current_function = start_block->getParent();
 
-		// Generate the true branch
+        // Generate the true branch
         auto * then_block = llvm::BasicBlock::Create(*context, "", current_function);
         ir_builder->SetInsertPoint(then_block);
         if_stmt.true_branch->accept(*this);
@@ -240,7 +254,7 @@ namespace visitor {
 
         if (if_stmt.else_branch == nullptr) {
 
-			// Short cut to just merging
+            // Short cut to just merging
             auto * merge_block = llvm::BasicBlock::Create(*context, "", current_function);
 
             if (not terminated(start_block)) {
@@ -252,7 +266,7 @@ namespace visitor {
             return;
         }
 
-		// Generate the else block
+        // Generate the else block
         auto * else_block = llvm::BasicBlock::Create(*context, "", current_function);
         ir_builder->SetInsertPoint(else_block);
         if_stmt.else_branch->accept(*this);
@@ -260,7 +274,7 @@ namespace visitor {
         ir_builder->SetInsertPoint(start_block);
         ir_builder->CreateCondBr(condition, then_block, else_block);
 
-		// Ensure termination
+        // Ensure termination
         if (not terminated(else_block) and not terminated(then_block)) {
             auto * merge_block = llvm::BasicBlock::Create(*context, "", current_function);
             if (not terminated(then_block)) {
@@ -313,5 +327,42 @@ namespace visitor {
         unary_expr.expr->accept(*this);
     }
 
-    void codegen::visit(ast::user_val & user_val) { std::cout << user_val.val << std::endl; }
+    void codegen::visit(ast::user_val & user_val) {
+        using value_type = ast::user_val::value_type;
+        switch (user_val.type) {
+        case value_type::identifier: {
+            auto * value = find_alive_value(user_val.val);
+            if (value == nullptr) {
+                printError("Could not find variable " + user_val.val);
+                // TODO: Better recovery
+                assert(false);
+            }
+            store_result(value);
+        } break;
+        case value_type::integer: {
+            static constexpr auto hex_base = 16;
+            static constexpr auto dec_base = 10;
+            auto base = user_val.val.find_first_of('x') != std::string::npos ? hex_base : dec_base;
+            store_result(
+                llvm::ConstantInt::get(llvm::Type::getInt32Ty(*context), user_val.val, base));
+        } break;
+        case value_type::floating:
+            std::cout << "Floating point IR not implemented" << std::endl;
+            assert(false);
+            break;
+        case value_type::character:
+            std::cout << "Character IR not implemented" << std::endl;
+            assert(false);
+            break;
+        case value_type::boolean: {
+            auto iter = valid_bools.find(user_val.val);
+            assert(iter != valid_bools.end());
+            store_result(llvm::ConstantInt::getBool(*context, iter->second));
+        } break;
+        case value_type::string:
+            std::cout << "String IR not implemented" << std::endl;
+            assert(false);
+            break;
+        }
+    }
 } // namespace visitor
