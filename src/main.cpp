@@ -5,6 +5,7 @@
 #include "parser.hpp" // yyparse
 #include "settings.hpp"
 #include "tokens.hpp" // yyin
+#include "visitor/codegen.hpp"
 #include <sys/wait.h> // waitpid
 
 #include <cassert>
@@ -118,6 +119,9 @@ int main(const int arg_count, const char * const * const args) {
     // TODO: Add include/import system
     auto parsed_module = read_module(filename);
     if (parsed_module == nullptr) { return -1; }
+
+    visitor::codegen codegen_visitor{filename};
+    parsed_module->accept(codegen_visitor);
 
     parsed_module->codegen(context);
 

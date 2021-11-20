@@ -31,6 +31,7 @@ namespace ast {
 
         virtual llvm::Value * codegen(context_module & context) = 0;
 
+        // TODO: Just public location
         void set_location(const Location & loc_new) { loc = loc_new; }
 
         [[nodiscard]] const auto & location() const noexcept { return loc; }

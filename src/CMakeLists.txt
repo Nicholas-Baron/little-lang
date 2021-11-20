@@ -32,6 +32,7 @@ set(proj_files
 	jit.cpp
 	location.cpp
 	ast/nodes.cpp
+	visitor/codegen.cpp
 	settings.cpp
 	${bison_output}
 	${flex_output}
