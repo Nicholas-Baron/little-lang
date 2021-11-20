@@ -5,7 +5,10 @@
 #include "parser.hpp" // token names (should not be needed here)
 #include <llvm/IR/BasicBlock.h>
 #include <llvm/IR/Constants.h>
+#include <llvm/IR/InstrTypes.h>
+#include <llvm/IR/Instruction.h>
 #include <llvm/IR/Verifier.h>
+#include <llvm/Support/raw_ostream.h>
 
 #include <iostream>
 #include <sstream>
@@ -157,9 +160,129 @@ namespace visitor {
 
     void codegen::visit(ast::binary_expr & binary_expr) {
 
-        binary_expr.lhs->accept(*this);
-        std::cout << tok_to_string(binary_expr.tok) << '\n';
-        binary_expr.rhs->accept(*this);
+        auto * lhs_value = get_value(*binary_expr.lhs, *this);
+        if (binary_expr.is_shortcircuiting()) {
+            // TODO: Too many arrows
+            auto * lhs_block = ir_builder->GetInsertBlock();
+            auto * current_function = lhs_block->getParent();
+            auto * rhs_block = llvm::BasicBlock::Create(*context, "rhs", current_function);
+
+            auto * merge_block = llvm::BasicBlock::Create(*context, "merge", current_function);
+
+            // add a check to short circuit
+            // short on false if anding, short on true if oring
+
+            assert(binary_expr.tok == T_AND or binary_expr.tok == T_OR);
+
+            // if (true && rhs) -> should eval rhs
+            auto * on_true = binary_expr.tok == T_AND ? rhs_block : merge_block;
+
+            // if (false || rhs) -> should eval rhs
+            auto * on_false = binary_expr.tok == T_OR ? rhs_block : merge_block;
+            assert(on_true != on_false);
+
+            ir_builder->CreateCondBr(lhs_value, on_true, on_false);
+
+            ir_builder->SetInsertPoint(rhs_block);
+            auto * rhs_value = get_value(*binary_expr.rhs, *this);
+            ir_builder->CreateBr(merge_block);
+
+            ir_builder->SetInsertPoint(merge_block);
+            auto * phi = ir_builder->CreatePHI(lhs_value->getType(), 2);
+            phi->addIncoming(lhs_value, lhs_block);
+            phi->addIncoming(rhs_value, rhs_block);
+
+            store_result(phi);
+            return;
+        }
+
+        // We will generate here, as every expression after will need the rhs
+        auto * rhs_value = get_value(*binary_expr.rhs, *this);
+
+        const bool is_constant
+            = llvm::isa<llvm::Constant>(lhs_value) and llvm::isa<llvm::Constant>(rhs_value);
+
+        const bool is_int
+            = lhs_value->getType()->isIntegerTy() and rhs_value->getType()->isIntegerTy();
+
+        if (binary_expr.is_comparison()) {
+
+            using predicate = llvm::CmpInst::Predicate;
+            auto int_or_float = [&is_int](predicate float_pred, predicate int_pred) {
+                return is_int ? int_pred : float_pred;
+            };
+
+            std::optional<predicate> p;
+            switch (binary_expr.tok) {
+            case T_LE:
+                p = int_or_float(predicate::FCMP_OLE, predicate::ICMP_SLE);
+                break;
+            case T_LT:
+                p = int_or_float(predicate::FCMP_OLT, predicate::ICMP_SLT);
+                break;
+            case T_GE:
+                p = int_or_float(predicate::FCMP_OGE, predicate::ICMP_SGE);
+                break;
+            case T_GT:
+                p = int_or_float(predicate::FCMP_OGT, predicate::ICMP_SGT);
+                break;
+            case T_EQ:
+                p = int_or_float(predicate::FCMP_OEQ, predicate::ICMP_EQ);
+                break;
+            case T_NE:
+                p = int_or_float(predicate::FCMP_ONE, predicate::ICMP_NE);
+                break;
+            default:
+                printError("Comparison operator " + tok_to_string(binary_expr.tok)
+                               + " is not implemented yet",
+                           binary_expr.location());
+                assert(false);
+            }
+            assert(p.has_value());
+            if (is_constant) {
+                auto * constant_lhs = llvm::dyn_cast<llvm::Constant>(lhs_value);
+                auto * constant_rhs = llvm::dyn_cast<llvm::Constant>(rhs_value);
+                store_result(llvm::ConstantExpr::getCompare(*p, constant_lhs, constant_rhs));
+            } else if (is_int) {
+                store_result(ir_builder->CreateICmp(*p, lhs_value, rhs_value));
+            } else {
+                store_result(ir_builder->CreateFCmp(*p, lhs_value, rhs_value));
+            }
+            return;
+        }
+
+        // all other binary expressions
+
+        using bin_ops = llvm::Instruction::BinaryOps;
+        std::optional<bin_ops> bin_op;
+
+        // TODO: Rename or swap args
+        auto int_or_float = [&is_int](bin_ops float_pred, bin_ops int_pred) {
+            return is_int ? int_pred : float_pred;
+        };
+
+        switch (binary_expr.tok) {
+        case T_PLUS:
+            bin_op = int_or_float(bin_ops::Add, bin_ops::FAdd);
+            break;
+        case T_MINUS:
+            bin_op = int_or_float(bin_ops::Sub, bin_ops::FSub);
+            break;
+        default:
+            printError("Binary operator " + tok_to_string(binary_expr.tok)
+                           + " is not implemented yet",
+                       binary_expr.location());
+            assert(false);
+        }
+
+        assert(bin_op.has_value());
+        if (is_constant) {
+            auto * constant_lhs = llvm::dyn_cast<llvm::Constant>(lhs_value);
+            auto * constant_rhs = llvm::dyn_cast<llvm::Constant>(rhs_value);
+            store_result(llvm::ConstantExpr::get(*bin_op, constant_lhs, constant_rhs));
+        } else {
+            store_result(ir_builder->CreateBinOp(*bin_op, lhs_value, rhs_value));
+        }
     }
 
     void codegen::visit(ast::const_decl & const_decl) {
@@ -216,7 +339,7 @@ namespace visitor {
             active_values.back().emplace(name, arg);
         }
 
-        auto * block = llvm::BasicBlock::Create(*context, "", func);
+        auto * block = llvm::BasicBlock::Create(*context, func->getName(), func);
         ir_builder->SetInsertPoint(block);
 
         func_decl.body->accept(*this);
