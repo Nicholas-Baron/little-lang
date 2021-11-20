@@ -47,6 +47,16 @@ namespace ast {
 
         llvm::Type * type_check(context_module &, Location);
 
+        [[nodiscard]] const auto & name() const { return name_; }
+
+        [[nodiscard]] size_t args_count() const { return args_.size(); }
+
+		// TODO: stop returning const std::unique_ptr &
+        [[nodiscard]] const auto & arg(size_t i) const {
+            assert(i < args_.size());
+            return args_.at(i);
+        }
+
       private:
         std::string name_;
         std::vector<expr_ptr> args_{};

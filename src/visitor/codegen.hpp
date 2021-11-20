@@ -24,7 +24,7 @@ namespace visitor {
         ~codegen() override = default;
 
         // clang-format off
-#define __node(name) void visit(ast::name & node) override;
+#define __node(name) void visit(ast::name & name) override;
         ast_nodes
 #undef __node
 

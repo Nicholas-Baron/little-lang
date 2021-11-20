@@ -25,7 +25,6 @@ namespace ast {
 
         llvm::Type * type_check(context_module & context) override;
 
-      private:
         [[nodiscard]] llvm::ConstantInt * as_i32(context_module &) const;
         [[nodiscard]] llvm::ConstantInt * as_bool(context_module &) const;
 
@@ -52,7 +51,6 @@ namespace ast {
             return expr->type_check(context);
         }
 
-      private:
         int tok;
         expr_ptr expr;
     };
@@ -60,8 +58,8 @@ namespace ast {
     class binary_expr final : public expr {
       public:
         binary_expr(expr * lhs, int op, expr * rhs)
-            : lhs_(lhs)
-            , rhs_(rhs)
+            : lhs(lhs)
+            , rhs(rhs)
             , tok(op) {}
 
         non_copyable(binary_expr);
@@ -75,8 +73,8 @@ namespace ast {
         llvm::Constant * compile_time_codegen(context_module & context) override;
 
         llvm::Type * type_check(context_module & context) override {
-            auto * lhs_type = lhs_->type_check(context);
-            auto * rhs_type = rhs_->type_check(context);
+            auto * lhs_type = lhs->type_check(context);
+            auto * rhs_type = rhs->type_check(context);
 
             if (lhs_type != rhs_type) {
                 context.printError("Failed to type check binary expression", location());
@@ -87,11 +85,10 @@ namespace ast {
             return lhs_type;
         }
 
-      private:
         [[nodiscard]] bool is_comparison() const noexcept;
         [[nodiscard]] bool is_shortcircuiting() const noexcept;
 
-        expr_ptr lhs_, rhs_;
+        expr_ptr lhs, rhs;
         int tok;
     };
 
@@ -114,7 +111,6 @@ namespace ast {
             return data.type_check(context, location());
         }
 
-      private:
         func_call_data data;
     };
 } // namespace ast

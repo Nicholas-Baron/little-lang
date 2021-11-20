@@ -391,10 +391,10 @@ namespace ast {
 
     Value * binary_expr::codegen(context_module & context) {
 
-        if (is_shortcircuiting()) { return short_circuit(context, lhs_.get(), tok, rhs_.get()); }
+        if (is_shortcircuiting()) { return short_circuit(context, lhs.get(), tok, rhs.get()); }
 
-        auto * left = lhs_->codegen(context);
-        auto * right = rhs_->codegen(context);
+        auto * left = lhs->codegen(context);
+        auto * right = rhs->codegen(context);
 
         if (left == nullptr) {
             context.printError("Token #" + tok_to_string(tok) + " has a null left operand.",
@@ -426,8 +426,8 @@ namespace ast {
     }
 
     llvm::Constant * binary_expr::compile_time_codegen(context_module & context) {
-        auto * left = lhs_->compile_time_codegen(context);
-        auto * right = rhs_->compile_time_codegen(context);
+        auto * left = lhs->compile_time_codegen(context);
+        auto * right = rhs->compile_time_codegen(context);
 
         if (left == nullptr) {
             context.printError("Token #" + tok_to_string(tok) + " has a null left operand.",
@@ -539,11 +539,11 @@ namespace ast {
 
     Value * let_stmt::codegen(context_module & context) {
 
-        auto * value = value_->codegen(context);
+        auto * llvm_value = value->codegen(context);
         auto type = name_and_type.type();
-        if (type == "auto" or context.find_type(type, location()) == value->getType()) {
-            value->setName(name_and_type.name());
-            return value;
+        if (type == "auto" or context.find_type(type, location()) == llvm_value->getType()) {
+            llvm_value->setName(name_and_type.name());
+            return llvm_value;
         }
 
         context.printError("Casting is not supported at this time.", location());

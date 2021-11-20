@@ -27,7 +27,6 @@ namespace ast {
                and (else_branch == nullptr or else_branch->type_check(context));
         }
 
-      private:
         expr_ptr condition;
         stmt_ptr true_branch;
         stmt_ptr else_branch;
@@ -37,11 +36,11 @@ namespace ast {
       public:
         let_stmt(std::string && name, expr * value)
             : name_and_type(std::move(name), "auto")
-            , value_(value) {}
+            , value(value) {}
 
         let_stmt(typed_identifier && typed_name, expr * value)
             : name_and_type(std::move(typed_name))
-            , value_(value) {}
+            , value(value) {}
 
         non_copyable(let_stmt);
 
@@ -52,7 +51,7 @@ namespace ast {
         llvm::Value * codegen(context_module & context) override;
 
         bool type_check(context_module & context) override {
-            auto * expr_type = value_->type_check(context);
+            auto * expr_type = value->type_check(context);
             if (expr_type == nullptr) { return false; }
 
             auto * decl_type = context.find_type(name_and_type.type(), location());
@@ -67,15 +66,14 @@ namespace ast {
             return context.bind_type(name_and_type.name(), expr_type);
         }
 
-      private:
         typed_identifier name_and_type;
-        expr_ptr value_;
+        expr_ptr value;
     };
 
     class stmt_sequence final : public stmt {
       public:
         stmt_sequence() = default;
-        stmt_sequence(stmt * stmt)
+        explicit stmt_sequence(stmt * stmt)
             : stmt_sequence() {
             append(stmt);
         }
@@ -103,7 +101,6 @@ namespace ast {
             return true;
         }
 
-      private:
         std::vector<stmt_ptr> stmts{};
     };
 
@@ -121,7 +118,6 @@ namespace ast {
             return data.type_check(context, location()) == context.builder().getVoidTy();
         }
 
-      private:
         func_call_data data;
     };
 
@@ -145,7 +141,6 @@ namespace ast {
             return expr_type == decl_type;
         }
 
-      private:
         expr_ptr value;
     };
 } // namespace ast
