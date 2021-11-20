@@ -6,6 +6,7 @@
 #include <llvm/IR/Verifier.h>
 
 #include <iostream>
+#include <sstream>
 
 namespace visitor {
 
@@ -98,7 +99,12 @@ namespace visitor {
     codegen::codegen(const std::string & name)
         : context{std::make_unique<llvm::LLVMContext>()}
         , ir_module{std::make_unique<llvm::Module>(name, *context)}
-        , ir_builder{std::make_unique<llvm::IRBuilder<>>(*context)} {
+        , ir_builder{std::make_unique<llvm::IRBuilder<>>(*context)}
+        , types{{"int", llvm::Type::getInt32Ty(*context)},
+                {"float", llvm::Type::getFloatTy(*context)},
+                {"proc", llvm::Type::getVoidTy(*context)},
+                {"bool", llvm::Type::getInt1Ty(*context)},
+                {"char", llvm::Type::getInt8Ty(*context)}} {
 
         ir_module->setTargetTriple(init_llvm_targets());
     }
@@ -114,7 +120,25 @@ namespace visitor {
         std::cout << to_print << std::endl;
     }
 
+    llvm::Type * codegen::find_type(const std::string & name, std::optional<Location> loc) {
+
+        const auto iter = types.find(name);
+        if (iter != types.end()) { return iter->second; }
+        printError(name + " is an unknown type", loc);
+        return nullptr;
+    }
+
     void codegen::verify_module() const { llvm::verifyModule(*ir_module, &llvm::errs()); }
+
+    void codegen::printError(const std::string & name, std::optional<Location> loc) {
+        if (loc == std::nullopt) {
+            context->emitError(name);
+        } else {
+            std::stringstream to_print;
+            to_print << *loc << " : " << name;
+            context->emitError(to_print.str());
+        }
+    }
 
     void codegen::visit(ast::binary_expr & binary_expr) {
 
@@ -146,8 +170,26 @@ namespace visitor {
 
     void codegen::visit(ast::func_decl & func_decl) {
         std::cout << "func_decl" << std::endl;
-        // TODO: Add accept to some other classes
-        visit(func_decl.head);
+
+        std::vector<llvm::Type *> param_types;
+        auto param_count = func_decl.head.param_count();
+        param_types.reserve(func_decl.head.param_count());
+
+        for (auto i = 0U; i < param_count; ++i) {
+
+            auto param = func_decl.head.arg(i);
+            param_types.push_back(find_type(param.type(), param.location()));
+        }
+
+        auto * func_type = llvm::FunctionType::get(
+            find_type(func_decl.head.ret_type(), func_decl.location()), param_types, false);
+
+        auto * func = llvm::Function::Create(func_type, llvm::Function::ExternalLinkage,
+                                             func_decl.head.name(), ir_module.get());
+
+        auto * block = llvm::BasicBlock::Create(*context, "", func);
+        ir_builder->SetInsertPoint(block);
+
         func_decl.body->accept(*this);
     }
 
@@ -196,6 +238,7 @@ namespace visitor {
         std::cout << "top_level_sequence" << std::endl;
         for (auto & item : top_level_sequence.items) {
             assert(item != nullptr);
+            // TODO: Add accept to some other classes
             visit(*item);
         }
     }
