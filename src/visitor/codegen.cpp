@@ -104,8 +104,8 @@ namespace visitor {
                 {"float", llvm::Type::getFloatTy(*context)},
                 {"proc", llvm::Type::getVoidTy(*context)},
                 {"bool", llvm::Type::getInt1Ty(*context)},
-                {"char", llvm::Type::getInt8Ty(*context)}} {
-
+                {"char", llvm::Type::getInt8Ty(*context)}}
+        , active_values{{}} {
         ir_module->setTargetTriple(init_llvm_targets());
     }
 
@@ -164,12 +164,14 @@ namespace visitor {
         }
     }
 
-    void codegen::visit(ast::func_call_expr & func_call_expr) { visit(func_call_expr.data); }
+    void codegen::visit(ast::func_call_expr & func_call_expr) {
+        // TODO: Add accept to some other classes
+        visit(func_call_expr.data);
+    }
 
     void codegen::visit(ast::func_call_stmt & func_call_stmt) { visit(func_call_stmt.data); }
 
     void codegen::visit(ast::func_decl & func_decl) {
-        std::cout << "func_decl" << std::endl;
 
         std::vector<llvm::Type *> param_types;
         auto param_count = func_decl.head.param_count();
@@ -187,10 +189,25 @@ namespace visitor {
         auto * func = llvm::Function::Create(func_type, llvm::Function::ExternalLinkage,
                                              func_decl.head.name(), ir_module.get());
 
+        // add the function to the current scope
+        active_values.back().emplace(func_decl.head.name(), func);
+
+        // enter the function
+        active_values.emplace_back();
+        for (auto i = 0U; i < param_count; ++i) {
+            const auto & name = func_decl.head.arg(i).name();
+            auto * arg = func->getArg(i);
+            arg->setName(name);
+            active_values.back().emplace(name, arg);
+        }
+
         auto * block = llvm::BasicBlock::Create(*context, "", func);
         ir_builder->SetInsertPoint(block);
 
         func_decl.body->accept(*this);
+
+        // leave the function
+        active_values.pop_back();
     }
 
     void codegen::visit(ast::func_header & func_header) {
@@ -235,11 +252,9 @@ namespace visitor {
     void codegen::visit(ast::top_level & top_level) { top_level.accept(*this); }
 
     void codegen::visit(ast::top_level_sequence & top_level_sequence) {
-        std::cout << "top_level_sequence" << std::endl;
         for (auto & item : top_level_sequence.items) {
             assert(item != nullptr);
-            // TODO: Add accept to some other classes
-            visit(*item);
+            item->accept(*this);
         }
     }
 
