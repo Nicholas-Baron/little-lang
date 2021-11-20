@@ -10,10 +10,9 @@ namespace visitor {
     class value_getter {
       public:
         static_assert(std::is_class_v<visitable>, "we must visit classes");
-        static result_t get_value(visitable & n) {
-            visitor_impl vis;
-            n.accept(vis);
-            return vis.result;
+        [[nodiscard]] static result_t get_value(visitable & n, visitor_impl & context) {
+            n.accept(context);
+            return context.result;
         }
 
         static_assert(not std::is_reference_v<result_t>, "we can only return non-references");

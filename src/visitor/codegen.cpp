@@ -3,6 +3,7 @@
 #include "ast/nodes.hpp"
 #include "emit_asm.hpp"
 #include "parser.hpp" // token names (should not be needed here)
+#include <llvm/IR/BasicBlock.h>
 #include <llvm/IR/Verifier.h>
 
 #include <iostream>
@@ -222,10 +223,53 @@ namespace visitor {
     }
 
     void codegen::visit(ast::if_stmt & if_stmt) {
-        std::cout << "if_stmt" << std::endl;
-        if_stmt.condition->accept(*this);
+
+        // Evaluate the condition
+        llvm::Value * condition = get_value(*if_stmt.condition, *this);
+
+        auto * start_block = ir_builder->GetInsertBlock();
+        auto * current_function = start_block->getParent();
+
+		// Generate the true branch
+        auto * then_block = llvm::BasicBlock::Create(*context, "", current_function);
+        ir_builder->SetInsertPoint(then_block);
         if_stmt.true_branch->accept(*this);
-        if (if_stmt.else_branch != nullptr) { if_stmt.else_branch->accept(*this); }
+
+        auto terminated
+            = [](const llvm::BasicBlock * block) -> bool { return block->back().isTerminator(); };
+
+        if (if_stmt.else_branch == nullptr) {
+
+			// Short cut to just merging
+            auto * merge_block = llvm::BasicBlock::Create(*context, "", current_function);
+
+            if (not terminated(start_block)) {
+                ir_builder->SetInsertPoint(start_block);
+                ir_builder->CreateCondBr(condition, then_block, merge_block);
+            }
+            ir_builder->SetInsertPoint(merge_block);
+
+            return;
+        }
+
+		// Generate the else block
+        auto * else_block = llvm::BasicBlock::Create(*context, "", current_function);
+        ir_builder->SetInsertPoint(else_block);
+        if_stmt.else_branch->accept(*this);
+
+        ir_builder->SetInsertPoint(start_block);
+        ir_builder->CreateCondBr(condition, then_block, else_block);
+
+		// Ensure termination
+        if (not terminated(else_block) and not terminated(then_block)) {
+            auto * merge_block = llvm::BasicBlock::Create(*context, "", current_function);
+            if (not terminated(then_block)) {
+                ir_builder->SetInsertPoint(then_block);
+                ir_builder->CreateBr(merge_block);
+            }
+
+            ir_builder->SetInsertPoint(merge_block);
+        }
     }
 
     void codegen::visit(ast::let_stmt & let_stmt) {
