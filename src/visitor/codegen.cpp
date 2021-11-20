@@ -208,6 +208,7 @@ namespace visitor {
         if (binary_expr.is_comparison()) {
 
             using predicate = llvm::CmpInst::Predicate;
+            // TODO: Rename or swap args
             auto int_or_float = [&is_int](predicate float_pred, predicate int_pred) {
                 return is_int ? int_pred : float_pred;
             };
@@ -256,8 +257,7 @@ namespace visitor {
         using bin_ops = llvm::Instruction::BinaryOps;
         std::optional<bin_ops> bin_op;
 
-        // TODO: Rename or swap args
-        auto int_or_float = [&is_int](bin_ops float_pred, bin_ops int_pred) {
+        auto int_or_float = [&is_int](bin_ops int_pred, bin_ops float_pred) {
             return is_int ? int_pred : float_pred;
         };
 
@@ -295,11 +295,32 @@ namespace visitor {
     void codegen::visit(ast::expr & expr) { expr.accept(*this); }
 
     void codegen::visit(ast::func_call_data & func_call_data) {
-        std::cout << "func_call_data" << std::endl;
-        std::cout << func_call_data.name() << std::endl;
-        for (auto i = 0U; i < func_call_data.args_count(); ++i) {
-            func_call_data.arg(i)->accept(*this);
+        const auto & func_name = func_call_data.name();
+
+        auto * func_val = find_alive_value(func_name);
+
+        // TODO: A better exit strategy
+        if (func_val == nullptr) {
+            printError("Could not find function named " + func_name);
+            assert(false);
         }
+
+        auto * func = llvm::dyn_cast<llvm::Function>(func_val);
+        if (func == nullptr) {
+            printError(func_name + " is not a function");
+            assert(false);
+        }
+
+        auto * func_type = func->getFunctionType();
+
+        std::vector<llvm::Value *> args;
+        args.reserve(func_call_data.args_count());
+
+        for (auto i = 0U; i < func_call_data.args_count(); ++i) {
+            args.push_back(get_value(*func_call_data.arg(i), *this));
+        }
+
+        store_result(ir_builder->CreateCall(func_type, func, args));
     }
 
     void codegen::visit(ast::func_call_expr & func_call_expr) {
@@ -419,14 +440,18 @@ namespace visitor {
     void codegen::visit(ast::node & node) { node.accept(*this); }
 
     void codegen::visit(ast::return_stmt & return_stmt) {
-        std::cout << "return_stmt" << std::endl;
-        if (return_stmt.value != nullptr) { return_stmt.value->accept(*this); }
+        if (return_stmt.value == nullptr) {
+            ir_builder->CreateRetVoid();
+            return;
+        }
+
+        auto * ret_val = get_value(*return_stmt.value, *this);
+        ir_builder->CreateRet(ret_val);
     }
 
     void codegen::visit(ast::stmt & stmt) { stmt.accept(*this); }
 
     void codegen::visit(ast::stmt_sequence & stmt_sequence) {
-        std::cout << "stmt_sequence" << std::endl;
         for (auto & stmt : stmt_sequence.stmts) { stmt->accept(*this); }
     }
 
