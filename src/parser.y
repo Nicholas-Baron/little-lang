@@ -27,7 +27,7 @@
 }
 
 %code {
-	using namespace ast;
+    using namespace ast;
     std::unique_ptr<top_level_sequence> module;
 
     [[nodiscard]] static Location make_loc(const YYLTYPE& yy_loc){
@@ -72,9 +72,8 @@
 %token <string>   T_IDENT T_INT T_CHAR T_BOOL T_STRING T_FLOAT T_PRIM_TYPE               // Regexes
 
 // Types for non-terminals
-%nterm <string> literal type ret_type
-%type <expression> expr
-%type <expression> initialization
+%nterm <string> type ret_type
+%type <expression> expr literal initialization
 %type <stmt> stmt else_block conditional action
 %type <top_lvl> top_lvl_item function const_decl
 %type <func_call> func_call
@@ -171,11 +170,16 @@ initialization : T_ASSIGN expr { $$ = $2;  set_loc($$, @$); }
                | T_LBRACE expr T_RBRACE { $$ = $2; set_loc($$, @$);  }
                ;
 
-literal : T_INT | T_FLOAT | T_CHAR | T_BOOL | T_STRING ;
+literal : T_INT { $$ = new user_val(std::move(*$1), user_val::value_type::integer); delete $1; set_loc($$, @$); }
+        | T_FLOAT { $$ = new user_val(std::move(*$1), user_val::value_type::floating); delete $1; set_loc($$, @$); }
+        | T_CHAR { $$ = new user_val(std::move(*$1), user_val::value_type::character); delete $1; set_loc($$, @$); }
+        | T_BOOL { $$ = new user_val(std::move(*$1), user_val::value_type::boolean); delete $1; set_loc($$, @$); }
+        | T_STRING { $$ = new user_val(std::move(*$1), user_val::value_type::string); delete $1; set_loc($$, @$); }
+        ;
 
-expr  : T_IDENT { $$ = new user_val(std::move(*$1)); delete $1; set_loc($$, @$);  }
+expr  : T_IDENT { $$ = new user_val(std::move(*$1), user_val::value_type::identifier); delete $1; set_loc($$, @$);  }
       | func_call { $$ = new func_call_expr(std::move(*$1)); delete $1; set_loc($$, @$);  }
-      | literal { $$ = new user_val(std::move(*$1)); delete $1; set_loc($$, @$);  }
+      | literal
       | T_LPAREN expr T_RPAREN { $$ = $2; set_loc($$, @$);  }
       | T_NOT expr { $$ = new unary_expr($1, $2); set_loc($$, @$);  }
       | T_MINUS expr { $$ = new unary_expr($1, $2); set_loc($$, @$); } %prec T_NOT
@@ -201,8 +205,8 @@ func_call : T_IDENT arg_group {
             std::vector<std::unique_ptr<expr>> args;
             args.emplace_back(std::make_unique<func_call_expr>(std::move(*$3)));
             $$ = new func_call_data{std::move(*$1), std::move(args)};
-			delete $1;
-			delete $3;
+            delete $1;
+            delete $3;
           }
           ;
 

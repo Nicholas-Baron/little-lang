@@ -11,8 +11,11 @@
 namespace ast {
     class user_val final : public expr {
       public:
-        user_val(std::string && value)
-            : val(std::move(value)) {}
+        enum class value_type { identifier, integer, floating, character, boolean, string };
+
+        user_val(std::string && value, value_type type)
+            : val(std::move(value))
+            , type{type} {}
 
         non_copyable(user_val);
 
@@ -31,6 +34,7 @@ namespace ast {
         [[nodiscard]] bool is_bool() const;
 
         std::string val;
+        value_type type;
     };
 
     class unary_expr final : public expr {
