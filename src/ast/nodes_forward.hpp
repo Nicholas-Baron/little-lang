@@ -3,32 +3,32 @@
 
 // clang-format off
 #define ast_nodes                 \
-    __node(binary_expr)           \
-    __node(const_decl)            \
-    __node(expr)                  \
-    __node(func_call_data)        \
-    __node(func_call_expr)        \
-    __node(func_call_stmt)        \
-    __node(func_decl)             \
-    __node(func_header)           \
-    __node(if_stmt)               \
-    __node(let_stmt)              \
-    __node(node)                  \
-    __node(return_stmt)           \
-    __node(stmt)                  \
-    __node(stmt_sequence)         \
-    __node(top_level)             \
-    __node(top_level_sequence)    \
-    __node(typed_identifier)      \
-    __node(unary_expr)            \
-    __node(user_val)
+    expand_node_macro(binary_expr)           \
+    expand_node_macro(const_decl)            \
+    expand_node_macro(expr)                  \
+    expand_node_macro(func_call_data)        \
+    expand_node_macro(func_call_expr)        \
+    expand_node_macro(func_call_stmt)        \
+    expand_node_macro(func_decl)             \
+    expand_node_macro(func_header)           \
+    expand_node_macro(if_stmt)               \
+    expand_node_macro(let_stmt)              \
+    expand_node_macro(node)                  \
+    expand_node_macro(return_stmt)           \
+    expand_node_macro(stmt)                  \
+    expand_node_macro(stmt_sequence)         \
+    expand_node_macro(top_level)             \
+    expand_node_macro(top_level_sequence)    \
+    expand_node_macro(typed_identifier)      \
+    expand_node_macro(unary_expr)            \
+    expand_node_macro(user_val)
 
 // clang-format on
 
 namespace ast {
-#define __node(name) class name;
+#define expand_node_macro(name) class name;
     ast_nodes
-#undef __node
+#undef expand_node_macro
 } // namespace ast
 
 #endif

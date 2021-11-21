@@ -14,9 +14,9 @@ namespace visitor {
         virtual ~visitor_base() = default;
 
         // clang-format off
-#define __node(name) virtual void visit(ast::name &) = 0;
+#define expand_node_macro(name) virtual void visit(ast::name &) = 0;
         ast_nodes
-#undef __node
+#undef expand_node_macro
 
       protected:
         visitor_base() = default;

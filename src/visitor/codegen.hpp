@@ -24,9 +24,9 @@ namespace visitor {
         ~codegen() override = default;
 
         // clang-format off
-#define __node(name) void visit(ast::name & name) override;
+#define expand_node_macro(name) void visit(ast::name & name) override;
         ast_nodes
-#undef __node
+#undef expand_node_macro
 
         std::unique_ptr<llvm::Module> take_module() && noexcept { return std::move(ir_module); }
         // clang-format on

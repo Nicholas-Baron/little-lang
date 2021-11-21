@@ -1,5 +1,5 @@
-#ifndef _LOCATION_HPP
-#define _LOCATION_HPP
+#ifndef LOCATION_HPP
+#define LOCATION_HPP
 
 #include <iosfwd>
 #include <utility>
