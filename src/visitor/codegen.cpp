@@ -8,6 +8,7 @@
 #include <llvm/IR/InstrTypes.h>
 #include <llvm/IR/Instruction.h>
 #include <llvm/IR/Verifier.h>
+#include <llvm/Support/Casting.h>
 #include <llvm/Support/raw_ostream.h>
 
 #include <iostream>
@@ -158,7 +159,7 @@ namespace visitor {
         }
     }
 
-	// TODO: Break into smaller functions
+    // TODO: Break into smaller functions
     void codegen::visit(ast::binary_expr & binary_expr) {
 
         auto * lhs_value = get_value(*binary_expr.lhs, *this);
@@ -290,10 +291,21 @@ namespace visitor {
     }
 
     void codegen::visit(ast::const_decl & const_decl) {
-        std::cout << "const_decl" << std::endl;
-        std::cout << const_decl.name_and_type.name() << " : " << const_decl.name_and_type.type()
-                  << std::endl;
-        const_decl.expr->accept(*this);
+
+        auto * value = llvm::dyn_cast<llvm::Constant>(get_value(*const_decl.expr, *this));
+
+        if (value == nullptr) {
+            printError(const_decl.name_and_type.name() + " is not a constant expression",
+                       const_decl.location());
+            assert(false);
+        }
+
+        auto * global = new llvm::GlobalVariable{
+            *ir_module, value->getType(),
+            true,       llvm::GlobalVariable::LinkageTypes::ExternalLinkage,
+            value,      const_decl.name_and_type.name()};
+
+        active_values.back().emplace(const_decl.name_and_type.name(), global);
     }
 
     void codegen::visit(ast::expr & expr) { expr.accept(*this); }
