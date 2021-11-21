@@ -158,6 +158,7 @@ namespace visitor {
         }
     }
 
+	// TODO: Break into smaller functions
     void codegen::visit(ast::binary_expr & binary_expr) {
 
         auto * lhs_value = get_value(*binary_expr.lhs, *this);
@@ -267,6 +268,9 @@ namespace visitor {
             break;
         case T_MINUS:
             bin_op = int_or_float(bin_ops::Sub, bin_ops::FSub);
+            break;
+        case T_MULT:
+            bin_op = int_or_float(bin_ops::Mul, bin_ops::FMul);
             break;
         default:
             printError("Binary operator " + tok_to_string(binary_expr.tok)
