@@ -1,5 +1,5 @@
-#ifndef _CONTEXT_MODULE_HPP
-#define _CONTEXT_MODULE_HPP
+#ifndef CONTEXT_MODULE_HPP
+#define CONTEXT_MODULE_HPP
 
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/LLVMContext.h"

@@ -1,5 +1,5 @@
-#ifndef _SETTINGS_HPP
-#define _SETTINGS_HPP
+#ifndef SETTINGS_HPP
+#define SETTINGS_HPP
 
 #include <memory>
 #include <string>

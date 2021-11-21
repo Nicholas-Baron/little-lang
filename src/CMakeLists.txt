@@ -39,6 +39,11 @@ set(proj_files
 	${flex_output}
 	)
 
+# Add reserved identifier warning here, as catch's internals seem to set it off a lot
+if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "13")
+	add_compile_options(-Wreserved-identifier)
+endif()
+
 # the actual executable
 add_executable(littlec main.cpp ${proj_files})
 target_compile_options(littlec
