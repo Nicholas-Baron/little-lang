@@ -133,7 +133,20 @@ namespace visitor {
     llvm::Value * codegen::find_alive_value(const std::string & name) const {
         // Walk backwards thru scopes
         for (auto scope = active_values.rbegin(); scope != active_values.rend(); ++scope) {
-            if (auto iter = scope->find(name); iter != scope->end()) { return iter->second; }
+            if (auto iter = scope->find(name); iter != scope->end()) {
+
+				// Globals are always pointers to data, so we should try to use the initializer
+                auto * global = llvm::dyn_cast<llvm::GlobalVariable>(iter->second);
+                if (global != nullptr and global->hasInitializer()) {
+                    return global->getInitializer();
+                }
+                if (global != nullptr) {
+                    printError("Uninitalized globals are not handled currently");
+                    assert(false);
+                }
+
+                return iter->second;
+            }
         }
         printError("Could not find value " + name);
         return nullptr;
