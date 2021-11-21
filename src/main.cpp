@@ -61,7 +61,6 @@ static auto read_module(const std::string & filename) -> decltype(module) {
     return std::move(module);
 }
 
-/*
 static bool exec_command(std::vector<std::string> && cmd, bool debug) {
 
     if (debug) {
@@ -100,7 +99,6 @@ static bool exec_command(std::vector<std::string> && cmd, bool debug) {
         return WEXITSTATUS(wait_status) == 0;
     }
 }
-*/
 
 int main(const int arg_count, const char * const * const args) {
 
@@ -118,17 +116,17 @@ int main(const int arg_count, const char * const * const args) {
     auto parsed_module = read_module(filename);
     if (parsed_module == nullptr) { return -1; }
 
-	/*
+    /* TODO: more granular flags
     if (command_line->debug) {
         visitor::printer printer_visitor{filename};
         parsed_module->accept(printer_visitor);
     }
-	*/
+    */
 
     visitor::codegen codegen_visitor{filename};
     codegen_visitor.visit(*parsed_module);
 
-    /*
+    /* TODO: type checking visitor
     if (not parsed_module->type_check(context)) {
         std::cout << "Failed to type check" << std::endl;
         return 1;
@@ -139,13 +137,12 @@ int main(const int arg_count, const char * const * const args) {
 
     if (command_line->debug) { codegen_visitor.dump(); }
 
-    /*
     if (command_line->simulate) {
-        auto parsed_module_result = run_module(std::move(context));
+        auto parsed_module_result = run_module(std::move(codegen_visitor).take_ir_module());
         std::cout << "parsed_module returned " << parsed_module_result << std::endl;
     } else {
         auto output_name = make_output_name(filename);
-        emit_asm(std::move(context), std::move(target_triple), std::string{output_name});
+        emit_asm(std::move(codegen_visitor).take_ir_module(), std::string{output_name});
 
         auto program_name = output_name.substr(0, output_name.find_last_of('.'));
 
@@ -153,5 +150,4 @@ int main(const int arg_count, const char * const * const args) {
         exec_command({"gcc", "-static", "-o", std::move(program_name), std::move(output_name)},
                      command_line->debug);
     }
-    */
 }

@@ -28,7 +28,7 @@ namespace visitor {
         ast_nodes
 #undef expand_node_macro
 
-        std::unique_ptr<llvm::Module> take_module() && noexcept { return std::move(ir_module); }
+        std::unique_ptr<llvm::Module> take_ir_module() && noexcept { return std::move(ir_module); }
         // clang-format on
 
         void verify_module() const;

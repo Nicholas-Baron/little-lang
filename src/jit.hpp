@@ -1,8 +1,10 @@
 #ifndef JIT_HPP
 #define JIT_HPP
 
-#include "context_module.hpp"
+#include <llvm/IR/Module.h>
 
-[[nodiscard]] int run_module(context_module &&);
+#include <memory> // unique_ptr
+
+[[nodiscard]] int run_module(std::unique_ptr<llvm::Module>);
 
 #endif

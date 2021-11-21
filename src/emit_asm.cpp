@@ -32,11 +32,10 @@ std::string init_llvm_targets() {
     return base_filename + ".o";
 }
 
-void emit_asm(context_module && context, std::string && target_triple,
-              std::string && output_filename) {
+void emit_asm(std::unique_ptr<llvm::Module> ir_module, std::string && output_filename) {
 
     std::string error;
-    const auto * target = llvm::TargetRegistry::lookupTarget(target_triple, error);
+    const auto * target = llvm::TargetRegistry::lookupTarget(ir_module->getTargetTriple(), error);
     if (target == nullptr) {
         errs() << error << '\n';
         errs().flush();
@@ -46,11 +45,11 @@ void emit_asm(context_module && context, std::string && target_triple,
     llvm::TargetOptions opt;
     const auto * cpu = "generic";
 
-    auto * target_machine
-        = target->createTargetMachine(target_triple, cpu, "", opt, llvm::Reloc::PIC_);
+    auto * target_machine = target->createTargetMachine(ir_module->getTargetTriple(), cpu, "", opt,
+                                                        llvm::Reloc::PIC_);
     assert(target->hasTargetMachine());
 
-    context.module().setDataLayout(target_machine->createDataLayout());
+    ir_module->setDataLayout(target_machine->createDataLayout());
 
     std::error_code ec;
     llvm::raw_fd_ostream dest{output_filename, ec, llvm::sys::fs::OF_None};
@@ -80,7 +79,7 @@ void emit_asm(context_module && context, std::string && target_triple,
 
         auto mpm = pb.buildPerModuleDefaultPipeline(PassBuilder::OptimizationLevel::O2);
 
-        mpm.run(context.module(), mam);
+        mpm.run(*ir_module, mam);
     }
 
     {
@@ -92,7 +91,7 @@ void emit_asm(context_module && context, std::string && target_triple,
             return;
         }
 
-        pm.run(context.module());
+        pm.run(*ir_module);
     }
 
     dest.flush();
