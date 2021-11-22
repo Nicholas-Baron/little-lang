@@ -11,7 +11,6 @@
 #include <llvm/Support/Casting.h>
 #include <llvm/Support/raw_ostream.h>
 
-#include <iostream>
 #include <sstream>
 
 namespace visitor {
@@ -119,23 +118,14 @@ namespace visitor {
         ir_module->setTargetTriple(init_llvm_targets());
     }
 
-    void codegen::dump() const {
-        // TODO: move away from std::cout?
-        std::string to_print;
-        {
-            llvm::raw_string_ostream stream(to_print);
-            ir_module->print(stream, nullptr);
-        }
-
-        std::cout << to_print << std::endl;
-    }
+    void codegen::dump() const { llvm::outs() << *ir_module << '\n'; }
 
     llvm::Value * codegen::find_alive_value(const std::string & name) const {
         // Walk backwards thru scopes
         for (auto scope = active_values.rbegin(); scope != active_values.rend(); ++scope) {
             if (auto iter = scope->find(name); iter != scope->end()) {
 
-				// Globals are always pointers to data, so we should try to use the initializer
+                // Globals are always pointers to data, so we should try to use the initializer
                 auto * global = llvm::dyn_cast<llvm::GlobalVariable>(iter->second);
                 if (global != nullptr and global->hasInitializer()) {
                     return global->getInitializer();
@@ -180,9 +170,9 @@ namespace visitor {
             // TODO: Too many arrows
             auto * lhs_block = ir_builder->GetInsertBlock();
             auto * current_function = lhs_block->getParent();
-            auto * rhs_block = llvm::BasicBlock::Create(*context, "rhs", current_function);
+            auto * rhs_block = llvm::BasicBlock::Create(*context, "", current_function);
 
-            auto * merge_block = llvm::BasicBlock::Create(*context, "merge", current_function);
+            auto * merge_block = llvm::BasicBlock::Create(*context, "", current_function);
 
             // add a check to short circuit
             // short on false if anding, short on true if oring
@@ -398,15 +388,9 @@ namespace visitor {
         active_values.pop_back();
     }
 
-    void codegen::visit(ast::func_header & func_header) {
-        std::cout << "func_header" << std::endl;
-
-        std::cout << func_header.name() << " : " << func_header.ret_type() << std::endl;
-        for (auto i = 0U; i < func_header.param_count(); ++i) {
-            const auto & typed_identifier = func_header.arg(i);
-            std::cout << i << " : " << typed_identifier.name() << " : " << typed_identifier.type()
-                      << std::endl;
-        }
+    void codegen::visit(ast::func_header & /*func_header*/) {
+        printError("In unimplemented function for function header");
+        assert(false);
     }
 
     void codegen::visit(ast::if_stmt & if_stmt) {
@@ -460,10 +444,10 @@ namespace visitor {
     }
 
     void codegen::visit(ast::let_stmt & let_stmt) {
-        std::cout << "let_stmt" << std::endl;
-        std::cout << let_stmt.name_and_type.name() << " : " << let_stmt.name_and_type.type()
-                  << std::endl;
-        let_stmt.value->accept(*this);
+
+        auto * value = get_value(*let_stmt.value, *this);
+
+        active_values.back().emplace(let_stmt.name_and_type.name(), value);
     }
 
     void codegen::visit(ast::node & node) { node.accept(*this); }
@@ -494,14 +478,13 @@ namespace visitor {
     }
 
     void codegen::visit(ast::typed_identifier & /*typed_identifier*/) {
-        std::cout << "How did I get here?" << std::endl;
+        printError("In unimplemented function for typed_identifier");
         assert(false);
     }
 
-    void codegen::visit(ast::unary_expr & unary_expr) {
-        std::cout << "unary_expr" << std::endl;
-        std::cout << tok_to_string(unary_expr.tok) << std::endl;
-        unary_expr.expr->accept(*this);
+    void codegen::visit(ast::unary_expr & /*unary_expr*/) {
+
+        printError("In unimplemented function for unary_expr");
     }
 
     void codegen::visit(ast::user_val & user_val) {
@@ -524,11 +507,11 @@ namespace visitor {
                 llvm::ConstantInt::get(llvm::Type::getInt32Ty(*context), user_val.val, base));
         } break;
         case value_type::floating:
-            std::cout << "Floating point IR not implemented" << std::endl;
+            printError("Floating point IR not implemented");
             assert(false);
             break;
         case value_type::character:
-            std::cout << "Character IR not implemented" << std::endl;
+            printError("Character IR not implemented");
             assert(false);
             break;
         case value_type::boolean: {
@@ -537,7 +520,7 @@ namespace visitor {
             store_result(llvm::ConstantInt::getBool(*context, iter->second));
         } break;
         case value_type::string:
-            std::cout << "String IR not implemented" << std::endl;
+            printError("String IR not implemented");
             assert(false);
             break;
         }
