@@ -68,6 +68,40 @@ namespace visitor {
         return nullptr;
     }
 
+    void codegen::evaluate_short_circuit(ast::binary_expr & binary_expr, llvm::Value * lhs_value) {
+
+        auto * lhs_block = ir_builder->GetInsertBlock();
+        auto * current_function = lhs_block->getParent();
+        auto * rhs_block = llvm::BasicBlock::Create(*context, "", current_function);
+
+        auto * merge_block = llvm::BasicBlock::Create(*context, "", current_function);
+
+        // Check that this is an acutal short circuit
+        // short on false if and-ing, short on true if or-ing
+
+        assert(binary_expr.tok == T_AND or binary_expr.tok == T_OR);
+
+        // if (true && rhs) -> should eval rhs
+        auto * on_true = binary_expr.tok == T_AND ? rhs_block : merge_block;
+
+        // if (false || rhs) -> should eval rhs
+        auto * on_false = binary_expr.tok == T_OR ? rhs_block : merge_block;
+        assert(on_true != on_false);
+
+        ir_builder->CreateCondBr(lhs_value, on_true, on_false);
+
+        ir_builder->SetInsertPoint(rhs_block);
+        auto * rhs_value = get_value(*binary_expr.rhs, *this);
+        ir_builder->CreateBr(merge_block);
+
+        ir_builder->SetInsertPoint(merge_block);
+        auto * phi = ir_builder->CreatePHI(lhs_value->getType(), 2);
+        phi->addIncoming(lhs_value, lhs_block);
+        phi->addIncoming(rhs_value, rhs_block);
+
+        store_result(phi);
+    }
+
     void codegen::verify_module() const { llvm::verifyModule(*ir_module, &llvm::errs()); }
 
     void codegen::printError(const std::string & name, std::optional<Location> loc) const {
@@ -85,38 +119,7 @@ namespace visitor {
 
         auto * lhs_value = get_value(*binary_expr.lhs, *this);
         if (binary_expr.is_shortcircuiting()) {
-            // TODO: Too many arrows
-            auto * lhs_block = ir_builder->GetInsertBlock();
-            auto * current_function = lhs_block->getParent();
-            auto * rhs_block = llvm::BasicBlock::Create(*context, "", current_function);
-
-            auto * merge_block = llvm::BasicBlock::Create(*context, "", current_function);
-
-            // add a check to short circuit
-            // short on false if anding, short on true if oring
-
-            assert(binary_expr.tok == T_AND or binary_expr.tok == T_OR);
-
-            // if (true && rhs) -> should eval rhs
-            auto * on_true = binary_expr.tok == T_AND ? rhs_block : merge_block;
-
-            // if (false || rhs) -> should eval rhs
-            auto * on_false = binary_expr.tok == T_OR ? rhs_block : merge_block;
-            assert(on_true != on_false);
-
-            ir_builder->CreateCondBr(lhs_value, on_true, on_false);
-
-            ir_builder->SetInsertPoint(rhs_block);
-            auto * rhs_value = get_value(*binary_expr.rhs, *this);
-            ir_builder->CreateBr(merge_block);
-
-            ir_builder->SetInsertPoint(merge_block);
-            auto * phi = ir_builder->CreatePHI(lhs_value->getType(), 2);
-            phi->addIncoming(lhs_value, lhs_block);
-            phi->addIncoming(rhs_value, rhs_block);
-
-            store_result(phi);
-            return;
+            return evaluate_short_circuit(binary_expr, lhs_value);
         }
 
         // We will generate here, as every expression after will need the rhs

@@ -38,6 +38,9 @@ namespace visitor {
         llvm::Type * find_type(const std::string & name,
                                std::optional<Location> loc = std::nullopt);
         [[nodiscard]] llvm::Value * find_alive_value(const std::string & name) const;
+
+        void evaluate_short_circuit(ast::binary_expr &, llvm::Value * lhs_value);
+
         void printError(const std::string & name, std::optional<Location> loc = std::nullopt) const;
 
         // Keep these behind unique_ptr to allow for moving the visitor
