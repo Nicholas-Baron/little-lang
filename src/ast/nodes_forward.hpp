@@ -10,7 +10,6 @@
     expand_node_macro(func_call_expr)        \
     expand_node_macro(func_call_stmt)        \
     expand_node_macro(func_decl)             \
-    expand_node_macro(func_header)           \
     expand_node_macro(if_stmt)               \
     expand_node_macro(let_stmt)              \
     expand_node_macro(node)                  \

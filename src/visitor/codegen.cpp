@@ -307,11 +307,6 @@ namespace visitor {
         active_values.pop_back();
     }
 
-    void codegen::visit(ast::func_header & /*func_header*/) {
-        printError("In unimplemented function for function header");
-        assert(false);
-    }
-
     void codegen::visit(ast::if_stmt & if_stmt) {
 
         // Evaluate the condition

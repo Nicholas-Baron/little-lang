@@ -199,7 +199,7 @@ namespace ast {
 
     } // namespace
 
-    std::vector<Type *> func_header::param_types(context_module & context) {
+    std::vector<Type *> func_decl::header::param_types(context_module & context) {
 
         std::vector<Type *> to_ret;
         to_ret.reserve(params.size());
@@ -211,7 +211,7 @@ namespace ast {
         return to_ret;
     }
 
-    FunctionType * func_header::full_type(context_module & context) {
+    FunctionType * func_decl::header::full_type(context_module & context) {
 
         if (ret_type().empty() or ret_type() == "auto") {
             context.printError(name_ + " does not have a known return type", location());
@@ -556,7 +556,7 @@ namespace ast {
         return context.builder().CreateRet(value->codegen(context));
     }
 
-    void func_header::add_parameters(context_module & context, llvm::Function & func) const {
+    void func_decl::header::add_parameters(context_module & context, llvm::Function & func) const {
 
         unsigned index = 0;
         auto * const args_end = func.arg_end();

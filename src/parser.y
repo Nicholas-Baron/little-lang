@@ -50,7 +50,7 @@
 
     ast::func_call_data * func_call;
 
-    ast::func_header * func_head;
+    ast::func_decl::header * func_head;
     ast::typed_identifier * var_with_type;
 
     ast::stmt_sequence * stmts;
@@ -129,7 +129,7 @@ ret_type : type
          | T_PROC { $$ = new std::string{"proc"}; }
          ;
 
-func_sig : T_IDENT param_group { $$ = new func_header{std::move(*$1), std::move(*$2)}; delete $1; delete $2; set_loc($$, @$); } ;
+func_sig : T_IDENT param_group { $$ = new func_decl::header{std::move(*$1), std::move(*$2)}; delete $1; delete $2; set_loc($$, @$); } ;
 
 param_group : T_LPAREN T_RPAREN { $$ = new std::vector<typed_identifier>; }
             | T_LPAREN param_list T_RPAREN { $$ = $2; }

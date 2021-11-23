@@ -40,19 +40,13 @@ namespace visitor {
     void printer::visit(ast::func_decl & func_decl) {
         std::cout << "func_decl" << std::endl;
         // TODO: Add accept to some other classes
-        visit(func_decl.head);
-        func_decl.body->accept(*this);
-    }
-
-    void printer::visit(ast::func_header & func_header) {
-        std::cout << "func_header" << std::endl;
-
-        std::cout << func_header.name() << " : " << func_header.ret_type() << std::endl;
-        for (auto i = 0U; i < func_header.param_count(); ++i) {
-            const auto & typed_identifier = func_header.arg(i);
+        std::cout << func_decl.head.name() << " : " << func_decl.head.ret_type() << std::endl;
+        for (auto i = 0U; i < func_decl.head.param_count(); ++i) {
+            const auto & typed_identifier = func_decl.head.arg(i);
             std::cout << i << " : " << typed_identifier.name() << " : " << typed_identifier.type()
                       << std::endl;
         }
+        func_decl.body->accept(*this);
     }
 
     void printer::visit(ast::if_stmt & if_stmt) {

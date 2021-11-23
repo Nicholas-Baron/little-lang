@@ -46,46 +46,45 @@ namespace ast {
         std::vector<top_lvl_ptr> items;
     };
 
-    // TODO: make this class a member of func_decl and shorten the name
-    class func_header final {
-      public:
-        func_header(std::string && name, std::vector<typed_identifier> && parameters)
-            : name_(std::move(name))
-            , params(std::move(parameters)) {}
-
-        void set_ret_type(std::string && type) { ret_type_ = std::move(type); }
-
-        [[nodiscard]] const auto & ret_type() const { return ret_type_; }
-
-        llvm::FunctionType * full_type(context_module & context);
-
-        [[nodiscard]] const typed_identifier & arg(unsigned index) const {
-            return params.at(index);
-        }
-
-        [[nodiscard]] size_t param_count() const { return params.size(); }
-
-        [[nodiscard]] const std::string & name() const { return name_; }
-
-        void set_location(const Location & loc_new) { loc = loc_new; }
-
-        [[nodiscard]] const auto & location() const noexcept { return loc; }
-
-        void add_parameters(context_module &, llvm::Function &) const;
-
-      private:
-        std::vector<llvm::Type *> param_types(context_module & context);
-
-        std::string name_;
-        std::vector<typed_identifier> params;
-        std::string ret_type_{};
-        Location loc{};
-    };
-
     // Top Level classes
     class func_decl final : public top_level {
       public:
-        func_decl(func_header && head, stmt * body)
+        class header final {
+          public:
+            header(std::string && name, std::vector<typed_identifier> && parameters)
+                : name_(std::move(name))
+                , params(std::move(parameters)) {}
+
+            void set_ret_type(std::string && type) { ret_type_ = std::move(type); }
+
+            [[nodiscard]] const auto & ret_type() const { return ret_type_; }
+
+            llvm::FunctionType * full_type(context_module & context);
+
+            [[nodiscard]] const typed_identifier & arg(unsigned index) const {
+                return params.at(index);
+            }
+
+            [[nodiscard]] size_t param_count() const { return params.size(); }
+
+            [[nodiscard]] const std::string & name() const { return name_; }
+
+            void set_location(const Location & loc_new) { loc = loc_new; }
+
+            [[nodiscard]] const auto & location() const noexcept { return loc; }
+
+            void add_parameters(context_module &, llvm::Function &) const;
+
+          private:
+            std::vector<llvm::Type *> param_types(context_module & context);
+
+            std::string name_;
+            std::vector<typed_identifier> params;
+            std::string ret_type_{};
+            Location loc{};
+        };
+
+        func_decl(header && head, stmt * body)
             : head(std::move(head))
             , body(body) {}
 
@@ -99,7 +98,7 @@ namespace ast {
 
         bool type_check(context_module & context) override;
 
-        func_header head;
+        header head;
         stmt_ptr body;
     };
 
