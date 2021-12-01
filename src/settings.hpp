@@ -4,11 +4,25 @@
 #include <memory>
 #include <string>
 
+// Some command line flags can be stored in a bitfield.
+enum class cmd_flag : unsigned {
+    simulate = 1 << 0,
+    debug_ast = 1 << 1,
+    debug_ir = 1 << 2,
+    debug_optimized_ir = 1 << 3,
+    debug_show_execs = 1 << 4,
+};
+
 struct Settings {
     std::string file_to_read;
-    bool print_version{false};
-    bool simulate;
-    bool debug{false};
+
+    [[nodiscard]] bool flag_is_set(cmd_flag flag) const {
+        return (flags & static_cast<unsigned>(flag)) != 0;
+    }
+
+    void set_flag(cmd_flag flag) { flags |= static_cast<unsigned>(flag); }
+
+    unsigned flags;
 };
 
 std::shared_ptr<Settings> read_settings(int arg_count, const char * const * args);
