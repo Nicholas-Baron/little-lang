@@ -105,24 +105,16 @@ int main(const int arg_count, const char * const * const args) {
 
     const auto command_line = read_settings(arg_count, args);
 
-    // TODO: Move into settings parser
-    if (command_line->print_version) {
-        std::cout << *args << "\nVersion: 0.0.1" << std::endl;
-        return 0;
-    }
-
     const auto & filename = command_line->file_to_read;
 
     // TODO: Add include/import system
     auto parsed_module = read_module(filename);
     if (parsed_module == nullptr) { return -1; }
 
-    /* TODO: more granular flags
-    if (command_line->debug) {
+    if (command_line->flag_is_set(cmd_flag::debug_ast)) {
         visitor::printer printer_visitor{filename};
         parsed_module->accept(printer_visitor);
     }
-    */
 
     {
         visitor::type_checker type_checker;
@@ -138,9 +130,9 @@ int main(const int arg_count, const char * const * const args) {
 
     codegen_visitor.verify_module();
 
-    if (command_line->debug) { codegen_visitor.dump(); }
+    if (command_line->flag_is_set(cmd_flag::debug_ir)) { codegen_visitor.dump(); }
 
-    if (command_line->simulate) {
+    if (command_line->flag_is_set(cmd_flag::simulate)) {
         auto parsed_module_result = run_module(std::move(codegen_visitor).take_ir_module());
         std::cout << "parsed_module returned " << parsed_module_result << std::endl;
     } else {
@@ -151,6 +143,6 @@ int main(const int arg_count, const char * const * const args) {
 
         // TODO: Get away from C's standard library
         exec_command({"gcc", "-static", "-o", std::move(program_name), std::move(output_name)},
-                     command_line->debug);
+                     command_line->flag_is_set(cmd_flag::debug_show_execs));
     }
 }
