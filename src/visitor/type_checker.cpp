@@ -81,10 +81,27 @@ namespace visitor {
     }
 
     void type_checker::visit(ast::const_decl & const_decl) {
-        std::cout << "const_decl" << std::endl;
-        std::cout << const_decl.name_and_type.name() << " : " << const_decl.name_and_type.type()
-                  << std::endl;
-        const_decl.expr->accept(*this);
+
+        if (find_type_of(const_decl.name_and_type.name()) != nullptr) {
+            std::cout << "Constant " << const_decl.name_and_type.name()
+                      << " has already been declared" << std::endl;
+            assert(false);
+        }
+
+        auto * expected = find_type_of(const_decl.name_and_type.type());
+        if (expected == nullptr) {
+            std::cout << "Type " << const_decl.name_and_type.type() << " is not known" << std::endl;
+            assert(false);
+        }
+
+        auto * actual = get_value(*const_decl.expr, *this);
+        if (expected != actual) {
+            std::cout << "Constant " << const_decl.name_and_type.name() << " is not of type "
+                      << const_decl.name_and_type.type() << std::endl;
+            assert(false);
+        }
+
+        bind_type(actual, const_decl.name_and_type.name());
     }
 
     void type_checker::visit(ast::expr & expr) { expr.accept(*this); }
