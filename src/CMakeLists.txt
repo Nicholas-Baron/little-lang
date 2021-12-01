@@ -27,7 +27,6 @@ add_custom_command(
 	)
 
 set(proj_files
-	context_module.cpp
 	emit_asm.cpp
 	jit.cpp
 	location.cpp

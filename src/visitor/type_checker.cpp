@@ -3,7 +3,9 @@
 #include "ast/nodes.hpp"
 #include "parser.hpp" // please remove
 #include "token_to_string.hpp"
+#include <llvm/IR/DerivedTypes.h>
 #include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/Type.h>
 
 #include <iostream>
 #include <memory>

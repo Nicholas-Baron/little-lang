@@ -26,23 +26,6 @@ namespace ast {
 
         void append(top_level * item) { items.emplace_back(item); }
 
-        // The return value should not be used
-        llvm::Value * codegen(context_module & context) override {
-            for (const auto & item : items) {
-                assert(item != nullptr);
-                item->codegen(context);
-            }
-            return nullptr;
-        }
-
-        [[nodiscard]] bool type_check(context_module & context) {
-            for (auto & item : items) {
-                assert(item != nullptr);
-                if (not item->type_check(context)) { return false; }
-            }
-            return true;
-        }
-
         std::vector<top_lvl_ptr> items;
     };
 
@@ -59,8 +42,6 @@ namespace ast {
 
             [[nodiscard]] const auto & ret_type() const { return ret_type_; }
 
-            llvm::FunctionType * full_type(context_module & context);
-
             [[nodiscard]] const typed_identifier & arg(unsigned index) const {
                 return params.at(index);
             }
@@ -73,11 +54,7 @@ namespace ast {
 
             [[nodiscard]] const auto & location() const noexcept { return loc; }
 
-            void add_parameters(context_module &, llvm::Function &) const;
-
           private:
-            std::vector<llvm::Type *> param_types(context_module & context);
-
             std::string name_;
             std::vector<typed_identifier> params;
             std::string ret_type_{};
@@ -94,10 +71,6 @@ namespace ast {
 
         make_visitable;
 
-        llvm::Value * codegen(context_module & context) override;
-
-        bool type_check(context_module & context) override;
-
         header head;
         stmt_ptr body;
     };
@@ -113,10 +86,6 @@ namespace ast {
         movable(const_decl);
 
         make_visitable;
-
-        llvm::Value * codegen(context_module & context) override;
-
-        bool type_check(context_module & context) override;
 
         typed_identifier name_and_type;
         expr_ptr expr;
