@@ -23,6 +23,8 @@ namespace visitor {
                                                       {"False", false}, {"FALSE", false}};
     } // namespace
 
+    // TODO: Make a function to init type map with builtin types
+
     codegen::codegen(const std::string & name)
         : context{std::make_unique<llvm::LLVMContext>()}
         , ir_module{std::make_unique<llvm::Module>(name, *context)}
