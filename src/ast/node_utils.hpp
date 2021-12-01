@@ -2,11 +2,12 @@
 #define NODE_UTILS_HPP
 
 #include "base_nodes.hpp"
-#include "context_module.hpp"
 #include "location.hpp"
 #include "utils/move_copy.hpp"
 
+#include <cassert>
 #include <string>
+#include <vector>
 
 // Classes that are utilities to ast nodes,
 // but not nodes themselves
@@ -43,15 +44,11 @@ namespace ast {
 
         movable(func_call_data);
 
-        llvm::Value * codegen(context_module & context);
-
-        llvm::Type * type_check(context_module &, Location);
-
         [[nodiscard]] const auto & name() const { return name_; }
 
         [[nodiscard]] size_t args_count() const { return args_.size(); }
 
-		// TODO: stop returning const std::unique_ptr &
+        // TODO: stop returning const std::unique_ptr &
         [[nodiscard]] const auto & arg(size_t i) const {
             assert(i < args_.size());
             return args_.at(i);

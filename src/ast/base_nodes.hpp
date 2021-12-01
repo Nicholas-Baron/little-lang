@@ -1,12 +1,10 @@
 #ifndef BASE_NODES_HPP
 #define BASE_NODES_HPP
 
-#include "context_module.hpp"
 #include "location.hpp"
 #include "nodes_forward.hpp"
 #include "utils/move_copy.hpp"
 #include "visitor/visitor_base.hpp"
-#include <llvm/IR/Value.h>
 
 #include <memory> // unique_ptr
 
@@ -29,8 +27,6 @@ namespace ast {
 #define make_visitable \
     void accept(visitor::visitor_base & visitor) override { visitor.visit(*this); }
 
-        virtual llvm::Value * codegen(context_module & context) = 0;
-
         // TODO: Just public location
         void set_location(const Location & loc_new) { loc = loc_new; }
 
@@ -41,20 +37,9 @@ namespace ast {
     };
 
     // Base classes
-    class expr : public virtual node {
-      public:
-        virtual llvm::Constant * compile_time_codegen(context_module &) = 0;
-
-        virtual llvm::Type * type_check(context_module &) = 0;
-    };
-    class stmt : public virtual node {
-      public:
-        [[nodiscard]] virtual bool type_check(context_module &) = 0;
-    };
-    class top_level : public virtual node {
-      public:
-        [[nodiscard]] virtual bool type_check(context_module &) = 0;
-    };
+    class expr : public virtual node {};
+    class stmt : public virtual node {};
+    class top_level : public virtual node {};
 
     // Utility types aliases
     using expr_ptr = std::unique_ptr<expr>;
