@@ -7,6 +7,7 @@
 #include "tokens.hpp" // yyin
 #include "visitor/codegen.hpp"
 #include "visitor/printer.hpp"
+#include "visitor/type_checker.hpp"
 #include <sys/wait.h> // waitpid
 
 #include <cassert>
@@ -123,15 +124,17 @@ int main(const int arg_count, const char * const * const args) {
     }
     */
 
+    {
+        visitor::type_checker type_checker;
+        type_checker.visit(*parsed_module);
+        if (not type_checker.checked_good()) {
+            std::cout << "Failed to type check" << std::endl;
+            return 1;
+        }
+    }
+
     visitor::codegen codegen_visitor{filename};
     codegen_visitor.visit(*parsed_module);
-
-    /* TODO: type checking visitor
-    if (not parsed_module->type_check(context)) {
-        std::cout << "Failed to type check" << std::endl;
-        return 1;
-    }
-    */
 
     codegen_visitor.verify_module();
 
