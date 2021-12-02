@@ -1,0 +1,5 @@
+
+main () proc {
+	let text = "Hello World";
+	syscall(1, 1, text, 11); // TODO: add strlen
+}
