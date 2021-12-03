@@ -21,6 +21,9 @@ namespace visitor {
         global_scope.emplace("proc", llvm::Type::getVoidTy(*context));
         global_scope.emplace("bool", llvm::Type::getInt1Ty(*context));
         global_scope.emplace("char", llvm::Type::getInt8Ty(*context));
+
+        // TODO: Move to a Rust style 2 ptr string instead of a C style null-terminated string
+        global_scope.emplace("string", llvm::Type::getInt8PtrTy(*context));
     }
 
     void type_checker::bind_type(llvm::Type * type, std::string identifier) {
@@ -289,8 +292,8 @@ namespace visitor {
             store_result(find_type_of("char"));
             break;
         case val_type::string:
-            std::cout << "String type not implemented" << std::endl;
-            assert(false);
+            store_result(find_type_of("string"));
+            break;
         }
     }
 } // namespace visitor
