@@ -206,10 +206,25 @@ namespace visitor {
     }
 
     void type_checker::visit(ast::let_stmt & let_stmt) {
-        std::cout << "let_stmt" << std::endl;
-        std::cout << let_stmt.name_and_type.name() << " : " << let_stmt.name_and_type.type()
-                  << std::endl;
-        let_stmt.value->accept(*this);
+
+        if (find_type_of(let_stmt.name_and_type.name()) != nullptr) {
+            std::cout << let_stmt.name_and_type.name() << " has already been bound to a type"
+                      << std::endl;
+            assert(false);
+        }
+
+        auto * val_type = get_value(*let_stmt.value, *this);
+
+        if (auto stated_type = let_stmt.name_and_type.type();
+            not stated_type.empty() and stated_type != "auto") {
+            if (auto * found_type = find_type_of(stated_type); found_type != val_type) {
+                std::cout << stated_type << " is not the type of the initialization of "
+                          << let_stmt.name_and_type.name() << std::endl;
+                assert(false);
+            }
+        }
+
+        bind_type(val_type, let_stmt.name_and_type.name());
     }
 
     void type_checker::visit(ast::node & node) { node.accept(*this); }
