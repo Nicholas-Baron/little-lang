@@ -1,9 +1,9 @@
-int factorial(int input){
+factorial(int input) -> int {
 	if(input <= 2){ return input; }
 	return input * factorial(input - 1);
 }
 
 const my_val : int = 10
 
-int main()
+main() -> int
 	ret factorial(my_val);

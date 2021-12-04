@@ -67,8 +67,6 @@
         return "T_NOT";
     case T_ASSIGN:
         return "T_ASSIGN";
-    case T_PROC:
-        return "T_PROC";
     case T_IDENT:
         return "T_IDENT";
     case T_INT:

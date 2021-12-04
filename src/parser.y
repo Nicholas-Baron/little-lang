@@ -68,7 +68,7 @@
 %token <token>    T_COMMA "," T_IS "is" T_SEMI ";" T_DOT "."                             // Misc symbols
 %token <token>    T_RET "return" T_IF "if" T_ELSE "else" T_LET "let" T_CONST "const"     // Reserved words
 %token <token>    T_AND "and" T_OR "or" T_NOT "not"                                      // Boolean operators
-%token <token>    T_ASSIGN "=" T_PROC "proc"
+%token <token>    T_ASSIGN "=" T_ARROW "->"
 %token <string>   T_IDENT T_INT T_CHAR T_BOOL T_STRING T_FLOAT T_PRIM_TYPE               // Regexes
 
 // Types for non-terminals
@@ -121,12 +121,11 @@ function : func_header stmt {
          }
          ;
 
-func_header : ret_type func_sig { $$ = $2; $$->set_ret_type(std::move(*$1)); delete $1; set_loc($$, @$); }
-            | func_sig ret_type { $$ = $1; $$->set_ret_type(std::move(*$2)); delete $2; set_loc($$, @$); }
+func_header : func_sig ret_type { $$ = $1; $$->set_ret_type(std::move(*$2)); delete $2; set_loc($$, @$); }
             ;
 
-ret_type : type
-         | T_PROC { $$ = new std::string{"proc"}; }
+ret_type : T_ARROW type { $$ = $2; }
+         | %empty { $$ = new std::string{"proc"}; }
          ;
 
 func_sig : T_IDENT param_group { $$ = new func_decl::header{std::move(*$1), std::move(*$2)}; delete $1; delete $2; set_loc($$, @$); } ;
