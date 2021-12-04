@@ -375,6 +375,16 @@ namespace visitor {
 
         // leave the function
         active_values.pop_back();
+
+        // Ensure termination for the whole function
+        if (auto & last_bb = func->getBasicBlockList().back(); not last_bb.back().isTerminator()) {
+            if (not func_type->getReturnType()->isVoidTy()) {
+                printError("Function " + func_decl.head.name()
+                           + " does not return a value at the end");
+                assert(false);
+            }
+            ir_builder->CreateRetVoid();
+        }
     }
 
     void codegen::visit(ast::if_stmt & if_stmt) {
