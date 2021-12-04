@@ -45,11 +45,23 @@ namespace visitor {
     }
 
     void type_checker::syscall(ast::func_call_data & func_call_data) {
+        // Syscalls can only take between 1 and 7 arguments.
+        if (auto arg_count = func_call_data.args_count(); arg_count == 0 or arg_count > 7) {
+            std::cout << "syscalls can only take 1 to 7 arguments" << std::endl;
+            assert(false);
+        }
+
         for (auto i = 0U; i < func_call_data.args_count(); ++i) {
             const auto & arg = func_call_data.arg(i);
             auto * arg_type = get_value(*arg, *this);
             if (not arg_type->isIntOrPtrTy()) {
                 std::cout << "syscall can only take int, bool, or string arguments" << std::endl;
+                assert(false);
+            }
+
+            // The first argmuent must always be a syscall number.
+            if (i == 0 and not arg_type->isIntegerTy()) {
+                std::cout << "syscall must have an integer as its first argument" << std::endl;
                 assert(false);
             }
         }
