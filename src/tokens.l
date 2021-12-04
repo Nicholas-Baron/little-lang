@@ -85,6 +85,8 @@ number -?([1-9][0-9]*|0)
 "if"            return token(T_IF);
 "else"          return token(T_ELSE);
 "const"         return token(T_CONST);
+"from"          return token(T_FROM);
+"import"        return token(T_IMPORT);
 "int"|"bool"|"float"|"char"|"auto" save_tok; return T_PRIM_TYPE;
 
     /* Literals */

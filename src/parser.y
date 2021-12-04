@@ -68,7 +68,7 @@
 %token <token>    T_COMMA "," T_IS "is" T_SEMI ";" T_DOT "."                             // Misc symbols
 %token <token>    T_RET "return" T_IF "if" T_ELSE "else" T_LET "let" T_CONST "const"     // Reserved words
 %token <token>    T_AND "and" T_OR "or" T_NOT "not"                                      // Boolean operators
-%token <token>    T_ASSIGN "=" T_ARROW "->"
+%token <token>    T_ASSIGN "=" T_ARROW "->" T_FROM "from" T_IMPORT "import"
 %token <string>   T_IDENT T_INT T_CHAR T_BOOL T_STRING T_FLOAT T_PRIM_TYPE               // Regexes
 
 // Types for non-terminals
@@ -97,10 +97,21 @@
 
 %%
 
-program : top_lvl_seq {
-            module = std::unique_ptr<top_level_sequence>($1); set_loc(module, @$);
+program : imports top_lvl_seq {
+            module = std::unique_ptr<top_level_sequence>($2); set_loc(module, @$);
         }
         ;
+
+imports : %empty
+        | imports import
+        ;
+
+import : T_FROM T_STRING T_IMPORT import_list
+       ;
+
+import_list : T_IDENT
+            | import_list T_COMMA T_IDENT
+            ;
 
 top_lvl_seq : top_lvl_item { $$ = new top_level_sequence{$1}; set_loc($$, @$); }
             | top_lvl_seq top_lvl_item {
