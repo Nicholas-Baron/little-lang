@@ -516,7 +516,7 @@ namespace visitor {
         case value_type::string: {
             assert(user_val.val.size() > 2);
             auto value = user_val.val.substr(1, user_val.val.size() - 2);
-            return store_result(ir_builder->CreateGlobalString(value));
+            return store_result(ir_builder->CreateGlobalStringPtr(value));
         } break;
         }
     }
