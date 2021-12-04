@@ -1,6 +1,7 @@
 #ifndef CODEGEN_HPP
 #define CODEGEN_HPP
 
+#include "ast/node_utils.hpp"
 #include "location.hpp"
 #include "value_getter.hpp"
 #include "visitor_base.hpp"
@@ -41,6 +42,8 @@ namespace visitor {
 
         void evaluate_short_circuit(ast::binary_expr &, llvm::Value * lhs_value);
 
+        void syscall(ast::func_call_data &);
+
         void printError(const std::string & name, std::optional<Location> loc = std::nullopt) const;
 
         // Keep these behind unique_ptr to allow for moving the visitor
@@ -50,6 +53,8 @@ namespace visitor {
 
         std::map<std::string, llvm::Type *> types;
         std::vector<std::map<std::string, llvm::Value *>> active_values;
+
+        std::map<std::string, void (codegen::*)(ast::func_call_data &)> instrinics;
     };
 } // namespace visitor
 

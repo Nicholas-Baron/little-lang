@@ -6,6 +6,7 @@
 #include "token_to_string.hpp"
 #include <llvm/IR/BasicBlock.h>
 #include <llvm/IR/Constants.h>
+#include <llvm/IR/InlineAsm.h>
 #include <llvm/IR/InstrTypes.h>
 #include <llvm/IR/Instruction.h>
 #include <llvm/IR/Verifier.h>
@@ -21,6 +22,41 @@ namespace visitor {
         const std::map<std::string, bool> valid_bools{{"true", true},   {"True", true},
                                                       {"TRUE", true},   {"false", false},
                                                       {"False", false}, {"FALSE", false}};
+
+        namespace constraints {
+
+            static constexpr size_t count_in(const char * text, char c) {
+                auto count = 0U;
+                while (text != nullptr and *text != '\0') {
+                    count += static_cast<unsigned int>(*text == c);
+                    ++text;
+                }
+                return count;
+            }
+
+            static constexpr auto * first_part = "=A,A,{di},{si},{dx},{r10},{r8},{r9},";
+            static constexpr auto count = count_in(first_part, ',') - 1;
+            static constexpr auto * suffix = ",~{r11},~{rcx},~{dirflag},~{fpsr},~{flags}";
+
+        } // namespace constraints
+
+        std::array<std::string, constraints::count> generate_syscall_constraints_array() {
+            using namespace constraints;
+            std::array<std::string, count> result;
+
+            auto i = 0U;
+            for (const auto * iter = strchr(first_part, ',') + 1; iter != nullptr and *iter != '\0';
+                 ++iter) {
+
+                if (*iter != ',') { continue; }
+
+                auto constraints = std::string{first_part, static_cast<size_t>(iter - first_part)};
+
+                result[i++] = constraints + suffix;
+            }
+
+            return result;
+        }
     } // namespace
 
     // TODO: Make a function to init type map with builtin types
@@ -34,7 +70,8 @@ namespace visitor {
                 {"proc", llvm::Type::getVoidTy(*context)},
                 {"bool", llvm::Type::getInt1Ty(*context)},
                 {"char", llvm::Type::getInt8Ty(*context)}}
-        , active_values{{}} {
+        , active_values{{}}
+        , instrinics{{"syscall", &codegen::syscall}} {
         ir_module->setTargetTriple(init_llvm_targets());
     }
 
@@ -114,6 +151,30 @@ namespace visitor {
             to_print << *loc << " : " << name;
             context->emitError(to_print.str());
         }
+    }
+
+    void codegen::syscall(ast::func_call_data & func_call_data) {
+        std::vector<llvm::Value *> args;
+        args.reserve(func_call_data.args_count());
+
+        for (auto i = 0U; i < func_call_data.args_count(); ++i) {
+            args.push_back(get_value(*func_call_data.arg(i), *this));
+        }
+
+        static const auto syscall_constraints = generate_syscall_constraints_array();
+
+        const auto & constraint = syscall_constraints.at(func_call_data.args_count() - 1);
+
+        std::vector<llvm::Type *> param_types;
+        param_types.reserve(args.size());
+        for (auto * val : args) { param_types.push_back(val->getType()); }
+
+        auto * func_type = llvm::FunctionType::get(find_type("int"), param_types, false);
+
+        assert(llvm::InlineAsm::Verify(func_type, constraint));
+
+        store_result(ir_builder->CreateCall(
+            func_type, llvm::InlineAsm::get(func_type, "syscall", constraint, true), args));
     }
 
     // TODO: Break into smaller functions
@@ -239,6 +300,10 @@ namespace visitor {
 
     void codegen::visit(ast::func_call_data & func_call_data) {
         const auto & func_name = func_call_data.name();
+
+        if (auto iter = instrinics.find(func_name); iter != instrinics.end()) {
+            return (this->*iter->second)(func_call_data);
+        }
 
         auto * func_val = find_alive_value(func_name);
 
