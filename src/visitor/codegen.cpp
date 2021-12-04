@@ -438,10 +438,11 @@ namespace visitor {
             assert(iter != valid_bools.end());
             store_result(llvm::ConstantInt::getBool(*context, iter->second));
         } break;
-        case value_type::string:
-            printError("String IR not implemented");
-            assert(false);
-            break;
+        case value_type::string: {
+            assert(user_val.val.size() > 2);
+            auto value = user_val.val.substr(1, user_val.val.size() - 2);
+            return store_result(ir_builder->CreateGlobalString(value));
+        } break;
         }
     }
 } // namespace visitor
