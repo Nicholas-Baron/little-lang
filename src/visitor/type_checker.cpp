@@ -24,6 +24,8 @@ namespace visitor {
 
         // TODO: Move to a Rust style 2 ptr string instead of a C style null-terminated string
         global_scope.emplace("string", llvm::Type::getInt8PtrTy(*context));
+
+        instrinics.emplace("syscall", &type_checker::syscall);
     }
 
     void type_checker::bind_type(llvm::Type * type, std::string identifier) {
@@ -40,6 +42,19 @@ namespace visitor {
         }
 
         return nullptr;
+    }
+
+    void type_checker::syscall(ast::func_call_data & func_call_data) {
+        for (auto i = 0U; i < func_call_data.args_count(); ++i) {
+            const auto & arg = func_call_data.arg(i);
+            auto * arg_type = get_value(*arg, *this);
+            if (not arg_type->isIntOrPtrTy()) {
+                std::cout << "syscall can only take int, bool, or string arguments" << std::endl;
+                assert(false);
+            }
+        }
+        // TODO: syscalls can return pointers and 64 bit numbers
+        store_result(find_type_of("int"));
     }
 
     void type_checker::visit(ast::binary_expr & binary_expr) {
@@ -112,6 +127,10 @@ namespace visitor {
     void type_checker::visit(ast::expr & expr) { expr.accept(*this); }
 
     void type_checker::visit(ast::func_call_data & func_call_data) {
+
+        if (auto iter = instrinics.find(func_call_data.name()); iter != instrinics.end()) {
+            return (this->*iter->second)(func_call_data);
+        }
 
         auto * func_type
             = llvm::dyn_cast_or_null<llvm::FunctionType>(find_type_of(func_call_data.name()));

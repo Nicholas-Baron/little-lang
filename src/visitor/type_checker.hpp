@@ -32,6 +32,9 @@ namespace visitor {
         // clang-format on
 
       private:
+        void syscall(ast::func_call_data &);
+
+		// TODO: Actually implement this
         void printError(const std::string & name, std::optional<Location> loc = std::nullopt);
 
         [[nodiscard]] llvm::Type * find_type_of(const std::string &) const;
@@ -42,6 +45,7 @@ namespace visitor {
         std::unique_ptr<llvm::LLVMContext> context;
 
         std::vector<std::map<std::string, llvm::Type *>> active_typed_identifiers;
+        std::map<std::string, void (type_checker::*)(ast::func_call_data &)> instrinics;
 
         llvm::Type * current_return_type{nullptr};
     };
