@@ -4,11 +4,10 @@
 #include "base_nodes.hpp"
 #include "node_utils.hpp"
 
-// Classes relating to top level items
+// Classes representing top level items
 
 namespace ast {
-    // TODO: Nested modules will make this extend from top_level
-    class top_level_sequence final : public node {
+    class top_level_sequence final : public top_level {
       public:
         top_level_sequence() = default;
         explicit top_level_sequence(top_level * first_item)
@@ -29,7 +28,6 @@ namespace ast {
         std::vector<top_lvl_ptr> items;
     };
 
-    // Top Level classes
     class func_decl final : public top_level {
       public:
         class header final {
