@@ -30,6 +30,8 @@ namespace ast {
         std::map<std::string, std::vector<std::string>> imports;
 
         std::vector<top_lvl_ptr> items;
+
+        std::string filename;
     };
 
     class func_decl final : public top_level {
