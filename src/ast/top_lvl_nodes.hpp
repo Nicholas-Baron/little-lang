@@ -4,6 +4,8 @@
 #include "base_nodes.hpp"
 #include "node_utils.hpp"
 
+#include <map>
+
 // Classes representing top level items
 
 namespace ast {
@@ -24,6 +26,8 @@ namespace ast {
         make_visitable;
 
         void append(top_level * item) { items.emplace_back(item); }
+
+        std::map<std::string, std::vector<std::string>> imports;
 
         std::vector<top_lvl_ptr> items;
     };

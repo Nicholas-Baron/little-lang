@@ -43,6 +43,8 @@
 %union{
     int token;
     std::string * string;
+    std::vector<std::string> * strings;
+    std::map<std::string, std::vector<std::string>> * imports;
 
     ast::expr * expression;
     ast::stmt * stmt;
@@ -73,6 +75,8 @@
 
 // Types for non-terminals
 %nterm <string> type ret_type
+%type <strings> import_list
+%type <imports> imports
 %type <expression> expr literal initialization
 %type <stmt> stmt else_block conditional action
 %type <top_lvl> top_lvl_item function const_decl
@@ -98,19 +102,21 @@
 %%
 
 program : imports top_lvl_seq {
-            module = std::unique_ptr<top_level_sequence>($2); set_loc(module, @$);
+            module = std::unique_ptr<top_level_sequence>($2);
+            module->imports = std::move(*$1);
+            delete $1;
+            set_loc(module, @$);
         }
         ;
 
-imports : %empty
-        | imports import
+imports : %empty { $$ = new std::map<std::string, std::vector<std::string>>; }
+        | imports T_FROM T_STRING T_IMPORT import_list {
+            $$ = $1; $$->emplace(std::move(*$3), std::move(*$5)); delete $3; delete $5;
+        }
         ;
 
-import : T_FROM T_STRING T_IMPORT import_list
-       ;
-
-import_list : T_IDENT
-            | import_list T_COMMA T_IDENT
+import_list : T_IDENT { $$ = new std::vector{std::move(*$1)}; delete $1; }
+            | import_list T_COMMA T_IDENT { $$ = $1; $$->push_back(std::move(*$3)); delete $3; }
             ;
 
 top_lvl_seq : top_lvl_item { $$ = new top_level_sequence{$1}; set_loc($$, @$); }
