@@ -81,6 +81,13 @@ namespace visitor {
 
     void printer::visit(ast::top_level_sequence & top_level_sequence) {
         std::cout << "top_level_sequence" << std::endl;
+
+        for (auto & [file, imports] : top_level_sequence.imports) {
+            std::cout << file << " : ";
+            for (auto & id : imports) { std::cout << id << ", "; }
+            std::cout << std::endl;
+        }
+
         for (auto & item : top_level_sequence.items) {
             assert(item != nullptr);
             visit(*item);
