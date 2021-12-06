@@ -1,6 +1,7 @@
 #ifndef PARSER_HPP
 #define PARSER_HPP
 
+#include <ast/base_nodes.hpp>
 #include <ast/nodes_forward.hpp>
 #include <utils/move_copy.hpp>
 
@@ -34,6 +35,8 @@ class parser final {
 
     // parsing functions
     std::unique_ptr<ast::func_decl> parse_function();
+    ast::stmt_ptr parse_statement();
+    ast::stmt_ptr parse_compound_statement();
 
     enum class token_type {
         unknown,
@@ -44,6 +47,11 @@ class parser final {
         character,
         string,
         boolean,
+        // symbols
+        lparen,
+        rparen,
+        lbrace,
+        rbrace,
         eof,
     };
 
