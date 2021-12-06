@@ -4,6 +4,7 @@
 #include "parser.hpp" // yyparse
 #include "settings.hpp"
 #include "tokens.hpp" // yyin
+#include "utils/string_utils.hpp"
 #include "visitor/codegen.hpp"
 #include "visitor/printer.hpp"
 #include "visitor/type_checker.hpp"
@@ -12,6 +13,7 @@
 #include <cassert>
 #include <cstdio>  // fopen
 #include <cstring> // strcpy
+#include <filesystem>
 #include <iostream>
 #include <queue>
 #include <set>
@@ -66,6 +68,9 @@ static auto read_module(const std::string & filename) -> decltype(module) {
 
 static std::vector<ast::top_level_sequence> load_modules(std::string input, bool debug_ast) {
 
+    namespace fs = std::filesystem;
+    auto project_root = fs::canonical(fs::current_path() / input).remove_filename();
+
     std::vector<ast::top_level_sequence> modules;
 
     std::set<std::string> loaded;
@@ -85,11 +90,15 @@ static std::vector<ast::top_level_sequence> load_modules(std::string input, bool
             assert(false);
         }
 
-        parsed_module->filename = filename;
+        parsed_module->filename = unquote(filename);
 
         if (debug_ast) {
             visitor::printer printer_visitor{filename};
             printer_visitor.visit(*parsed_module);
+        }
+
+        for (const auto & iter : parsed_module->imports) {
+            to_load.push(project_root / unquote(iter.first));
         }
 
         modules.push_back(std::move(*parsed_module));
