@@ -1,6 +1,7 @@
 #include "new_parser.hpp"
 
 #include "ast/nodes.hpp"
+#include "ast/top_lvl_nodes.hpp"
 #include "unistd.h"   // close
 #include <sys/mman.h> // mmap
 #include <sys/stat.h> // fstat
@@ -79,7 +80,6 @@ std::unique_ptr<ast::top_level_sequence> parser::parse() {
 
     while (tok.first != token_type::eof) {
         // parse top level items
-        std::cout << static_cast<unsigned>(tok.first) << std::endl;
         switch (tok.first) {
         case token_type::identifier:
             // parse function
@@ -98,7 +98,53 @@ std::unique_ptr<ast::top_level_sequence> parser::parse() {
     return to_ret;
 }
 
-std::unique_ptr<ast::func_decl> parser::parse_function() { assert(false); }
+std::unique_ptr<ast::func_decl> parser::parse_function() {
+
+    auto tok = next_token();
+    auto func_name = tok.second;
+    assert(tok.first == token_type::identifier);
+
+    tok = next_token();
+    assert(tok.first == token_type::lparen);
+
+    tok = next_token();
+    assert(tok.first == token_type::rparen);
+
+    ast::func_decl::header func_header{std::move(func_name), {}};
+    auto body = parse_statement();
+    if (body == nullptr) { return nullptr; }
+
+    return std::make_unique<ast::func_decl>(std::move(func_header), std::move(body));
+}
+
+ast::stmt_ptr parser::parse_statement() {
+    switch (auto tok = peek_token(); tok.first) {
+    case token_type::lbrace:
+        return parse_compound_statement();
+    default:
+        error = "Unexpected " + tok.second + " at start of statement";
+        return nullptr;
+    }
+}
+
+ast::stmt_ptr parser::parse_compound_statement() {
+    auto tok = next_token();
+    assert(tok.first == token_type::lbrace);
+
+    auto to_ret = std::make_unique<ast::stmt_sequence>();
+
+    tok = peek_token();
+    while (tok.first != token_type::rbrace) {
+        auto stmt = parse_statement();
+        if (stmt == nullptr) { return nullptr; }
+        to_ret->append(std::move(stmt));
+        tok = peek_token();
+    }
+
+    assert(next_token().first == token_type::rbrace);
+
+    return to_ret;
+}
 
 std::pair<parser::token_type, std::string> parser::next_token() {
 
@@ -153,11 +199,20 @@ std::pair<parser::token_type, std::string> parser::next_token() {
         assert(false);
     } else {
         // symbols
-        switch (peek_char()) {
+        switch (next_char()) {
         case EOF:
             return {token_type::eof, ""};
+        case '(':
+            return {token_type::lparen, "("};
+        case ')':
+            return {token_type::rparen, ")"};
+        case '{':
+            return {token_type::lbrace, "{"};
+        case '}':
+            return {token_type::rbrace, "}"};
         default:
-            std::cerr << "Unknown character: " << static_cast<unsigned>(peek_char()) << std::endl;
+            std::cerr << "Unknown character: " << static_cast<unsigned>(peek_char()) << " \'"
+                      << peek_char() << '\'' << std::endl;
             assert(false);
         }
     }
