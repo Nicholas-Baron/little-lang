@@ -1,11 +1,15 @@
 #include "new_parser.hpp"
 
+#include "ast/nodes.hpp"
 #include "unistd.h"   // close
 #include <sys/mman.h> // mmap
 #include <sys/stat.h> // fstat
 
 #include <cassert>
-#include <fcntl.h> // open
+#include <cctype>   // isspace
+#include <fcntl.h>  // open
+#include <iostream> // cerr
+#include <map>
 
 std::unique_ptr<parser> parser::from_file(const std::string & filename) {
 
@@ -59,4 +63,112 @@ parser::~parser() {
     }
 }
 
-std::unique_ptr<ast::top_level_sequence> parser::parse() { assert(false); }
+std::unique_ptr<ast::top_level_sequence> parser::parse() {
+
+    auto to_ret = std::make_unique<ast::top_level_sequence>();
+
+    auto tok = peek_token();
+
+    if (tok.first == token_type::eof) {
+        error = "Found empty file";
+        return nullptr;
+    }
+
+    // parse possible imports
+    if (tok.first == token_type::from) { assert(false); }
+
+    while (tok.first != token_type::eof) {
+        // parse top level items
+        std::cout << static_cast<unsigned>(tok.first) << std::endl;
+        switch (tok.first) {
+        case token_type::identifier:
+            // parse function
+            to_ret->append(parse_function());
+            break;
+        default:
+            if (tok.first == token_type::eof) {
+                error = "Unexpected end of file";
+            } else {
+                error = "Unexpected " + tok.second;
+            }
+            return nullptr;
+        }
+        tok = peek_token();
+    }
+    return to_ret;
+}
+
+std::unique_ptr<ast::func_decl> parser::parse_function() { assert(false); }
+
+std::pair<parser::token_type, std::string> parser::next_token() {
+
+    if (peeked_token.has_value()) {
+        auto result = peeked_token.value();
+        peeked_token.reset();
+        return result;
+    }
+
+    while (true) {
+        // go to first non-whitespace character
+        while (isspace(peek_char()) != 0) { next_char(); }
+
+        // TODO: Support "[Cc]omment" to start a comment
+        auto found_comment = (peek_char() == '/' and peek_char(1) == '/') or peek_char() == '#';
+        if (not found_comment) { break; }
+
+        // Skip the comment line
+        while (peek_char() != '\n' and peek_char() != '\r') { next_char(); }
+    }
+
+    if (peek_char() == EOF) { return {token_type::eof, ""}; }
+
+    // we are now at the first meaningful token
+
+    std::string to_ret;
+
+    if (isalpha(peek_char()) != 0) {
+        // parse a word
+        // XXX: this may be bad on performance
+        while (isalnum(peek_char()) != 0) { to_ret += next_char(); }
+
+        static const std::map<std::string, parser::token_type> reserved_words{};
+
+        if (auto iter = reserved_words.find(to_ret); iter != reserved_words.end()) {
+            return {iter->second, std::move(to_ret)};
+        }
+        return {token_type::identifier, std::move(to_ret)};
+    }
+
+    if (isdigit(peek_char()) != 0) {
+        auto c = next_char();
+        to_ret += c;
+        if (c == '0') {
+            // either we are hexadecimal or just 0
+            if (peek_char() != 'x') { return {token_type::integer, std::move(to_ret)}; }
+
+            // we are hexadecimal
+            while (isxdigit(peek_char()) != 0) { to_ret += next_char(); }
+            return {token_type::integer, std::move(to_ret)};
+        }
+        assert(false);
+    } else {
+        // symbols
+        switch (peek_char()) {
+        case EOF:
+            return {token_type::eof, ""};
+        default:
+            std::cerr << "Unknown character: " << static_cast<unsigned>(peek_char()) << std::endl;
+            assert(false);
+        }
+    }
+}
+
+char parser::next_char() {
+    if (current_pos >= length) { return EOF; }
+    return data[current_pos++];
+}
+
+char parser::peek_char(unsigned offset) {
+    if (offset + current_pos >= length) { return EOF; }
+    return data[current_pos + offset];
+}
