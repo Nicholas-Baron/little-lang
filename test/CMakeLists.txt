@@ -2,6 +2,7 @@ add_executable(littlec_test
 	emit_asm_test.cpp
 	main_tests.cpp
 	settings_test.cpp
+	string_utils_test.cpp
 	parser_test.cpp
 	)
 target_link_libraries(littlec_test littlec_lib CONAN_PKG::catch2 CONAN_PKG::lyra)

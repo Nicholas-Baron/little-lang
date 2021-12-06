@@ -35,6 +35,7 @@ set(proj_files
 	visitor/type_checker.cpp
 	visitor/token_to_string.cpp
 	visitor/printer.cpp
+	utils/string_utils.cpp
 	settings.cpp
 	${bison_output}
 	${flex_output}
