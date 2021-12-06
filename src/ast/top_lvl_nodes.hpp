@@ -26,6 +26,7 @@ namespace ast {
         make_visitable;
 
         void append(top_level * item) { items.emplace_back(item); }
+        void append(top_lvl_ptr item) { items.emplace_back(std::move(item)); }
 
         std::map<std::string, std::vector<std::string>> imports;
 
