@@ -5,6 +5,7 @@
 #include <utils/move_copy.hpp>
 
 #include <memory>
+#include <optional>
 #include <string>
 
 class parser final {
@@ -27,11 +28,45 @@ class parser final {
     parser(std::string filename, const char * data, size_t);
     parser(const char * data, size_t);
 
+#ifdef PARSER_TEST
+  public:
+#endif
+
+    // parsing functions
+    std::unique_ptr<ast::func_decl> parse_function();
+
+    enum class token_type {
+        unknown,
+        identifier,
+        integer,
+        floating,
+        from,
+        character,
+        string,
+        boolean,
+        eof,
+    };
+
+    std::pair<token_type, std::string> peek_token() {
+        if (not peeked_token.has_value()) { peeked_token = next_token(); }
+        return peeked_token.value();
+    }
+    std::pair<token_type, std::string> next_token();
+
+    char next_char();
+    char peek_char(unsigned offset = 0);
+
+#ifdef PARSER_TEST
+  private:
+#endif
+
+    std::optional<std::pair<token_type, std::string>> peeked_token;
     std::string filename;
     std::string error;
 
     const char * data;
     size_t length;
+    size_t current_pos{0};
     enum data_type { mmapped, read_buffer } type;
 };
 
