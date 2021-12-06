@@ -22,6 +22,6 @@ static int run_parser(std::string && data) {
 TEST_CASE("the input cannot be empty") { CHECK(run_parser("") == 1); }
 
 TEST_CASE("a function can be parsed") {
-    CHECK(run_parser("main() int = 0") == 0);
+    CHECK(run_parser("main() -> int = 0") == 0);
     CHECK(module != nullptr);
 }
