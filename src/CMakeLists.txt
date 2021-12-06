@@ -30,6 +30,7 @@ set(proj_files
 	emit_asm.cpp
 	jit.cpp
 	location.cpp
+	new_parser.cpp
 	ast/nodes.cpp
 	visitor/codegen.cpp
 	visitor/type_checker.cpp
