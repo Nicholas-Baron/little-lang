@@ -70,7 +70,8 @@
 %token <token>    T_COMMA "," T_IS "is" T_SEMI ";" T_DOT "."                             // Misc symbols
 %token <token>    T_RET "return" T_IF "if" T_ELSE "else" T_LET "let" T_CONST "const"     // Reserved words
 %token <token>    T_AND "and" T_OR "or" T_NOT "not"                                      // Boolean operators
-%token <token>    T_ASSIGN "=" T_ARROW "->" T_FROM "from" T_IMPORT "import"
+%token <token>    T_ASSIGN "=" T_ARROW "->"
+%token <token>    T_FROM "from" T_IMPORT "import" T_EXPORT "export"                      // Reserved words for imports and exports
 %token <string>   T_IDENT T_INT T_CHAR T_BOOL T_STRING T_FLOAT T_PRIM_TYPE               // Regexes
 
 // Types for non-terminals
@@ -79,12 +80,12 @@
 %type <imports> imports
 %type <expression> expr literal initialization
 %type <stmt> stmt else_block conditional action
-%type <top_lvl> top_lvl_item function const_decl
+%type <top_lvl> top_lvl_item function const_decl internal_decl export_decl
 %type <func_call> func_call
 %type <func_head> func_header func_sig
 %type <var_with_type> typed_var
 %type <stmts> stmt_seq stmt_block
-%type <top_lvl_items> top_lvl_seq
+%type <top_lvl_items> top_lvl_seq internal_decl_seq
 %type <params> param_list param_group
 %type <args> arg_list arg_group
 
@@ -125,7 +126,17 @@ top_lvl_seq : top_lvl_item { $$ = new top_level_sequence{$1}; set_loc($$, @$); }
             }
             ;
 
-top_lvl_item : function | const_decl ;
+top_lvl_item : internal_decl | export_decl ;
+
+export_decl : T_EXPORT "{" internal_decl_seq "}" { $$ = $3; $$->should_export(true); set_loc($$, @$); }
+            | T_EXPORT internal_decl { $$ = $2; $$->should_export(true); set_loc($$, @$); }
+            ;
+
+internal_decl_seq : internal_decl { $$ = new top_level_sequence{$1}; set_loc($$, @$); }
+                  | internal_decl_seq internal_decl { $$ = $1; $$->append($2); set_loc($$, @$); }
+                  ;
+
+internal_decl : const_decl | function ;
 
 const_decl : T_CONST typed_var initialization { $$ = new const_decl{std::move(*$2), $3}; delete $2; set_loc($$, @$); }
          ;

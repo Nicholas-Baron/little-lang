@@ -32,6 +32,11 @@ namespace ast {
         std::vector<top_lvl_ptr> items;
 
         std::string filename;
+
+      private:
+        void update_export(bool val) final {
+            for (auto & item : items) { item->should_export(val); }
+        }
     };
 
     class func_decl final : public top_level {
@@ -77,6 +82,9 @@ namespace ast {
 
         header head;
         stmt_ptr body;
+
+      private:
+        void update_export(bool val) final {}
     };
 
     class const_decl final : public top_level {
@@ -93,6 +101,9 @@ namespace ast {
 
         typed_identifier name_and_type;
         expr_ptr expr;
+
+      private:
+        void update_export(bool val) final {}
     };
 } // namespace ast
 

@@ -39,7 +39,24 @@ namespace ast {
     // Base classes
     class expr : public virtual node {};
     class stmt : public virtual node {};
-    class top_level : public virtual node {};
+    class top_level : public virtual node {
+
+      public:
+        [[nodiscard]] bool exported() const { return export_flag; }
+
+        void should_export(bool val) {
+            if (val != export_flag) {
+                export_flag = val;
+                update_export(val);
+            }
+        }
+
+      protected:
+        virtual void update_export(bool val) = 0;
+
+      private:
+        bool export_flag{false};
+    };
 
     // Utility types aliases
     using expr_ptr = std::unique_ptr<expr>;
