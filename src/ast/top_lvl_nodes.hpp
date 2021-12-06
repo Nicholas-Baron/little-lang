@@ -75,6 +75,10 @@ namespace ast {
             : head(std::move(head))
             , body(body) {}
 
+        func_decl(header && head, stmt_ptr body)
+            : head(std::move(head))
+            , body(std::move(body)) {}
+
         non_copyable(func_decl);
 
         movable(func_decl);

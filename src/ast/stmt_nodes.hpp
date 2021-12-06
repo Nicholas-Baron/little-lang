@@ -60,6 +60,7 @@ namespace ast {
         ~stmt_sequence() override = default;
 
         void append(stmt * stmt) { stmts.emplace_back(stmt); }
+        void append(stmt_ptr stmt) { stmts.push_back(std::move(stmt)); }
 
         make_visitable;
 
