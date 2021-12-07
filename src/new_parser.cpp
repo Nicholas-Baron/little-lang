@@ -230,6 +230,8 @@ std::pair<parser::token_type, std::string> parser::next_symbol() {
         return {token_type::rbrace, "}"};
     case ':':
         return {token_type::colon, ":"};
+    case ',':
+        return {token_type::comma, ","};
     case '-':
         if (peek_char() == '>') {
             // found arrow

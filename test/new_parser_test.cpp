@@ -73,6 +73,16 @@ TEST_CASE("the parser will parse a 'skinny' arrow") {
     CHECK(parser->next_token().first == parser::token_type::eof);
 }
 
+TEST_CASE("the parser will parse a comma") {
+    std::string buffer = ",";
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    CHECK(parser->next_token().first == parser::token_type::comma);
+    CHECK(parser->next_token().first == parser::token_type::eof);
+}
+
 // ast level
 TEST_CASE("the parser will parse braces as a compound statement") {
     std::string buffer = "{}";
