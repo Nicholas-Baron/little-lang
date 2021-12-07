@@ -119,3 +119,16 @@ TEST_CASE("the parser will parse a function with return type") {
     CHECK(parser->error_message().empty());
     std::cout << parser->error_message() << std::endl;
 }
+
+TEST_CASE("the parser will parse a function with parameters") {
+    std::string buffer = "foo(int x, y : bool) -> int {}";
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    CHECK(parser->peek_token().first == parser::token_type::identifier);
+
+    CHECK(parser->parse() != nullptr);
+    CHECK(parser->error_message().empty());
+    std::cout << parser->error_message() << std::endl;
+}

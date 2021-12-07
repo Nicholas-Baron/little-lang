@@ -1,6 +1,8 @@
 #include "new_parser.hpp"
 
+#include "ast/node_utils.hpp"
 #include "ast/nodes.hpp"
+#include "ast/nodes_forward.hpp"
 #include "ast/top_lvl_nodes.hpp"
 #include "unistd.h"   // close
 #include <sys/mman.h> // mmap
@@ -106,6 +108,38 @@ std::unique_ptr<ast::func_decl> parser::parse_function() {
 
     tok = next_token();
     assert(tok.first == token_type::lparen);
+
+    std::vector<ast::typed_identifier> args;
+    while (peek_token().first == token_type::identifier) {
+        auto first_id = next_token();
+
+		// TODO: consume_if?
+        const auto name_first = peek_token().first == token_type::colon;
+        if (name_first) { next_token(); }
+
+        auto second_id = next_token();
+        assert(second_id.first == token_type::identifier);
+
+        auto arg
+            = name_first
+                ? ast::typed_identifier{std::move(first_id.second), std::move(second_id.second)}
+                : ast::typed_identifier{std::move(second_id.second), std::move(first_id.second)};
+        args.push_back(std::move(arg));
+
+        switch (auto peek_type = peek_token().first; peek_type) {
+        case token_type::comma:
+            // consume and go to next iteration
+            next_token();
+            break;
+        case token_type::rparen:
+            // this will be consumed after the loop.
+            // just ignore
+            break;
+        default:
+            // this should not happen
+            assert(false);
+        }
+    }
 
     tok = next_token();
     assert(tok.first == token_type::rparen);
