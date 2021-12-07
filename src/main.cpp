@@ -1,9 +1,8 @@
 #include "ast/top_lvl_nodes.hpp"
 #include "emit_asm.hpp"
 #include "jit.hpp"
-#include "parser.hpp" // yyparse
+#include "new_parser.hpp"
 #include "settings.hpp"
-#include "tokens.hpp" // yyin
 #include "utils/string_utils.hpp"
 #include "visitor/codegen.hpp"
 #include "visitor/printer.hpp"
@@ -11,8 +10,6 @@
 #include <sys/wait.h> // waitpid
 
 #include <cassert>
-#include <cstdio>  // fopen
-#include <cstring> // strcpy
 #include <filesystem>
 #include <iostream>
 #include <queue>
@@ -20,50 +17,13 @@
 #include <unistd.h> // execve
 #include <utility>
 
-extern std::unique_ptr<ast::top_level_sequence> module;
+static std::unique_ptr<ast::top_level_sequence> read_module(const std::string & filename) {
+    auto p = parser::from_file(filename);
+    if (p == nullptr) { return nullptr; }
 
-static bool parse_file() {
-
-    const auto parse_status = yyparse();
-
-    if (parse_status != 0) {
-        std::cerr << "Parsing error: ";
-        if (parse_status == 1) {
-            std::cerr << "Syntax error found!";
-        } else if (parse_status == 2) {
-            std::cerr << "Exhausted memory!";
-        } else {
-            std::cerr << "Unknown error";
-        }
-
-        std::cerr << std::endl;
-    }
-
-    /* According to bison, a yyparse() result of 0 is successful.
-     * (ie: read all input) */
-    return parse_status == 0;
-}
-
-static auto read_module(const std::string & filename) -> decltype(module) {
-    if (filename.empty()) {
-        std::cerr << "Input file not specified." << std::endl;
-        return nullptr;
-    }
-
-    yyin = fopen(filename.c_str(), "r");
-
-    if (yyin == nullptr) {
-        std::cerr << filename << " cannot be opened." << std::endl;
-        return nullptr;
-    }
-
-    // If the file could not be parsed, leave the program immediately.
-    if (not parse_file()) {
-        std::cerr << "Failed to parse " << filename << std::endl;
-        return nullptr;
-    }
-
-    return std::move(module);
+    auto module_ = p->parse();
+    if (module_ == nullptr) { std::cerr << p->error_message() << std::endl; }
+    return module_;
 }
 
 static std::vector<ast::top_level_sequence> load_modules(std::string input, bool debug_ast) {

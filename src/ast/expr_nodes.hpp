@@ -28,8 +28,10 @@ namespace ast {
 
     class unary_expr final : public expr {
       public:
-        unary_expr(int token, expr * operand)
-            : tok(token)
+        enum class operand { bool_not, negate };
+
+        unary_expr(operand op, expr * operand)
+            : op(op)
             , expr(operand) {}
 
         non_copyable(unary_expr);
@@ -38,16 +40,32 @@ namespace ast {
 
         make_visitable;
 
-        int tok;
+        operand op;
         expr_ptr expr;
     };
 
     class binary_expr final : public expr {
       public:
-        binary_expr(expr * lhs, int op, expr * rhs)
+        enum class operand {
+            add,
+            sub,
+            mult,
+            div,
+            mod,
+            gt,
+            ge,
+            lt,
+            le,
+            eq,
+            ne,
+            bool_and,
+            bool_or,
+        };
+
+        binary_expr(expr * lhs, operand op, expr * rhs)
             : lhs(lhs)
             , rhs(rhs)
-            , tok(op) {}
+            , op(op) {}
 
         non_copyable(binary_expr);
 
@@ -59,7 +77,7 @@ namespace ast {
         [[nodiscard]] bool is_shortcircuiting() const noexcept;
 
         expr_ptr lhs, rhs;
-        int tok;
+        operand op;
     };
 
     class func_call_expr final : public expr {

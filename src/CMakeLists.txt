@@ -1,30 +1,15 @@
-# the header from Bison
-set(parser_header ${temp_dir}/parser.hpp)
-# the bison spec file
-set(bison_input ${CMAKE_SOURCE_DIR}/src/parser.y)
-# the main output of bison
-set(bison_output ${temp_dir}/parser.cpp)
+# Bison is needed only for checking the formal grammar
+find_package(BISON)
 
-add_custom_command(
-	OUTPUT ${bison_output} ${parser_header}
-	COMMAND ${BISON_EXECUTABLE} ${bison_input} --defines=${parser_header} --verbose -Wall --output=${bison_output}
-	WORKING_DIRECTORY ${temp_dir}
-	COMMENT "Generating parser..."
-	DEPENDS ${bison_input}
-	USES_TERMINAL VERBATIM
-	)
-
-set(flex_input ${CMAKE_SOURCE_DIR}/src/tokens.l ${parser_header})
-set(flex_output ${temp_dir}/tokens.cpp)
-
-add_custom_command(
-	OUTPUT ${flex_output}
-	COMMAND ${FLEX_EXECUTABLE} --header-file=${temp_dir}/tokens.hpp -o ${flex_output} ${flex_input}
-	COMMENT "Generating tokenizer..."
-	WORKING_DIRECTORY ${temp_dir}
-	DEPENDS ${flex_input}
-	USES_TERMINAL VERBATIM
-	)
+if(BISON_FOUND)
+	# the bison spec file
+	set(bison_input ${CMAKE_SOURCE_DIR}/src/parser.y)
+	add_custom_target(bison
+		COMMAND ${BISON_EXECUTABLE} ${bison_input} -Wall --verbose --report-file=parser.report
+		WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+		VERBATIM USES_TERMINAL
+		)
+endif()
 
 set(proj_files
 	emit_asm.cpp
@@ -38,8 +23,6 @@ set(proj_files
 	visitor/printer.cpp
 	utils/string_utils.cpp
 	settings.cpp
-	${bison_output}
-	${flex_output}
 	)
 
 # Add reserved identifier warning here, as catch's internals seem to set it off a lot
@@ -54,7 +37,7 @@ target_compile_options(littlec
 	)
 target_link_libraries(littlec ${LLVM_CONFIG} CONAN_PKG::lyra)
 target_include_directories(littlec
-	PRIVATE ${CMAKE_SOURCE_DIR}/src ${temp_dir} CONAN_PKG::lyra
+	PRIVATE ${CMAKE_SOURCE_DIR}/src CONAN_PKG::lyra
 	)
 
 # the library for testing
@@ -64,6 +47,6 @@ target_compile_options(littlec_lib
 	)
 target_link_libraries(littlec_lib ${LLVM_CONFIG} CONAN_PKG::lyra)
 target_include_directories(littlec_lib
-	PUBLIC ${CMAKE_SOURCE_DIR}/src ${temp_dir}
+	PUBLIC ${CMAKE_SOURCE_DIR}/src
 	PRIVATE CONAN_PKG::lyra
 	)

@@ -26,10 +26,6 @@ conan_cmake_run(CONANFILE conanfile.txt
 
 enable_testing()
 
-# Flex and Bison are needed
-find_package(FLEX REQUIRED)
-find_package(BISON REQUIRED)
-
 # Format the LLVM flags
 execute_process(
 	COMMAND llvm-config --cxxflags --ldflags --libs core native

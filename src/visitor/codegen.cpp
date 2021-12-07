@@ -1,8 +1,8 @@
 #include "codegen.hpp"
 
+#include "ast/expr_nodes.hpp"
 #include "ast/nodes.hpp"
 #include "emit_asm.hpp"
-#include "parser.hpp" // token names (should not be needed here)
 #include "token_to_string.hpp"
 #include <llvm/IR/BasicBlock.h>
 #include <llvm/IR/Constants.h>
@@ -117,14 +117,14 @@ namespace visitor {
 
         // Check that this is an acutal short circuit
         // short on false if and-ing, short on true if or-ing
-
-        assert(binary_expr.tok == T_AND or binary_expr.tok == T_OR);
+        using operand = ast::binary_expr::operand;
+        assert(binary_expr.op == operand::bool_and or binary_expr.op == operand::bool_or);
 
         // if (true && rhs) -> should eval rhs
-        auto * on_true = binary_expr.tok == T_AND ? rhs_block : merge_block;
+        auto * on_true = binary_expr.op == operand::bool_and ? rhs_block : merge_block;
 
         // if (false || rhs) -> should eval rhs
-        auto * on_false = binary_expr.tok == T_OR ? rhs_block : merge_block;
+        auto * on_false = binary_expr.op == operand::bool_or ? rhs_block : merge_block;
         assert(on_true != on_false);
 
         ir_builder->CreateCondBr(lhs_value, on_true, on_false);
@@ -194,6 +194,8 @@ namespace visitor {
         const bool is_int
             = lhs_value->getType()->isIntegerTy() and rhs_value->getType()->isIntegerTy();
 
+        using operand = ast::binary_expr::operand;
+
         if (binary_expr.is_comparison()) {
 
             using predicate = llvm::CmpInst::Predicate;
@@ -203,27 +205,27 @@ namespace visitor {
             };
 
             std::optional<predicate> p;
-            switch (binary_expr.tok) {
-            case T_LE:
+            switch (binary_expr.op) {
+            case operand::le:
                 p = int_or_float(predicate::FCMP_OLE, predicate::ICMP_SLE);
                 break;
-            case T_LT:
+            case operand::lt:
                 p = int_or_float(predicate::FCMP_OLT, predicate::ICMP_SLT);
                 break;
-            case T_GE:
+            case operand::ge:
                 p = int_or_float(predicate::FCMP_OGE, predicate::ICMP_SGE);
                 break;
-            case T_GT:
+            case operand::gt:
                 p = int_or_float(predicate::FCMP_OGT, predicate::ICMP_SGT);
                 break;
-            case T_EQ:
+            case operand::eq:
                 p = int_or_float(predicate::FCMP_OEQ, predicate::ICMP_EQ);
                 break;
-            case T_NE:
+            case operand::ne:
                 p = int_or_float(predicate::FCMP_ONE, predicate::ICMP_NE);
                 break;
             default:
-                printError("Comparison operator " + tok_to_string(binary_expr.tok)
+                printError("Comparison operator " + tok_to_string(binary_expr.op)
                                + " is not implemented yet",
                            binary_expr.location());
                 assert(false);
@@ -251,18 +253,18 @@ namespace visitor {
         };
 
         // TODO: add binary_expr::operation instead of raw tokens
-        switch (binary_expr.tok) {
-        case T_PLUS:
+        switch (binary_expr.op) {
+        case operand::add:
             bin_op = int_or_float(bin_ops::Add, bin_ops::FAdd);
             break;
-        case T_MINUS:
+        case operand::sub:
             bin_op = int_or_float(bin_ops::Sub, bin_ops::FSub);
             break;
-        case T_MULT:
+        case operand::mult:
             bin_op = int_or_float(bin_ops::Mul, bin_ops::FMul);
             break;
         default:
-            printError("Binary operator " + tok_to_string(binary_expr.tok)
+            printError("Binary operator " + tok_to_string(binary_expr.op)
                            + " is not implemented yet",
                        binary_expr.location());
             assert(false);

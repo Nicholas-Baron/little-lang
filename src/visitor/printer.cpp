@@ -12,7 +12,7 @@ namespace visitor {
     void printer::visit(ast::binary_expr & binary_expr) {
 
         binary_expr.lhs->accept(*this);
-        std::cout << tok_to_string(binary_expr.tok) << '\n';
+        std::cout << tok_to_string(binary_expr.op) << '\n';
         binary_expr.rhs->accept(*this);
     }
 
@@ -101,7 +101,7 @@ namespace visitor {
 
     void printer::visit(ast::unary_expr & unary_expr) {
         std::cout << "unary_expr" << std::endl;
-        std::cout << tok_to_string(unary_expr.tok) << std::endl;
+        std::cout << tok_to_string(unary_expr.op) << std::endl;
         unary_expr.expr->accept(*this);
     }
 
