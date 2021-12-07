@@ -232,6 +232,29 @@ TEST_CASE("the parser will parse a module with one import") {
     CHECK_FALSE(mod->items.at(0) == nullptr);
 }
 
+TEST_CASE("the parser will parse imports with or without semicolons") {
+    std::string buffer = "from \"test.lil\" import foo, bar\nmain() {}";
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+    CHECK(parser->peek_token().first == parser::token_type::from);
+
+    auto mod = parser->parse();
+    CHECK(mod != nullptr);
+    CHECK(parser->error_message().empty());
+    std::cout << parser->error_message() << std::endl;
+
+    CHECK(mod->imports.size() == 1);
+    {
+        auto iter = mod->imports.find("test.lil");
+        CHECK_FALSE(iter == mod->imports.end());
+        CHECK(iter->second.size() == 2);
+    }
+
+    CHECK(mod->items.size() == 1);
+    CHECK_FALSE(mod->items.at(0) == nullptr);
+}
+
 TEST_CASE("the parser will parse a module with multiple imports") {
     std::string buffer = R"(from "test.lil" import foo, bar; from "foo.lil" import baz; main() {})";
     auto parser = parser::from_buffer(buffer);

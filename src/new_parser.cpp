@@ -86,8 +86,9 @@ std::unique_ptr<ast::top_level_sequence> parser::parse() {
 
         assert(next_token().first == token_type::import_);
 
+        bool more_ids = peek_token().first == token_type::identifier;
         std::vector<std::string> identifiers;
-        while (peek_token().first == token_type::identifier) {
+        while (more_ids) {
             identifiers.push_back(next_token().second);
             switch (peek_token().first) {
             case token_type::comma:
@@ -96,7 +97,13 @@ std::unique_ptr<ast::top_level_sequence> parser::parse() {
                 assert(peek_token().first == token_type::identifier);
                 break;
             case token_type::semi:
+                // consume the semi and end the import
+                assert(next_token().first == token_type::semi);
+                [[fallthrough]];
+            case token_type::identifier:
+            case token_type::from:
                 // end of this import
+                more_ids = false;
                 break;
             default:
                 std::cerr << "Unexpected " << peek_token().second << " in import." << std::endl;
@@ -106,7 +113,6 @@ std::unique_ptr<ast::top_level_sequence> parser::parse() {
 
         to_ret->imports.emplace(unquote(filename.second), std::move(identifiers));
 
-        assert(next_token().first == token_type::semi);
         tok = peek_token();
     }
 
