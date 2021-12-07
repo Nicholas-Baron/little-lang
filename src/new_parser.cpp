@@ -79,7 +79,7 @@ std::unique_ptr<ast::top_level_sequence> parser::parse() {
     }
 
     // parse possible imports
-    if (tok.first == token_type::from) {
+    while (tok.first == token_type::from) {
         assert(next_token().first == token_type::from);
         auto filename = next_token();
         assert(filename.first == token_type::string);
