@@ -26,7 +26,9 @@ TEST_CASE("the parser will parse an identifier") {
 
     CHECK(parser != nullptr);
 
-    CHECK(parser->next_token().first == parser::token_type::identifier);
+    auto tok = parser->next_token();
+    CHECK(tok.first == parser::token_type::identifier);
+    CHECK(tok.second == "main");
     CHECK(parser->next_token().first == parser::token_type::eof);
 }
 
