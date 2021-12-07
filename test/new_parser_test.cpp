@@ -121,6 +121,19 @@ TEST_CASE("the parser will parse a comma") {
     CHECK(parser->next_token().first == parser::token_type::eof);
 }
 
+TEST_CASE("the parser will parse 'from', 'import', and 'export'") {
+    std::string buffer = "from import export";
+
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    CHECK(parser->next_token().first == parser::token_type::from);
+    CHECK(parser->next_token().first == parser::token_type::import_);
+    CHECK(parser->next_token().first == parser::token_type::export_);
+    CHECK(parser->next_token().first == parser::token_type::eof);
+}
+
 // ast level
 TEST_CASE("the parser will parse braces as a compound statement") {
     std::string buffer = "{}";
