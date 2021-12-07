@@ -240,10 +240,13 @@ std::pair<parser::token_type, std::string> parser::next_number() {
     to_ret += c;
     if (c == '0') {
         // either we are hexadecimal or just 0
-        if (peek_char() != 'x') { return {token_type::integer, std::move(to_ret)}; }
+        if (tolower(peek_char()) == 'x') {
+            // remove the 'x' or 'X'
+            to_ret += next_char();
+            // consume all hexadecimal digits
+            while (isxdigit(peek_char()) != 0) { to_ret += next_char(); }
+        }
 
-        // we are hexadecimal
-        while (isxdigit(peek_char()) != 0) { to_ret += next_char(); }
         return {token_type::integer, std::move(to_ret)};
     }
 
