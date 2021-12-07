@@ -4,7 +4,8 @@
 #include "ast/nodes.hpp"
 #include "ast/nodes_forward.hpp"
 #include "ast/top_lvl_nodes.hpp"
-#include "unistd.h"   // close
+#include "unistd.h" // close
+#include "utils/string_utils.hpp"
 #include <sys/mman.h> // mmap
 #include <sys/stat.h> // fstat
 
@@ -78,7 +79,36 @@ std::unique_ptr<ast::top_level_sequence> parser::parse() {
     }
 
     // parse possible imports
-    if (tok.first == token_type::from) { assert(false); }
+    if (tok.first == token_type::from) {
+        assert(next_token().first == token_type::from);
+        auto filename = next_token();
+        assert(filename.first == token_type::string);
+
+        assert(next_token().first == token_type::import_);
+
+        std::vector<std::string> identifiers;
+        while (peek_token().first == token_type::identifier) {
+            identifiers.push_back(next_token().second);
+            switch (peek_token().first) {
+            case token_type::comma:
+                // there are more identifiers.
+                assert(next_token().first == token_type::comma);
+                assert(peek_token().first == token_type::identifier);
+                break;
+            case token_type::semi:
+                // end of this import
+                break;
+            default:
+                std::cerr << "Unexpected " << peek_token().second << " in import." << std::endl;
+                assert(false);
+            }
+        }
+
+        to_ret->imports.emplace(unquote(filename.second), std::move(identifiers));
+
+        assert(next_token().first == token_type::semi);
+        tok = peek_token();
+    }
 
     while (tok.first != token_type::eof) {
         // parse top level items
