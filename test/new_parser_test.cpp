@@ -121,6 +121,16 @@ TEST_CASE("the parser will parse a comma") {
     CHECK(parser->next_token().first == parser::token_type::eof);
 }
 
+TEST_CASE("the parser will parse a semicolon") {
+    std::string buffer = ";";
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    CHECK(parser->next_token().first == parser::token_type::semi);
+    CHECK(parser->next_token().first == parser::token_type::eof);
+}
+
 TEST_CASE("the parser will parse 'from', 'import', and 'export'") {
     std::string buffer = "from import export";
 

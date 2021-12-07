@@ -57,6 +57,7 @@ class parser final {
         arrow,
         comma,
         colon,
+        semi,
         eof,
     };
 
