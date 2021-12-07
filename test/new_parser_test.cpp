@@ -44,6 +44,18 @@ TEST_CASE("the parser will parse an integer") {
     CHECK(parser->next_token().first == parser::token_type::eof);
 }
 
+TEST_CASE("the parser will parse a hexadecimal integer") {
+    std::string buffer = "0x123456789aBcDeF";
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    auto tok = parser->next_token();
+    CHECK(tok.first == parser::token_type::integer);
+    CHECK(tok.second == buffer);
+    CHECK(parser->next_token().first == parser::token_type::eof);
+}
+
 TEST_CASE("the parser will parse a colon and the word 'is' as the same token") {
     std::string buffer = "is:";
     auto parser = parser::from_buffer(buffer);
