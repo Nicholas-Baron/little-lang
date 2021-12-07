@@ -111,6 +111,14 @@ std::unique_ptr<ast::func_decl> parser::parse_function() {
     assert(tok.first == token_type::rparen);
 
     ast::func_decl::header func_header{std::move(func_name), {}};
+    if (peek_token().first == token_type::arrow) {
+        assert(next_token().first == token_type::arrow);
+
+        auto ret_tok = next_token();
+        assert(ret_tok.first == token_type::identifier);
+        func_header.set_ret_type(std::move(ret_tok.second));
+    }
+
     auto body = parse_statement();
     if (body == nullptr) { return nullptr; }
 
