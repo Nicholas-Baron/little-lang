@@ -52,6 +52,7 @@ class parser final {
         rparen,
         lbrace,
         rbrace,
+        arrow,
         eof,
     };
 

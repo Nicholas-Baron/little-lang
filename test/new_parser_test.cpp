@@ -5,6 +5,9 @@
 #include "new_parser.hpp"
 #include <catch2/catch.hpp>
 
+// TODO: This split in the tests should probably be reflected in a lexer-parser split
+
+// token level
 TEST_CASE("the parser will not accept empty inputs") {
     std::string buffer;
     auto parser = parser::from_buffer(buffer);
@@ -49,6 +52,17 @@ TEST_CASE("the parser will parse braces") {
     CHECK(parser->next_token().first == parser::token_type::eof);
 }
 
+TEST_CASE("the parser will parse a 'skinny' arrow") {
+    std::string buffer = "->";
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    CHECK(parser->next_token().first == parser::token_type::arrow);
+    CHECK(parser->next_token().first == parser::token_type::eof);
+}
+
+// ast level
 TEST_CASE("the parser will parse braces as a compound statement") {
     std::string buffer = "{}";
     auto parser = parser::from_buffer(buffer);

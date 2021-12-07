@@ -219,6 +219,15 @@ std::pair<parser::token_type, std::string> parser::next_symbol() {
         return {token_type::lbrace, "{"};
     case '}':
         return {token_type::rbrace, "}"};
+    case '-':
+        if (peek_char() == '>') {
+            // found arrow
+            std::string to_ret;
+            (to_ret += c) += next_char();
+            return {token_type::arrow, to_ret};
+        }
+        assert(false);
+        break;
     default:
         std::cerr << "Unknown character: " << static_cast<unsigned>(c) << " \'" << c << '\''
                   << std::endl;
