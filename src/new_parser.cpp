@@ -260,7 +260,7 @@ std::pair<parser::token_type, std::string> parser::next_number() {
 
 std::pair<parser::token_type, std::string> parser::next_symbol() {
 
-    switch (auto c = next_char(); c) {
+    switch (const auto c = next_char(); c) {
     case EOF:
         return {token_type::eof, ""};
     case '(':
@@ -284,6 +284,14 @@ std::pair<parser::token_type, std::string> parser::next_symbol() {
         }
         assert(false);
         break;
+    case '\"': {
+        std::string to_ret;
+        to_ret += c;
+        while (peek_char() != c) { to_ret += next_char(); }
+        // consume the quote
+        to_ret += next_char();
+        return {token_type::string, std::move(to_ret)};
+    } break;
     default:
         std::cerr << "Unknown character: " << static_cast<unsigned>(c) << " \'" << c << '\''
                   << std::endl;
