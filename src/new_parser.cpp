@@ -78,6 +78,36 @@ std::unique_ptr<ast::top_level_sequence> parser::parse() {
         return nullptr;
     }
 
+    if (tok.first == token_type::from) {
+        to_ret->imports = parse_imports();
+        tok = peek_token();
+    }
+
+    while (tok.first != token_type::eof) {
+        // parse top level items
+        switch (tok.first) {
+        case token_type::identifier:
+            // parse function
+            to_ret->append(parse_function());
+            break;
+        default:
+            if (tok.first == token_type::eof) {
+                error = "Unexpected end of file";
+            } else {
+                error = "Unexpected " + tok.second;
+            }
+            return nullptr;
+        }
+        tok = peek_token();
+    }
+    return to_ret;
+}
+
+std::map<std::string, std::vector<std::string>> parser::parse_imports() {
+
+    std::map<std::string, std::vector<std::string>> to_ret;
+    auto tok = peek_token();
+
     // parse possible imports
     while (tok.first == token_type::from) {
         assert(next_token().first == token_type::from);
@@ -111,26 +141,8 @@ std::unique_ptr<ast::top_level_sequence> parser::parse() {
             }
         }
 
-        to_ret->imports.emplace(unquote(filename.second), std::move(identifiers));
+        to_ret.emplace(unquote(filename.second), std::move(identifiers));
 
-        tok = peek_token();
-    }
-
-    while (tok.first != token_type::eof) {
-        // parse top level items
-        switch (tok.first) {
-        case token_type::identifier:
-            // parse function
-            to_ret->append(parse_function());
-            break;
-        default:
-            if (tok.first == token_type::eof) {
-                error = "Unexpected end of file";
-            } else {
-                error = "Unexpected " + tok.second;
-            }
-            return nullptr;
-        }
         tok = peek_token();
     }
     return to_ret;

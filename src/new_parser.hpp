@@ -5,9 +5,11 @@
 #include <ast/nodes_forward.hpp>
 #include <utils/move_copy.hpp>
 
+#include <map>
 #include <memory>
 #include <optional>
 #include <string>
+#include <vector>
 
 class parser final {
   public:
@@ -34,6 +36,7 @@ class parser final {
 #endif
 
     // parsing functions
+    std::map<std::string, std::vector<std::string>> parse_imports();
     std::unique_ptr<ast::func_decl> parse_function();
     ast::stmt_ptr parse_statement();
     ast::stmt_ptr parse_compound_statement();
