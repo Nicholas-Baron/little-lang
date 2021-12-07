@@ -225,7 +225,10 @@ std::pair<parser::token_type, std::string> parser::next_identifier() {
     while (isalnum(peek_char()) != 0) { to_ret += next_char(); }
 
     static const std::map<std::string, parser::token_type> reserved_words{
-        {"is", token_type::colon}};
+        {"is", token_type::colon},
+        {"from", token_type::from},
+        {"import", token_type::import_},
+        {"export", token_type::export_}};
 
     if (auto iter = reserved_words.find(to_ret); iter != reserved_words.end()) {
         return {iter->second, std::move(to_ret)};

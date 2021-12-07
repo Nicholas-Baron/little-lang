@@ -44,6 +44,8 @@ class parser final {
         integer,
         floating,
         from,
+        import_,
+        export_,
         character,
         string,
         boolean,
