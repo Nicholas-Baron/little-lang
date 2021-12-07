@@ -1,5 +1,5 @@
 ---
-Checks:          '-*,clang-analyzer-*,misc-*,modernize-*,-modernize-use-trailing-return-type,performance-*,readability-*,portability-*'
+Checks:          '-*,clang-analyzer-*,misc-*,-misc-no-recursion,modernize-*,-modernize-use-trailing-return-type,performance-*,readability-*,portability-*'
 WarningsAsErrors: ''
 HeaderFilterRegex: './src/*'
 AnalyzeTemporaryDtors: false
