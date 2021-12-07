@@ -53,6 +53,7 @@ class parser final {
         lbrace,
         rbrace,
         arrow,
+        colon,
         eof,
     };
 
