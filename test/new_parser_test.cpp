@@ -30,6 +30,17 @@ TEST_CASE("the parser will parse an identifier") {
     CHECK(parser->next_token().first == parser::token_type::eof);
 }
 
+TEST_CASE("the parser will parse a colon and the word 'is' as the same token") {
+    std::string buffer = "is:";
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    CHECK(parser->next_token().first == parser::token_type::colon);
+    CHECK(parser->next_token().first == parser::token_type::colon);
+    CHECK(parser->next_token().first == parser::token_type::eof);
+}
+
 TEST_CASE("the parser will parse parentheses") {
     std::string buffer = "()";
     auto parser = parser::from_buffer(buffer);

@@ -190,7 +190,8 @@ std::pair<parser::token_type, std::string> parser::next_identifier() {
     // XXX: this may be bad on performance
     while (isalnum(peek_char()) != 0) { to_ret += next_char(); }
 
-    static const std::map<std::string, parser::token_type> reserved_words{};
+    static const std::map<std::string, parser::token_type> reserved_words{
+        {"is", token_type::colon}};
 
     if (auto iter = reserved_words.find(to_ret); iter != reserved_words.end()) {
         return {iter->second, std::move(to_ret)};
@@ -227,6 +228,8 @@ std::pair<parser::token_type, std::string> parser::next_symbol() {
         return {token_type::lbrace, "{"};
     case '}':
         return {token_type::rbrace, "}"};
+    case ':':
+        return {token_type::colon, ":"};
     case '-':
         if (peek_char() == '>') {
             // found arrow
