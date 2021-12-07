@@ -246,6 +246,12 @@ std::pair<parser::token_type, std::string> parser::next_number() {
         while (isxdigit(peek_char()) != 0) { to_ret += next_char(); }
         return {token_type::integer, std::move(to_ret)};
     }
+
+    assert(isdigit(c));
+    while (isdigit(peek_char()) != 0) { to_ret += next_char(); }
+
+    if (peek_char() != '.') { return {token_type::integer, to_ret}; }
+
     assert(false);
 }
 
