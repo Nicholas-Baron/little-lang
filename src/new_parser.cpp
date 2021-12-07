@@ -113,7 +113,7 @@ std::unique_ptr<ast::func_decl> parser::parse_function() {
     while (peek_token().first == token_type::identifier) {
         auto first_id = next_token();
 
-		// TODO: consume_if?
+        // TODO: consume_if?
         const auto name_first = peek_token().first == token_type::colon;
         if (name_first) { next_token(); }
 
@@ -144,7 +144,7 @@ std::unique_ptr<ast::func_decl> parser::parse_function() {
     tok = next_token();
     assert(tok.first == token_type::rparen);
 
-    ast::func_decl::header func_header{std::move(func_name), {}};
+    ast::func_decl::header func_header{std::move(func_name), std::move(args)};
     if (peek_token().first == token_type::arrow) {
         assert(next_token().first == token_type::arrow);
 

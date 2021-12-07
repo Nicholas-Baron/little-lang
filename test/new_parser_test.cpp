@@ -102,9 +102,14 @@ TEST_CASE("the parser will parse a unit function") {
 
     CHECK(parser->peek_token().first == parser::token_type::identifier);
 
-    CHECK(parser->parse() != nullptr);
+    auto func = parser->parse_function();
+    CHECK(func != nullptr);
     CHECK(parser->error_message().empty());
-    std::cout << parser->error_message() << std::endl;
+
+    CHECK(func->head.name() == "main");
+    CHECK(func->head.param_count() == 0);
+    CHECK(func->head.ret_type().empty());
+    CHECK(func->body != nullptr);
 }
 
 TEST_CASE("the parser will parse a function with return type") {
@@ -113,11 +118,14 @@ TEST_CASE("the parser will parse a function with return type") {
 
     CHECK(parser != nullptr);
 
-    CHECK(parser->peek_token().first == parser::token_type::identifier);
-
-    CHECK(parser->parse() != nullptr);
+    auto func = parser->parse_function();
+    CHECK(func != nullptr);
     CHECK(parser->error_message().empty());
-    std::cout << parser->error_message() << std::endl;
+
+    CHECK(func->head.name() == "main");
+    CHECK(func->head.param_count() == 0);
+    CHECK(func->head.ret_type() == "int");
+    CHECK(func->body != nullptr);
 }
 
 TEST_CASE("the parser will parse a function with parameters") {
@@ -126,9 +134,16 @@ TEST_CASE("the parser will parse a function with parameters") {
 
     CHECK(parser != nullptr);
 
-    CHECK(parser->peek_token().first == parser::token_type::identifier);
-
-    CHECK(parser->parse() != nullptr);
+    auto func = parser->parse_function();
+    CHECK(func != nullptr);
     CHECK(parser->error_message().empty());
-    std::cout << parser->error_message() << std::endl;
+
+    CHECK(func->head.name() == "foo");
+    CHECK(func->head.param_count() == 2);
+    CHECK(func->head.arg(0).name() == "x");
+    CHECK(func->head.arg(0).type() == "int");
+    CHECK(func->head.arg(1).name() == "y");
+    CHECK(func->head.arg(1).type() == "bool");
+    CHECK(func->head.ret_type() == "int");
+    CHECK(func->body != nullptr);
 }
