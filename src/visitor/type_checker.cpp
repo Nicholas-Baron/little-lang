@@ -1,7 +1,6 @@
 #include "type_checker.hpp"
 
 #include "ast/nodes.hpp"
-#include "parser.hpp" // please remove
 #include "token_to_string.hpp"
 #include <llvm/IR/DerivedTypes.h>
 #include <llvm/IR/LLVMContext.h>
@@ -74,30 +73,31 @@ namespace visitor {
         auto * lhs_type = get_value(*binary_expr.lhs, *this);
         auto * rhs_type = get_value(*binary_expr.rhs, *this);
 
-        switch (binary_expr.tok) {
-        case T_OR:
-        case T_AND:
+        using operand = ast::binary_expr::operand;
+        switch (binary_expr.op) {
+        case operand::bool_or:
+        case operand::bool_and:
             if (auto * bool_type = find_type_of("bool");
                 lhs_type != bool_type or rhs_type != bool_type) {
                 std::cout << "Logical operations can only use booleans" << std::endl;
                 assert(false);
             }
             [[fallthrough]];
-        case T_EQ:
-        case T_NE:
-        case T_GT:
-        case T_GE:
-        case T_LT:
-        case T_LE:
+        case operand::eq:
+        case operand::ne:
+        case operand::gt:
+        case operand::ge:
+        case operand::lt:
+        case operand::le:
             if (lhs_type != rhs_type) {
                 std::cout << "Comparisons can only be made within the same type" << std::endl;
                 assert(false);
             }
             store_result(find_type_of("bool"));
             break;
-        case T_PLUS:
-        case T_MINUS:
-        case T_MULT:
+        case operand::add:
+        case operand::sub:
+        case operand::mult:
             if (lhs_type != rhs_type) {
                 std::cout << "Arithmetic operations can only be made within the same type"
                           << std::endl;
@@ -106,7 +106,7 @@ namespace visitor {
             store_result(lhs_type);
             break;
         default:
-            std::cout << "Unimplemented type check for " << tok_to_string(binary_expr.tok)
+            std::cout << "Unimplemented type check for " << tok_to_string(binary_expr.op)
                       << std::endl;
             assert(false);
         }
@@ -307,7 +307,7 @@ namespace visitor {
 
     void type_checker::visit(ast::unary_expr & unary_expr) {
         std::cout << "unary_expr" << std::endl;
-        std::cout << tok_to_string(unary_expr.tok) << std::endl;
+        std::cout << tok_to_string(unary_expr.op) << std::endl;
         unary_expr.expr->accept(*this);
     }
 

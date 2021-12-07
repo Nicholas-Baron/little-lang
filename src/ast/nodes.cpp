@@ -1,23 +1,23 @@
 #include "nodes.hpp"
 
-#include "parser.hpp"
-
 namespace ast {
 
     bool binary_expr::is_comparison() const noexcept {
-        switch (tok) {
-        case T_GE:
-        case T_GT:
-        case T_LT:
-        case T_LE:
-        case T_EQ:
-        case T_NE:
+        switch (op) {
+        case operand::ge:
+        case operand::gt:
+        case operand::lt:
+        case operand::le:
+        case operand::eq:
+        case operand::ne:
             return true;
         default:
             return false;
         }
     }
 
-    bool binary_expr::is_shortcircuiting() const noexcept { return tok == T_OR or tok == T_AND; }
+    bool binary_expr::is_shortcircuiting() const noexcept {
+        return op == operand::bool_or or op == operand::bool_and;
+    }
 
 } // namespace ast
