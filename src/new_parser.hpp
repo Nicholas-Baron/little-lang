@@ -68,6 +68,11 @@ class parser final {
   private:
 #endif
 
+    // helpers for next_token
+    std::pair<token_type, std::string> next_identifier();
+    std::pair<token_type, std::string> next_number();
+    std::pair<token_type, std::string> next_symbol();
+
     std::optional<std::pair<token_type, std::string>> peeked_token;
     std::string filename;
     std::string error;

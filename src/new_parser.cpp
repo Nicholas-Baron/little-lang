@@ -169,52 +169,60 @@ std::pair<parser::token_type, std::string> parser::next_token() {
     if (peek_char() == EOF) { return {token_type::eof, ""}; }
 
     // we are now at the first meaningful token
+    if (isalpha(peek_char()) != 0) { return next_identifier(); }
+    if (isdigit(peek_char()) != 0) { return next_number(); }
+    return next_symbol();
+}
+
+std::pair<parser::token_type, std::string> parser::next_identifier() {
 
     std::string to_ret;
 
-    if (isalpha(peek_char()) != 0) {
-        // parse a word
-        // XXX: this may be bad on performance
-        while (isalnum(peek_char()) != 0) { to_ret += next_char(); }
+    // parse a word
+    // XXX: this may be bad on performance
+    while (isalnum(peek_char()) != 0) { to_ret += next_char(); }
 
-        static const std::map<std::string, parser::token_type> reserved_words{};
+    static const std::map<std::string, parser::token_type> reserved_words{};
 
-        if (auto iter = reserved_words.find(to_ret); iter != reserved_words.end()) {
-            return {iter->second, std::move(to_ret)};
-        }
-        return {token_type::identifier, std::move(to_ret)};
+    if (auto iter = reserved_words.find(to_ret); iter != reserved_words.end()) {
+        return {iter->second, std::move(to_ret)};
     }
+    return {token_type::identifier, std::move(to_ret)};
+}
 
-    if (isdigit(peek_char()) != 0) {
-        auto c = next_char();
-        to_ret += c;
-        if (c == '0') {
-            // either we are hexadecimal or just 0
-            if (peek_char() != 'x') { return {token_type::integer, std::move(to_ret)}; }
+std::pair<parser::token_type, std::string> parser::next_number() {
 
-            // we are hexadecimal
-            while (isxdigit(peek_char()) != 0) { to_ret += next_char(); }
-            return {token_type::integer, std::move(to_ret)};
-        }
+    auto c = next_char();
+    std::string to_ret;
+    to_ret += c;
+    if (c == '0') {
+        // either we are hexadecimal or just 0
+        if (peek_char() != 'x') { return {token_type::integer, std::move(to_ret)}; }
+
+        // we are hexadecimal
+        while (isxdigit(peek_char()) != 0) { to_ret += next_char(); }
+        return {token_type::integer, std::move(to_ret)};
+    }
+    assert(false);
+}
+
+std::pair<parser::token_type, std::string> parser::next_symbol() {
+
+    switch (auto c = next_char(); c) {
+    case EOF:
+        return {token_type::eof, ""};
+    case '(':
+        return {token_type::lparen, "("};
+    case ')':
+        return {token_type::rparen, ")"};
+    case '{':
+        return {token_type::lbrace, "{"};
+    case '}':
+        return {token_type::rbrace, "}"};
+    default:
+        std::cerr << "Unknown character: " << static_cast<unsigned>(c) << " \'" << c << '\''
+                  << std::endl;
         assert(false);
-    } else {
-        // symbols
-        switch (next_char()) {
-        case EOF:
-            return {token_type::eof, ""};
-        case '(':
-            return {token_type::lparen, "("};
-        case ')':
-            return {token_type::rparen, ")"};
-        case '{':
-            return {token_type::lbrace, "{"};
-        case '}':
-            return {token_type::rbrace, "}"};
-        default:
-            std::cerr << "Unknown character: " << static_cast<unsigned>(peek_char()) << " \'"
-                      << peek_char() << '\'' << std::endl;
-            assert(false);
-        }
     }
 }
 
