@@ -14,6 +14,11 @@ namespace ast {
             , true_branch(on_true)
             , else_branch(on_false) {}
 
+        if_stmt(expr_ptr cond, stmt_ptr on_true, stmt_ptr on_false)
+            : condition(std::move(cond))
+            , true_branch(std::move(on_true))
+            , else_branch(std::move(on_false)) {}
+
         non_copyable(if_stmt);
 
         movable(if_stmt);

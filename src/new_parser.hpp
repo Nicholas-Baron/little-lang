@@ -40,6 +40,7 @@ class parser final {
     std::unique_ptr<ast::func_decl> parse_function();
     ast::stmt_ptr parse_statement();
     ast::stmt_ptr parse_compound_statement();
+    std::unique_ptr<ast::if_stmt> parse_if_statement();
 
     // parse expressions
     ast::expr_ptr parse_expression();
@@ -58,6 +59,8 @@ class parser final {
         from,
         import_,
         export_,
+        if_,
+        else_,
         character,
         string,
         boolean,

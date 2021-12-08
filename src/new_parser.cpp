@@ -4,6 +4,7 @@
 #include "ast/node_utils.hpp"
 #include "ast/nodes.hpp"
 #include "ast/nodes_forward.hpp"
+#include "ast/stmt_nodes.hpp"
 #include "ast/top_lvl_nodes.hpp"
 #include "unistd.h" // close
 #include "utils/string_utils.hpp"
@@ -238,6 +239,22 @@ ast::stmt_ptr parser::parse_compound_statement() {
     return to_ret;
 }
 
+std::unique_ptr<ast::if_stmt> parser::parse_if_statement() {
+    assert(next_token().first == token_type::if_);
+    auto condition = parse_expression();
+
+    const bool can_have_else = peek_token().first == token_type::lbrace;
+    auto then_block = parse_statement();
+
+    ast::stmt_ptr else_block;
+    if (can_have_else and peek_token().first == token_type::else_) {
+        assert(next_token().first == token_type::else_);
+        else_block = parse_statement();
+    }
+    return std::make_unique<ast::if_stmt>(std::move(condition), std::move(then_block),
+                                          std::move(else_block));
+}
+
 ast::expr_ptr parser::parse_expression() { return parse_boolean_expression(); }
 ast::expr_ptr parser::parse_boolean_expression() {
     auto expr = parse_comparison();
@@ -360,10 +377,10 @@ ast::expr_ptr parser::parse_atom() {
         return expr;
     }
 
+    using val_type = ast::user_val::value_type;
     if (tok_type == token_type::integer or tok_type == token_type::floating
         or tok_type == token_type::string or tok_type == token_type::boolean
         or tok_type == token_type::character) {
-        using val_type = ast::user_val::value_type;
         switch (tok_type) {
         case token_type::string:
             return std::make_unique<ast::user_val>(next_token().second, val_type::string);
@@ -379,7 +396,12 @@ ast::expr_ptr parser::parse_atom() {
             assert(false);
         }
     }
-    assert(false);
+
+    assert(tok_type == token_type::identifier);
+    auto id = next_token();
+    assert(peek_token().first != token_type::lparen);
+
+    return std::make_unique<ast::user_val>(std::move(id.second), val_type::identifier);
 }
 
 std::pair<parser::token_type, std::string> parser::next_token() {
@@ -419,10 +441,9 @@ std::pair<parser::token_type, std::string> parser::next_identifier() {
     while (isalnum(peek_char()) != 0) { to_ret += next_char(); }
 
     static const std::map<std::string, parser::token_type> reserved_words{
-        {"is", token_type::colon},
-        {"from", token_type::from},
-        {"import", token_type::import_},
-        {"export", token_type::export_}};
+        {"is", token_type::colon},       {"from", token_type::from},
+        {"if", token_type::if_},         {"else", token_type::else_},
+        {"import", token_type::import_}, {"export", token_type::export_}};
 
     if (auto iter = reserved_words.find(to_ret); iter != reserved_words.end()) {
         return {iter->second, std::move(to_ret)};
