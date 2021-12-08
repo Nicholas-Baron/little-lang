@@ -183,12 +183,14 @@ TEST_CASE("the parser will parse if statements") {
 
     CHECK(parser != nullptr);
 
-    auto stmt = parser->parse_if_statement();
+    auto stmt = parser->parse_statement();
     CHECK(stmt != nullptr);
-    CHECK(stmt->else_branch == nullptr);
-    CHECK(stmt->true_branch != nullptr);
+    auto * if_stmt = dynamic_cast<ast::if_stmt *>(stmt.get());
+    CHECK(if_stmt != nullptr);
+    CHECK(if_stmt->else_branch == nullptr);
+    CHECK(if_stmt->true_branch != nullptr);
 
-    auto * cond = dynamic_cast<ast::user_val *>(stmt->condition.get());
+    auto * cond = dynamic_cast<ast::user_val *>(if_stmt->condition.get());
     CHECK(cond != nullptr);
     CHECK(cond->type == ast::user_val::value_type::identifier);
     CHECK(cond->val == "x");
@@ -200,12 +202,14 @@ TEST_CASE("the parser will parse if-else statements") {
 
     CHECK(parser != nullptr);
 
-    auto stmt = parser->parse_if_statement();
+    auto stmt = parser->parse_statement();
     CHECK(stmt != nullptr);
-    CHECK(stmt->else_branch != nullptr);
-    CHECK(stmt->true_branch != nullptr);
+    auto * if_stmt = dynamic_cast<ast::if_stmt *>(stmt.get());
+    CHECK(if_stmt != nullptr);
+    CHECK(if_stmt->else_branch != nullptr);
+    CHECK(if_stmt->true_branch != nullptr);
 
-    auto * cond = dynamic_cast<ast::user_val *>(stmt->condition.get());
+    auto * cond = dynamic_cast<ast::user_val *>(if_stmt->condition.get());
     CHECK(cond != nullptr);
     CHECK(cond->type == ast::user_val::value_type::identifier);
     CHECK(cond->val == "x");
