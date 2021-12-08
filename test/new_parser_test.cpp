@@ -155,6 +155,16 @@ TEST_CASE("the parser will parse braces as a compound statement") {
     CHECK(stmt != nullptr);
 }
 
+TEST_CASE("the parser will parse binary expressions") {
+    std::string buffer = " 5 + 10 ";
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    auto stmt = parser->parse_expression();
+    CHECK(stmt != nullptr);
+}
+
 TEST_CASE("the parser will parse a unit function") {
     std::string buffer = "main() {}";
     auto parser = parser::from_buffer(buffer);
