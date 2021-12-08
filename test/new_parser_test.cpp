@@ -185,8 +185,13 @@ TEST_CASE("the parser will parse if statements") {
 
     auto stmt = parser->parse_if_statement();
     CHECK(stmt != nullptr);
-	CHECK(stmt->else_branch == nullptr);
-	CHECK(stmt->true_branch != nullptr);
+    CHECK(stmt->else_branch == nullptr);
+    CHECK(stmt->true_branch != nullptr);
+
+    auto * cond = dynamic_cast<ast::user_val *>(stmt->condition.get());
+    CHECK(cond != nullptr);
+    CHECK(cond->type == ast::user_val::value_type::identifier);
+    CHECK(cond->val == "x");
 }
 
 TEST_CASE("the parser will parse if-else statements") {
@@ -197,8 +202,13 @@ TEST_CASE("the parser will parse if-else statements") {
 
     auto stmt = parser->parse_if_statement();
     CHECK(stmt != nullptr);
-	CHECK(stmt->else_branch != nullptr);
-	CHECK(stmt->true_branch != nullptr);
+    CHECK(stmt->else_branch != nullptr);
+    CHECK(stmt->true_branch != nullptr);
+
+    auto * cond = dynamic_cast<ast::user_val *>(stmt->condition.get());
+    CHECK(cond != nullptr);
+    CHECK(cond->type == ast::user_val::value_type::identifier);
+    CHECK(cond->val == "x");
 }
 
 TEST_CASE("the parser will parse a unit function") {
@@ -319,11 +329,11 @@ TEST_CASE("the parser will parse a module with multiple imports") {
         CHECK_FALSE(iter == mod->imports.end());
         CHECK(iter->second.size() == 2);
     }
-	{
+    {
         auto iter = mod->imports.find("foo.lil");
         CHECK_FALSE(iter == mod->imports.end());
         CHECK(iter->second.size() == 1);
-	}
+    }
 
     CHECK(mod->items.size() == 1);
     CHECK_FALSE(mod->items.at(0) == nullptr);
