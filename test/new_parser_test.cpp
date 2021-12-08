@@ -144,6 +144,18 @@ TEST_CASE("the parser will parse 'from', 'import', and 'export'") {
     CHECK(parser->next_token().first == parser::token_type::eof);
 }
 
+TEST_CASE("the parser will parse 'if' and 'else'") {
+    std::string buffer = "if else";
+
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    CHECK(parser->next_token().first == parser::token_type::if_);
+    CHECK(parser->next_token().first == parser::token_type::else_);
+    CHECK(parser->next_token().first == parser::token_type::eof);
+}
+
 // ast level
 TEST_CASE("the parser will parse braces as a compound statement") {
     std::string buffer = "{}";
@@ -163,6 +175,30 @@ TEST_CASE("the parser will parse binary expressions") {
 
     auto stmt = parser->parse_expression();
     CHECK(stmt != nullptr);
+}
+
+TEST_CASE("the parser will parse if statements") {
+    std::string buffer = "if x {}";
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    auto stmt = parser->parse_if_statement();
+    CHECK(stmt != nullptr);
+	CHECK(stmt->else_branch == nullptr);
+	CHECK(stmt->true_branch != nullptr);
+}
+
+TEST_CASE("the parser will parse if-else statements") {
+    std::string buffer = "if x {} else {}";
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    auto stmt = parser->parse_if_statement();
+    CHECK(stmt != nullptr);
+	CHECK(stmt->else_branch != nullptr);
+	CHECK(stmt->true_branch != nullptr);
 }
 
 TEST_CASE("the parser will parse a unit function") {
