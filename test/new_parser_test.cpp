@@ -156,6 +156,18 @@ TEST_CASE("the parser will parse 'if' and 'else'") {
     CHECK(parser->next_token().first == parser::token_type::eof);
 }
 
+TEST_CASE("the parser will parse 'return' and 'ret' the same") {
+    std::string buffer = "return ret";
+
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    CHECK(parser->next_token().first == parser::token_type::return_);
+    CHECK(parser->next_token().first == parser::token_type::return_);
+    CHECK(parser->next_token().first == parser::token_type::eof);
+}
+
 // ast level
 TEST_CASE("the parser will parse braces as a compound statement") {
     std::string buffer = "{}";
@@ -213,6 +225,19 @@ TEST_CASE("the parser will parse if-else statements") {
     CHECK(cond != nullptr);
     CHECK(cond->type == ast::user_val::value_type::identifier);
     CHECK(cond->val == "x");
+}
+
+TEST_CASE("the parser will parse return statements") {
+    std::string buffer = "return;";
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    auto stmt = parser->parse_statement();
+    CHECK(stmt != nullptr);
+    auto * ret_stmt = dynamic_cast<ast::return_stmt *>(stmt.get());
+    CHECK(ret_stmt != nullptr);
+    CHECK(ret_stmt->value == nullptr);
 }
 
 TEST_CASE("the parser will parse a unit function") {

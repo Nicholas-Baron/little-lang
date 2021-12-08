@@ -214,6 +214,10 @@ ast::stmt_ptr parser::parse_statement() {
     switch (auto tok = peek_token(); tok.first) {
     case token_type::lbrace:
         return parse_compound_statement();
+    case token_type::return_:
+        return parse_return_statement();
+    case token_type::if_:
+        return parse_if_statement();
     default:
         error = "Unexpected " + tok.second + " at start of statement";
         return nullptr;
@@ -253,6 +257,20 @@ std::unique_ptr<ast::if_stmt> parser::parse_if_statement() {
     }
     return std::make_unique<ast::if_stmt>(std::move(condition), std::move(then_block),
                                           std::move(else_block));
+}
+
+std::unique_ptr<ast::return_stmt> parser::parse_return_statement() {
+    assert(next_token().first == token_type::return_);
+
+    if (peek_token().first == token_type::semi) {
+        // no expression
+        return std::make_unique<ast::return_stmt>();
+    }
+
+    // expression
+    auto value = parse_expression();
+    assert(next_token().first == token_type::semi);
+    return std::make_unique<ast::return_stmt>(std::move(value));
 }
 
 ast::expr_ptr parser::parse_expression() { return parse_boolean_expression(); }
@@ -443,6 +461,7 @@ std::pair<parser::token_type, std::string> parser::next_identifier() {
     static const std::map<std::string, parser::token_type> reserved_words{
         {"is", token_type::colon},       {"from", token_type::from},
         {"if", token_type::if_},         {"else", token_type::else_},
+        {"return", token_type::return_}, {"ret", token_type::return_},
         {"import", token_type::import_}, {"export", token_type::export_}};
 
     if (auto iter = reserved_words.find(to_ret); iter != reserved_words.end()) {

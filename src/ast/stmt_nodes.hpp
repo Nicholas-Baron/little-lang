@@ -84,8 +84,8 @@ namespace ast {
 
     class return_stmt final : public stmt {
       public:
-        explicit return_stmt(expr * val = nullptr)
-            : value(val) {}
+        explicit return_stmt(expr_ptr val = nullptr)
+            : value(std::move(val)) {}
 
         non_copyable(return_stmt);
 
