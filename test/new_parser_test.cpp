@@ -240,6 +240,25 @@ TEST_CASE("the parser will parse return statements") {
     CHECK(ret_stmt->value == nullptr);
 }
 
+TEST_CASE("the parser will parse return statements with values") {
+    std::string buffer = "return 5 * 10;";
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    auto stmt = parser->parse_statement();
+    CHECK(stmt != nullptr);
+    auto * ret_stmt = dynamic_cast<ast::return_stmt *>(stmt.get());
+    CHECK(ret_stmt != nullptr);
+    CHECK(ret_stmt->value != nullptr);
+
+    auto * value = dynamic_cast<ast::binary_expr *>(ret_stmt->value.get());
+    CHECK(value != nullptr);
+    CHECK(value->op == ast::binary_expr::operand::mult);
+    CHECK(value->lhs != nullptr);
+    CHECK(value->rhs != nullptr);
+}
+
 TEST_CASE("the parser will parse a unit function") {
     std::string buffer = "main() {}";
     auto parser = parser::from_buffer(buffer);

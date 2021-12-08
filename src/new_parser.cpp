@@ -516,6 +516,8 @@ std::pair<parser::token_type, std::string> parser::next_symbol() {
         return {token_type::semi, ";"};
     case '+':
         return {token_type::plus, "+"};
+    case '*':
+        return {token_type::asterik, "*"};
     case '-':
         if (peek_char() == '>') {
             // found arrow
