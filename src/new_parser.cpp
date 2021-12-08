@@ -1,5 +1,6 @@
 #include "new_parser.hpp"
 
+#include "ast/base_nodes.hpp"
 #include "ast/node_utils.hpp"
 #include "ast/nodes.hpp"
 #include "ast/nodes_forward.hpp"
@@ -14,6 +15,7 @@
 #include <fcntl.h>  // open
 #include <iostream> // cerr
 #include <map>
+#include <memory>
 
 std::unique_ptr<parser> parser::from_file(const std::string & filename) {
 
@@ -236,6 +238,150 @@ ast::stmt_ptr parser::parse_compound_statement() {
     return to_ret;
 }
 
+ast::expr_ptr parser::parse_expression() { return parse_boolean_expression(); }
+ast::expr_ptr parser::parse_boolean_expression() {
+    auto expr = parse_comparison();
+    if (peek_token().first == token_type::double_and
+        or peek_token().first == token_type::double_or) {
+        auto tok = next_token().first;
+        assert(tok == token_type::double_and or tok == token_type::double_or);
+        using operand = ast::binary_expr::operand;
+        auto rhs = parse_comparison();
+        assert(rhs != nullptr);
+        expr = std::make_unique<ast::binary_expr>(
+            std::move(expr), tok == token_type::double_or ? operand::bool_or : operand::bool_and,
+            std::move(rhs));
+    }
+    return expr;
+}
+
+ast::expr_ptr parser::parse_comparison() {
+    auto expr = parse_additive();
+    if (auto tok_type = peek_token().first;
+        tok_type == token_type::lt or tok_type == token_type::le or tok_type == token_type::gt
+        or tok_type == token_type::ge or tok_type == token_type::eq or tok_type == token_type::ne) {
+        auto tok = next_token().first;
+        using operand = ast::binary_expr::operand;
+        auto rhs = parse_additive();
+        switch (tok) {
+        case token_type::le:
+            return std::make_unique<ast::binary_expr>(std::move(expr), operand::le, std::move(rhs));
+        case token_type::lt:
+            return std::make_unique<ast::binary_expr>(std::move(expr), operand::lt, std::move(rhs));
+        case token_type::ge:
+            return std::make_unique<ast::binary_expr>(std::move(expr), operand::ge, std::move(rhs));
+        case token_type::gt:
+            return std::make_unique<ast::binary_expr>(std::move(expr), operand::gt, std::move(rhs));
+        case token_type::eq:
+            return std::make_unique<ast::binary_expr>(std::move(expr), operand::eq, std::move(rhs));
+        case token_type::ne:
+            return std::make_unique<ast::binary_expr>(std::move(expr), operand::ne, std::move(rhs));
+        default:
+            assert(false);
+        }
+    }
+    return expr;
+}
+
+ast::expr_ptr parser::parse_additive() {
+    auto expr = parse_multiplicative();
+    if (auto tok_type = peek_token().first;
+        tok_type == token_type::plus or tok_type == token_type::minus) {
+        auto tok = next_token().first;
+        using operand = ast::binary_expr::operand;
+        auto rhs = parse_multiplicative();
+        switch (tok) {
+        case token_type::plus:
+            return std::make_unique<ast::binary_expr>(std::move(expr), operand::add,
+                                                      std::move(rhs));
+        case token_type::minus:
+            return std::make_unique<ast::binary_expr>(std::move(expr), operand::sub,
+                                                      std::move(rhs));
+        default:
+            assert(false);
+        }
+    }
+    return expr;
+}
+
+ast::expr_ptr parser::parse_multiplicative() {
+    auto expr = parse_unary();
+    if (auto tok_type = peek_token().first; tok_type == token_type::percent
+                                            or tok_type == token_type::asterik
+                                            or tok_type == token_type::slash) {
+        auto tok = next_token().first;
+        using operand = ast::binary_expr::operand;
+        auto rhs = parse_unary();
+        switch (tok) {
+        case token_type::percent:
+            return std::make_unique<ast::binary_expr>(std::move(expr), operand::mod,
+                                                      std::move(rhs));
+        case token_type::asterik:
+            return std::make_unique<ast::binary_expr>(std::move(expr), operand::mult,
+                                                      std::move(rhs));
+        case token_type::slash:
+            return std::make_unique<ast::binary_expr>(std::move(expr), operand::div,
+                                                      std::move(rhs));
+        default:
+            assert(false);
+        }
+    }
+    return expr;
+}
+
+ast::expr_ptr parser::parse_unary() {
+
+    using operand = ast::unary_expr::operand;
+    switch (auto tok_type = peek_token().first; tok_type) {
+    case token_type::minus: {
+        // - expr
+        auto expr = parse_atom();
+        assert(expr != nullptr);
+        return std::make_unique<ast::unary_expr>(operand::negate, std::move(expr));
+    }
+    case token_type::exclam: {
+        // ! expr
+        auto expr = parse_atom();
+        assert(expr != nullptr);
+        return std::make_unique<ast::unary_expr>(operand::bool_not, std::move(expr));
+    }
+    default:
+        return parse_atom();
+    }
+}
+
+ast::expr_ptr parser::parse_atom() {
+    // parens
+    auto tok_type = peek_token().first;
+    if (tok_type == token_type::lparen) {
+        next_token();
+        auto expr = parse_expression();
+        assert(next_token().first == token_type::rparen);
+        return expr;
+    }
+
+    if (tok_type == token_type::integer or tok_type == token_type::floating
+        or tok_type == token_type::string or tok_type == token_type::boolean
+        or tok_type == token_type::character) {
+        using val_type = ast::user_val::value_type;
+        switch (tok_type) {
+        case token_type::string:
+            return std::make_unique<ast::user_val>(next_token().second, val_type::string);
+        case token_type::character:
+            return std::make_unique<ast::user_val>(next_token().second, val_type::character);
+        case token_type::integer:
+            return std::make_unique<ast::user_val>(next_token().second, val_type::integer);
+        case token_type::floating:
+            return std::make_unique<ast::user_val>(next_token().second, val_type::floating);
+        case token_type::boolean:
+            return std::make_unique<ast::user_val>(next_token().second, val_type::boolean);
+        default:
+            assert(false);
+        }
+    }
+    assert(false);
+}
+
 std::pair<parser::token_type, std::string> parser::next_token() {
 
     if (peeked_token.has_value()) {
@@ -328,6 +474,8 @@ std::pair<parser::token_type, std::string> parser::next_symbol() {
         return {token_type::comma, ","};
     case ';':
         return {token_type::semi, ";"};
+    case '+':
+        return {token_type::plus, "+"};
     case '-':
         if (peek_char() == '>') {
             // found arrow

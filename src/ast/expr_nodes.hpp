@@ -34,6 +34,10 @@ namespace ast {
             : op(op)
             , expr(operand) {}
 
+        unary_expr(operand op, expr_ptr operand)
+            : op(op)
+            , expr(std::move(operand)) {}
+
         non_copyable(unary_expr);
 
         movable(unary_expr);
@@ -65,6 +69,11 @@ namespace ast {
         binary_expr(expr * lhs, operand op, expr * rhs)
             : lhs(lhs)
             , rhs(rhs)
+            , op(op) {}
+
+        binary_expr(expr_ptr lhs, operand op, expr_ptr rhs)
+            : lhs(std::move(lhs))
+            , rhs(std::move(rhs))
             , op(op) {}
 
         non_copyable(binary_expr);

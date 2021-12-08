@@ -41,6 +41,15 @@ class parser final {
     ast::stmt_ptr parse_statement();
     ast::stmt_ptr parse_compound_statement();
 
+    // parse expressions
+    ast::expr_ptr parse_expression();
+    ast::expr_ptr parse_boolean_expression();
+    ast::expr_ptr parse_comparison();
+    ast::expr_ptr parse_additive();
+    ast::expr_ptr parse_multiplicative();
+    ast::expr_ptr parse_unary();
+    ast::expr_ptr parse_atom();
+
     enum class token_type {
         unknown,
         identifier,
@@ -60,6 +69,20 @@ class parser final {
         arrow,
         comma,
         colon,
+        double_and,
+        double_or,
+        lt,
+        le,
+        gt,
+        ge,
+        eq,
+        ne,
+        plus,
+        minus,
+        percent,
+        asterik,
+        slash,
+        exclam,
         semi,
         eof,
     };
