@@ -521,9 +521,22 @@ std::pair<parser::token_type, std::string> parser::next_symbol() {
     case '-':
         if (peek_char() == '>') {
             // found arrow
-            std::string to_ret;
-            (to_ret += c) += next_char();
-            return {token_type::arrow, to_ret};
+			next_char();
+            return {token_type::arrow, "->"};
+        }
+        assert(false);
+        break;
+    case '<':
+        if (peek_char() == '=') {
+            next_char();
+            return {token_type::le, "<="};
+        }
+        assert(false);
+        break;
+    case '>':
+        if (peek_char() == '=') {
+            next_char();
+            return {token_type::ge, ">="};
         }
         assert(false);
         break;
