@@ -202,14 +202,15 @@ TEST_CASE("the parser will parse '<=' and '>=' as 1 token") {
     CHECK(parser->next_token().first == parser::token_type::eof);
 }
 
-TEST_CASE("the parser will parse 'let'") {
-    std::string buffer = "let";
+TEST_CASE("the parser will parse 'let' and 'const'") {
+    std::string buffer = "let const";
 
     auto parser = parser::from_buffer(buffer);
 
     CHECK(parser != nullptr);
 
     CHECK(parser->next_token().first == parser::token_type::let);
+    CHECK(parser->next_token().first == parser::token_type::const_);
     CHECK(parser->next_token().first == parser::token_type::eof);
 }
 

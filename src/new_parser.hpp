@@ -68,6 +68,7 @@ class parser final {
         else_,
         return_,
         let,
+        const_,
         character,
         string,
         boolean,
