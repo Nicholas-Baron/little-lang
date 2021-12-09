@@ -491,7 +491,7 @@ TEST_CASE("the parser will parse a unit function") {
 
     CHECK(func->head.name() == "main");
     CHECK(func->head.param_count() == 0);
-    CHECK(func->head.ret_type().empty());
+    CHECK(func->head.ret_type() == "unit");
     CHECK(func->body != nullptr);
 }
 
