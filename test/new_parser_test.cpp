@@ -202,7 +202,19 @@ TEST_CASE("the parser will parse 'return' and 'ret' the same") {
     CHECK(parser->next_token().first == parser::token_type::eof);
 }
 
-TEST_CASE("the parser will parse '<=' and '>=' as 1 token") {
+TEST_CASE("the parser will parse '<' and '>'") {
+    std::string buffer = "< >";
+
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    CHECK(parser->next_token().first == parser::token_type::lt);
+    CHECK(parser->next_token().first == parser::token_type::gt);
+    CHECK(parser->next_token().first == parser::token_type::eof);
+}
+
+TEST_CASE("the parser will parse '<=' and '>=' as 1 token each") {
     std::string buffer = "<= >=";
 
     auto parser = parser::from_buffer(buffer);
