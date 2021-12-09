@@ -42,6 +42,7 @@ class parser final {
     ast::stmt_ptr parse_compound_statement();
     std::unique_ptr<ast::if_stmt> parse_if_statement();
     std::unique_ptr<ast::return_stmt> parse_return_statement();
+    std::unique_ptr<ast::let_stmt> parse_let_statement();
 
     // parse expressions
     ast::expr_ptr parse_expression();
@@ -53,6 +54,7 @@ class parser final {
     ast::expr_ptr parse_atom();
     ast::func_call_data parse_func_call(std::optional<std::string> func_name = std::nullopt);
 
+    // TODO: add prim_type as a token type
     enum class token_type {
         unknown,
         identifier,
@@ -64,6 +66,7 @@ class parser final {
         if_,
         else_,
         return_,
+        let,
         character,
         string,
         boolean,
@@ -75,6 +78,7 @@ class parser final {
         arrow,
         comma,
         colon,
+        equal,
         double_and,
         double_or,
         lt,

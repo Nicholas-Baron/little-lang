@@ -40,6 +40,10 @@ namespace ast {
             : name_and_type(std::move(typed_name))
             , value(value) {}
 
+        let_stmt(typed_identifier && typed_name, expr_ptr value)
+            : name_and_type(std::move(typed_name))
+            , value(std::move(value)) {}
+
         non_copyable(let_stmt);
 
         movable(let_stmt);
