@@ -663,3 +663,51 @@ TEST_CASE("the parser will parse a module with multiple imports") {
     CHECK(mod->items.size() == 1);
     CHECK_FALSE(mod->items.at(0) == nullptr);
 }
+
+TEST_CASE("the parser will parse a module with a single export") {
+    std::string buffer = "export foo() {}";
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    auto mod = parser->parse();
+    CHECK(mod != nullptr);
+    CHECK(parser->error_message().empty());
+
+    CHECK(mod->imports.empty());
+
+    CHECK(mod->items.size() == 1);
+    CHECK_FALSE(mod->items[0] == nullptr);
+    CHECK(mod->items[0]->exported());
+
+    auto * func = dynamic_cast<ast::func_decl *>(mod->items[0].get());
+    CHECK(func != nullptr);
+    CHECK(func->head.name() == "foo");
+}
+
+TEST_CASE("the parser will parse a module with multiple exports") {
+    std::string buffer = "export { foo() {}\nconst bar : int = 5 }";
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    auto mod = parser->parse();
+    CHECK(mod != nullptr);
+    CHECK(parser->error_message().empty());
+
+    CHECK(mod->imports.empty());
+
+    CHECK(mod->items.size() == 2);
+    CHECK_FALSE(mod->items[0] == nullptr);
+    CHECK(mod->items[0]->exported());
+    CHECK_FALSE(mod->items[1] == nullptr);
+    CHECK(mod->items[1]->exported());
+
+    auto * func = dynamic_cast<ast::func_decl *>(mod->items[0].get());
+    CHECK(func != nullptr);
+    CHECK(func->head.name() == "foo");
+
+    auto * decl = dynamic_cast<ast::const_decl *>(mod->items[1].get());
+    CHECK(decl != nullptr);
+    CHECK(decl->name_and_type.name() == "bar");
+}

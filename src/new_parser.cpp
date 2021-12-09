@@ -85,13 +85,18 @@ std::unique_ptr<ast::top_level_sequence> parser::parse() {
     if (tok.first == token_type::from) { to_ret->imports = parse_imports(); }
 
     while (peek_token().first != token_type::eof) {
-        assert(peek_token().first != token_type::export_);
-        auto item = parse_top_level();
-        if (item == nullptr) {
-            std::cerr << "Error: " << error << std::endl;
-            assert(false);
+        if (peek_token().first == token_type::export_) {
+            auto items = parse_exports();
+            // TODO: Add a convenience append
+            for (auto && item : items) { to_ret->append(std::move(item)); }
+        } else {
+            auto item = parse_top_level();
+            if (item == nullptr) {
+                std::cerr << "Error: " << error << std::endl;
+                assert(false);
+            }
+            to_ret->append(std::move(item));
         }
-        to_ret->append(std::move(item));
     }
     return to_ret;
 }
@@ -109,6 +114,22 @@ ast::top_lvl_ptr parser::parse_top_level() {
         error = "Unexpected " + next_token().second;
         return nullptr;
     }
+}
+
+std::vector<ast::top_lvl_ptr> parser::parse_exports() {
+    assert(next_token().first == token_type::export_);
+
+    std::vector<ast::top_lvl_ptr> items;
+    if (peek_token().first == token_type::lbrace) {
+        next_token();
+        while (peek_token().first != token_type::rbrace) { items.push_back(parse_top_level()); }
+        assert(next_token().first == token_type::rbrace);
+    } else {
+        items.push_back(parse_top_level());
+    }
+
+    for (auto & item : items) { item->should_export(true); }
+    return items;
 }
 
 std::map<std::string, std::vector<std::string>> parser::parse_imports() {
@@ -208,7 +229,7 @@ std::unique_ptr<ast::func_decl> parser::parse_function() {
         assert(ret_tok.first == token_type::identifier);
         func_header.set_ret_type(std::move(ret_tok.second));
     } else {
-		func_header.set_ret_type("unit");
+        func_header.set_ret_type("unit");
     }
 
     // check for expression body
