@@ -155,16 +155,6 @@ TEST_CASE("the parser will parse a semicolon") {
     CHECK(parser->next_token().first == parser::token_type::eof);
 }
 
-TEST_CASE("the parser will parse an equal sign") {
-    std::string buffer = "=";
-    auto parser = parser::from_buffer(buffer);
-
-    CHECK(parser != nullptr);
-
-    CHECK(parser->next_token().first == parser::token_type::equal);
-    CHECK(parser->next_token().first == parser::token_type::eof);
-}
-
 TEST_CASE("the parser will parse 'from', 'import', and 'export'") {
     std::string buffer = "from import export";
 
@@ -271,6 +261,22 @@ TEST_CASE("the parser will parse 'equals' as '=='") {
 
     CHECK(parser->next_token().first == parser::token_type::eq);
     CHECK(parser->next_token().first == parser::token_type::eq);
+    CHECK(parser->next_token().first == parser::token_type::eof);
+}
+
+TEST_CASE("the parser will parse basic mathematical symbols") {
+    std::string buffer = "= + - / * %";
+
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    CHECK(parser->next_token().first == parser::token_type::equal);
+    CHECK(parser->next_token().first == parser::token_type::plus);
+    CHECK(parser->next_token().first == parser::token_type::minus);
+    CHECK(parser->next_token().first == parser::token_type::slash);
+    CHECK(parser->next_token().first == parser::token_type::asterik);
+    CHECK(parser->next_token().first == parser::token_type::percent);
     CHECK(parser->next_token().first == parser::token_type::eof);
 }
 

@@ -612,6 +612,12 @@ std::pair<parser::token_type, std::string> parser::next_symbol() {
         return {token_type::plus, "+"};
     case '*':
         return {token_type::asterik, "*"};
+    case '%':
+        return {token_type::percent, "%"};
+    case '/':
+        // at this point, we know that this is not a comment
+        assert(peek_char() != c);
+        return {token_type::slash, "/"};
     case '&':
         if (peek_char() == c) {
             next_char();
