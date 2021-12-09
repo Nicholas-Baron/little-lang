@@ -20,7 +20,7 @@
 
 std::unique_ptr<parser> parser::from_file(const std::string & filename) {
 
-    auto fd = open(filename.c_str(), O_CLOEXEC | O_WRONLY);
+    auto fd = open(filename.c_str(), O_CLOEXEC | O_RDONLY);
     if (fd == -1) {
         perror("parser open");
         return nullptr;

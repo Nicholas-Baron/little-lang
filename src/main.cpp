@@ -26,22 +26,26 @@ static std::unique_ptr<ast::top_level_sequence> read_module(const std::string & 
     return module_;
 }
 
-static std::vector<ast::top_level_sequence> load_modules(std::string input, bool debug_ast) {
-
-    namespace fs = std::filesystem;
-    auto project_root = fs::canonical(fs::current_path() / input).remove_filename();
+static std::vector<ast::top_level_sequence> load_modules(const std::string & input,
+                                                         bool debug_ast) {
 
     std::vector<ast::top_level_sequence> modules;
 
     std::set<std::string> loaded;
     std::queue<std::string> to_load;
-    to_load.push(std::move(input));
+
+    namespace fs = std::filesystem;
+    auto proper_input = fs::canonical(fs::current_path() / input);
+    const auto project_root = proper_input.parent_path();
+
+    to_load.push(std::move(proper_input));
 
     while (not to_load.empty()) {
 
         auto filename = to_load.front();
         to_load.pop();
 
+        // do not double load files
         if (loaded.find(filename) != loaded.end()) { continue; }
 
         auto parsed_module = read_module(filename);
