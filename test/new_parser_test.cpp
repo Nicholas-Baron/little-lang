@@ -168,6 +168,18 @@ TEST_CASE("the parser will parse 'return' and 'ret' the same") {
     CHECK(parser->next_token().first == parser::token_type::eof);
 }
 
+TEST_CASE("the parser will parse '<=' and '>=' as 1 token"){
+    std::string buffer = "<= >=";
+
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    CHECK(parser->next_token().first == parser::token_type::le);
+    CHECK(parser->next_token().first == parser::token_type::ge);
+    CHECK(parser->next_token().first == parser::token_type::eof);
+}
+
 // ast level
 TEST_CASE("the parser will parse braces as a compound statement") {
     std::string buffer = "{}";
