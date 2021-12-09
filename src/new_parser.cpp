@@ -547,7 +547,7 @@ std::pair<parser::token_type, std::string> parser::next_identifier() {
 
     // parse a word
     // XXX: this may be bad on performance
-    while (isalnum(peek_char()) != 0) { to_ret += next_char(); }
+    while (isalnum(peek_char()) != 0 or peek_char() == '_') { to_ret += next_char(); }
 
     static const std::map<std::string, parser::token_type> reserved_words{
         {"is", token_type::colon},       {"from", token_type::from},
