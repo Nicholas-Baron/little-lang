@@ -44,6 +44,18 @@ TEST_CASE("the parser will parse a plain string") {
     CHECK(parser->next_token().first == parser::token_type::eof);
 }
 
+TEST_CASE("the parser will parse a character literal") {
+    std::string buffer = "\'w\'";
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    auto tok = parser->next_token();
+    CHECK(tok.first == parser::token_type::string);
+    CHECK(tok.second == "\'w\'");
+    CHECK(parser->next_token().first == parser::token_type::eof);
+}
+
 TEST_CASE("the parser will parse an integer") {
     std::string buffer = "1234";
     auto parser = parser::from_buffer(buffer);
