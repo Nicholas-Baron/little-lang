@@ -416,10 +416,49 @@ ast::expr_ptr parser::parse_atom() {
     }
 
     assert(tok_type == token_type::identifier);
-    auto id = next_token();
-    assert(peek_token().first != token_type::lparen);
+    auto id = next_token().second;
+    if (peek_token().first == token_type::lparen) {
+        return std::make_unique<ast::func_call_expr>(parse_func_call(std::move(id)));
+    }
 
-    return std::make_unique<ast::user_val>(std::move(id.second), val_type::identifier);
+    return std::make_unique<ast::user_val>(std::move(id), val_type::identifier);
+}
+
+ast::func_call_data parser::parse_func_call(std::optional<std::string> func_name) {
+    auto name = [&] {
+        if (func_name.has_value()) {
+            // we have already eaten the id
+            assert(next_token().first == token_type::lparen);
+            return func_name.value();
+        }
+
+        // we need to eat the id
+        assert(peek_token().first == token_type::identifier);
+        auto name = next_token().second;
+        assert(next_token().first == token_type::lparen);
+        return name;
+    }();
+
+    // we have eaten the lparen here
+    std::vector<ast::expr_ptr> args;
+    while (peek_token().first != token_type::rparen) {
+        auto expr = parse_expression();
+        assert(expr != nullptr);
+        args.push_back(std::move(expr));
+        switch (peek_token().first) {
+        case token_type::rparen:
+            break;
+        case token_type::comma:
+            next_token();
+            break;
+        default:
+            assert(false);
+        }
+    }
+
+    assert(next_token().first == token_type::rparen);
+
+    return {std::move(name), std::move(args)};
 }
 
 std::pair<parser::token_type, std::string> parser::next_token() {

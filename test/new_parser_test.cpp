@@ -283,6 +283,26 @@ TEST_CASE("the parser will parse return statements with values") {
     CHECK(value->rhs != nullptr);
 }
 
+TEST_CASE("the parser will parse function calls as expressions") {
+    std::string buffer = "return foo(5, 'x');";
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    auto stmt = parser->parse_statement();
+    CHECK(stmt != nullptr);
+    auto * ret_stmt = dynamic_cast<ast::return_stmt *>(stmt.get());
+    CHECK(ret_stmt != nullptr);
+    CHECK(ret_stmt->value != nullptr);
+
+    auto * value = dynamic_cast<ast::func_call_expr *>(ret_stmt->value.get());
+    CHECK(value != nullptr);
+	CHECK(value->data.name() == "foo");
+	CHECK(value->data.args_count() == 2);
+	CHECK(value->data.arg(0) != nullptr);
+	CHECK(value->data.arg(1) != nullptr);
+}
+
 TEST_CASE("the parser will parse a unit function") {
     std::string buffer = "main() {}";
     auto parser = parser::from_buffer(buffer);
@@ -335,6 +355,39 @@ TEST_CASE("the parser will parse a function with parameters") {
     CHECK(func->head.arg(1).type() == "bool");
     CHECK(func->head.ret_type() == "int");
     CHECK(func->body != nullptr);
+}
+
+TEST_CASE("the parser will parse a factorial function") {
+    std::string buffer = R"(
+factorial(int input) -> int {
+	if(input <= 2){ return input; }
+	return input * factorial(input - 1);
+})";
+
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    auto func = parser->parse_function();
+    CHECK(func != nullptr);
+    CHECK(parser->error_message().empty());
+
+    CHECK(func->head.name() == "factorial");
+    CHECK(func->head.param_count() == 1);
+    CHECK(func->head.arg(0).name() == "input");
+    CHECK(func->head.arg(0).type() == "int");
+    CHECK(func->head.ret_type() == "int");
+    CHECK(func->body != nullptr);
+
+    auto * body = dynamic_cast<ast::stmt_sequence *>(func->body.get());
+    CHECK(body != nullptr);
+    CHECK(body->stmts.size() == 2);
+
+    auto * if_stmt = dynamic_cast<ast::if_stmt *>(body->stmts[0].get());
+    CHECK(if_stmt != nullptr);
+    CHECK(if_stmt->condition != nullptr);
+    CHECK(if_stmt->true_branch != nullptr);
+    CHECK(if_stmt->else_branch == nullptr);
 }
 
 TEST_CASE("the parser will parse a module with one import") {
