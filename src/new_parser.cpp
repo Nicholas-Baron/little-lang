@@ -218,6 +218,8 @@ ast::stmt_ptr parser::parse_statement() {
         return parse_return_statement();
     case token_type::if_:
         return parse_if_statement();
+    case token_type::let:
+        return parse_let_statement();
     default:
         error = "Unexpected " + tok.second + " at start of statement";
         return nullptr;
@@ -271,6 +273,27 @@ std::unique_ptr<ast::return_stmt> parser::parse_return_statement() {
     auto value = parse_expression();
     assert(next_token().first == token_type::semi);
     return std::make_unique<ast::return_stmt>(std::move(value));
+}
+
+std::unique_ptr<ast::let_stmt> parser::parse_let_statement() {
+    assert(next_token().first == token_type::let);
+
+    assert(peek_token().first == token_type::identifier);
+    auto id = next_token().second;
+    std::string type = "auto";
+    if (peek_token().first == token_type::colon) {
+        next_token();
+        assert(peek_token().first == token_type::identifier);
+        type = next_token().second;
+    }
+
+    assert(next_token().first == token_type::equal);
+
+    auto val = parse_expression();
+    assert(val != nullptr);
+    assert(next_token().first == token_type::semi);
+    return std::make_unique<ast::let_stmt>(ast::typed_identifier{std::move(id), std::move(type)},
+                                           std::move(val));
 }
 
 ast::expr_ptr parser::parse_expression() { return parse_boolean_expression(); }
@@ -498,10 +521,11 @@ std::pair<parser::token_type, std::string> parser::next_identifier() {
     while (isalnum(peek_char()) != 0) { to_ret += next_char(); }
 
     static const std::map<std::string, parser::token_type> reserved_words{
-        {"is", token_type::colon},       {"from", token_type::from},
-        {"if", token_type::if_},         {"else", token_type::else_},
-        {"return", token_type::return_}, {"ret", token_type::return_},
-        {"import", token_type::import_}, {"export", token_type::export_}};
+        {"is", token_type::colon},      {"from", token_type::from},
+        {"if", token_type::if_},        {"else", token_type::else_},
+        {"let", token_type::let},       {"return", token_type::return_},
+        {"ret", token_type::return_},   {"import", token_type::import_},
+        {"export", token_type::export_}};
 
     if (auto iter = reserved_words.find(to_ret); iter != reserved_words.end()) {
         return {iter->second, std::move(to_ret)};
@@ -577,6 +601,13 @@ std::pair<parser::token_type, std::string> parser::next_symbol() {
             return {token_type::ge, ">="};
         }
         assert(false);
+        break;
+    case '=':
+        if (peek_char() == '=') {
+            next_char();
+            return {token_type::eq, "=="};
+        }
+        return {token_type::equal, "="};
         break;
     case '\"': {
         std::string to_ret;

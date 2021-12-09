@@ -143,6 +143,16 @@ TEST_CASE("the parser will parse a semicolon") {
     CHECK(parser->next_token().first == parser::token_type::eof);
 }
 
+TEST_CASE("the parser will parse an equal sign") {
+    std::string buffer = "=";
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    CHECK(parser->next_token().first == parser::token_type::equal);
+    CHECK(parser->next_token().first == parser::token_type::eof);
+}
+
 TEST_CASE("the parser will parse 'from', 'import', and 'export'") {
     std::string buffer = "from import export";
 
@@ -180,7 +190,7 @@ TEST_CASE("the parser will parse 'return' and 'ret' the same") {
     CHECK(parser->next_token().first == parser::token_type::eof);
 }
 
-TEST_CASE("the parser will parse '<=' and '>=' as 1 token"){
+TEST_CASE("the parser will parse '<=' and '>=' as 1 token") {
     std::string buffer = "<= >=";
 
     auto parser = parser::from_buffer(buffer);
@@ -189,6 +199,17 @@ TEST_CASE("the parser will parse '<=' and '>=' as 1 token"){
 
     CHECK(parser->next_token().first == parser::token_type::le);
     CHECK(parser->next_token().first == parser::token_type::ge);
+    CHECK(parser->next_token().first == parser::token_type::eof);
+}
+
+TEST_CASE("the parser will parse 'let'") {
+    std::string buffer = "let";
+
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    CHECK(parser->next_token().first == parser::token_type::let);
     CHECK(parser->next_token().first == parser::token_type::eof);
 }
 
@@ -201,6 +222,28 @@ TEST_CASE("the parser will parse braces as a compound statement") {
 
     auto stmt = parser->parse_compound_statement();
     CHECK(stmt != nullptr);
+}
+
+TEST_CASE("the parser will parse let statement") {
+    std::string buffer = "let x = \"hello\";";
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    auto stmt = parser->parse_statement();
+    CHECK(stmt != nullptr);
+    CHECK(parser->peek_token().first == parser::token_type::eof);
+
+    auto * let = dynamic_cast<ast::let_stmt *>(stmt.get());
+    CHECK(let != nullptr);
+    CHECK(let->name_and_type.name() == "x");
+    CHECK(let->name_and_type.type() == "auto");
+    CHECK(let->value != nullptr);
+
+    auto * value = dynamic_cast<ast::user_val *>(let->value.get());
+    CHECK(value != nullptr);
+    CHECK(value->type == ast::user_val::value_type::string);
+    CHECK(value->val == "\"hello\"");
 }
 
 TEST_CASE("the parser will parse binary expressions") {
@@ -297,10 +340,10 @@ TEST_CASE("the parser will parse function calls as expressions") {
 
     auto * value = dynamic_cast<ast::func_call_expr *>(ret_stmt->value.get());
     CHECK(value != nullptr);
-	CHECK(value->data.name() == "foo");
-	CHECK(value->data.args_count() == 2);
-	CHECK(value->data.arg(0) != nullptr);
-	CHECK(value->data.arg(1) != nullptr);
+    CHECK(value->data.name() == "foo");
+    CHECK(value->data.args_count() == 2);
+    CHECK(value->data.arg(0) != nullptr);
+    CHECK(value->data.arg(1) != nullptr);
 }
 
 TEST_CASE("the parser will parse a unit function") {
