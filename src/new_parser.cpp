@@ -551,6 +551,7 @@ std::pair<parser::token_type, std::string> parser::next_identifier() {
 
     static const std::map<std::string, parser::token_type> reserved_words{
         {"is", token_type::colon},       {"from", token_type::from},
+        {"and", token_type::double_and}, {"or", token_type::double_or},
         {"if", token_type::if_},         {"else", token_type::else_},
         {"let", token_type::let},        {"const", token_type::const_},
         {"return", token_type::return_}, {"ret", token_type::return_},
@@ -610,6 +611,18 @@ std::pair<parser::token_type, std::string> parser::next_symbol() {
         return {token_type::plus, "+"};
     case '*':
         return {token_type::asterik, "*"};
+    case '&':
+        if (peek_char() == c) {
+            next_char();
+            return {token_type::double_and, "&&"};
+        }
+        assert(false);
+    case '|':
+        if (peek_char() == c) {
+            next_char();
+            return {token_type::double_or, "||"};
+        }
+        assert(false);
     case '-':
         if (peek_char() == '>') {
             // found arrow

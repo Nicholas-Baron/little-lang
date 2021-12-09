@@ -226,6 +226,30 @@ TEST_CASE("the parser will parse 'let' and 'const'") {
     CHECK(parser->next_token().first == parser::token_type::eof);
 }
 
+TEST_CASE("the parser will parse 'and' as '&&'") {
+    std::string buffer = "and &&";
+
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    CHECK(parser->next_token().first == parser::token_type::double_and);
+    CHECK(parser->next_token().first == parser::token_type::double_and);
+    CHECK(parser->next_token().first == parser::token_type::eof);
+}
+
+TEST_CASE("the parser will parse 'or' as '||'") {
+    std::string buffer = "or ||";
+
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    CHECK(parser->next_token().first == parser::token_type::double_or);
+    CHECK(parser->next_token().first == parser::token_type::double_or);
+    CHECK(parser->next_token().first == parser::token_type::eof);
+}
+
 // ast level
 TEST_CASE("the parser will parse braces as a compound statement") {
     std::string buffer = "{}";
