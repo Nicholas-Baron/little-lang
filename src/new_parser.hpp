@@ -51,6 +51,7 @@ class parser final {
     ast::expr_ptr parse_multiplicative();
     ast::expr_ptr parse_unary();
     ast::expr_ptr parse_atom();
+    ast::func_call_data parse_func_call(std::optional<std::string> func_name = std::nullopt);
 
     enum class token_type {
         unknown,
