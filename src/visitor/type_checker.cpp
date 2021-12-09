@@ -17,7 +17,7 @@ namespace visitor {
 
         global_scope.emplace("int", llvm::Type::getInt32Ty(*context));
         global_scope.emplace("float", llvm::Type::getFloatTy(*context));
-        global_scope.emplace("proc", llvm::Type::getVoidTy(*context));
+        global_scope.emplace("unit", llvm::Type::getVoidTy(*context));
         global_scope.emplace("bool", llvm::Type::getInt1Ty(*context));
         global_scope.emplace("char", llvm::Type::getInt8Ty(*context));
 

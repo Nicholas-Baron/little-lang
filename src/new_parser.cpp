@@ -207,6 +207,8 @@ std::unique_ptr<ast::func_decl> parser::parse_function() {
         auto ret_tok = next_token();
         assert(ret_tok.first == token_type::identifier);
         func_header.set_ret_type(std::move(ret_tok.second));
+    } else {
+		func_header.set_ret_type("unit");
     }
 
     // check for expression body

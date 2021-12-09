@@ -67,7 +67,7 @@ namespace visitor {
         , ir_builder{std::make_unique<llvm::IRBuilder<>>(*context)}
         , types{{"int", llvm::Type::getInt32Ty(*context)},
                 {"float", llvm::Type::getFloatTy(*context)},
-                {"proc", llvm::Type::getVoidTy(*context)},
+                {"unit", llvm::Type::getVoidTy(*context)},
                 {"bool", llvm::Type::getInt1Ty(*context)},
                 {"char", llvm::Type::getInt8Ty(*context)}}
         , active_values{{}}
