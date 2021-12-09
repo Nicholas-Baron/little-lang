@@ -391,6 +391,26 @@ TEST_CASE("the parser will parse function calls as expressions") {
     CHECK(value->data.arg(1) != nullptr);
 }
 
+TEST_CASE("the parser will parse function calls as statements") {
+    std::string buffer = "{ foo(5, 'x'); }";
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    auto stmt = parser->parse_statement();
+    CHECK(stmt != nullptr);
+    auto * stmt_seq = dynamic_cast<ast::stmt_sequence *>(stmt.get());
+    CHECK(stmt_seq != nullptr);
+    CHECK(stmt_seq->stmts.size() == 1);
+
+    auto * func_call = dynamic_cast<ast::func_call_stmt *>(stmt_seq->stmts[0].get());
+    CHECK(func_call != nullptr);
+    CHECK(func_call->data.name() == "foo");
+    CHECK(func_call->data.args_count() == 2);
+    CHECK(func_call->data.arg(0) != nullptr);
+    CHECK(func_call->data.arg(1) != nullptr);
+}
+
 TEST_CASE("the parser will parse a unit function") {
     std::string buffer = "main() {}";
     auto parser = parser::from_buffer(buffer);
