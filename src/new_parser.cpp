@@ -98,6 +98,9 @@ ast::top_lvl_ptr parser::parse_top_level() {
     case token_type::identifier:
         // parse function
         return parse_function();
+    case token_type::const_:
+        // parse function
+        return parse_const_decl();
     default:
         error = "Unexpected " + next_token().second;
         return nullptr;
@@ -206,6 +209,25 @@ std::unique_ptr<ast::func_decl> parser::parse_function() {
     if (body == nullptr) { return nullptr; }
 
     return std::make_unique<ast::func_decl>(std::move(func_header), std::move(body));
+}
+
+std::unique_ptr<ast::const_decl> parser::parse_const_decl() {
+    assert(next_token().first == token_type::const_);
+
+    assert(peek_token().first == token_type::identifier);
+    auto id = next_token().second;
+    assert(next_token().first == token_type::colon);
+    assert(peek_token().first == token_type::identifier);
+    auto type = next_token().second;
+
+    assert(next_token().first == token_type::equal);
+    auto value = parse_expression();
+    assert(value != nullptr);
+
+    // optional consume ';'
+    if (peek_token().first == token_type::semi) { next_token(); }
+    return std::make_unique<ast::const_decl>(ast::typed_identifier{std::move(id), std::move(type)},
+                                             std::move(value));
 }
 
 ast::stmt_ptr parser::parse_statement() {

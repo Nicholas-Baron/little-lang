@@ -98,6 +98,10 @@ namespace ast {
             : name_and_type(std::move(name_and_type))
             , expr{expr} {}
 
+        const_decl(typed_identifier && name_and_type, expr_ptr expr)
+            : name_and_type(std::move(name_and_type))
+            , expr{std::move(expr)} {}
+
         non_copyable(const_decl);
 
         movable(const_decl);
