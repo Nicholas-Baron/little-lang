@@ -521,11 +521,10 @@ std::pair<parser::token_type, std::string> parser::next_symbol() {
     case '-':
         if (peek_char() == '>') {
             // found arrow
-			next_char();
+            next_char();
             return {token_type::arrow, "->"};
         }
-        assert(false);
-        break;
+        return {token_type::minus, "-"};
     case '<':
         if (peek_char() == '=') {
             next_char();
@@ -544,6 +543,18 @@ std::pair<parser::token_type, std::string> parser::next_symbol() {
         std::string to_ret;
         to_ret += c;
         while (peek_char() != c) { to_ret += next_char(); }
+        // consume the quote
+        to_ret += next_char();
+        return {token_type::string, std::move(to_ret)};
+    } break;
+    case '\'': {
+        std::string to_ret;
+        to_ret += c;
+        assert(peek_char() != c);
+
+        if (peek_char() == '\\') { to_ret += next_char(); }
+        to_ret += next_char();
+
         // consume the quote
         to_ret += next_char();
         return {token_type::string, std::move(to_ret)};
