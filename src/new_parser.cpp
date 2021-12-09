@@ -77,6 +77,7 @@ std::unique_ptr<ast::top_level_sequence> parser::parse() {
     auto tok = peek_token();
 
     if (tok.first == token_type::eof) {
+        // TODO: spdlog
         error = "Found empty file";
         return nullptr;
     }
@@ -240,6 +241,12 @@ ast::stmt_ptr parser::parse_statement() {
         return parse_if_statement();
     case token_type::let:
         return parse_let_statement();
+    case token_type::identifier: {
+        auto func_call = std::make_unique<ast::func_call_stmt>(parse_func_call());
+        // optionally consume a semi
+        if (peek_token().first == token_type::semi) { next_token(); }
+        return func_call;
+    }
     default:
         error = "Unexpected " + tok.second + " at start of statement";
         return nullptr;
