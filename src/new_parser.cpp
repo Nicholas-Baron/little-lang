@@ -87,7 +87,10 @@ std::unique_ptr<ast::top_level_sequence> parser::parse() {
     while (peek_token().first != token_type::eof) {
         assert(peek_token().first != token_type::export_);
         auto item = parse_top_level();
-        assert(item != nullptr);
+        if (item == nullptr) {
+            std::cerr << "Error: " << error << std::endl;
+            assert(false);
+        }
         to_ret->append(std::move(item));
     }
     return to_ret;
@@ -206,8 +209,19 @@ std::unique_ptr<ast::func_decl> parser::parse_function() {
         func_header.set_ret_type(std::move(ret_tok.second));
     }
 
+    // check for expression body
+    if (peek_token().first == token_type::equal) {
+        next_token();
+        auto body = parse_expression();
+        return std::make_unique<ast::func_decl>(
+            std::move(func_header), std::make_unique<ast::return_stmt>(std::move(body)));
+    }
+
     auto body = parse_statement();
-    if (body == nullptr) { return nullptr; }
+    if (body == nullptr) {
+        error = "Could not find body for " + func_header.name();
+        return nullptr;
+    }
 
     return std::make_unique<ast::func_decl>(std::move(func_header), std::move(body));
 }

@@ -531,6 +531,32 @@ TEST_CASE("the parser will parse a function with parameters") {
     CHECK(func->body != nullptr);
 }
 
+TEST_CASE("the parser will parse a function with an expression body") {
+    std::string buffer = "foo(int x, y : int) -> int = (x + y) / 2";
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    auto func = parser->parse_function();
+    CHECK(func != nullptr);
+    CHECK(parser->error_message().empty());
+
+    CHECK(func->head.name() == "foo");
+    CHECK(func->head.param_count() == 2);
+    CHECK(func->head.ret_type() == "int");
+    CHECK(func->body != nullptr);
+
+    auto * ret_stmt = dynamic_cast<ast::return_stmt *>(func->body.get());
+    CHECK(ret_stmt != nullptr);
+    CHECK(ret_stmt->value != nullptr);
+
+    auto * value = dynamic_cast<ast::binary_expr *>(ret_stmt->value.get());
+    CHECK(value != nullptr);
+    CHECK(value->lhs != nullptr);
+    CHECK(value->rhs != nullptr);
+    CHECK(value->op == ast::binary_expr::operand::div);
+}
+
 TEST_CASE("the parser will parse a factorial function") {
     std::string buffer = R"(
 factorial(int input) -> int {
