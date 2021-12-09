@@ -51,7 +51,7 @@ TEST_CASE("the parser will parse a character literal") {
     CHECK(parser != nullptr);
 
     auto tok = parser->next_token();
-    CHECK(tok.first == parser::token_type::string);
+    CHECK(tok.first == parser::token_type::character);
     CHECK(tok.second == "\'w\'");
     CHECK(parser->next_token().first == parser::token_type::eof);
 }

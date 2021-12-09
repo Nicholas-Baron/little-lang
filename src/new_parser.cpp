@@ -596,7 +596,7 @@ std::pair<parser::token_type, std::string> parser::next_symbol() {
 
         // consume the quote
         to_ret += next_char();
-        return {token_type::string, std::move(to_ret)};
+        return {token_type::character, std::move(to_ret)};
     } break;
     default:
         std::cerr << "Unknown character: " << static_cast<unsigned>(c) << " \'" << c << '\''
