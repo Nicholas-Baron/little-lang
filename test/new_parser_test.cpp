@@ -268,6 +268,29 @@ TEST_CASE("the parser will parse unary minus") {
     CHECK(val->val == "3");
 }
 
+TEST_CASE("the parser will parse const declaration") {
+    std::string buffer = "const x : int = 5 * -3;";
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    auto decl = parser->parse_top_level();
+    CHECK(decl != nullptr);
+    CHECK(parser->peek_token().first == parser::token_type::eof);
+
+    auto * const_decl = dynamic_cast<ast::const_decl *>(decl.get());
+    CHECK(const_decl != nullptr);
+    CHECK(const_decl->name_and_type.name() == "x");
+    CHECK(const_decl->name_and_type.type() == "int");
+    CHECK(const_decl->expr != nullptr);
+
+    auto * value = dynamic_cast<ast::binary_expr *>(const_decl->expr.get());
+    CHECK(value != nullptr);
+    CHECK(value->op == ast::binary_expr::operand::mult);
+    CHECK(value->lhs != nullptr);
+    CHECK(value->rhs != nullptr);
+}
+
 TEST_CASE("the parser will parse binary expressions") {
     std::string buffer = " 5 + 10 ";
     auto parser = parser::from_buffer(buffer);

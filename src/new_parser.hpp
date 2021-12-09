@@ -39,6 +39,7 @@ class parser final {
     std::map<std::string, std::vector<std::string>> parse_imports();
     ast::top_lvl_ptr parse_top_level();
     std::unique_ptr<ast::func_decl> parse_function();
+    std::unique_ptr<ast::const_decl> parse_const_decl();
     ast::stmt_ptr parse_statement();
     ast::stmt_ptr parse_compound_statement();
     std::unique_ptr<ast::if_stmt> parse_if_statement();
