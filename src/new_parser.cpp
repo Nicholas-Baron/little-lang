@@ -555,7 +555,8 @@ std::pair<parser::token_type, std::string> parser::next_identifier() {
         {"if", token_type::if_},         {"else", token_type::else_},
         {"let", token_type::let},        {"const", token_type::const_},
         {"return", token_type::return_}, {"ret", token_type::return_},
-        {"import", token_type::import_}, {"export", token_type::export_}};
+        {"equals", token_type::eq},      {"import", token_type::import_},
+        {"export", token_type::export_}};
 
     if (auto iter = reserved_words.find(to_ret); iter != reserved_words.end()) {
         return {iter->second, std::move(to_ret)};
