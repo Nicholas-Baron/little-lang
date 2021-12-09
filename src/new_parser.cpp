@@ -636,22 +636,20 @@ std::pair<parser::token_type, std::string> parser::next_symbol() {
             next_char();
             return {token_type::le, "<="};
         }
-        assert(false);
+        return {token_type::lt, "<"};
         break;
     case '>':
         if (peek_char() == '=') {
             next_char();
             return {token_type::ge, ">="};
         }
-        assert(false);
-        break;
+        return {token_type::gt, ">"};
     case '=':
         if (peek_char() == '=') {
             next_char();
             return {token_type::eq, "=="};
         }
         return {token_type::equal, "="};
-        break;
     case '\"': {
         std::string to_ret;
         to_ret += c;
