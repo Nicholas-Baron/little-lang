@@ -391,12 +391,14 @@ ast::expr_ptr parser::parse_unary() {
     switch (auto tok_type = peek_token().first; tok_type) {
     case token_type::minus: {
         // - expr
+        next_token();
         auto expr = parse_atom();
         assert(expr != nullptr);
         return std::make_unique<ast::unary_expr>(operand::negate, std::move(expr));
     }
     case token_type::exclam: {
         // ! expr
+        next_token();
         auto expr = parse_atom();
         assert(expr != nullptr);
         return std::make_unique<ast::unary_expr>(operand::bool_not, std::move(expr));

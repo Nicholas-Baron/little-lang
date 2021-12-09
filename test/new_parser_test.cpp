@@ -247,6 +247,27 @@ TEST_CASE("the parser will parse let statement") {
     CHECK(value->val == "\"hello\"");
 }
 
+TEST_CASE("the parser will parse unary minus") {
+    std::string buffer = "-3";
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    auto expr = parser->parse_expression();
+    CHECK(expr != nullptr);
+    CHECK(parser->peek_token().first == parser::token_type::eof);
+
+    auto * unary_expr = dynamic_cast<ast::unary_expr *>(expr.get());
+    CHECK(unary_expr != nullptr);
+    CHECK(unary_expr->expr != nullptr);
+    CHECK(unary_expr->op == ast::unary_expr::operand::negate);
+
+    auto * val = dynamic_cast<ast::user_val *>(unary_expr->expr.get());
+    CHECK(val != nullptr);
+    CHECK(val->type == ast::user_val::value_type::integer);
+    CHECK(val->val == "3");
+}
+
 TEST_CASE("the parser will parse binary expressions") {
     std::string buffer = " 5 + 10 ";
     auto parser = parser::from_buffer(buffer);
