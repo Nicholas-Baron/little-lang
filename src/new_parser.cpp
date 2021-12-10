@@ -76,16 +76,16 @@ std::unique_ptr<ast::top_level_sequence> parser::parse() {
 
     auto tok = peek_token();
 
-    if (tok.first == token_type::eof) {
+    if (tok == token_type::eof) {
         // TODO: spdlog
         error = "Found empty file";
         return nullptr;
     }
 
-    if (tok.first == token_type::from) { to_ret->imports = parse_imports(); }
+    if (tok == token_type::from) { to_ret->imports = parse_imports(); }
 
-    while (peek_token().first != token_type::eof) {
-        if (peek_token().first == token_type::export_) {
+    while (peek_token() != token_type::eof) {
+        if (peek_token() == token_type::export_) {
             to_ret->append(parse_exports());
         } else {
             auto item = parse_top_level();
@@ -101,7 +101,7 @@ std::unique_ptr<ast::top_level_sequence> parser::parse() {
 
 ast::top_lvl_ptr parser::parse_top_level() {
 
-    switch (peek_token().first) {
+    switch (peek_token().type) {
     case token_type::identifier:
         // parse function
         return parse_function();
@@ -109,18 +109,18 @@ ast::top_lvl_ptr parser::parse_top_level() {
         // parse function
         return parse_const_decl();
     default:
-        error = "Unexpected " + next_token().second;
+        error = "Unexpected " + next_token().text;
         return nullptr;
     }
 }
 
 std::vector<ast::top_lvl_ptr> parser::parse_exports() {
-    assert(next_token().first == token_type::export_);
+    assert(next_token() == token_type::export_);
 
     std::vector<ast::top_lvl_ptr> items;
     if (consume_if(token_type::lbrace).has_value()) {
-        while (peek_token().first != token_type::rbrace) { items.push_back(parse_top_level()); }
-        assert(next_token().first == token_type::rbrace);
+        while (peek_token() != token_type::rbrace) { items.push_back(parse_top_level()); }
+        assert(next_token() == token_type::rbrace);
     } else {
         items.push_back(parse_top_level());
     }
@@ -134,38 +134,38 @@ std::map<std::string, std::vector<std::string>> parser::parse_imports() {
     std::map<std::string, std::vector<std::string>> to_ret;
 
     // parse possible imports
-    while (peek_token().first == token_type::from) {
-        assert(next_token().first == token_type::from);
+    while (peek_token() == token_type::from) {
+        assert(next_token() == token_type::from);
         auto filename = next_token();
-        assert(filename.first == token_type::string);
+        assert(filename == token_type::string);
 
-        assert(next_token().first == token_type::import_);
+        assert(next_token() == token_type::import_);
 
-        bool more_ids = peek_token().first == token_type::identifier;
+        bool more_ids = peek_token() == token_type::identifier;
         std::vector<std::string> identifiers;
         while (more_ids) {
-            identifiers.push_back(next_token().second);
+            identifiers.push_back(next_token().text);
 
             if (consume_if(token_type::comma).has_value()) {
-                assert(peek_token().first == token_type::identifier);
+                assert(peek_token() == token_type::identifier);
                 continue;
             }
 
             if (consume_if(token_type::semi).has_value()) { break; }
 
-            switch (peek_token().first) {
+            switch (peek_token().type) {
             case token_type::identifier:
             case token_type::from:
                 // end of this import
                 more_ids = false;
                 break;
             default:
-                std::cerr << "Unexpected " << peek_token().second << " in import." << std::endl;
+                std::cerr << "Unexpected " << peek_token().text << " in import." << std::endl;
                 assert(false);
             }
         }
 
-        to_ret.emplace(unquote(filename.second), std::move(identifiers));
+        to_ret.emplace(unquote(filename.text), std::move(identifiers));
     }
     return to_ret;
 }
@@ -173,31 +173,30 @@ std::map<std::string, std::vector<std::string>> parser::parse_imports() {
 std::unique_ptr<ast::func_decl> parser::parse_function() {
 
     auto tok = next_token();
-    auto func_name = tok.second;
-    assert(tok.first == token_type::identifier);
+    auto func_name = tok.text;
+    assert(tok == token_type::identifier);
 
     tok = next_token();
-    assert(tok.first == token_type::lparen);
+    assert(tok == token_type::lparen);
 
     std::vector<ast::typed_identifier> args;
-    while (peek_token().first == token_type::identifier) {
+    while (peek_token() == token_type::identifier) {
         auto first_id = next_token();
 
         // type id or id : type
         auto name_first = consume_if(token_type::colon).has_value();
 
         auto second_id = next_token();
-        assert(second_id.first == token_type::identifier);
+        assert(second_id == token_type::identifier);
 
-        auto arg
-            = name_first
-                ? ast::typed_identifier{std::move(first_id.second), std::move(second_id.second)}
-                : ast::typed_identifier{std::move(second_id.second), std::move(first_id.second)};
+        auto arg = name_first
+                     ? ast::typed_identifier{std::move(first_id.text), std::move(second_id.text)}
+                     : ast::typed_identifier{std::move(second_id.text), std::move(first_id.text)};
         args.push_back(std::move(arg));
 
         if (consume_if(token_type::comma).has_value()) { continue; }
 
-        switch (peek_token().first) {
+        switch (peek_token().type) {
         case token_type::rparen:
             // this will be consumed after the loop.
             // just ignore
@@ -209,13 +208,13 @@ std::unique_ptr<ast::func_decl> parser::parse_function() {
     }
 
     tok = next_token();
-    assert(tok.first == token_type::rparen);
+    assert(tok == token_type::rparen);
 
     ast::func_decl::header func_header{std::move(func_name), std::move(args)};
     if (consume_if(token_type::arrow).has_value()) {
         auto ret_tok = next_token();
-        assert(ret_tok.first == token_type::identifier);
-        func_header.set_ret_type(std::move(ret_tok.second));
+        assert(ret_tok == token_type::identifier);
+        func_header.set_ret_type(std::move(ret_tok.text));
     } else {
         func_header.set_ret_type("unit");
     }
@@ -237,15 +236,15 @@ std::unique_ptr<ast::func_decl> parser::parse_function() {
 }
 
 std::unique_ptr<ast::const_decl> parser::parse_const_decl() {
-    assert(next_token().first == token_type::const_);
+    assert(next_token() == token_type::const_);
 
-    assert(peek_token().first == token_type::identifier);
-    auto id = next_token().second;
-    assert(next_token().first == token_type::colon);
-    assert(peek_token().first == token_type::identifier);
-    auto type = next_token().second;
+    assert(peek_token() == token_type::identifier);
+    auto id = next_token().text;
+    assert(next_token() == token_type::colon);
+    assert(peek_token() == token_type::identifier);
+    auto type = next_token().text;
 
-    assert(next_token().first == token_type::equal);
+    assert(next_token() == token_type::equal);
     auto value = parse_expression();
     assert(value != nullptr);
 
@@ -256,7 +255,7 @@ std::unique_ptr<ast::const_decl> parser::parse_const_decl() {
 }
 
 ast::stmt_ptr parser::parse_statement() {
-    switch (peek_token().first) {
+    switch (peek_token().type) {
     case token_type::lbrace:
         return parse_compound_statement();
     case token_type::return_:
@@ -272,33 +271,33 @@ ast::stmt_ptr parser::parse_statement() {
         return func_call;
     }
     default:
-        error = "Unexpected " + peek_token().second + " at start of statement";
+        error = "Unexpected " + peek_token().text + " at start of statement";
         return nullptr;
     }
 }
 
 ast::stmt_ptr parser::parse_compound_statement() {
     auto tok = next_token();
-    assert(tok.first == token_type::lbrace);
+    assert(tok == token_type::lbrace);
 
     auto to_ret = std::make_unique<ast::stmt_sequence>();
 
-    while (peek_token().first != token_type::rbrace) {
+    while (peek_token() != token_type::rbrace) {
         auto stmt = parse_statement();
         if (stmt == nullptr) { return nullptr; }
         to_ret->append(std::move(stmt));
     }
 
-    assert(next_token().first == token_type::rbrace);
+    assert(next_token() == token_type::rbrace);
 
     return to_ret;
 }
 
 std::unique_ptr<ast::if_stmt> parser::parse_if_statement() {
-    assert(next_token().first == token_type::if_);
+    assert(next_token() == token_type::if_);
     auto condition = parse_expression();
 
-    const bool can_have_else = peek_token().first == token_type::lbrace;
+    const bool can_have_else = peek_token() == token_type::lbrace;
     auto then_block = parse_statement();
 
     ast::stmt_ptr else_block;
@@ -310,7 +309,7 @@ std::unique_ptr<ast::if_stmt> parser::parse_if_statement() {
 }
 
 std::unique_ptr<ast::return_stmt> parser::parse_return_statement() {
-    assert(next_token().first == token_type::return_);
+    assert(next_token() == token_type::return_);
 
     if (consume_if(token_type::semi).has_value()) {
         // no expression
@@ -319,26 +318,26 @@ std::unique_ptr<ast::return_stmt> parser::parse_return_statement() {
 
     // expression
     auto value = parse_expression();
-    assert(next_token().first == token_type::semi);
+    assert(next_token() == token_type::semi);
     return std::make_unique<ast::return_stmt>(std::move(value));
 }
 
 std::unique_ptr<ast::let_stmt> parser::parse_let_statement() {
-    assert(next_token().first == token_type::let);
+    assert(next_token() == token_type::let);
 
-    assert(peek_token().first == token_type::identifier);
-    auto id = next_token().second;
+    assert(peek_token() == token_type::identifier);
+    auto id = next_token().text;
     std::string type = "auto";
     if (consume_if(token_type::colon).has_value()) {
-        assert(peek_token().first == token_type::identifier);
-        type = next_token().second;
+        assert(peek_token() == token_type::identifier);
+        type = next_token().text;
     }
 
-    assert(next_token().first == token_type::equal);
+    assert(next_token() == token_type::equal);
 
     auto val = parse_expression();
     assert(val != nullptr);
-    assert(next_token().first == token_type::semi);
+    assert(next_token() == token_type::semi);
     return std::make_unique<ast::let_stmt>(ast::typed_identifier{std::move(id), std::move(type)},
                                            std::move(val));
 }
@@ -346,9 +345,8 @@ std::unique_ptr<ast::let_stmt> parser::parse_let_statement() {
 ast::expr_ptr parser::parse_expression() { return parse_boolean_expression(); }
 ast::expr_ptr parser::parse_boolean_expression() {
     auto expr = parse_comparison();
-    if (peek_token().first == token_type::double_and
-        or peek_token().first == token_type::double_or) {
-        auto tok = next_token().first;
+    if (peek_token() == token_type::double_and or peek_token() == token_type::double_or) {
+        auto tok = next_token();
         assert(tok == token_type::double_and or tok == token_type::double_or);
         using operand = ast::binary_expr::operand;
         auto rhs = parse_comparison();
@@ -362,13 +360,13 @@ ast::expr_ptr parser::parse_boolean_expression() {
 
 ast::expr_ptr parser::parse_comparison() {
     auto expr = parse_additive();
-    if (auto tok_type = peek_token().first;
-        tok_type == token_type::lt or tok_type == token_type::le or tok_type == token_type::gt
-        or tok_type == token_type::ge or tok_type == token_type::eq or tok_type == token_type::ne) {
-        auto tok = next_token().first;
+    if (auto tok_type = peek_token(); tok_type == token_type::lt or tok_type == token_type::le
+                                      or tok_type == token_type::gt or tok_type == token_type::ge
+                                      or tok_type == token_type::eq or tok_type == token_type::ne) {
+        auto tok = next_token();
         using operand = ast::binary_expr::operand;
         auto rhs = parse_additive();
-        switch (tok) {
+        switch (tok.type) {
         case token_type::le:
             return std::make_unique<ast::binary_expr>(std::move(expr), operand::le, std::move(rhs));
         case token_type::lt:
@@ -390,12 +388,12 @@ ast::expr_ptr parser::parse_comparison() {
 
 ast::expr_ptr parser::parse_additive() {
     auto expr = parse_multiplicative();
-    if (auto tok_type = peek_token().first;
+    if (auto tok_type = peek_token();
         tok_type == token_type::plus or tok_type == token_type::minus) {
-        auto tok = next_token().first;
+        auto tok = next_token();
         using operand = ast::binary_expr::operand;
         auto rhs = parse_multiplicative();
-        switch (tok) {
+        switch (tok.type) {
         case token_type::plus:
             return std::make_unique<ast::binary_expr>(std::move(expr), operand::add,
                                                       std::move(rhs));
@@ -411,13 +409,13 @@ ast::expr_ptr parser::parse_additive() {
 
 ast::expr_ptr parser::parse_multiplicative() {
     auto expr = parse_unary();
-    if (auto tok_type = peek_token().first; tok_type == token_type::percent
-                                            or tok_type == token_type::asterik
-                                            or tok_type == token_type::slash) {
-        auto tok = next_token().first;
+    if (auto tok_type = peek_token(); tok_type == token_type::percent
+                                      or tok_type == token_type::asterik
+                                      or tok_type == token_type::slash) {
+        auto tok = next_token();
         using operand = ast::binary_expr::operand;
         auto rhs = parse_unary();
-        switch (tok) {
+        switch (tok.type) {
         case token_type::percent:
             return std::make_unique<ast::binary_expr>(std::move(expr), operand::mod,
                                                       std::move(rhs));
@@ -437,7 +435,7 @@ ast::expr_ptr parser::parse_multiplicative() {
 ast::expr_ptr parser::parse_unary() {
 
     using operand = ast::unary_expr::operand;
-    switch (peek_token().first) {
+    switch (peek_token().type) {
     case token_type::minus: {
         // - expr
         next_token();
@@ -459,37 +457,36 @@ ast::expr_ptr parser::parse_unary() {
 
 ast::expr_ptr parser::parse_atom() {
     // parens
-    auto tok_type = peek_token().first;
-    if (tok_type == token_type::lparen) {
+    auto tok = peek_token();
+    if (tok == token_type::lparen) {
         next_token();
         auto expr = parse_expression();
-        assert(next_token().first == token_type::rparen);
+        assert(next_token() == token_type::rparen);
         return expr;
     }
 
     using val_type = ast::user_val::value_type;
-    if (tok_type == token_type::integer or tok_type == token_type::floating
-        or tok_type == token_type::string or tok_type == token_type::boolean
-        or tok_type == token_type::character) {
-        switch (tok_type) {
+    if (tok == token_type::integer or tok == token_type::floating or tok == token_type::string
+        or tok == token_type::boolean or tok == token_type::character) {
+        switch (tok.type) {
         case token_type::string:
-            return std::make_unique<ast::user_val>(next_token().second, val_type::string);
+            return std::make_unique<ast::user_val>(next_token().text, val_type::string);
         case token_type::character:
-            return std::make_unique<ast::user_val>(next_token().second, val_type::character);
+            return std::make_unique<ast::user_val>(next_token().text, val_type::character);
         case token_type::integer:
-            return std::make_unique<ast::user_val>(next_token().second, val_type::integer);
+            return std::make_unique<ast::user_val>(next_token().text, val_type::integer);
         case token_type::floating:
-            return std::make_unique<ast::user_val>(next_token().second, val_type::floating);
+            return std::make_unique<ast::user_val>(next_token().text, val_type::floating);
         case token_type::boolean:
-            return std::make_unique<ast::user_val>(next_token().second, val_type::boolean);
+            return std::make_unique<ast::user_val>(next_token().text, val_type::boolean);
         default:
             assert(false);
         }
     }
 
-    assert(tok_type == token_type::identifier);
-    auto id = next_token().second;
-    if (peek_token().first == token_type::lparen) {
+    assert(tok == token_type::identifier);
+    auto id = next_token().text;
+    if (peek_token() == token_type::lparen) {
         return std::make_unique<ast::func_call_expr>(parse_func_call(std::move(id)));
     }
 
@@ -500,24 +497,24 @@ ast::func_call_data parser::parse_func_call(std::optional<std::string> func_name
     auto name = [&] {
         if (func_name.has_value()) {
             // we have already eaten the id
-            assert(next_token().first == token_type::lparen);
+            assert(next_token() == token_type::lparen);
             return func_name.value();
         }
 
         // we need to eat the id
-        assert(peek_token().first == token_type::identifier);
-        auto name = next_token().second;
-        assert(next_token().first == token_type::lparen);
+        assert(peek_token() == token_type::identifier);
+        auto name = next_token().text;
+        assert(next_token() == token_type::lparen);
         return name;
     }();
 
     // we have eaten the lparen here
     std::vector<ast::expr_ptr> args;
-    while (peek_token().first != token_type::rparen) {
+    while (peek_token() != token_type::rparen) {
         auto expr = parse_expression();
         assert(expr != nullptr);
         args.push_back(std::move(expr));
-        switch (peek_token().first) {
+        switch (peek_token().type) {
         case token_type::rparen:
             break;
         case token_type::comma:
@@ -528,12 +525,12 @@ ast::func_call_data parser::parse_func_call(std::optional<std::string> func_name
         }
     }
 
-    assert(next_token().first == token_type::rparen);
+    assert(next_token() == token_type::rparen);
 
     return {std::move(name), std::move(args)};
 }
 
-std::pair<parser::token_type, std::string> parser::next_token() {
+parser::token parser::next_token() {
 
     if (peeked_token.has_value()) {
         auto result = peeked_token.value();
@@ -561,7 +558,7 @@ std::pair<parser::token_type, std::string> parser::next_token() {
     return next_symbol();
 }
 
-std::pair<parser::token_type, std::string> parser::next_identifier() {
+parser::token parser::next_identifier() {
 
     std::string to_ret;
 
@@ -584,7 +581,7 @@ std::pair<parser::token_type, std::string> parser::next_identifier() {
     return {token_type::identifier, std::move(to_ret)};
 }
 
-std::pair<parser::token_type, std::string> parser::next_number() {
+parser::token parser::next_number() {
 
     auto c = next_char();
     std::string to_ret;
@@ -609,7 +606,7 @@ std::pair<parser::token_type, std::string> parser::next_number() {
     assert(false);
 }
 
-std::pair<parser::token_type, std::string> parser::next_symbol() {
+parser::token parser::next_symbol() {
 
     switch (const auto c = next_char(); c) {
     case EOF:
