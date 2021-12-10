@@ -735,3 +735,10 @@ char parser::peek_char(unsigned offset) {
     if (offset + current_pos >= length) { return EOF; }
     return data[current_pos + offset];
 }
+
+bool parser::next_chars(const std::string & text, unsigned offset) {
+    for (auto i = 0U; i < text.size(); ++i) {
+        if (peek_char(i + offset) != text[i]) { return false; }
+    }
+    return true;
+}

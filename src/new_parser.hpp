@@ -131,6 +131,7 @@ class parser final {
 
     char next_char();
     char peek_char(unsigned offset = 0);
+    bool next_chars(const std::string &, unsigned offset = 0);
 
 #ifdef PARSER_TEST
   private:
