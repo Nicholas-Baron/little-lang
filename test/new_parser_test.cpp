@@ -14,7 +14,7 @@ TEST_CASE("the parser will not accept empty inputs") {
 
     CHECK(parser != nullptr);
 
-    CHECK(parser->peek_token().first == parser::token_type::eof);
+    CHECK(parser->peek_token() == parser::token_type::eof);
 
     CHECK(parser->parse() == nullptr);
     CHECK(parser->error_message() == "Found empty file");
@@ -27,9 +27,9 @@ TEST_CASE("the parser will parse an identifier") {
     CHECK(parser != nullptr);
 
     auto tok = parser->next_token();
-    CHECK(tok.first == parser::token_type::identifier);
-    CHECK(tok.second == "main");
-    CHECK(parser->next_token().first == parser::token_type::eof);
+    CHECK(tok == parser::token_type::identifier);
+    CHECK(tok == "main");
+    CHECK(parser->next_token() == parser::token_type::eof);
 }
 
 TEST_CASE("the parser will parse an identifier with underscores") {
@@ -39,9 +39,9 @@ TEST_CASE("the parser will parse an identifier with underscores") {
     CHECK(parser != nullptr);
 
     auto tok = parser->next_token();
-    CHECK(tok.first == parser::token_type::identifier);
-    CHECK(tok.second == "my_value");
-    CHECK(parser->next_token().first == parser::token_type::eof);
+    CHECK(tok == parser::token_type::identifier);
+    CHECK(tok == "my_value");
+    CHECK(parser->next_token() == parser::token_type::eof);
 }
 
 TEST_CASE("the parser will parse a plain string") {
@@ -51,9 +51,9 @@ TEST_CASE("the parser will parse a plain string") {
     CHECK(parser != nullptr);
 
     auto tok = parser->next_token();
-    CHECK(tok.first == parser::token_type::string);
-    CHECK(tok.second == "\"raw\"");
-    CHECK(parser->next_token().first == parser::token_type::eof);
+    CHECK(tok == parser::token_type::string);
+    CHECK(tok == "\"raw\"");
+    CHECK(parser->next_token() == parser::token_type::eof);
 }
 
 TEST_CASE("the parser will parse a character literal") {
@@ -63,9 +63,9 @@ TEST_CASE("the parser will parse a character literal") {
     CHECK(parser != nullptr);
 
     auto tok = parser->next_token();
-    CHECK(tok.first == parser::token_type::character);
-    CHECK(tok.second == "\'w\'");
-    CHECK(parser->next_token().first == parser::token_type::eof);
+    CHECK(tok == parser::token_type::character);
+    CHECK(tok == "\'w\'");
+    CHECK(parser->next_token() == parser::token_type::eof);
 }
 
 TEST_CASE("the parser will parse an integer") {
@@ -75,9 +75,9 @@ TEST_CASE("the parser will parse an integer") {
     CHECK(parser != nullptr);
 
     auto tok = parser->next_token();
-    CHECK(tok.first == parser::token_type::integer);
-    CHECK(tok.second == "1234");
-    CHECK(parser->next_token().first == parser::token_type::eof);
+    CHECK(tok == parser::token_type::integer);
+    CHECK(tok == "1234");
+    CHECK(parser->next_token() == parser::token_type::eof);
 }
 
 TEST_CASE("the parser will parse a hexadecimal integer") {
@@ -87,9 +87,9 @@ TEST_CASE("the parser will parse a hexadecimal integer") {
     CHECK(parser != nullptr);
 
     auto tok = parser->next_token();
-    CHECK(tok.first == parser::token_type::integer);
-    CHECK(tok.second == buffer);
-    CHECK(parser->next_token().first == parser::token_type::eof);
+    CHECK(tok == parser::token_type::integer);
+    CHECK(tok == buffer);
+    CHECK(parser->next_token() == parser::token_type::eof);
 }
 
 TEST_CASE("the parser will parse a colon and the word 'is' as the same token") {
@@ -98,9 +98,9 @@ TEST_CASE("the parser will parse a colon and the word 'is' as the same token") {
 
     CHECK(parser != nullptr);
 
-    CHECK(parser->next_token().first == parser::token_type::colon);
-    CHECK(parser->next_token().first == parser::token_type::colon);
-    CHECK(parser->next_token().first == parser::token_type::eof);
+    CHECK(parser->next_token() == parser::token_type::colon);
+    CHECK(parser->next_token() == parser::token_type::colon);
+    CHECK(parser->next_token() == parser::token_type::eof);
 }
 
 TEST_CASE("the parser will parse parentheses") {
@@ -109,9 +109,9 @@ TEST_CASE("the parser will parse parentheses") {
 
     CHECK(parser != nullptr);
 
-    CHECK(parser->next_token().first == parser::token_type::lparen);
-    CHECK(parser->next_token().first == parser::token_type::rparen);
-    CHECK(parser->next_token().first == parser::token_type::eof);
+    CHECK(parser->next_token() == parser::token_type::lparen);
+    CHECK(parser->next_token() == parser::token_type::rparen);
+    CHECK(parser->next_token() == parser::token_type::eof);
 }
 
 TEST_CASE("the parser will parse braces") {
@@ -120,9 +120,9 @@ TEST_CASE("the parser will parse braces") {
 
     CHECK(parser != nullptr);
 
-    CHECK(parser->next_token().first == parser::token_type::lbrace);
-    CHECK(parser->next_token().first == parser::token_type::rbrace);
-    CHECK(parser->next_token().first == parser::token_type::eof);
+    CHECK(parser->next_token() == parser::token_type::lbrace);
+    CHECK(parser->next_token() == parser::token_type::rbrace);
+    CHECK(parser->next_token() == parser::token_type::eof);
 }
 
 TEST_CASE("the parser will parse a 'skinny' arrow") {
@@ -131,8 +131,8 @@ TEST_CASE("the parser will parse a 'skinny' arrow") {
 
     CHECK(parser != nullptr);
 
-    CHECK(parser->next_token().first == parser::token_type::arrow);
-    CHECK(parser->next_token().first == parser::token_type::eof);
+    CHECK(parser->next_token() == parser::token_type::arrow);
+    CHECK(parser->next_token() == parser::token_type::eof);
 }
 
 TEST_CASE("the parser will parse a comma") {
@@ -141,8 +141,8 @@ TEST_CASE("the parser will parse a comma") {
 
     CHECK(parser != nullptr);
 
-    CHECK(parser->next_token().first == parser::token_type::comma);
-    CHECK(parser->next_token().first == parser::token_type::eof);
+    CHECK(parser->next_token() == parser::token_type::comma);
+    CHECK(parser->next_token() == parser::token_type::eof);
 }
 
 TEST_CASE("the parser will parse a semicolon") {
@@ -151,8 +151,8 @@ TEST_CASE("the parser will parse a semicolon") {
 
     CHECK(parser != nullptr);
 
-    CHECK(parser->next_token().first == parser::token_type::semi);
-    CHECK(parser->next_token().first == parser::token_type::eof);
+    CHECK(parser->next_token() == parser::token_type::semi);
+    CHECK(parser->next_token() == parser::token_type::eof);
 }
 
 TEST_CASE("the parser will parse 'from', 'import', and 'export'") {
@@ -162,10 +162,10 @@ TEST_CASE("the parser will parse 'from', 'import', and 'export'") {
 
     CHECK(parser != nullptr);
 
-    CHECK(parser->next_token().first == parser::token_type::from);
-    CHECK(parser->next_token().first == parser::token_type::import_);
-    CHECK(parser->next_token().first == parser::token_type::export_);
-    CHECK(parser->next_token().first == parser::token_type::eof);
+    CHECK(parser->next_token() == parser::token_type::from);
+    CHECK(parser->next_token() == parser::token_type::import_);
+    CHECK(parser->next_token() == parser::token_type::export_);
+    CHECK(parser->next_token() == parser::token_type::eof);
 }
 
 TEST_CASE("the parser will parse 'if' and 'else'") {
@@ -175,9 +175,9 @@ TEST_CASE("the parser will parse 'if' and 'else'") {
 
     CHECK(parser != nullptr);
 
-    CHECK(parser->next_token().first == parser::token_type::if_);
-    CHECK(parser->next_token().first == parser::token_type::else_);
-    CHECK(parser->next_token().first == parser::token_type::eof);
+    CHECK(parser->next_token() == parser::token_type::if_);
+    CHECK(parser->next_token() == parser::token_type::else_);
+    CHECK(parser->next_token() == parser::token_type::eof);
 }
 
 TEST_CASE("the parser will parse 'return' and 'ret' the same") {
@@ -187,9 +187,9 @@ TEST_CASE("the parser will parse 'return' and 'ret' the same") {
 
     CHECK(parser != nullptr);
 
-    CHECK(parser->next_token().first == parser::token_type::return_);
-    CHECK(parser->next_token().first == parser::token_type::return_);
-    CHECK(parser->next_token().first == parser::token_type::eof);
+    CHECK(parser->next_token() == parser::token_type::return_);
+    CHECK(parser->next_token() == parser::token_type::return_);
+    CHECK(parser->next_token() == parser::token_type::eof);
 }
 
 TEST_CASE("the parser will parse '<' and '>'") {
@@ -199,9 +199,9 @@ TEST_CASE("the parser will parse '<' and '>'") {
 
     CHECK(parser != nullptr);
 
-    CHECK(parser->next_token().first == parser::token_type::lt);
-    CHECK(parser->next_token().first == parser::token_type::gt);
-    CHECK(parser->next_token().first == parser::token_type::eof);
+    CHECK(parser->next_token() == parser::token_type::lt);
+    CHECK(parser->next_token() == parser::token_type::gt);
+    CHECK(parser->next_token() == parser::token_type::eof);
 }
 
 TEST_CASE("the parser will parse '<=' and '>=' as 1 token each") {
@@ -211,9 +211,9 @@ TEST_CASE("the parser will parse '<=' and '>=' as 1 token each") {
 
     CHECK(parser != nullptr);
 
-    CHECK(parser->next_token().first == parser::token_type::le);
-    CHECK(parser->next_token().first == parser::token_type::ge);
-    CHECK(parser->next_token().first == parser::token_type::eof);
+    CHECK(parser->next_token() == parser::token_type::le);
+    CHECK(parser->next_token() == parser::token_type::ge);
+    CHECK(parser->next_token() == parser::token_type::eof);
 }
 
 TEST_CASE("the parser will parse 'let' and 'const'") {
@@ -223,9 +223,9 @@ TEST_CASE("the parser will parse 'let' and 'const'") {
 
     CHECK(parser != nullptr);
 
-    CHECK(parser->next_token().first == parser::token_type::let);
-    CHECK(parser->next_token().first == parser::token_type::const_);
-    CHECK(parser->next_token().first == parser::token_type::eof);
+    CHECK(parser->next_token() == parser::token_type::let);
+    CHECK(parser->next_token() == parser::token_type::const_);
+    CHECK(parser->next_token() == parser::token_type::eof);
 }
 
 TEST_CASE("the parser will parse 'and' as '&&'") {
@@ -235,9 +235,9 @@ TEST_CASE("the parser will parse 'and' as '&&'") {
 
     CHECK(parser != nullptr);
 
-    CHECK(parser->next_token().first == parser::token_type::double_and);
-    CHECK(parser->next_token().first == parser::token_type::double_and);
-    CHECK(parser->next_token().first == parser::token_type::eof);
+    CHECK(parser->next_token() == parser::token_type::double_and);
+    CHECK(parser->next_token() == parser::token_type::double_and);
+    CHECK(parser->next_token() == parser::token_type::eof);
 }
 
 TEST_CASE("the parser will parse 'or' as '||'") {
@@ -247,9 +247,9 @@ TEST_CASE("the parser will parse 'or' as '||'") {
 
     CHECK(parser != nullptr);
 
-    CHECK(parser->next_token().first == parser::token_type::double_or);
-    CHECK(parser->next_token().first == parser::token_type::double_or);
-    CHECK(parser->next_token().first == parser::token_type::eof);
+    CHECK(parser->next_token() == parser::token_type::double_or);
+    CHECK(parser->next_token() == parser::token_type::double_or);
+    CHECK(parser->next_token() == parser::token_type::eof);
 }
 
 TEST_CASE("the parser will parse 'equals' as '=='") {
@@ -259,9 +259,9 @@ TEST_CASE("the parser will parse 'equals' as '=='") {
 
     CHECK(parser != nullptr);
 
-    CHECK(parser->next_token().first == parser::token_type::eq);
-    CHECK(parser->next_token().first == parser::token_type::eq);
-    CHECK(parser->next_token().first == parser::token_type::eof);
+    CHECK(parser->next_token() == parser::token_type::eq);
+    CHECK(parser->next_token() == parser::token_type::eq);
+    CHECK(parser->next_token() == parser::token_type::eof);
 }
 
 TEST_CASE("the parser will parse basic mathematical symbols") {
@@ -271,13 +271,13 @@ TEST_CASE("the parser will parse basic mathematical symbols") {
 
     CHECK(parser != nullptr);
 
-    CHECK(parser->next_token().first == parser::token_type::equal);
-    CHECK(parser->next_token().first == parser::token_type::plus);
-    CHECK(parser->next_token().first == parser::token_type::minus);
-    CHECK(parser->next_token().first == parser::token_type::slash);
-    CHECK(parser->next_token().first == parser::token_type::asterik);
-    CHECK(parser->next_token().first == parser::token_type::percent);
-    CHECK(parser->next_token().first == parser::token_type::eof);
+    CHECK(parser->next_token() == parser::token_type::equal);
+    CHECK(parser->next_token() == parser::token_type::plus);
+    CHECK(parser->next_token() == parser::token_type::minus);
+    CHECK(parser->next_token() == parser::token_type::slash);
+    CHECK(parser->next_token() == parser::token_type::asterik);
+    CHECK(parser->next_token() == parser::token_type::percent);
+    CHECK(parser->next_token() == parser::token_type::eof);
 }
 
 // ast level
@@ -299,7 +299,7 @@ TEST_CASE("the parser will parse let statement") {
 
     auto stmt = parser->parse_statement();
     CHECK(stmt != nullptr);
-    CHECK(parser->peek_token().first == parser::token_type::eof);
+    CHECK(parser->peek_token() == parser::token_type::eof);
 
     auto * let = dynamic_cast<ast::let_stmt *>(stmt.get());
     CHECK(let != nullptr);
@@ -321,7 +321,7 @@ TEST_CASE("the parser will parse unary minus") {
 
     auto expr = parser->parse_expression();
     CHECK(expr != nullptr);
-    CHECK(parser->peek_token().first == parser::token_type::eof);
+    CHECK(parser->peek_token() == parser::token_type::eof);
 
     auto * unary_expr = dynamic_cast<ast::unary_expr *>(expr.get());
     CHECK(unary_expr != nullptr);
@@ -342,7 +342,7 @@ TEST_CASE("the parser will parse const declaration") {
 
     auto decl = parser->parse_top_level();
     CHECK(decl != nullptr);
-    CHECK(parser->peek_token().first == parser::token_type::eof);
+    CHECK(parser->peek_token() == parser::token_type::eof);
 
     auto * const_decl = dynamic_cast<ast::const_decl *>(decl.get());
     CHECK(const_decl != nullptr);
@@ -483,7 +483,7 @@ TEST_CASE("the parser will parse a unit function") {
 
     CHECK(parser != nullptr);
 
-    CHECK(parser->peek_token().first == parser::token_type::identifier);
+    CHECK(parser->peek_token() == parser::token_type::identifier);
 
     auto func = parser->parse_function();
     CHECK(func != nullptr);
@@ -595,7 +595,7 @@ TEST_CASE("the parser will parse a module with one import") {
     auto parser = parser::from_buffer(buffer);
 
     CHECK(parser != nullptr);
-    CHECK(parser->peek_token().first == parser::token_type::from);
+    CHECK(parser->peek_token() == parser::token_type::from);
 
     auto mod = parser->parse();
     CHECK(mod != nullptr);
@@ -618,7 +618,7 @@ TEST_CASE("the parser will parse imports with or without semicolons") {
     auto parser = parser::from_buffer(buffer);
 
     CHECK(parser != nullptr);
-    CHECK(parser->peek_token().first == parser::token_type::from);
+    CHECK(parser->peek_token() == parser::token_type::from);
 
     auto mod = parser->parse();
     CHECK(mod != nullptr);
@@ -641,7 +641,7 @@ TEST_CASE("the parser will parse a module with multiple imports") {
     auto parser = parser::from_buffer(buffer);
 
     CHECK(parser != nullptr);
-    CHECK(parser->peek_token().first == parser::token_type::from);
+    CHECK(parser->peek_token() == parser::token_type::from);
 
     auto mod = parser->parse();
     CHECK(mod != nullptr);

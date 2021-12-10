@@ -57,8 +57,9 @@ class parser final {
     ast::expr_ptr parse_atom();
     ast::func_call_data parse_func_call(std::optional<std::string> func_name = std::nullopt);
 
-    // NOTE: A `prim_type` variant to mark certain identifiers as exclusively types is probably a good idea.
-	// However, implementing it may take a lot, as there is little support for conditional logic in the parser.
+    // NOTE: A `prim_type` variant to mark certain identifiers as exclusively types is probably a
+    // good idea. However, implementing it may take a lot, as there is little support for
+    // conditional logic in the parser.
     enum class token_type {
         unknown,
         identifier,
@@ -102,15 +103,32 @@ class parser final {
         eof,
     };
 
+    struct token {
+        token_type type;
+        std::string text;
+
+      private:
+        friend bool operator==(const token & tok, token_type type) { return tok.type == type; }
+        friend bool operator==(const token & tok, const std::string & text) {
+            return tok.text == text;
+        }
+
+        friend bool operator!=(const token & tok, token_type type) { return tok.type != type; }
+
+        friend bool operator!=(const token & tok, const std::string & text) {
+            return tok.text != text;
+        }
+    };
+
     std::optional<std::string> consume_if(token_type tok_type) {
-        if (peek_token().first == tok_type) { return next_token().second; }
+        if (peek_token() == tok_type) { return next_token().text; }
         return std::nullopt;
     }
-    std::pair<token_type, std::string> peek_token() {
+    token peek_token() {
         if (not peeked_token.has_value()) { peeked_token = next_token(); }
         return peeked_token.value();
     }
-    std::pair<token_type, std::string> next_token();
+    token next_token();
 
     char next_char();
     char peek_char(unsigned offset = 0);
@@ -120,11 +138,11 @@ class parser final {
 #endif
 
     // helpers for next_token
-    std::pair<token_type, std::string> next_identifier();
-    std::pair<token_type, std::string> next_number();
-    std::pair<token_type, std::string> next_symbol();
+    token next_identifier();
+    token next_number();
+    token next_symbol();
 
-    std::optional<std::pair<token_type, std::string>> peeked_token;
+    std::optional<token> peeked_token;
     std::string filename;
     std::string error;
 
