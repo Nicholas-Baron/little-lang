@@ -32,6 +32,22 @@ TEST_CASE("the parser can look ahead for whole text fragments") {
     CHECK(parser->next_chars("baz", 8));
 }
 
+TEST_CASE("the parser will ignore comments") {
+    std::string buffer = R"(// this is a comment
+                         # this is another comment
+                         comment I am from the 1960s
+                         Comment I am also from the 1960s
+                         foo bar baz)";
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    CHECK(parser->next_token() == "foo");
+    CHECK(parser->next_token() == "bar");
+    CHECK(parser->next_token() == "baz");
+    CHECK(parser->next_token() == parser::token_type::eof);
+}
+
 TEST_CASE("the parser will parse an identifier") {
     std::string buffer = "main";
     auto parser = parser::from_buffer(buffer);

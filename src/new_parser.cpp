@@ -552,8 +552,10 @@ parser::token parser::next_token() {
         // go to first non-whitespace character
         while (isspace(peek_char()) != 0) { next_char(); }
 
-        // TODO: Support "[Cc]omment" to start a comment
         auto found_comment = (peek_char() == '/' and peek_char(1) == '/') or peek_char() == '#';
+        if (not found_comment and tolower(peek_char()) == 'c') {
+            found_comment = next_chars("omment", 1);
+        }
         if (not found_comment) { break; }
 
         // Skip the comment line
