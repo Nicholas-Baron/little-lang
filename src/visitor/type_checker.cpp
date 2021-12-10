@@ -11,8 +11,8 @@
 
 namespace visitor {
 
-    type_checker::type_checker()
-        : context{std::make_unique<llvm::LLVMContext>()} {
+    type_checker::type_checker(llvm::LLVMContext * context)
+        : context{context} {
         auto & global_scope = active_typed_identifiers.emplace_back();
 
         global_scope.emplace("int", llvm::Type::getInt32Ty(*context));

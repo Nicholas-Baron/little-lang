@@ -16,6 +16,7 @@ set(proj_files
 	jit.cpp
 	location.cpp
 	new_parser.cpp
+	program.cpp
 	ast/nodes.cpp
 	visitor/codegen.cpp
 	visitor/type_checker.cpp

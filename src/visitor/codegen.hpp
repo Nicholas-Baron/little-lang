@@ -16,7 +16,7 @@ namespace visitor {
     class codegen final : public visitor_base,
                           public value_getter<codegen, ast::node, llvm::Value *> {
       public:
-        explicit codegen(const std::string & name);
+        explicit codegen(const std::string & name, llvm::LLVMContext *);
 
         non_copyable(codegen);
 
@@ -47,7 +47,8 @@ namespace visitor {
         void printError(const std::string & name, std::optional<Location> loc = std::nullopt) const;
 
         // Keep these behind unique_ptr to allow for moving the visitor
-        std::unique_ptr<llvm::LLVMContext> context;
+        // context is not owned by us, but is sent to us via the constructor.
+        llvm::LLVMContext * context;
         std::unique_ptr<llvm::Module> ir_module;
         std::unique_ptr<llvm::IRBuilder<>> ir_builder;
 

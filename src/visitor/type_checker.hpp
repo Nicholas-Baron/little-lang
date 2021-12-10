@@ -15,7 +15,7 @@ namespace visitor {
     class type_checker final : public visitor_base,
                                public value_getter<type_checker, ast::node, llvm::Type *> {
       public:
-        type_checker();
+        explicit type_checker(llvm::LLVMContext *);
 
         non_copyable(type_checker);
 
@@ -34,7 +34,7 @@ namespace visitor {
       private:
         void syscall(ast::func_call_data &);
 
-		// TODO: Actually implement this
+        // TODO: Actually implement this
         void printError(const std::string & name, std::optional<Location> loc = std::nullopt);
 
         [[nodiscard]] llvm::Type * find_type_of(const std::string &) const;
@@ -42,7 +42,7 @@ namespace visitor {
 
         bool found_error{false};
 
-        std::unique_ptr<llvm::LLVMContext> context;
+        llvm::LLVMContext * context;
 
         std::vector<std::map<std::string, llvm::Type *>> active_typed_identifiers;
         std::map<std::string, void (type_checker::*)(ast::func_call_data &)> instrinics;
