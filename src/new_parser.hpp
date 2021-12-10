@@ -101,6 +101,10 @@ class parser final {
         eof,
     };
 
+    std::optional<std::string> consume_if(token_type tok_type) {
+        if (peek_token().first == tok_type) { return next_token().second; }
+        return std::nullopt;
+    }
     std::pair<token_type, std::string> peek_token() {
         if (not peeked_token.has_value()) { peeked_token = next_token(); }
         return peeked_token.value();
