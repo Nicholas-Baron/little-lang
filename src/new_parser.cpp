@@ -86,9 +86,7 @@ std::unique_ptr<ast::top_level_sequence> parser::parse() {
 
     while (peek_token().first != token_type::eof) {
         if (peek_token().first == token_type::export_) {
-            auto items = parse_exports();
-            // TODO: Add a convenience append
-            for (auto && item : items) { to_ret->append(std::move(item)); }
+            to_ret->append(parse_exports());
         } else {
             auto item = parse_top_level();
             if (item == nullptr) {
