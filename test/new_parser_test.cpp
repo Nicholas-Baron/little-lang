@@ -32,6 +32,21 @@ TEST_CASE("the parser will parse an identifier") {
     CHECK(parser->next_token() == parser::token_type::eof);
 }
 
+TEST_CASE("the parser will parse primitive types") {
+    std::string buffer = "int unit string char bool float";
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    CHECK(parser->next_token() == parser::token_type::prim_type);
+    CHECK(parser->next_token() == parser::token_type::prim_type);
+    CHECK(parser->next_token() == parser::token_type::prim_type);
+    CHECK(parser->next_token() == parser::token_type::prim_type);
+    CHECK(parser->next_token() == parser::token_type::prim_type);
+    CHECK(parser->next_token() == parser::token_type::prim_type);
+    CHECK(parser->next_token() == parser::token_type::eof);
+}
+
 TEST_CASE("the parser will parse an identifier with underscores") {
     std::string buffer = "my_value";
     auto parser = parser::from_buffer(buffer);

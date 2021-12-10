@@ -180,14 +180,16 @@ std::unique_ptr<ast::func_decl> parser::parse_function() {
     assert(tok == token_type::lparen);
 
     std::vector<ast::typed_identifier> args;
-    while (peek_token() == token_type::identifier) {
+    while (peek_token() == token_type::identifier or peek_token() == token_type::prim_type) {
         auto first_id = next_token();
 
         // type id or id : type
-        auto name_first = consume_if(token_type::colon).has_value();
+        // if the first token we see is a primitive type, there should not be a colon.
+        auto name_first
+            = first_id != token_type::prim_type and consume_if(token_type::colon).has_value();
 
         auto second_id = next_token();
-        assert(second_id == token_type::identifier);
+        assert(second_id == token_type::identifier or second_id == token_type::prim_type);
 
         auto arg = name_first
                      ? ast::typed_identifier{std::move(first_id.text), std::move(second_id.text)}
@@ -212,9 +214,7 @@ std::unique_ptr<ast::func_decl> parser::parse_function() {
 
     ast::func_decl::header func_header{std::move(func_name), std::move(args)};
     if (consume_if(token_type::arrow).has_value()) {
-        auto ret_tok = next_token();
-        assert(ret_tok == token_type::identifier);
-        func_header.set_ret_type(std::move(ret_tok.text));
+        func_header.set_ret_type(parse_type());
     } else {
         func_header.set_ret_type("unit");
     }
@@ -241,8 +241,7 @@ std::unique_ptr<ast::const_decl> parser::parse_const_decl() {
     assert(peek_token() == token_type::identifier);
     auto id = next_token().text;
     assert(next_token() == token_type::colon);
-    assert(peek_token() == token_type::identifier);
-    auto type = next_token().text;
+    auto type = parse_type();
 
     assert(next_token() == token_type::equal);
     auto value = parse_expression();
@@ -340,6 +339,17 @@ std::unique_ptr<ast::let_stmt> parser::parse_let_statement() {
     assert(next_token() == token_type::semi);
     return std::make_unique<ast::let_stmt>(ast::typed_identifier{std::move(id), std::move(type)},
                                            std::move(val));
+}
+
+std::string parser::parse_type() {
+    switch (peek_token().type) {
+    case token_type::identifier:
+    case token_type::prim_type:
+        return next_token().text;
+    default:
+        error = "Expected a type. Found " + peek_token().text;
+        assert(false);
+    }
 }
 
 ast::expr_ptr parser::parse_expression() { return parse_boolean_expression(); }
@@ -567,13 +577,29 @@ parser::token parser::next_identifier() {
     while (isalnum(peek_char()) != 0 or peek_char() == '_') { to_ret += next_char(); }
 
     static const std::map<std::string, parser::token_type> reserved_words{
-        {"is", token_type::colon},       {"from", token_type::from},
-        {"and", token_type::double_and}, {"or", token_type::double_or},
-        {"if", token_type::if_},         {"else", token_type::else_},
-        {"let", token_type::let},        {"const", token_type::const_},
-        {"return", token_type::return_}, {"ret", token_type::return_},
-        {"equals", token_type::eq},      {"import", token_type::import_},
-        {"export", token_type::export_}};
+        // alternate tokens
+        {"and", token_type::double_and},
+        {"equals", token_type::eq},
+        {"is", token_type::colon},
+        {"or", token_type::double_or},
+        // keywords
+        {"const", token_type::const_},
+        {"else", token_type::else_},
+        {"export", token_type::export_},
+        {"from", token_type::from},
+        {"if", token_type::if_},
+        {"import", token_type::import_},
+        {"let", token_type::let},
+        {"ret", token_type::return_},
+        {"return", token_type::return_},
+        // primitive types
+        {"bool", token_type::prim_type},
+        {"char", token_type::prim_type},
+        {"float", token_type::prim_type},
+        {"int", token_type::prim_type},
+        {"string", token_type::prim_type},
+        {"unit", token_type::prim_type},
+    };
 
     if (auto iter = reserved_words.find(to_ret); iter != reserved_words.end()) {
         return {iter->second, std::move(to_ret)};

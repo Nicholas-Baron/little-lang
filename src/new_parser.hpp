@@ -46,6 +46,7 @@ class parser final {
     std::unique_ptr<ast::if_stmt> parse_if_statement();
     std::unique_ptr<ast::return_stmt> parse_return_statement();
     std::unique_ptr<ast::let_stmt> parse_let_statement();
+    std::string parse_type();
 
     // parse expressions
     ast::expr_ptr parse_expression();
@@ -57,12 +58,10 @@ class parser final {
     ast::expr_ptr parse_atom();
     ast::func_call_data parse_func_call(std::optional<std::string> func_name = std::nullopt);
 
-    // NOTE: A `prim_type` variant to mark certain identifiers as exclusively types is probably a
-    // good idea. However, implementing it may take a lot, as there is little support for
-    // conditional logic in the parser.
     enum class token_type {
         unknown,
         identifier,
+        prim_type,
         integer,
         floating,
         from,
