@@ -11,8 +11,11 @@
 
 namespace visitor {
 
-    type_checker::type_checker(llvm::LLVMContext * context)
-        : context{context} {
+    type_checker::type_checker(std::string filename, llvm::LLVMContext * context,
+                               std::map<std::string, std::map<std::string, llvm::Type *>> * imports)
+        : filename{std::move(filename)}
+        , context{context}
+        , program_globals{imports} {
         auto & global_scope = active_typed_identifiers.emplace_back();
 
         global_scope.emplace("int", llvm::Type::getInt32Ty(*context));
@@ -27,7 +30,13 @@ namespace visitor {
         instrinics.emplace("syscall", &type_checker::syscall);
     }
 
-    void type_checker::bind_type(llvm::Type * type, std::string identifier) {
+    void type_checker::bind_type(llvm::Type * type, std::string identifier, bool should_export) {
+        if (should_export and program_globals != nullptr) {
+            auto [iter, _]
+                = program_globals->emplace(filename, std::map<std::string, llvm::Type *>{});
+            assert(iter != program_globals->end());
+            iter->second.emplace(identifier, type);
+        }
         active_typed_identifiers.back().emplace(std::move(identifier), type);
     }
 
@@ -133,7 +142,7 @@ namespace visitor {
             assert(false);
         }
 
-        bind_type(actual, const_decl.name_and_type.name());
+        bind_type(actual, const_decl.name_and_type.name(), const_decl.exported());
     }
 
     void type_checker::visit(ast::expr & expr) { expr.accept(*this); }
@@ -208,7 +217,7 @@ namespace visitor {
 
         auto * func_type = llvm::FunctionType::get(ret_type, args, false);
 
-        bind_type(func_type, func_name);
+        bind_type(func_type, func_name, func_decl.exported());
 
         active_typed_identifiers.emplace_back();
 
@@ -294,6 +303,31 @@ namespace visitor {
     void type_checker::visit(ast::top_level & top_level) { top_level.accept(*this); }
 
     void type_checker::visit(ast::top_level_sequence & top_level_sequence) {
+
+        if (not top_level_sequence.imports.empty()) {
+            if (this->program_globals == nullptr) {
+                std::cerr << "No import map was given" << std::endl;
+                assert(false);
+            }
+            for (auto & [filename, imports] : top_level_sequence.imports) {
+                auto file_iter = program_globals->find(filename);
+                if (file_iter == program_globals->end()) {
+                    std::cout << "File " << filename << " was not found" << std::endl;
+                    assert(false);
+                }
+
+                auto & imports_from_file = file_iter->second;
+                for (auto & id : imports) {
+                    auto import_iter = imports_from_file.find(id);
+                    if (import_iter == imports_from_file.end()) {
+                        std::cout << "File " << filename << " does not export " << id << std::endl;
+                        assert(false);
+                    }
+                    bind_type(import_iter->second, id);
+                }
+            }
+        }
+
         for (auto & item : top_level_sequence.items) {
             assert(item != nullptr);
             item->accept(*this);

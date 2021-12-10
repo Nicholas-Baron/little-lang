@@ -52,6 +52,8 @@ static bool exec_command(std::vector<std::string> && cmd, bool debug) {
         return WEXITSTATUS(wait_status) == 0;
     }
 }
+
+// TODO: test this
 static std::vector<std::string>
 toposort(const std::string & root, const std::map<std::string, std::set<std::string>> & graph) {
     std::vector<std::string> to_ret;
@@ -117,15 +119,20 @@ std::optional<program> program::from_modules(const std::string & root_file,
     // topo sort the modules
     std::map<std::string, std::set<std::string>> dependencies;
     for (auto & mod : modules) {
+        auto abs_path = normalized_absolute_path(mod.filename);
         std::set<std::string> imports;
-        for (auto & [dependency, _] : mod.imports) { imports.emplace(dependency); }
-        dependencies.emplace(normalized_absolute_path(mod.filename), std::move(imports));
+        for (auto & [dependency, _] : mod.imports) {
+            imports.emplace(abs_path.parent_path() / dependency);
+        }
+        dependencies.emplace(abs_path, std::move(imports));
     }
-    auto sorted = toposort(root_file, dependencies);
+    auto sorted = toposort(normalized_absolute_path(root_file), dependencies);
     if (sorted.empty()) {
         std::cerr << "Found cyclic file dependency.\nCannot process this program" << std::endl;
         return std::nullopt;
     }
+
+    assert(sorted.size() == modules.size());
 
     // swap the given modules into the toposorted order
     auto dest_iter = modules.begin();
@@ -150,8 +157,10 @@ program::program(std::vector<ast::top_level_sequence> && modules,
 
 bool program::type_check() {
     for (auto & mod : ast_modules) {
-        assert(mod.imports.empty());
-        visitor::type_checker type_checker{context.get()};
+        // Note: currently, the ast imports are not updated with absolute paths,
+        // but the ast filenames are absolute paths.
+        auto filename = mod.filename.substr(mod.filename.find_last_of('/') + 1);
+        visitor::type_checker type_checker{std::move(filename), context.get(), &program_globals};
         type_checker.visit(mod);
         if (not type_checker.checked_good()) {
             std::cout << "Failed to type check" << std::endl;
