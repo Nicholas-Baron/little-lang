@@ -252,7 +252,6 @@ namespace visitor {
             return is_int ? int_pred : float_pred;
         };
 
-        // TODO: add binary_expr::operation instead of raw tokens
         switch (binary_expr.op) {
         case operand::add:
             bin_op = int_or_float(bin_ops::Add, bin_ops::FAdd);
