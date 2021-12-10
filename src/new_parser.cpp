@@ -77,7 +77,6 @@ std::unique_ptr<ast::top_level_sequence> parser::parse() {
     auto tok = peek_token();
 
     if (tok == token_type::eof) {
-        // TODO: spdlog
         error = "Found empty file";
         return nullptr;
     }
