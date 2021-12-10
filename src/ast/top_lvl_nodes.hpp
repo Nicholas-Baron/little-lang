@@ -12,10 +12,6 @@ namespace ast {
     class top_level_sequence final : public top_level {
       public:
         top_level_sequence() = default;
-        explicit top_level_sequence(top_level * first_item)
-            : top_level_sequence{} {
-            append(first_item);
-        }
 
         non_copyable(top_level_sequence);
 
@@ -25,7 +21,6 @@ namespace ast {
 
         make_visitable;
 
-        void append(top_level * item) { items.emplace_back(item); }
         void append(top_lvl_ptr item) { items.emplace_back(std::move(item)); }
 
         std::map<std::string, std::vector<std::string>> imports;
@@ -71,10 +66,6 @@ namespace ast {
             Location loc{};
         };
 
-        func_decl(header && head, stmt * body)
-            : head(std::move(head))
-            , body(body) {}
-
         func_decl(header && head, stmt_ptr body)
             : head(std::move(head))
             , body(std::move(body)) {}
@@ -94,10 +85,6 @@ namespace ast {
 
     class const_decl final : public top_level {
       public:
-        const_decl(typed_identifier && name_and_type, expr * expr)
-            : name_and_type(std::move(name_and_type))
-            , expr{expr} {}
-
         const_decl(typed_identifier && name_and_type, expr_ptr expr)
             : name_and_type(std::move(name_and_type))
             , expr{std::move(expr)} {}

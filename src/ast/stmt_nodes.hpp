@@ -9,11 +9,6 @@
 namespace ast {
     class if_stmt final : public stmt {
       public:
-        if_stmt(expr * cond, stmt * on_true, stmt * on_false)
-            : condition(cond)
-            , true_branch(on_true)
-            , else_branch(on_false) {}
-
         if_stmt(expr_ptr cond, stmt_ptr on_true, stmt_ptr on_false)
             : condition(std::move(cond))
             , true_branch(std::move(on_true))
@@ -32,14 +27,6 @@ namespace ast {
 
     class let_stmt final : public stmt {
       public:
-        let_stmt(std::string && name, expr * value)
-            : name_and_type(std::move(name), "auto")
-            , value(value) {}
-
-        let_stmt(typed_identifier && typed_name, expr * value)
-            : name_and_type(std::move(typed_name))
-            , value(value) {}
-
         let_stmt(typed_identifier && typed_name, expr_ptr value)
             : name_and_type(std::move(typed_name))
             , value(std::move(value)) {}
@@ -57,10 +44,6 @@ namespace ast {
     class stmt_sequence final : public stmt {
       public:
         stmt_sequence() = default;
-        explicit stmt_sequence(stmt * stmt)
-            : stmt_sequence() {
-            append(stmt);
-        }
 
         non_copyable(stmt_sequence);
 
@@ -68,7 +51,6 @@ namespace ast {
 
         ~stmt_sequence() override = default;
 
-        void append(stmt * stmt) { stmts.emplace_back(stmt); }
         void append(stmt_ptr stmt) { stmts.push_back(std::move(stmt)); }
 
         make_visitable;
