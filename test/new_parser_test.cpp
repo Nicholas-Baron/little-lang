@@ -20,6 +20,18 @@ TEST_CASE("the parser will not accept empty inputs") {
     CHECK(parser->error_message() == "Found empty file");
 }
 
+TEST_CASE("the parser can look ahead for whole text fragments") {
+    std::string buffer = "foo bar baz";
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    CHECK(parser->next_chars("foo"));
+    CHECK(parser->next_chars("oo", 1));
+    CHECK(parser->next_chars("bar", 4));
+    CHECK(parser->next_chars("baz", 8));
+}
+
 TEST_CASE("the parser will parse an identifier") {
     std::string buffer = "main";
     auto parser = parser::from_buffer(buffer);
