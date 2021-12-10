@@ -178,7 +178,8 @@ void program::emit_and_link() {
     for (auto && mod : ir_modules) {
         auto output_name = make_output_name(mod->getSourceFileName());
         gcc_args.emplace_back(output_name);
-        emit_asm(std::move(mod), std::string{output_name});
+        emit_asm(std::move(mod), std::string{output_name},
+                 settings->flag_is_set(cmd_flag::debug_optimized_ir));
     }
 
     auto output_name = make_output_name(ast_modules.back().filename);

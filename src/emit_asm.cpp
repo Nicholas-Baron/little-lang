@@ -32,7 +32,8 @@ std::string init_llvm_targets() {
     return base_filename + ".o";
 }
 
-void emit_asm(std::unique_ptr<llvm::Module> ir_module, std::string && output_filename) {
+void emit_asm(std::unique_ptr<llvm::Module> ir_module, std::string && output_filename,
+              bool debug_optimized_ir) {
 
     std::string error;
     const auto * target = llvm::TargetRegistry::lookupTarget(ir_module->getTargetTriple(), error);
@@ -81,6 +82,8 @@ void emit_asm(std::unique_ptr<llvm::Module> ir_module, std::string && output_fil
 
         mpm.run(*ir_module, mam);
     }
+
+    if (debug_optimized_ir) { llvm::outs() << *ir_module << '\n'; }
 
     {
         legacy::PassManager pm;
