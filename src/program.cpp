@@ -181,7 +181,7 @@ void program::emit_and_link() {
         emit_asm(std::move(mod), std::string{output_name});
     }
 
-    auto output_name = ast_modules.back().filename;
+    auto output_name = make_output_name(ast_modules.back().filename);
     auto program_name = output_name.substr(0, output_name.find_last_of('.'));
 
     gcc_args.emplace_back("-o");
