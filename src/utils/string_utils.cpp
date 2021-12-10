@@ -9,3 +9,9 @@ std::string unquote(const std::string & input) {
 
     return input.substr(1, input.size() - 2);
 }
+
+namespace fs = std::filesystem;
+fs::path normalized_absolute_path(const std::string & relative_path) {
+
+    return fs::canonical(fs::current_path() / relative_path);
+}

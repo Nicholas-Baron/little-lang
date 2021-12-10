@@ -34,8 +34,7 @@ static std::vector<ast::top_level_sequence> load_modules(const std::string & inp
     std::set<std::string> loaded;
     std::queue<std::string> to_load;
 
-    namespace fs = std::filesystem;
-    auto proper_input = fs::canonical(fs::current_path() / input);
+    auto proper_input = normalized_absolute_path(input);
     const auto project_root = proper_input.parent_path();
 
     to_load.push(std::move(proper_input));
