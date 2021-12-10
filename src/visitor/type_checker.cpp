@@ -107,6 +107,7 @@ namespace visitor {
         case operand::add:
         case operand::sub:
         case operand::mult:
+        case operand::div:
             if (lhs_type != rhs_type) {
                 std::cout << "Arithmetic operations can only be made within the same type"
                           << std::endl;

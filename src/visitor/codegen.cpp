@@ -262,6 +262,9 @@ namespace visitor {
         case operand::mult:
             bin_op = int_or_float(bin_ops::Mul, bin_ops::FMul);
             break;
+        case operand::div:
+            bin_op = int_or_float(bin_ops::SDiv, bin_ops::FDiv);
+            break;
         default:
             printError("Binary operator " + tok_to_string(binary_expr.op)
                            + " is not implemented yet",
