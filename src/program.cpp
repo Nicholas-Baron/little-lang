@@ -201,7 +201,4 @@ void program::emit_and_link() {
     exec_command(std::move(gcc_args), settings->flag_is_set(cmd_flag::debug_show_execs));
 }
 
-int program::jit() {
-    assert(ir_modules.size() == 1);
-    return run_module(std::move(ir_modules.front()));
-}
+int program::jit() { return run_module(std::move(ir_modules)); }

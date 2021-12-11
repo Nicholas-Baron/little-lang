@@ -5,6 +5,6 @@
 
 #include <memory> // unique_ptr
 
-[[nodiscard]] int run_module(std::unique_ptr<llvm::Module>);
+[[nodiscard]] int run_module(std::vector<std::unique_ptr<llvm::Module>>);
 
 #endif

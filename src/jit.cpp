@@ -3,12 +3,18 @@
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 #include <llvm/ExecutionEngine/GenericValue.h>
 
-int run_module(std::unique_ptr<llvm::Module> ir_module) {
+using namespace llvm;
 
-    // execute it!
+int run_module(std::vector<std::unique_ptr<Module>> ir_modules) {
+
+    // pass some module to get the jit setup correctly
     auto * executionEngine
-        = llvm::EngineBuilder{std::move(ir_module)}.setEngineKind(llvm::EngineKind::JIT).create();
+        = EngineBuilder{std::move(ir_modules.back())}.setEngineKind(EngineKind::JIT).create();
+    ir_modules.pop_back();
+
+    for (auto && ir_module : ir_modules) { executionEngine->addModule(std::move(ir_module)); }
     auto * main = executionEngine->FindFunctionNamed("main");
+    // TODO: pass args into the jit
     auto result = executionEngine->runFunction(main, {});
 
     // return the result
