@@ -172,8 +172,8 @@ bool program::type_check() {
 
 void program::generate_ir() {
     for (auto & mod : ast_modules) {
-        assert(mod.imports.empty());
-        visitor::codegen codegen{mod.filename, context.get()};
+        auto filename = mod.filename.substr(mod.filename.find_last_of('/') + 1);
+        visitor::codegen codegen{filename, context.get(), &program_globals};
         codegen.visit(mod);
         codegen.verify_module();
         if (settings->flag_is_set(cmd_flag::debug_ir)) { codegen.dump(); }

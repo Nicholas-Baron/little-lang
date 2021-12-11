@@ -6,6 +6,7 @@
 #include "token_to_string.hpp"
 #include <llvm/IR/BasicBlock.h>
 #include <llvm/IR/Constants.h>
+#include <llvm/IR/Function.h>
 #include <llvm/IR/InlineAsm.h>
 #include <llvm/IR/InstrTypes.h>
 #include <llvm/IR/Instruction.h>
@@ -61,7 +62,8 @@ namespace visitor {
 
     // TODO: Make a function to init type map with builtin types
 
-    codegen::codegen(const std::string & name, llvm::LLVMContext * context)
+    codegen::codegen(const std::string & name, llvm::LLVMContext * context,
+                     std::map<std::string, std::map<std::string, llvm::Type *>> * program_globals)
         : context{context}
         , ir_module{std::make_unique<llvm::Module>(name, *context)}
         , ir_builder{std::make_unique<llvm::IRBuilder<>>(*context)}
@@ -71,6 +73,7 @@ namespace visitor {
                 {"bool", llvm::Type::getInt1Ty(*context)},
                 {"char", llvm::Type::getInt8Ty(*context)}}
         , active_values{{}}
+        , program_globals{program_globals}
         , instrinics{{"syscall", &codegen::syscall}} {
         ir_module->setTargetTriple(init_llvm_targets());
     }
@@ -469,6 +472,29 @@ namespace visitor {
     void codegen::visit(ast::top_level & top_level) { top_level.accept(*this); }
 
     void codegen::visit(ast::top_level_sequence & top_level_sequence) {
+
+        if (not top_level_sequence.imports.empty()) {
+            assert(program_globals != nullptr);
+            for (auto & [src_module, ids] : top_level_sequence.imports) {
+                auto module_iter = program_globals->find(src_module);
+                assert(module_iter != program_globals->end());
+                for (auto & id : ids) {
+                    auto id_iter = module_iter->second.find(id);
+                    assert(id_iter != module_iter->second.end());
+                    if (auto * func_type = llvm::dyn_cast<llvm::FunctionType>(id_iter->second);
+                        func_type != nullptr) {
+                        auto * func
+                            = llvm::Function::Create(func_type, llvm::GlobalValue::ExternalLinkage,
+                                                     id_iter->first, ir_module.get());
+                        func->deleteBody();
+                        active_values.back().emplace(id_iter->first, func);
+                    } else {
+                        printError(id_iter->first + " cannot be imported");
+                    }
+                }
+            }
+        }
+
         for (auto & item : top_level_sequence.items) {
             assert(item != nullptr);
             item->accept(*this);
