@@ -26,7 +26,6 @@ class program final {
     std::unique_ptr<llvm::LLVMContext> context;
     std::shared_ptr<Settings> settings;
     std::vector<ast::top_level_sequence> ast_modules;
-    std::map<std::string, std::map<std::string, llvm::Type *>> program_globals;
     std::vector<std::unique_ptr<llvm::Module>> ir_modules;
 };
 

@@ -1,2 +1,5 @@
+export {
+	foo (x : int, int y) -> int = (x + y) / 2
 
-export foo (x : int, int y) -> int = (x + y) / 2
+	const bar : int = 10
+}

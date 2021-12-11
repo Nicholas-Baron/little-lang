@@ -2,6 +2,7 @@
 
 #include "ast/top_lvl_nodes.hpp"
 #include "emit_asm.hpp"
+#include "global_values.hpp"
 #include "jit.hpp"
 #include "utils/string_utils.hpp"
 #include "visitor/codegen.hpp"
@@ -156,6 +157,7 @@ program::program(std::vector<ast::top_level_sequence> && modules,
     , ast_modules(std::move(modules)) {}
 
 bool program::type_check() {
+    std::map<std::string, std::map<std::string, llvm::Type *>> program_globals;
     for (auto & mod : ast_modules) {
         // Note: currently, the ast imports are not updated with absolute paths,
         // but the ast filenames are absolute paths.
@@ -171,9 +173,10 @@ bool program::type_check() {
 }
 
 void program::generate_ir() {
+    global_values globals;
     for (auto & mod : ast_modules) {
         auto filename = mod.filename.substr(mod.filename.find_last_of('/') + 1);
-        visitor::codegen codegen{filename, context.get(), &program_globals};
+        visitor::codegen codegen{filename, context.get(), &globals};
         codegen.visit(mod);
         codegen.verify_module();
         if (settings->flag_is_set(cmd_flag::debug_ir)) { codegen.dump(); }

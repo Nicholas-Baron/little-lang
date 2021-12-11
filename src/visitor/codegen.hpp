@@ -2,6 +2,7 @@
 #define CODEGEN_HPP
 
 #include "ast/node_utils.hpp"
+#include "global_values.hpp"
 #include "location.hpp"
 #include "value_getter.hpp"
 #include "visitor_base.hpp"
@@ -16,8 +17,7 @@ namespace visitor {
     class codegen final : public visitor_base,
                           public value_getter<codegen, ast::node, llvm::Value *> {
       public:
-        codegen(const std::string & name, llvm::LLVMContext *,
-                std::map<std::string, std::map<std::string, llvm::Type *>> *);
+        codegen(const std::string & name, llvm::LLVMContext *, global_values *);
 
         non_copyable(codegen);
 
@@ -55,7 +55,7 @@ namespace visitor {
 
         std::map<std::string, llvm::Type *> types;
         std::vector<std::map<std::string, llvm::Value *>> active_values;
-        std::map<std::string, std::map<std::string, llvm::Type *>> * program_globals;
+        global_values * program_globals;
 
         std::map<std::string, void (codegen::*)(ast::func_call_data &)> instrinics;
     };

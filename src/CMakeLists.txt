@@ -16,6 +16,7 @@ set(
   proj_files
   ast/nodes.cpp
   emit_asm.cpp
+  global_values.cpp
   jit.cpp
   location.cpp
   new_parser.cpp

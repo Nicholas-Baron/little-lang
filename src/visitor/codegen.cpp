@@ -63,7 +63,7 @@ namespace visitor {
     // TODO: Make a function to init type map with builtin types
 
     codegen::codegen(const std::string & name, llvm::LLVMContext * context,
-                     std::map<std::string, std::map<std::string, llvm::Type *>> * program_globals)
+                     global_values * program_globals)
         : context{context}
         , ir_module{std::make_unique<llvm::Module>(name, *context)}
         , ir_builder{std::make_unique<llvm::IRBuilder<>>(*context)}
@@ -90,11 +90,6 @@ namespace visitor {
                 if (global != nullptr and global->hasInitializer()) {
                     return global->getInitializer();
                 }
-                if (global != nullptr) {
-                    printError("Uninitalized globals are not handled currently");
-                    assert(false);
-                }
-
                 return iter->second;
             }
         }
@@ -301,6 +296,10 @@ namespace visitor {
             value,      const_decl.name_and_type.name()};
 
         active_values.back().emplace(const_decl.name_and_type.name(), global);
+        if (const_decl.exported()) {
+            program_globals->add(ir_module->getModuleIdentifier(), const_decl.name_and_type.name(),
+                                 global);
+        }
     }
 
     void codegen::visit(ast::expr & expr) { expr.accept(*this); }
@@ -392,6 +391,10 @@ namespace visitor {
             }
             ir_builder->CreateRetVoid();
         }
+
+        if (func_decl.exported()) {
+            program_globals->add(ir_module->getModuleIdentifier(), func_decl.head.name(), func);
+        }
     }
 
     void codegen::visit(ast::if_stmt & if_stmt) {
@@ -476,20 +479,20 @@ namespace visitor {
         if (not top_level_sequence.imports.empty()) {
             assert(program_globals != nullptr);
             for (auto & [src_module, ids] : top_level_sequence.imports) {
-                auto module_iter = program_globals->find(src_module);
-                assert(module_iter != program_globals->end());
                 for (auto & id : ids) {
-                    auto id_iter = module_iter->second.find(id);
-                    assert(id_iter != module_iter->second.end());
-                    if (auto * func_type = llvm::dyn_cast<llvm::FunctionType>(id_iter->second);
-                        func_type != nullptr) {
-                        auto * func
-                            = llvm::Function::Create(func_type, llvm::GlobalValue::ExternalLinkage,
-                                                     id_iter->first, ir_module.get());
+                    auto * global = program_globals->lookup(src_module, id);
+                    assert(global != nullptr);
+                    if (auto * func_orig = llvm::dyn_cast<llvm::Function>(global);
+                        func_orig != nullptr) {
+                        auto * func = llvm::Function::Create(func_orig->getFunctionType(),
+                                                             llvm::GlobalValue::ExternalLinkage, id,
+                                                             ir_module.get());
                         func->deleteBody();
-                        active_values.back().emplace(id_iter->first, func);
-                    } else {
-                        printError(id_iter->first + " cannot be imported");
+                        active_values.back().emplace(id, func);
+                    } else if (auto * global_var = llvm::dyn_cast<llvm::GlobalVariable>(global);
+                               global_var != nullptr) {
+                        // must be a global constant
+                        active_values.back().emplace(id, global_var);
                     }
                 }
             }
