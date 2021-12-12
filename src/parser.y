@@ -29,7 +29,7 @@ program : imports top_lvl_seq
 
 imports : %empty
         | imports T_FROM T_STRING T_IMPORT import_list
-		;
+        ;
 
 import_list : T_IDENT
             | import_list T_COMMA T_IDENT
@@ -39,7 +39,9 @@ top_lvl_seq : top_lvl_item
             | top_lvl_seq top_lvl_item
             ;
 
-top_lvl_item : internal_decl | export_decl ;
+top_lvl_item : internal_decl
+             | export_decl
+             ;
 
 export_decl : T_EXPORT "{" internal_decl_seq "}"
             | T_EXPORT internal_decl
@@ -49,10 +51,12 @@ internal_decl_seq : internal_decl
                   | internal_decl_seq internal_decl
                   ;
 
-internal_decl : const_decl | function ;
+internal_decl : const_decl
+              | function
+              ;
 
-const_decl : T_CONST typed_var initialization
-         ;
+const_decl : T_CONST typed_var T_ASSIGN expr
+           ;
 
 function : func_header stmt
          | func_header T_ASSIGN expr
@@ -66,7 +70,7 @@ ret_type : T_ARROW type
          ;
 
 func_sig : T_IDENT param_group
-		 ;
+         ;
 
 param_group : T_LPAREN T_RPAREN
             | T_LPAREN param_list T_RPAREN
@@ -81,35 +85,34 @@ typed_var : type T_IDENT
           ;
 
 stmt : stmt_block
-	 | action T_SEMI
-	 | conditional
-	 | func_call
-	 ;
+     | return_stmt T_SEMI
+     | let_stmt opt_semi
+     | conditional
+     | func_call opt_semi
+     ;
+
+opt_semi : %empty
+         | T_SEMI
+         ;
 
 stmt_block : T_LBRACE stmt_seq T_RBRACE
-		   ;
+           ;
 
 stmt_seq : %empty
          | stmt_seq stmt
          ;
 
-action : T_RET expr
-       | T_RET
-       | T_LET T_IDENT initialization
-       | T_LET typed_var initialization
-       ;
+let_stmt : T_LET T_IDENT T_ASSIGN expr
+         | T_LET typed_var T_ASSIGN expr
+         ;
 
-conditional : T_IF expr stmt_block else_block
-            | T_IF expr stmt
+return_stmt : T_RET expr
+            | T_RET
             ;
 
-else_block : T_ELSE stmt_block
-           | T_ELSE conditional
-           ;
-
-initialization : T_ASSIGN expr
-               | T_LBRACE expr T_RBRACE
-               ;
+conditional : T_IF expr stmt_block T_ELSE stmt
+            | T_IF expr stmt
+            ;
 
 literal : T_INT
         | T_FLOAT
@@ -140,7 +143,6 @@ expr  : T_IDENT
       ;
 
 func_call : T_IDENT arg_group
-          | T_IDENT T_DOT func_call
           ;
 
 arg_group : T_LPAREN arg_list T_RPAREN
@@ -152,7 +154,7 @@ arg_list : expr
          ;
 
 type : T_PRIM_TYPE
-	 | T_IDENT
-	 ;
+     | T_IDENT
+     ;
 
 %%
