@@ -12,7 +12,7 @@
 namespace visitor {
 
     type_checker::type_checker(std::string filename, llvm::LLVMContext * context,
-                               std::map<std::string, std::map<std::string, llvm::Type *>> * imports)
+                               global_map<llvm::Type *> * imports)
         : filename{std::move(filename)}
         , context{context}
         , program_globals{imports} {
@@ -32,10 +32,7 @@ namespace visitor {
 
     void type_checker::bind_type(llvm::Type * type, std::string identifier, bool should_export) {
         if (should_export and program_globals != nullptr) {
-            auto [iter, _]
-                = program_globals->emplace(filename, std::map<std::string, llvm::Type *>{});
-            assert(iter != program_globals->end());
-            iter->second.emplace(identifier, type);
+            program_globals->add(filename, identifier, type);
         }
         active_typed_identifiers.back().emplace(std::move(identifier), type);
     }
@@ -311,20 +308,13 @@ namespace visitor {
                 assert(false);
             }
             for (auto & [filename, imports] : top_level_sequence.imports) {
-                auto file_iter = program_globals->find(filename);
-                if (file_iter == program_globals->end()) {
-                    std::cout << "File " << filename << " was not found" << std::endl;
-                    assert(false);
-                }
-
-                auto & imports_from_file = file_iter->second;
                 for (auto & id : imports) {
-                    auto import_iter = imports_from_file.find(id);
-                    if (import_iter == imports_from_file.end()) {
+                    auto * import_type = this->program_globals->lookup(filename, id);
+                    if (import_type == nullptr) {
                         std::cout << "File " << filename << " does not export " << id << std::endl;
                         assert(false);
                     }
-                    bind_type(import_iter->second, id);
+                    bind_type(import_type, id);
                 }
             }
         }

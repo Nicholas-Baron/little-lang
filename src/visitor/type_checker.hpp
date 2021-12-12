@@ -1,6 +1,7 @@
 #ifndef type_checker_HPP
 #define type_checker_HPP
 
+#include "global_values.hpp"
 #include "location.hpp"
 #include "value_getter.hpp"
 #include "visitor_base.hpp"
@@ -15,8 +16,7 @@ namespace visitor {
     class type_checker final : public visitor_base,
                                public value_getter<type_checker, ast::node, llvm::Type *> {
       public:
-        type_checker(std::string filename, llvm::LLVMContext *,
-                     std::map<std::string, std::map<std::string, llvm::Type *>> *);
+        type_checker(std::string filename, llvm::LLVMContext *, global_map<llvm::Type *> *);
 
         non_copyable(type_checker);
 
@@ -47,7 +47,7 @@ namespace visitor {
         llvm::LLVMContext * context;
 
         std::vector<std::map<std::string, llvm::Type *>> active_typed_identifiers;
-        std::map<std::string, std::map<std::string, llvm::Type *>> * program_globals;
+        global_map<llvm::Type *> * program_globals;
         std::map<std::string, void (type_checker::*)(ast::func_call_data &)> instrinics;
 
         llvm::Type * current_return_type{nullptr};

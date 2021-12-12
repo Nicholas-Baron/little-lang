@@ -159,7 +159,7 @@ program::program(std::vector<ast::top_level_sequence> && modules,
     , ast_modules(std::move(modules)) {}
 
 bool program::type_check() {
-    std::map<std::string, std::map<std::string, llvm::Type *>> program_globals;
+    global_map< llvm::Type *> program_globals;
     for (auto & mod : ast_modules) {
         // Note: currently, the ast imports are not updated with absolute paths,
         // but the ast filenames are absolute paths.
