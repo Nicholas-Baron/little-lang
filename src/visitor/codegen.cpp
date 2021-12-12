@@ -481,7 +481,11 @@ namespace visitor {
             for (auto & [src_module, ids] : top_level_sequence.imports) {
                 for (auto & id : ids) {
                     auto * global = program_globals->lookup(src_module, id);
-                    assert(global != nullptr);
+                    if (global == nullptr) {
+                        llvm::outs() << "Could not find " << id << " in exports of module "
+                                     << src_module << '\n';
+                        assert(false);
+                    }
                     if (auto * func_orig = llvm::dyn_cast<llvm::Function>(global);
                         func_orig != nullptr) {
                         auto * func = llvm::Function::Create(func_orig->getFunctionType(),

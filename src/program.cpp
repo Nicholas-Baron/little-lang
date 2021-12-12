@@ -177,7 +177,7 @@ bool program::type_check() {
 void program::generate_ir() {
     global_values globals;
     for (auto & mod : ast_modules) {
-        auto filename = mod.filename.substr(mod.filename.find_last_of('/') + 1);
+        auto filename = std::filesystem::relative(mod.filename, project_root);
         visitor::codegen codegen{filename, context.get(), &globals};
         codegen.visit(mod);
         codegen.verify_module();
