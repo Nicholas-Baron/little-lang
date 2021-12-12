@@ -67,6 +67,7 @@ class parser final {
     std::unique_ptr<ast::if_stmt> parse_if_statement();
     std::unique_ptr<ast::return_stmt> parse_return_statement();
     std::unique_ptr<ast::let_stmt> parse_let_statement();
+    ast::typed_identifier parse_typed_identifier();
     std::string parse_type();
 
     // The following parsing functions deal with expression syntax,

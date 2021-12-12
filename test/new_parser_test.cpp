@@ -334,6 +334,30 @@ TEST_CASE("the parser will parse braces as a compound statement") {
     CHECK(stmt != nullptr);
 }
 
+TEST_CASE("the parser will parse typed identifiers in both new style and C-style") {
+
+    ast::typed_identifier typed_id_1 = [] {
+        std::string buffer = "int x";
+        auto parser = parser::from_buffer(buffer);
+
+        CHECK(parser != nullptr);
+
+        return parser->parse_typed_identifier();
+    }();
+
+    ast::typed_identifier typed_id_2 = [] {
+        std::string buffer = "x : int";
+        auto parser = parser::from_buffer(buffer);
+
+        CHECK(parser != nullptr);
+
+        return parser->parse_typed_identifier();
+    }();
+
+    CHECK(typed_id_1.name() == typed_id_2.name());
+    CHECK(typed_id_1.type() == typed_id_2.type());
+}
+
 TEST_CASE("the parser will parse let statement") {
     std::string buffer = "let x = \"hello\";";
     auto parser = parser::from_buffer(buffer);
