@@ -8,47 +8,34 @@ class Location final {
 
   public:
     constexpr Location()
-        : Location(0, 0, 0, 0) {}
+        : Location(0, 0) {}
 
-    explicit constexpr Location(int start_line, int start_col, int end_line, int end_col)
-        : start_pos(start_line, start_col)
-        , end_pos(end_line, end_col) {}
+    constexpr Location(int line, int column)
+        : line_num{line}
+        , column_num{column} {}
 
-    [[nodiscard]] constexpr auto first_line() const noexcept { return start_pos.first; }
-    [[nodiscard]] constexpr auto first_column() const noexcept { return start_pos.second; }
-    [[nodiscard]] constexpr auto last_line() const noexcept { return end_pos.first; }
-    [[nodiscard]] constexpr auto last_column() const noexcept { return end_pos.second; }
-
-    [[nodiscard]] constexpr bool operator==(const Location & rhs) const noexcept {
-        return start_pos == rhs.start_pos and end_pos == rhs.end_pos;
-    }
-
-    [[nodiscard]] constexpr bool oneline() const noexcept {
-        return start_pos.first == end_pos.first;
-    }
+    [[nodiscard]] constexpr auto line() const noexcept { return line_num; }
+    [[nodiscard]] constexpr auto column() const noexcept { return column_num; }
 
   private:
-    // Line first
-    std::pair<int, int> start_pos;
-    std::pair<int, int> end_pos;
-};
-
-constexpr bool operator!=(const Location & lhs, const Location & rhs) noexcept {
-    return not(lhs == rhs);
-}
-
-constexpr bool operator<(const Location & lhs, const Location & rhs) noexcept {
-
-    if (lhs.first_line() != rhs.first_line()) { return lhs.first_line() < rhs.first_line(); }
-
-    if (lhs.first_column() != rhs.first_column()) {
-        return lhs.first_column() < rhs.first_column();
+    friend constexpr bool operator==(const Location & lhs, const Location & rhs) noexcept {
+        return lhs.line() == rhs.line() and lhs.column() == rhs.column();
     }
 
-    if (lhs.last_line() != rhs.last_line()) { return lhs.last_line() < rhs.last_line(); }
+    friend constexpr bool operator!=(const Location & lhs, const Location & rhs) noexcept {
+        return not(lhs == rhs);
+    }
 
-    return lhs.last_column() < rhs.last_column();
-}
+    friend constexpr bool operator<(const Location & lhs, const Location & rhs) noexcept {
+
+        if (lhs.line() != rhs.line()) { return lhs.line() < rhs.line(); }
+
+        return lhs.column() < rhs.column();
+    }
+
+    int line_num;
+    int column_num;
+};
 
 std::ostream & operator<<(std::ostream & lhs, const Location & rhs);
 
