@@ -24,14 +24,6 @@ std::string init_llvm_targets() {
     return sys::getDefaultTargetTriple();
 }
 
-[[nodiscard]] std::string make_output_name(const std::string & input) {
-    auto last_dot = input.find_last_of('.');
-    auto last_slash = input.find_last_of('/') + 1;
-    auto base_filename = input.substr(last_slash, last_dot - last_slash);
-    assert(not base_filename.empty());
-    return base_filename + ".o";
-}
-
 void emit_asm(std::unique_ptr<llvm::Module> ir_module, std::string && output_filename,
               bool debug_optimized_ir) {
 
@@ -53,6 +45,16 @@ void emit_asm(std::unique_ptr<llvm::Module> ir_module, std::string && output_fil
     ir_module->setDataLayout(target_machine->createDataLayout());
 
     std::error_code ec;
+
+    if (auto slash_pos = output_filename.find_last_of('/'); slash_pos != std::string::npos) {
+        if (ec = llvm::sys::fs::create_directories(output_filename.substr(0, slash_pos)); ec) {
+            errs() << "Could not create directories for " << output_filename << " : "
+                   << ec.message() << '\n';
+            errs().flush();
+            return;
+        }
+    }
+
     llvm::raw_fd_ostream dest{output_filename, ec, llvm::sys::fs::OF_None};
 
     if (ec) {

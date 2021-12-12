@@ -190,14 +190,13 @@ void program::emit_and_link() {
 
     std::vector<std::string> gcc_args{"gcc", "-static"};
     for (auto && mod : ir_modules) {
-        auto output_name = make_output_name(mod->getSourceFileName());
+        auto output_name = std::filesystem::path(mod->getSourceFileName()).replace_extension("o");
         gcc_args.emplace_back(output_name);
         emit_asm(std::move(mod), std::string{output_name},
                  settings->flag_is_set(cmd_flag::debug_optimized_ir));
     }
 
-    auto output_name = make_output_name(ast_modules.back().filename);
-    auto program_name = output_name.substr(0, output_name.find_last_of('.'));
+    auto program_name = std::filesystem::path(ast_modules.back().filename).stem();
 
     gcc_args.emplace_back("-o");
     gcc_args.emplace_back(program_name);
