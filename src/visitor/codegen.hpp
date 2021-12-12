@@ -2,7 +2,7 @@
 #define CODEGEN_HPP
 
 #include "ast/node_utils.hpp"
-#include "global_values.hpp"
+#include "global_map.hpp"
 #include "location.hpp"
 #include "value_getter.hpp"
 #include "visitor_base.hpp"

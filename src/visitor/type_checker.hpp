@@ -1,7 +1,7 @@
 #ifndef type_checker_HPP
 #define type_checker_HPP
 
-#include "global_values.hpp"
+#include "global_map.hpp"
 #include "location.hpp"
 #include "value_getter.hpp"
 #include "visitor_base.hpp"

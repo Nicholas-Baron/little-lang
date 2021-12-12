@@ -2,7 +2,7 @@
 
 #include "ast/top_lvl_nodes.hpp"
 #include "emit_asm.hpp"
-#include "global_values.hpp"
+#include "global_map.hpp"
 #include "jit.hpp"
 #include "utils/string_utils.hpp"
 #include "visitor/codegen.hpp"
@@ -159,7 +159,7 @@ program::program(std::vector<ast::top_level_sequence> && modules,
     , ast_modules(std::move(modules)) {}
 
 bool program::type_check() {
-    global_map< llvm::Type *> program_globals;
+    global_map<llvm::Type *> program_globals;
     for (auto & mod : ast_modules) {
         // Note: currently, the ast imports are not updated with absolute paths,
         // but the ast filenames are absolute paths.
