@@ -63,7 +63,7 @@ namespace visitor {
     // TODO: Make a function to init type map with builtin types
 
     codegen::codegen(const std::string & name, llvm::LLVMContext * context,
-                     global_values * program_globals)
+                     global_map<llvm::GlobalObject *> * program_globals)
         : context{context}
         , ir_module{std::make_unique<llvm::Module>(name, *context)}
         , ir_builder{std::make_unique<llvm::IRBuilder<>>(*context)}

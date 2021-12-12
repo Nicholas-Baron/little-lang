@@ -175,7 +175,7 @@ bool program::type_check() {
 }
 
 void program::generate_ir() {
-    global_values globals;
+    global_map<llvm::GlobalObject *> globals;
     for (auto & mod : ast_modules) {
         auto filename = std::filesystem::relative(mod.filename, project_root);
         visitor::codegen codegen{filename, context.get(), &globals};

@@ -17,7 +17,7 @@ namespace visitor {
     class codegen final : public visitor_base,
                           public value_getter<codegen, ast::node, llvm::Value *> {
       public:
-        codegen(const std::string & name, llvm::LLVMContext *, global_values *);
+        codegen(const std::string & name, llvm::LLVMContext *, global_map<llvm::GlobalObject *> *);
 
         non_copyable(codegen);
 
@@ -55,7 +55,7 @@ namespace visitor {
 
         std::map<std::string, llvm::Type *> types;
         std::vector<std::map<std::string, llvm::Value *>> active_values;
-        global_values * program_globals;
+        global_map<llvm::GlobalObject *> * program_globals;
 
         std::map<std::string, void (codegen::*)(ast::func_call_data &)> instrinics;
     };
