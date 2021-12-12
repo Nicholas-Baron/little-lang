@@ -75,7 +75,7 @@ TEST_CASE("the parser will parse primitive types") {
     CHECK(parser->next_token() == parser::token_type::eof);
 }
 
-TEST_CASE("the parser will parse an identifier with underscores") {
+TEST_CASE("the parser will parse an identifier containing underscores") {
     std::string buffer = "my_value";
     auto parser = parser::from_buffer(buffer);
 
@@ -84,6 +84,18 @@ TEST_CASE("the parser will parse an identifier with underscores") {
     auto tok = parser->next_token();
     CHECK(tok == parser::token_type::identifier);
     CHECK(tok == "my_value");
+    CHECK(parser->next_token() == parser::token_type::eof);
+}
+
+TEST_CASE("the parser will parse an identifier starting with underscores") {
+    std::string buffer = "_value";
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    auto tok = parser->next_token();
+    CHECK(tok == parser::token_type::identifier);
+    CHECK(tok == "_value");
     CHECK(parser->next_token() == parser::token_type::eof);
 }
 

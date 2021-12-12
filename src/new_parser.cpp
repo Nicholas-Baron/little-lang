@@ -657,7 +657,7 @@ parser::token parser::next_token() {
     if (peek_char() == EOF) { return {token_type::eof, ""}; }
 
     // we are now at the first meaningful token
-    if (isalpha(peek_char()) != 0) { return next_identifier(); }
+    if (isalpha(peek_char()) != 0 or peek_char() == '_') { return next_identifier(); }
     if (isdigit(peek_char()) != 0) { return next_number(); }
     return next_symbol();
 }
