@@ -1,31 +1,29 @@
 #include "new_parser.hpp"
 
-#include "ast/base_nodes.hpp"
 #include "ast/node_utils.hpp"
 #include "ast/nodes.hpp"
-#include "ast/nodes_forward.hpp"
-#include "ast/stmt_nodes.hpp"
-#include "ast/top_lvl_nodes.hpp"
-#include "unistd.h" // close
-#include "utils/string_utils.hpp"
-#include <sys/mman.h> // mmap
-#include <sys/stat.h> // fstat
+#include "unistd.h"               // close
+#include "utils/string_utils.hpp" // unquote
+#include <sys/mman.h>             // mmap
+#include <sys/stat.h>             // fstat
 
 #include <cassert>
 #include <cctype>   // isspace
 #include <fcntl.h>  // open
 #include <iostream> // cerr
 #include <map>
-#include <memory>
+#include <memory> // unique_ptr
 
 std::unique_ptr<parser> parser::from_file(const std::string & filename) {
 
+    // First, we open the file via a Linux syscall.
     auto fd = open(filename.c_str(), O_CLOEXEC | O_RDONLY);
     if (fd == -1) {
         perror("parser open");
         return nullptr;
     }
 
+    // Then, we read the open file's size.
     struct stat file_stats;
     if (fstat(fd, &file_stats) == -1) {
         perror("parser stat");
@@ -34,17 +32,20 @@ std::unique_ptr<parser> parser::from_file(const std::string & filename) {
 
     const auto file_length = file_stats.st_size;
 
+    // Next, we map the file into our memory.
     auto * data = (char *)mmap(nullptr, file_length, PROT_READ, MAP_PRIVATE, fd, 0);
     if (data == MAP_FAILED) {
         perror("parser mmap");
         return nullptr;
     }
 
+    // Finally, we close that file, as the mapping does not need it open.
     if (close(fd) != 0) {
         perror("parser close");
         return nullptr;
     }
 
+    // NOTE: `make_unique` does not like private constructors.
     return std::unique_ptr<parser>(new parser(filename, data, file_length));
 }
 
@@ -66,6 +67,7 @@ parser::parser(const char * data, size_t size)
 
 parser::~parser() {
     if (type == data_type::mmapped) {
+        // If we mapped in a file for our input, we need to clean up that mapping.
         if (munmap(const_cast<char *>(data), length) == -1) { perror("parser munmap"); }
     }
 }
@@ -77,13 +79,16 @@ std::unique_ptr<ast::top_level_sequence> parser::parse() {
     auto tok = peek_token();
 
     if (tok == token_type::eof) {
+        // We do not allow an empty module.
         error = "Found empty file";
         return nullptr;
     }
 
+    // There may be some imports to parse.
     if (tok == token_type::from) { to_ret->imports = parse_imports(); }
 
     while (peek_token() != token_type::eof) {
+        // The only special case here is `export`, as we do not allow `export export`.
         if (peek_token() == token_type::export_) {
             to_ret->append(parse_exports());
         } else {
@@ -102,10 +107,10 @@ ast::top_lvl_ptr parser::parse_top_level() {
 
     switch (peek_token().type) {
     case token_type::identifier:
-        // parse function
+        // Parse a function
         return parse_function();
     case token_type::const_:
-        // parse function
+        // Parse a constant
         return parse_const_decl();
     default:
         error = "Unexpected " + next_token().text;
@@ -118,12 +123,16 @@ std::vector<ast::top_lvl_ptr> parser::parse_exports() {
 
     std::vector<ast::top_lvl_ptr> items;
     if (consume_if(token_type::lbrace).has_value()) {
+        // We have found an export block.
+        // All items inside of it need to be exported.
         while (peek_token() != token_type::rbrace) { items.push_back(parse_top_level()); }
         assert(next_token() == token_type::rbrace);
     } else {
+        // There is only a single item to export.
         items.push_back(parse_top_level());
     }
 
+    // Mark all parsed items as exported.
     for (auto & item : items) { item->should_export(true); }
     return items;
 }
@@ -132,7 +141,8 @@ std::map<std::string, std::vector<std::string>> parser::parse_imports() {
 
     std::map<std::string, std::vector<std::string>> to_ret;
 
-    // parse possible imports
+    // Parse imports
+    // Imports take the form of `from "filename" import x, y`, optionally ending in a semicolon.
     while (peek_token() == token_type::from) {
         assert(next_token() == token_type::from);
         auto filename = next_token();
@@ -146,16 +156,21 @@ std::map<std::string, std::vector<std::string>> parser::parse_imports() {
             identifiers.push_back(next_token().text);
 
             if (consume_if(token_type::comma).has_value()) {
+                // There are more identifiers to import from this module
                 assert(peek_token() == token_type::identifier);
                 continue;
             }
 
+            // There are no more identifiers to import from this module
             if (consume_if(token_type::semi).has_value()) { break; }
 
             switch (peek_token().type) {
             case token_type::identifier:
+                // Double identifiers signal the start of a function.
+            case token_type::const_:
+                // `const` signals the start of a constant.
             case token_type::from:
-                // end of this import
+                // `from` signals a new import.
                 more_ids = false;
                 break;
             default:
@@ -171,6 +186,12 @@ std::map<std::string, std::vector<std::string>> parser::parse_imports() {
 
 std::unique_ptr<ast::func_decl> parser::parse_function() {
 
+	// Function declarations take the form of `name`,
+	// followed by parenthesis-enclosed arguments,
+	// followed by a return type,
+	// followed by a body.
+
+	// Parse the function's name.
     auto tok = next_token();
     auto func_name = tok.text;
     assert(tok == token_type::identifier);
@@ -178,12 +199,13 @@ std::unique_ptr<ast::func_decl> parser::parse_function() {
     tok = next_token();
     assert(tok == token_type::lparen);
 
+	// Parse the arguments (there may be none).
     std::vector<ast::typed_identifier> args;
     while (peek_token() == token_type::identifier or peek_token() == token_type::prim_type) {
         auto first_id = next_token();
 
         // type id or id : type
-        // if the first token we see is a primitive type, there should not be a colon.
+        // If the first token we see is a primitive type, there should not be a colon.
         auto name_first
             = first_id != token_type::prim_type and consume_if(token_type::colon).has_value();
 
@@ -195,12 +217,13 @@ std::unique_ptr<ast::func_decl> parser::parse_function() {
                      : ast::typed_identifier{std::move(second_id.text), std::move(first_id.text)};
         args.push_back(std::move(arg));
 
+		// If there is a comma, there are more arguments.
         if (consume_if(token_type::comma).has_value()) { continue; }
 
         switch (peek_token().type) {
         case token_type::rparen:
-            // this will be consumed after the loop.
-            // just ignore
+            // This will be consumed after the loop.
+            // Ignore it for now.
             break;
         default:
             // this should not happen
@@ -212,19 +235,25 @@ std::unique_ptr<ast::func_decl> parser::parse_function() {
     assert(tok == token_type::rparen);
 
     ast::func_decl::header func_header{std::move(func_name), std::move(args)};
+
+	// Parse the optional return type.
     if (consume_if(token_type::arrow).has_value()) {
         func_header.set_ret_type(parse_type());
     } else {
         func_header.set_ret_type("unit");
     }
 
-    // check for expression body
+    // The body of a function may either be an `=` followed by an expression,
+	// or just a statement.
     if (consume_if(token_type::equal).has_value()) {
         auto body = parse_expression();
+		// We need to inject the implied return for the expression,
+		// as a function's body is just a statement
         return std::make_unique<ast::func_decl>(
             std::move(func_header), std::make_unique<ast::return_stmt>(std::move(body)));
     }
 
+	// Parse the statement that is the function body
     auto body = parse_statement();
     if (body == nullptr) {
         error = "Could not find body for " + func_header.name();
@@ -237,16 +266,18 @@ std::unique_ptr<ast::func_decl> parser::parse_function() {
 std::unique_ptr<ast::const_decl> parser::parse_const_decl() {
     assert(next_token() == token_type::const_);
 
+	// Parse the identifier and type of the constant
     assert(peek_token() == token_type::identifier);
     auto id = next_token().text;
     assert(next_token() == token_type::colon);
     auto type = parse_type();
 
     assert(next_token() == token_type::equal);
+	// Parse the initializer of the constant
     auto value = parse_expression();
     assert(value != nullptr);
 
-    // optional consume ';'
+	// Parse optional semicolon
     consume_if(token_type::semi);
     return std::make_unique<ast::const_decl>(ast::typed_identifier{std::move(id), std::move(type)},
                                              std::move(value));
@@ -264,7 +295,7 @@ ast::stmt_ptr parser::parse_statement() {
         return parse_let_statement();
     case token_type::identifier: {
         auto func_call = std::make_unique<ast::func_call_stmt>(parse_func_call());
-        // optionally consume a semi
+        // Optionally consume a semicolon for function calls.
         consume_if(token_type::semi);
         return func_call;
     }
@@ -275,6 +306,9 @@ ast::stmt_ptr parser::parse_statement() {
 }
 
 ast::stmt_ptr parser::parse_compound_statement() {
+	// a compound statement is a `{`,
+	// followed by some statements,
+	// followed by a `}`.
     auto tok = next_token();
     assert(tok == token_type::lbrace);
 
@@ -295,6 +329,8 @@ std::unique_ptr<ast::if_stmt> parser::parse_if_statement() {
     assert(next_token() == token_type::if_);
     auto condition = parse_expression();
 
+	// an `if` can only have an `else` when it is written `if x {} else {}`,
+	// that is the then block is a compund statement.
     const bool can_have_else = peek_token() == token_type::lbrace;
     auto then_block = parse_statement();
 
@@ -310,11 +346,11 @@ std::unique_ptr<ast::return_stmt> parser::parse_return_statement() {
     assert(next_token() == token_type::return_);
 
     if (consume_if(token_type::semi).has_value()) {
-        // no expression
+        // Found no expression
         return std::make_unique<ast::return_stmt>();
     }
 
-    // expression
+    // Found an expression
     auto value = parse_expression();
     assert(next_token() == token_type::semi);
     return std::make_unique<ast::return_stmt>(std::move(value));
@@ -322,6 +358,11 @@ std::unique_ptr<ast::return_stmt> parser::parse_return_statement() {
 
 std::unique_ptr<ast::let_stmt> parser::parse_let_statement() {
     assert(next_token() == token_type::let);
+
+	// A let statement is made of `let`,
+	// followed by an optionally-typed identifier,
+	// followed by `=`,
+	// followed by an expression.
 
     assert(peek_token() == token_type::identifier);
     auto id = next_token().text;
@@ -341,6 +382,7 @@ std::unique_ptr<ast::let_stmt> parser::parse_let_statement() {
 }
 
 std::string parser::parse_type() {
+	// a type can either be some primitive or a user-defined type.
     switch (peek_token().type) {
     case token_type::identifier:
     case token_type::prim_type:

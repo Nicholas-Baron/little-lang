@@ -6,22 +6,40 @@
 #include <utils/move_copy.hpp>
 
 #include <map>
-#include <memory>
+#include <memory> // unique_ptr
 #include <optional>
 #include <string>
 #include <vector>
 
+// This class takes some character input and produces an abstract syntax tree (AST).
+// In a development compilation, its public interface is rather small,
+// consisting only of two static functions, two member functions, and a destructor.
+// However, for testing purposes,
+// a larger swath of internal parsing helpers is exposed to test each one of them independently.
+//
+// The two static functions serve as factory functions for the parser class,
+// as creating the parser may fail.
 class parser final {
   public:
+    // `from_file` loads a file from given filename and uses that as input.
+    // The file data is internally allocated and freed by the parser.
     static std::unique_ptr<parser> from_file(const std::string & filename);
 
-    // We do not own the string. The caller must store the string.
+    // `from_buffer` uses the given string as its input.
+    // Note that the parser does not own the string and maintains a readonly view into it.
+    // The caller must store the string *and* ensure that it is not modified while the parser is
+    // alive.
     static std::unique_ptr<parser> from_buffer(std::string & buffer);
 
+    // `parse` parses a single module (one file).
+    // Any failure in parsing results in a `nullptr`.
+    // Otherwise, the AST of the parser's input is returned.
     [[nodiscard]] std::unique_ptr<ast::top_level_sequence> parse();
 
-    [[nodiscard]] std::string error_message() { return error; }
+    // In the case that `parse` failed, `error_message` will provide a human readable error.
+    [[nodiscard]] std::string error_message() const { return error; }
 
+    // The parser's inner state is rather complex, so not moving or copying it is essential.
     non_copyable(parser);
     non_movable(parser);
 
@@ -31,11 +49,14 @@ class parser final {
     parser(std::string filename, const char * data, size_t);
     parser(const char * data, size_t);
 
+    // As stated above,
+    // there are some internals which need to be tested independently of each other.
 #ifdef PARSER_TEST
   public:
 #endif
 
-    // parsing functions
+    // The following parsing functions deal with non-expression syntax,
+    // that is syntax that does not map to some value at runtime.
     std::map<std::string, std::vector<std::string>> parse_imports();
     ast::top_lvl_ptr parse_top_level();
     std::vector<ast::top_lvl_ptr> parse_exports();
@@ -48,7 +69,11 @@ class parser final {
     std::unique_ptr<ast::let_stmt> parse_let_statement();
     std::string parse_type();
 
-    // parse expressions
+    // The following parsing functions deal with expression syntax,
+    // that is syntax that does map to some value at runtime.
+    // They are arrange in roughly precedence order,
+    // such that the expressions they parse contain the function below them.
+	// This is the basis of a recursive decent parser.
     ast::expr_ptr parse_expression();
     ast::expr_ptr parse_boolean_expression();
     ast::expr_ptr parse_comparison();
@@ -56,8 +81,15 @@ class parser final {
     ast::expr_ptr parse_multiplicative();
     ast::expr_ptr parse_unary();
     ast::expr_ptr parse_atom();
+
+	// A function call can either be a statement or an expression.
+	// To reduce code duplication, `parse_func_call` handles both.
+	// In the expression case, we have already consumed the name, so we must pass it in.
     ast::func_call_data parse_func_call(std::optional<std::string> func_name = std::nullopt);
 
+    // This enum marks the type of a given token.
+    // This is done to speed up equality checking,
+    // and to denote whole groups of tokens (e.g. identifiers, integers).
     enum class token_type {
         unknown,
         identifier,
@@ -102,6 +134,7 @@ class parser final {
         eof,
     };
 
+    // This struct represents a token and can be compared against both a `token_type` and a string.
     struct token {
         token_type type;
         std::string text;
@@ -119,25 +152,40 @@ class parser final {
         }
     };
 
+    // The following functions are used to read and pop from the token stream.
+    // `consume_if` will only pop the next token if it is of the given type.
     std::optional<std::string> consume_if(token_type tok_type) {
         if (peek_token() == tok_type) { return next_token().text; }
         return std::nullopt;
     }
+
+    // `peek_token` returns the next token without removing it from the token stream.
     token peek_token() {
         if (not peeked_token.has_value()) { peeked_token = next_token(); }
         return peeked_token.value();
     }
+
+    // `next_token` returns the next token and removes it from the token stream.
     token next_token();
 
+    // The following are functions that operate on the character stream.
+    // `next_char` returns the next character and removes it from the stream.
     char next_char();
+
+    // `peek_char` returns the character at some offset into the stream,
+	// without removing it from the stream.
     char peek_char(unsigned offset = 0);
+
+    // `next_chars` checks that the characters at some offset into the stream are equal to the
+    // provided string.
     bool next_chars(const std::string &, unsigned offset = 0);
 
 #ifdef PARSER_TEST
   private:
 #endif
 
-    // helpers for next_token
+    // `next_token` has some complex, yet modular, logic for determining a token's type.
+	// These 3 functions are helpers to `next_token` that handle some, but not all, tokens each.
     token next_identifier();
     token next_number();
     token next_symbol();
@@ -149,6 +197,9 @@ class parser final {
     const char * data;
     size_t length;
     size_t current_pos{0};
+
+	// This enum is used to determine whether the parser came from a file or an internal buffer,
+	// and so how it should be cleaned up.
     enum data_type { mmapped, read_buffer } type;
 };
 
