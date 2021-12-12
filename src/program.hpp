@@ -21,8 +21,10 @@ class program final {
     [[nodiscard]] int jit();
 
   private:
-    program(std::vector<ast::top_level_sequence> &&, std::shared_ptr<Settings>);
+    program(std::vector<ast::top_level_sequence> &&, std::shared_ptr<Settings>,
+            std::string && project_root);
 
+	std::string project_root;
     std::unique_ptr<llvm::LLVMContext> context;
     std::shared_ptr<Settings> settings;
     std::vector<ast::top_level_sequence> ast_modules;

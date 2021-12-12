@@ -147,12 +147,14 @@ std::optional<program> program::from_modules(const std::string & root_file,
         dest_iter++;
     }
 
-    return program{std::move(modules), std::move(settings)};
+    return program{std::move(modules), std::move(settings),
+                   normalized_absolute_path(root_file).parent_path()};
 }
 
 program::program(std::vector<ast::top_level_sequence> && modules,
-                 std::shared_ptr<Settings> settings)
-    : context{std::make_unique<llvm::LLVMContext>()}
+                 std::shared_ptr<Settings> settings, std::string && project_root)
+    : project_root{std::move(project_root)}
+    , context{std::make_unique<llvm::LLVMContext>()}
     , settings{std::move(settings)}
     , ast_modules(std::move(modules)) {}
 
@@ -161,7 +163,7 @@ bool program::type_check() {
     for (auto & mod : ast_modules) {
         // Note: currently, the ast imports are not updated with absolute paths,
         // but the ast filenames are absolute paths.
-        auto filename = mod.filename.substr(mod.filename.find_last_of('/') + 1);
+        auto filename = std::filesystem::relative(mod.filename, project_root);
         visitor::type_checker type_checker{std::move(filename), context.get(), &program_globals};
         type_checker.visit(mod);
         if (not type_checker.checked_good()) {
