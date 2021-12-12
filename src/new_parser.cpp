@@ -186,12 +186,12 @@ std::map<std::string, std::vector<std::string>> parser::parse_imports() {
 
 std::unique_ptr<ast::func_decl> parser::parse_function() {
 
-	// Function declarations take the form of `name`,
-	// followed by parenthesis-enclosed arguments,
-	// followed by a return type,
-	// followed by a body.
+    // Function declarations take the form of `name`,
+    // followed by parenthesis-enclosed arguments,
+    // followed by a return type,
+    // followed by a body.
 
-	// Parse the function's name.
+    // Parse the function's name.
     auto tok = next_token();
     auto func_name = tok.text;
     assert(tok == token_type::identifier);
@@ -199,7 +199,7 @@ std::unique_ptr<ast::func_decl> parser::parse_function() {
     tok = next_token();
     assert(tok == token_type::lparen);
 
-	// Parse the arguments (there may be none).
+    // Parse the arguments (there may be none).
     std::vector<ast::typed_identifier> args;
     while (peek_token() == token_type::identifier or peek_token() == token_type::prim_type) {
         auto first_id = next_token();
@@ -217,7 +217,7 @@ std::unique_ptr<ast::func_decl> parser::parse_function() {
                      : ast::typed_identifier{std::move(second_id.text), std::move(first_id.text)};
         args.push_back(std::move(arg));
 
-		// If there is a comma, there are more arguments.
+        // If there is a comma, there are more arguments.
         if (consume_if(token_type::comma).has_value()) { continue; }
 
         switch (peek_token().type) {
@@ -236,7 +236,7 @@ std::unique_ptr<ast::func_decl> parser::parse_function() {
 
     ast::func_decl::header func_header{std::move(func_name), std::move(args)};
 
-	// Parse the optional return type.
+    // Parse the optional return type.
     if (consume_if(token_type::arrow).has_value()) {
         func_header.set_ret_type(parse_type());
     } else {
@@ -244,16 +244,16 @@ std::unique_ptr<ast::func_decl> parser::parse_function() {
     }
 
     // The body of a function may either be an `=` followed by an expression,
-	// or just a statement.
+    // or just a statement.
     if (consume_if(token_type::equal).has_value()) {
         auto body = parse_expression();
-		// We need to inject the implied return for the expression,
-		// as a function's body is just a statement
+        // We need to inject the implied return for the expression,
+        // as a function's body is just a statement
         return std::make_unique<ast::func_decl>(
             std::move(func_header), std::make_unique<ast::return_stmt>(std::move(body)));
     }
 
-	// Parse the statement that is the function body
+    // Parse the statement that is the function body
     auto body = parse_statement();
     if (body == nullptr) {
         error = "Could not find body for " + func_header.name();
@@ -266,18 +266,18 @@ std::unique_ptr<ast::func_decl> parser::parse_function() {
 std::unique_ptr<ast::const_decl> parser::parse_const_decl() {
     assert(next_token() == token_type::const_);
 
-	// Parse the identifier and type of the constant
+    // Parse the identifier and type of the constant
     assert(peek_token() == token_type::identifier);
     auto id = next_token().text;
     assert(next_token() == token_type::colon);
     auto type = parse_type();
 
     assert(next_token() == token_type::equal);
-	// Parse the initializer of the constant
+    // Parse the initializer of the constant
     auto value = parse_expression();
     assert(value != nullptr);
 
-	// Parse optional semicolon
+    // Parse optional semicolon
     consume_if(token_type::semi);
     return std::make_unique<ast::const_decl>(ast::typed_identifier{std::move(id), std::move(type)},
                                              std::move(value));
@@ -306,9 +306,9 @@ ast::stmt_ptr parser::parse_statement() {
 }
 
 ast::stmt_ptr parser::parse_compound_statement() {
-	// a compound statement is a `{`,
-	// followed by some statements,
-	// followed by a `}`.
+    // a compound statement is a `{`,
+    // followed by some statements,
+    // followed by a `}`.
     auto tok = next_token();
     assert(tok == token_type::lbrace);
 
@@ -329,8 +329,8 @@ std::unique_ptr<ast::if_stmt> parser::parse_if_statement() {
     assert(next_token() == token_type::if_);
     auto condition = parse_expression();
 
-	// an `if` can only have an `else` when it is written `if x {} else {}`,
-	// that is the then block is a compund statement.
+    // an `if` can only have an `else` when it is written `if x {} else {}`,
+    // that is the then block is a compund statement.
     const bool can_have_else = peek_token() == token_type::lbrace;
     auto then_block = parse_statement();
 
@@ -359,10 +359,10 @@ std::unique_ptr<ast::return_stmt> parser::parse_return_statement() {
 std::unique_ptr<ast::let_stmt> parser::parse_let_statement() {
     assert(next_token() == token_type::let);
 
-	// A let statement is made of `let`,
-	// followed by an optionally-typed identifier,
-	// followed by `=`,
-	// followed by an expression.
+    // A let statement is made of `let`,
+    // followed by an optionally-typed identifier,
+    // followed by `=`,
+    // followed by an expression.
 
     assert(peek_token() == token_type::identifier);
     auto id = next_token().text;
@@ -382,7 +382,7 @@ std::unique_ptr<ast::let_stmt> parser::parse_let_statement() {
 }
 
 std::string parser::parse_type() {
-	// a type can either be some primitive or a user-defined type.
+    // a type can either be some primitive or a user-defined type.
     switch (peek_token().type) {
     case token_type::identifier:
     case token_type::prim_type:
@@ -516,6 +516,7 @@ ast::expr_ptr parser::parse_atom() {
         return expr;
     }
 
+    // literals
     using val_type = ast::user_val::value_type;
     if (tok == token_type::integer or tok == token_type::floating or tok == token_type::string
         or tok == token_type::boolean or tok == token_type::character) {
@@ -537,29 +538,31 @@ ast::expr_ptr parser::parse_atom() {
 
     assert(tok == token_type::identifier);
     auto id = next_token().text;
+    // function call
     if (peek_token() == token_type::lparen) {
         return std::make_unique<ast::func_call_expr>(parse_func_call(std::move(id)));
     }
 
+    // some variable
     return std::make_unique<ast::user_val>(std::move(id), val_type::identifier);
 }
 
 ast::func_call_data parser::parse_func_call(std::optional<std::string> func_name) {
     auto name = [&] {
         if (func_name.has_value()) {
-            // we have already eaten the id
+            // we have already taken the function name
             assert(next_token() == token_type::lparen);
             return func_name.value();
         }
 
-        // we need to eat the id
+        // we need to take the function name
         assert(peek_token() == token_type::identifier);
         auto name = next_token().text;
         assert(next_token() == token_type::lparen);
         return name;
     }();
 
-    // we have eaten the lparen here
+    // we have already taken the lparen
     std::vector<ast::expr_ptr> args;
     while (peek_token() != token_type::rparen) {
         auto expr = parse_expression();
@@ -584,6 +587,7 @@ ast::func_call_data parser::parse_func_call(std::optional<std::string> func_name
 parser::token parser::next_token() {
 
     if (peeked_token.has_value()) {
+        // return the already processed token when one exists
         auto result = peeked_token.value();
         peeked_token.reset();
         return result;
