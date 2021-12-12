@@ -1,6 +1,8 @@
 # little-lang
 A LLVM compiler for a small, functional language
 
+[Playlist documenting the concepts in this project](https://youtube.com/playlist?list=PLHqsxrQm_CBIw6C5IfUXlWOdmKQ9vnbQF)
+
 ## Tools Used
 - Bison
   + Used for checking the language's grammar
