@@ -8,4 +8,3 @@ std::string unquote(const std::string &);
 std::filesystem::path normalized_absolute_path(const std::string &);
 
 #endif
-

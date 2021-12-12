@@ -74,7 +74,7 @@ class parser final {
     // that is syntax that does map to some value at runtime.
     // They are arrange in roughly precedence order,
     // such that the expressions they parse contain the function below them.
-	// This is the basis of a recursive decent parser.
+    // This is the basis of a recursive decent parser.
     ast::expr_ptr parse_expression();
     ast::expr_ptr parse_boolean_expression();
     ast::expr_ptr parse_comparison();
@@ -83,9 +83,9 @@ class parser final {
     ast::expr_ptr parse_unary();
     ast::expr_ptr parse_atom();
 
-	// A function call can either be a statement or an expression.
-	// To reduce code duplication, `parse_func_call` handles both.
-	// In the expression case, we have already consumed the name, so we must pass it in.
+    // A function call can either be a statement or an expression.
+    // To reduce code duplication, `parse_func_call` handles both.
+    // In the expression case, we have already consumed the name, so we must pass it in.
     ast::func_call_data parse_func_call(std::optional<std::string> func_name = std::nullopt);
 
     // This enum marks the type of a given token.
@@ -174,7 +174,7 @@ class parser final {
     char next_char();
 
     // `peek_char` returns the character at some offset into the stream,
-	// without removing it from the stream.
+    // without removing it from the stream.
     char peek_char(unsigned offset = 0);
 
     // `next_chars` checks that the characters at some offset into the stream are equal to the
@@ -186,7 +186,7 @@ class parser final {
 #endif
 
     // `next_token` has some complex, yet modular, logic for determining a token's type.
-	// These 3 functions are helpers to `next_token` that handle some, but not all, tokens each.
+    // These 3 functions are helpers to `next_token` that handle some, but not all, tokens each.
     token next_identifier();
     token next_number();
     token next_symbol();
@@ -199,8 +199,8 @@ class parser final {
     size_t length;
     size_t current_pos{0};
 
-	// This enum is used to determine whether the parser came from a file or an internal buffer,
-	// and so how it should be cleaned up.
+    // This enum is used to determine whether the parser came from a file or an internal buffer,
+    // and so how it should be cleaned up.
     enum data_type { mmapped, read_buffer } type;
 };
 
