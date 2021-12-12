@@ -381,6 +381,35 @@ std::unique_ptr<ast::let_stmt> parser::parse_let_statement() {
                                            std::move(val));
 }
 
+ast::typed_identifier parser::parse_opt_typed_identifier() {
+    // a typed identifier is either:
+    //     `type name`
+    // or  `name : type`
+    // However, here we need to allow just a name.
+
+    // Assume that the first token we see is a type,
+    // as that covers the identifier in the second case as well.
+    auto first_id = next_token();
+    assert(first_id == token_type::prim_type or first_id == token_type::identifier);
+
+    if (consume_if(token_type::colon).has_value()) {
+        // the second case (`name : type`) has occured.
+        assert(first_id == token_type::identifier);
+
+        return {std::move(first_id.text), parse_type()};
+    }
+
+    if (peek_token() != token_type::identifier) {
+        // the third case (`name`) has occured.
+        return {std::move(first_id.text), "auto"};
+    }
+
+    // the first case (`type name`) has occured.
+    auto second_id = next_token();
+    assert(second_id == token_type::identifier);
+    return {std::move(second_id.text), std::move(first_id.text)};
+}
+
 ast::typed_identifier parser::parse_typed_identifier() {
     // a typed identifier is either:
     //     `type name`

@@ -358,6 +358,39 @@ TEST_CASE("the parser will parse typed identifiers in both new style and C-style
     CHECK(typed_id_1.type() == typed_id_2.type());
 }
 
+TEST_CASE("the parser will parse optionally typed identifiers") {
+
+    ast::typed_identifier typed_id_1 = [] {
+        std::string buffer = "x";
+        auto parser = parser::from_buffer(buffer);
+
+        CHECK(parser != nullptr);
+
+        return parser->parse_opt_typed_identifier();
+    }();
+
+    ast::typed_identifier typed_id_2 = [] {
+        std::string buffer = "x : int";
+        auto parser = parser::from_buffer(buffer);
+
+        CHECK(parser != nullptr);
+
+        return parser->parse_opt_typed_identifier();
+    }();
+
+    ast::typed_identifier typed_id_3 = [] {
+        std::string buffer = "int x";
+        auto parser = parser::from_buffer(buffer);
+
+        CHECK(parser != nullptr);
+
+        return parser->parse_opt_typed_identifier();
+    }();
+
+    CHECK(typed_id_1.name() == typed_id_2.name());
+    CHECK(typed_id_1.name() == typed_id_3.name());
+}
+
 TEST_CASE("the parser will parse let statement") {
     std::string buffer = "let x = \"hello\";";
     auto parser = parser::from_buffer(buffer);
