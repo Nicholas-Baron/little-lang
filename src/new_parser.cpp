@@ -291,8 +291,11 @@ ast::stmt_ptr parser::parse_statement() {
         return parse_return_statement();
     case token_type::if_:
         return parse_if_statement();
-    case token_type::let:
-        return parse_let_statement();
+    case token_type::let: {
+        auto let_stmt = parse_let_statement();
+        consume_if(token_type::semi);
+        return let_stmt;
+    }
     case token_type::identifier: {
         auto func_call = std::make_unique<ast::func_call_stmt>(parse_func_call());
         // Optionally consume a semicolon for function calls.
@@ -364,21 +367,13 @@ std::unique_ptr<ast::let_stmt> parser::parse_let_statement() {
     // followed by `=`,
     // followed by an expression.
 
-    assert(peek_token() == token_type::identifier);
-    auto id = next_token().text;
-    std::string type = "auto";
-    if (consume_if(token_type::colon).has_value()) {
-        assert(peek_token() == token_type::identifier);
-        type = next_token().text;
-    }
+    auto typed_id = parse_opt_typed_identifier();
 
     assert(next_token() == token_type::equal);
 
     auto val = parse_expression();
     assert(val != nullptr);
-    assert(next_token() == token_type::semi);
-    return std::make_unique<ast::let_stmt>(ast::typed_identifier{std::move(id), std::move(type)},
-                                           std::move(val));
+    return std::make_unique<ast::let_stmt>(std::move(typed_id), std::move(val));
 }
 
 ast::typed_identifier parser::parse_opt_typed_identifier() {
