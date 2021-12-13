@@ -82,6 +82,22 @@ namespace ast {
         operand op;
     };
 
+    class if_expr final : public expr {
+      public:
+        if_expr(expr_ptr condition, expr_ptr then_case, expr_ptr else_case)
+            : condition{std::move(condition)}
+            , then_case{std::move(then_case)}
+            , else_case{std::move(else_case)} {}
+
+        non_copyable(if_expr);
+
+        movable(if_expr);
+
+        make_visitable;
+
+        expr_ptr condition, then_case, else_case;
+    };
+
     class func_call_expr final : public expr {
       public:
         explicit func_call_expr(func_call_data && data, Location loc = {})

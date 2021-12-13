@@ -236,8 +236,8 @@ TEST_CASE("the parser will parse 'from', 'import', and 'export'") {
     CHECK(parser->next_token() == parser::token_type::eof);
 }
 
-TEST_CASE("the parser will parse 'if' and 'else'") {
-    std::string buffer = "if else";
+TEST_CASE("the parser will parse 'if', 'then', and 'else'") {
+    std::string buffer = "if else then";
 
     auto parser = parser::from_buffer(buffer);
 
@@ -245,6 +245,7 @@ TEST_CASE("the parser will parse 'if' and 'else'") {
 
     CHECK(parser->next_token() == parser::token_type::if_);
     CHECK(parser->next_token() == parser::token_type::else_);
+    CHECK(parser->next_token() == parser::token_type::then);
     CHECK(parser->next_token() == parser::token_type::eof);
 }
 
@@ -512,6 +513,19 @@ TEST_CASE("the parser will parse binary expressions") {
 
     auto stmt = parser->parse_expression();
     CHECK(stmt != nullptr);
+}
+
+TEST_CASE("the parser will parse if expressions") {
+    std::string buffer = " if x then y else z + 1 ";
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    auto expr = parser->parse_expression();
+    CHECK(expr != nullptr);
+
+    auto * if_expr = dynamic_cast<ast::if_expr *>(expr.get());
+    CHECK(if_expr != nullptr);
 }
 
 TEST_CASE("the parser will parse if statements") {

@@ -440,7 +440,26 @@ std::string parser::parse_type() {
     }
 }
 
-ast::expr_ptr parser::parse_expression() { return parse_boolean_expression(); }
+ast::expr_ptr parser::parse_expression() { return parse_if_expression(); }
+
+ast::expr_ptr parser::parse_if_expression() {
+
+    // if expr then expr else expr
+    if (not consume_if(token_type::if_).has_value()) { return parse_boolean_expression(); }
+    // we did consume an if
+    auto condition = parse_expression();
+    assert(next_token() == token_type::then);
+
+    auto then_branch = parse_expression();
+
+    assert(next_token() == token_type::else_);
+
+    auto else_branch = parse_expression();
+
+    return std::make_unique<ast::if_expr>(std::move(condition), std::move(then_branch),
+                                          std::move(else_branch));
+}
+
 ast::expr_ptr parser::parse_boolean_expression() {
     auto expr = parse_comparison();
     if (peek_token() == token_type::double_and or peek_token() == token_type::double_or) {
@@ -699,6 +718,7 @@ parser::token parser::next_identifier(Location l) {
         {"let", token_type::let},
         {"ret", token_type::return_},
         {"return", token_type::return_},
+        {"then", token_type::then},
         // primitive types
         {"bool", token_type::prim_type},
         {"char", token_type::prim_type},

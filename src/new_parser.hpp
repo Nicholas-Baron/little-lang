@@ -78,6 +78,7 @@ class parser final {
     // such that the expressions they parse contain the function below them.
     // This is the basis of a recursive decent parser.
     ast::expr_ptr parse_expression();
+    ast::expr_ptr parse_if_expression();
     ast::expr_ptr parse_boolean_expression();
     ast::expr_ptr parse_comparison();
     ast::expr_ptr parse_additive();
@@ -103,6 +104,7 @@ class parser final {
         import_,
         export_,
         if_,
+        then,
         else_,
         return_,
         let,
