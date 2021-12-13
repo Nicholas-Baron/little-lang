@@ -654,15 +654,17 @@ parser::token parser::next_token() {
         while (peek_char() != '\n' and peek_char() != '\r') { next_char(); }
     }
 
-    if (peek_char() == EOF) { return {token_type::eof, ""}; }
+    Location l{line_num, col_num};
+
+    if (peek_char() == EOF) { return {token_type::eof, "", l}; }
 
     // we are now at the first meaningful token
-    if (isalpha(peek_char()) != 0 or peek_char() == '_') { return next_identifier(); }
-    if (isdigit(peek_char()) != 0) { return next_number(); }
-    return next_symbol();
+    if (isalpha(peek_char()) != 0 or peek_char() == '_') { return next_identifier(l); }
+    if (isdigit(peek_char()) != 0) { return next_number(l); }
+    return next_symbol(l);
 }
 
-parser::token parser::next_identifier() {
+parser::token parser::next_identifier(Location l) {
 
     std::string to_ret;
 
@@ -696,12 +698,12 @@ parser::token parser::next_identifier() {
     };
 
     if (auto iter = reserved_words.find(to_ret); iter != reserved_words.end()) {
-        return {iter->second, std::move(to_ret)};
+        return {iter->second, std::move(to_ret), l};
     }
-    return {token_type::identifier, std::move(to_ret)};
+    return {token_type::identifier, std::move(to_ret), l};
 }
 
-parser::token parser::next_number() {
+parser::token parser::next_number(Location l) {
 
     auto c = next_char();
     std::string to_ret;
@@ -715,91 +717,91 @@ parser::token parser::next_number() {
             while (isxdigit(peek_char()) != 0) { to_ret += next_char(); }
         }
 
-        return {token_type::integer, std::move(to_ret)};
+        return {token_type::integer, std::move(to_ret), l};
     }
 
     assert(isdigit(c));
     while (isdigit(peek_char()) != 0) { to_ret += next_char(); }
 
-    if (peek_char() != '.') { return {token_type::integer, to_ret}; }
+    if (peek_char() != '.') { return {token_type::integer, to_ret, l}; }
 
     assert(false);
 }
 
-parser::token parser::next_symbol() {
+parser::token parser::next_symbol(Location l) {
 
     switch (const auto c = next_char(); c) {
     case EOF:
-        return {token_type::eof, ""};
+        return {token_type::eof, "", l};
     case '(':
-        return {token_type::lparen, "("};
+        return {token_type::lparen, "(", l};
     case ')':
-        return {token_type::rparen, ")"};
+        return {token_type::rparen, ")", l};
     case '{':
-        return {token_type::lbrace, "{"};
+        return {token_type::lbrace, "{", l};
     case '}':
-        return {token_type::rbrace, "}"};
+        return {token_type::rbrace, "}", l};
     case ':':
-        return {token_type::colon, ":"};
+        return {token_type::colon, ":", l};
     case ',':
-        return {token_type::comma, ","};
+        return {token_type::comma, ",", l};
     case ';':
-        return {token_type::semi, ";"};
+        return {token_type::semi, ";", l};
     case '+':
-        return {token_type::plus, "+"};
+        return {token_type::plus, "+", l};
     case '*':
-        return {token_type::asterik, "*"};
+        return {token_type::asterik, "*", l};
     case '%':
-        return {token_type::percent, "%"};
+        return {token_type::percent, "%", l};
     case '/':
         // at this point, we know that this is not a comment
         assert(peek_char() != c);
-        return {token_type::slash, "/"};
+        return {token_type::slash, "/", l};
     case '&':
         if (peek_char() == c) {
             next_char();
-            return {token_type::double_and, "&&"};
+            return {token_type::double_and, "&&", l};
         }
         assert(false);
     case '|':
         if (peek_char() == c) {
             next_char();
-            return {token_type::double_or, "||"};
+            return {token_type::double_or, "||", l};
         }
         assert(false);
     case '-':
         if (peek_char() == '>') {
             // found arrow
             next_char();
-            return {token_type::arrow, "->"};
+            return {token_type::arrow, "->", l};
         }
-        return {token_type::minus, "-"};
+        return {token_type::minus, "-", l};
     case '<':
         if (peek_char() == '=') {
             next_char();
-            return {token_type::le, "<="};
+            return {token_type::le, "<=", l};
         }
-        return {token_type::lt, "<"};
+        return {token_type::lt, "<", l};
         break;
     case '>':
         if (peek_char() == '=') {
             next_char();
-            return {token_type::ge, ">="};
+            return {token_type::ge, ">=", l};
         }
-        return {token_type::gt, ">"};
+        return {token_type::gt, ">", l};
     case '=':
         if (peek_char() == '=') {
             next_char();
-            return {token_type::eq, "=="};
+            return {token_type::eq, "==", l};
         }
-        return {token_type::equal, "="};
+        return {token_type::equal, "=", l};
     case '\"': {
         std::string to_ret;
         to_ret += c;
         while (peek_char() != c) { to_ret += next_char(); }
         // consume the quote
         to_ret += next_char();
-        return {token_type::string, std::move(to_ret)};
+        return {token_type::string, std::move(to_ret), l};
     } break;
     case '\'': {
         std::string to_ret;
@@ -811,7 +813,7 @@ parser::token parser::next_symbol() {
 
         // consume the quote
         to_ret += next_char();
-        return {token_type::character, std::move(to_ret)};
+        return {token_type::character, std::move(to_ret), l};
     } break;
     default:
         std::cerr << "Unknown character: " << static_cast<unsigned>(c) << " \'" << c << '\''
@@ -822,6 +824,12 @@ parser::token parser::next_symbol() {
 
 char parser::next_char() {
     if (current_pos >= length) { return EOF; }
+    if (data[current_pos] == '\n') {
+        ++line_num;
+        col_num = 0;
+    } else {
+        ++col_num;
+    }
     return data[current_pos++];
 }
 

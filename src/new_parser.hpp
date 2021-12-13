@@ -1,6 +1,7 @@
 #ifndef PARSER_HPP
 #define PARSER_HPP
 
+#include "location.hpp"
 #include <ast/base_nodes.hpp>
 #include <ast/nodes_forward.hpp>
 #include <utils/move_copy.hpp>
@@ -140,6 +141,7 @@ class parser final {
     struct token {
         token_type type;
         std::string text;
+        Location location;
 
       private:
         friend bool operator==(const token & tok, token_type type) { return tok.type == type; }
@@ -188,9 +190,9 @@ class parser final {
 
     // `next_token` has some complex, yet modular, logic for determining a token's type.
     // These 3 functions are helpers to `next_token` that handle some, but not all, tokens each.
-    token next_identifier();
-    token next_number();
-    token next_symbol();
+    token next_identifier(Location);
+    token next_number(Location);
+    token next_symbol(Location);
 
     std::optional<token> peeked_token;
     std::string filename;
@@ -199,6 +201,9 @@ class parser final {
     const char * data;
     size_t length;
     size_t current_pos{0};
+
+    int line_num{1};
+    int col_num{0};
 
     // This enum is used to determine whether the parser came from a file or an internal buffer,
     // and so how it should be cleaned up.

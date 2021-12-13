@@ -20,6 +20,19 @@ TEST_CASE("the parser will not accept empty inputs") {
     CHECK(parser->error_message() == "Found empty file");
 }
 
+TEST_CASE("the parser will report locations for tokens") {
+    std::string buffer = "foo\n  bar";
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    CHECK(parser->next_token().location == Location{1, 0});
+    CHECK(parser->next_token().location == Location{2, 2});
+    CHECK(parser->next_token().location == Location{2, 5});
+
+    CHECK(parser->error_message().empty());
+}
+
 TEST_CASE("the parser can look ahead for whole text fragments") {
     std::string buffer = "foo bar baz";
     auto parser = parser::from_buffer(buffer);
