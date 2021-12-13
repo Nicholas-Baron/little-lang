@@ -12,9 +12,11 @@
 %token T_ASSIGN "=" T_ARROW "->"
 %token T_FROM "from" T_IMPORT "import" T_EXPORT "export"                      // Reserved words for imports and exports
 %token T_IDENT T_INT T_CHAR T_BOOL T_STRING T_FLOAT T_PRIM_TYPE               // Regexes
+%token T_THEN "then"
 
 %start program
 
+%precedence if_expr
 %left T_OR
 %left T_AND
 %nonassoc T_LE T_LT T_GE T_GT T_EQ T_NE
@@ -114,6 +116,15 @@ conditional : T_IF expr stmt_block T_ELSE stmt
             | T_IF expr stmt
             ;
 
+atom : literal
+     | T_IDENT
+     | func_call
+     | T_LPAREN expr T_RPAREN
+     ;
+
+func_call : T_IDENT arg_group
+          ;
+
 literal : T_INT
         | T_FLOAT
         | T_CHAR
@@ -121,29 +132,24 @@ literal : T_INT
         | T_STRING
         ;
 
-expr  : T_IDENT
-      | func_call
-      | literal
-      | T_LPAREN expr T_RPAREN
-      | T_NOT expr
-      | T_MINUS expr  %prec T_NOT
-      | expr T_MULT expr
-      | expr T_MOD  expr
-      | expr T_DIV  expr
-      | expr T_PLUS  expr
-      | expr T_MINUS expr
-      | expr T_LE expr
-      | expr T_LT expr
-      | expr T_GE expr
-      | expr T_GT expr
-      | expr T_EQ expr
-      | expr T_NE expr
-      | expr T_AND expr
-      | expr T_OR expr
-      ;
-
-func_call : T_IDENT arg_group
-          ;
+expr : atom
+     | T_IF expr T_THEN expr T_ELSE expr %prec if_expr
+     | T_NOT expr
+     | T_MINUS expr  %prec T_NOT
+     | expr T_MULT expr
+     | expr T_MOD expr
+     | expr T_DIV expr
+     | expr T_PLUS expr
+     | expr T_MINUS expr
+     | expr T_LE expr
+     | expr T_LT expr
+     | expr T_GE expr
+     | expr T_GT expr
+     | expr T_EQ expr
+     | expr T_NE expr
+     | expr T_AND expr
+     | expr T_OR expr
+     ;
 
 arg_group : T_LPAREN arg_list T_RPAREN
           | T_LPAREN T_RPAREN
