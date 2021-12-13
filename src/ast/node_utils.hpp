@@ -15,15 +15,13 @@
 namespace ast {
     class typed_identifier final {
       public:
-        typed_identifier(std::string && name, std::string && type)
+        typed_identifier(std::string && name, std::string && type, Location loc)
             : type_{std::move(type)}
-            , name_{std::move(name)} {}
+            , name_{std::move(name)}
+            , loc{loc} {}
 
         [[nodiscard]] const auto & name() const { return name_; }
         [[nodiscard]] const auto & type() const { return type_; }
-
-        void set_location(const Location & loc_new) { loc = loc_new; }
-
         [[nodiscard]] const auto & location() const noexcept { return loc; }
 
       private:

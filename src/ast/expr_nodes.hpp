@@ -12,9 +12,11 @@ namespace ast {
       public:
         enum class value_type { identifier, integer, floating, character, boolean, string };
 
-        user_val(std::string && value, value_type type)
+        user_val(std::string && value, value_type type, Location loc = {})
             : val(std::move(value))
-            , type{type} {}
+            , type{type} {
+            set_location(loc);
+        }
 
         non_copyable(user_val);
 
@@ -82,8 +84,10 @@ namespace ast {
 
     class func_call_expr final : public expr {
       public:
-        explicit func_call_expr(func_call_data && data)
-            : data{std::move(data)} {}
+        explicit func_call_expr(func_call_data && data, Location loc = {})
+            : data{std::move(data)} {
+            set_location(loc);
+        }
 
         make_visitable;
 
