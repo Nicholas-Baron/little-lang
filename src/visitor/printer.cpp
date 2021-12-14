@@ -49,6 +49,13 @@ namespace visitor {
         func_decl.body->accept(*this);
     }
 
+    void printer::visit(ast::if_expr & if_expr) {
+        std::cout << "if_expr" << std::endl;
+        if_expr.condition->accept(*this);
+        if_expr.then_case->accept(*this);
+        if_expr.else_case->accept(*this);
+    }
+
     void printer::visit(ast::if_stmt & if_stmt) {
         std::cout << "if_stmt" << std::endl;
         if_stmt.condition->accept(*this);

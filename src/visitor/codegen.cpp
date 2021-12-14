@@ -397,6 +397,64 @@ namespace visitor {
         }
     }
 
+    void codegen::visit(ast::if_expr & if_expr) {
+
+        // Evaluate the condition
+        llvm::Value * condition = get_value(*if_expr.condition, *this);
+
+        // Optimize if the condition is constant.
+        if (auto * constant_condition = llvm::dyn_cast<llvm::Constant>(condition);
+            constant_condition != nullptr) {
+            if (constant_condition == llvm::ConstantInt::getTrue(*context)) {
+                store_result(get_value(*if_expr.then_case, *this));
+                return;
+            }
+            store_result(get_value(*if_expr.else_case, *this));
+            return;
+        }
+
+        auto * start_block = ir_builder->GetInsertBlock();
+        auto * current_function = start_block->getParent();
+
+        // Generate the true branch
+        auto * then_block = llvm::BasicBlock::Create(*context, "", current_function);
+        ir_builder->SetInsertPoint(then_block);
+        auto * then_value = get_value(*if_expr.then_case, *this);
+
+		auto * end_then = ir_builder->GetInsertBlock();
+
+        // Generate the else block
+        auto * else_block = llvm::BasicBlock::Create(*context, "", current_function);
+        ir_builder->SetInsertPoint(else_block);
+        auto * else_value = get_value(*if_expr.else_case, *this);
+
+		auto * end_else = ir_builder->GetInsertBlock();
+
+        ir_builder->SetInsertPoint(start_block);
+        ir_builder->CreateCondBr(condition, then_block, else_block);
+
+        auto terminated
+            = [](const llvm::BasicBlock * block) -> bool { return block->back().isTerminator(); };
+
+        // merge the expressions
+        auto * merge_block = llvm::BasicBlock::Create(*context, "", current_function);
+        if (not terminated(end_then)) {
+            ir_builder->SetInsertPoint(end_then);
+            ir_builder->CreateBr(merge_block);
+        }
+
+        if (not terminated(end_else)) {
+            ir_builder->SetInsertPoint(end_else);
+            ir_builder->CreateBr(merge_block);
+        }
+
+        ir_builder->SetInsertPoint(merge_block);
+        auto * phi = ir_builder->CreatePHI(then_value->getType(), 2);
+        phi->addIncoming(then_value, end_then);
+        phi->addIncoming(else_value, end_else);
+        store_result(phi);
+    }
+
     void codegen::visit(ast::if_stmt & if_stmt) {
 
         // Evaluate the condition

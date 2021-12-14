@@ -229,6 +229,31 @@ namespace visitor {
         active_typed_identifiers.pop_back();
     }
 
+    void type_checker::visit(ast::if_expr & if_expr) {
+        // Check that the condition type is bool
+        auto * cond_type = get_value(*if_expr.condition, *this);
+
+        // TODO: improve this check
+        if (cond_type != find_type_of("bool")) {
+            std::cout << "Conditions for ifs must be of type `bool`" << std::endl;
+            assert(false);
+        }
+
+        // check that the then_case type is the same as the else_case
+
+        auto * then_type = get_value(*if_expr.then_case, *this);
+        auto * else_type = get_value(*if_expr.else_case, *this);
+        assert(then_type != nullptr);
+        assert(else_type != nullptr);
+
+        if (then_type != else_type) {
+            std::cout << "The then and else branches of an if expression must be of the same type"
+                      << std::endl;
+            assert(false);
+        }
+        store_result(then_type);
+    }
+
     void type_checker::visit(ast::if_stmt & if_stmt) {
         // Check that the condition type is bool
         auto * cond_type = get_value(*if_stmt.condition, *this);

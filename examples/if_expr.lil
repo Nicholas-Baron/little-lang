@@ -1,0 +1,6 @@
+fib(pos is int) -> int
+	return if pos <= 1 or pos equals 5 then pos
+	else if pos > 1 and pos < 5 then pos - 1
+	else fib(pos - 2) + fib(pos - 1);
+
+main() -> int = fib(5)

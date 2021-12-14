@@ -8,6 +8,7 @@
 // expr node classes
 
 namespace ast {
+    // TODO: Mark some AST nodes as constants
     class user_val final : public expr {
       public:
         enum class value_type { identifier, integer, floating, character, boolean, string };
