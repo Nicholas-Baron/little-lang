@@ -421,14 +421,14 @@ namespace visitor {
         ir_builder->SetInsertPoint(then_block);
         auto * then_value = get_value(*if_expr.then_case, *this);
 
-		auto * end_then = ir_builder->GetInsertBlock();
+        auto * end_then = ir_builder->GetInsertBlock();
 
         // Generate the else block
         auto * else_block = llvm::BasicBlock::Create(*context, "", current_function);
         ir_builder->SetInsertPoint(else_block);
         auto * else_value = get_value(*if_expr.else_case, *this);
 
-		auto * end_else = ir_builder->GetInsertBlock();
+        auto * end_else = ir_builder->GetInsertBlock();
 
         ir_builder->SetInsertPoint(start_block);
         ir_builder->CreateCondBr(condition, then_block, else_block);
@@ -468,6 +468,8 @@ namespace visitor {
         ir_builder->SetInsertPoint(then_block);
         if_stmt.true_branch->accept(*this);
 
+        auto * end_true = ir_builder->GetInsertBlock();
+
         auto terminated
             = [](const llvm::BasicBlock * block) -> bool { return block->back().isTerminator(); };
 
@@ -480,6 +482,12 @@ namespace visitor {
                 ir_builder->SetInsertPoint(start_block);
                 ir_builder->CreateCondBr(condition, then_block, merge_block);
             }
+
+            if (not terminated(end_true)) {
+                ir_builder->SetInsertPoint(end_true);
+                ir_builder->CreateBr(merge_block);
+            }
+
             ir_builder->SetInsertPoint(merge_block);
 
             return;
@@ -490,14 +498,21 @@ namespace visitor {
         ir_builder->SetInsertPoint(else_block);
         if_stmt.else_branch->accept(*this);
 
+        auto * end_else = ir_builder->GetInsertBlock();
+
         ir_builder->SetInsertPoint(start_block);
         ir_builder->CreateCondBr(condition, then_block, else_block);
 
         // Ensure termination
-        if (not terminated(else_block) and not terminated(then_block)) {
+        if (not terminated(end_else) and not terminated(end_true)) {
             auto * merge_block = llvm::BasicBlock::Create(*context, "", current_function);
-            if (not terminated(then_block)) {
-                ir_builder->SetInsertPoint(then_block);
+            if (not terminated(end_true)) {
+                ir_builder->SetInsertPoint(end_true);
+                ir_builder->CreateBr(merge_block);
+            }
+
+            if (not terminated(end_else)) {
+                ir_builder->SetInsertPoint(end_else);
                 ir_builder->CreateBr(merge_block);
             }
 
