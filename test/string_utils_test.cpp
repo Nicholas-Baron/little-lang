@@ -8,4 +8,3 @@ TEST_CASE("unquote preserves internal quotes") { CHECK(unquote("The \'dog\'") ==
 TEST_CASE("unquote removes external double quotes") {
     CHECK(unquote("\"file.txt\"") == "file.txt");
 }
-

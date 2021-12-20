@@ -15,4 +15,3 @@ fs::path normalized_absolute_path(const std::string & relative_path) {
 
     return fs::canonical(fs::current_path() / relative_path);
 }
-
