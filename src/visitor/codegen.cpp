@@ -105,6 +105,53 @@ namespace visitor {
         return nullptr;
     }
 
+    void codegen::evaluate_comparison(ast::binary_expr & binary_expr, llvm::Value * lhs_value,
+                                      llvm::Value * rhs_value, bool is_int, bool is_constant) {
+
+        using predicate = llvm::CmpInst::Predicate;
+        auto int_or_float = [&is_int](predicate int_pred, predicate float_pred) {
+            return is_int ? int_pred : float_pred;
+        };
+
+        using operand = ast::binary_expr::operand;
+        std::optional<predicate> p;
+        switch (binary_expr.op) {
+        case operand::le:
+            p = int_or_float(predicate::ICMP_SLE, predicate::FCMP_OLE);
+            break;
+        case operand::lt:
+            p = int_or_float(predicate::ICMP_SLT, predicate::FCMP_OLT);
+            break;
+        case operand::ge:
+            p = int_or_float(predicate::ICMP_SGE, predicate::FCMP_OGE);
+            break;
+        case operand::gt:
+            p = int_or_float(predicate::ICMP_SGT, predicate::FCMP_OGT);
+            break;
+        case operand::eq:
+            p = int_or_float(predicate::ICMP_EQ, predicate::FCMP_OEQ);
+            break;
+        case operand::ne:
+            p = int_or_float(predicate::ICMP_NE, predicate::FCMP_ONE);
+            break;
+        default:
+            printError("Comparison operator " + tok_to_string(binary_expr.op)
+                           + " is not implemented yet",
+                       binary_expr.location());
+            assert(false);
+        }
+        assert(p.has_value());
+        if (is_constant) {
+            auto * constant_lhs = llvm::dyn_cast<llvm::Constant>(lhs_value);
+            auto * constant_rhs = llvm::dyn_cast<llvm::Constant>(rhs_value);
+            store_result(llvm::ConstantExpr::getCompare(*p, constant_lhs, constant_rhs));
+        } else if (is_int) {
+            store_result(ir_builder->CreateICmp(*p, lhs_value, rhs_value));
+        } else {
+            store_result(ir_builder->CreateFCmp(*p, lhs_value, rhs_value));
+        }
+    }
+
     void codegen::evaluate_short_circuit(ast::binary_expr & binary_expr, llvm::Value * lhs_value) {
 
         auto * lhs_block = ir_builder->GetInsertBlock();
@@ -175,7 +222,6 @@ namespace visitor {
             func_type, llvm::InlineAsm::get(func_type, "syscall", constraint, true), args));
     }
 
-    // TODO: Break into smaller functions
     void codegen::visit(ast::binary_expr & binary_expr) {
 
         auto * lhs_value = get_value(*binary_expr.lhs, *this);
@@ -192,53 +238,8 @@ namespace visitor {
         const bool is_int
             = lhs_value->getType()->isIntegerTy() and rhs_value->getType()->isIntegerTy();
 
-        using operand = ast::binary_expr::operand;
-
         if (binary_expr.is_comparison()) {
-
-            using predicate = llvm::CmpInst::Predicate;
-            // TODO: Rename or swap args
-            auto int_or_float = [&is_int](predicate float_pred, predicate int_pred) {
-                return is_int ? int_pred : float_pred;
-            };
-
-            std::optional<predicate> p;
-            switch (binary_expr.op) {
-            case operand::le:
-                p = int_or_float(predicate::FCMP_OLE, predicate::ICMP_SLE);
-                break;
-            case operand::lt:
-                p = int_or_float(predicate::FCMP_OLT, predicate::ICMP_SLT);
-                break;
-            case operand::ge:
-                p = int_or_float(predicate::FCMP_OGE, predicate::ICMP_SGE);
-                break;
-            case operand::gt:
-                p = int_or_float(predicate::FCMP_OGT, predicate::ICMP_SGT);
-                break;
-            case operand::eq:
-                p = int_or_float(predicate::FCMP_OEQ, predicate::ICMP_EQ);
-                break;
-            case operand::ne:
-                p = int_or_float(predicate::FCMP_ONE, predicate::ICMP_NE);
-                break;
-            default:
-                printError("Comparison operator " + tok_to_string(binary_expr.op)
-                               + " is not implemented yet",
-                           binary_expr.location());
-                assert(false);
-            }
-            assert(p.has_value());
-            if (is_constant) {
-                auto * constant_lhs = llvm::dyn_cast<llvm::Constant>(lhs_value);
-                auto * constant_rhs = llvm::dyn_cast<llvm::Constant>(rhs_value);
-                store_result(llvm::ConstantExpr::getCompare(*p, constant_lhs, constant_rhs));
-            } else if (is_int) {
-                store_result(ir_builder->CreateICmp(*p, lhs_value, rhs_value));
-            } else {
-                store_result(ir_builder->CreateFCmp(*p, lhs_value, rhs_value));
-            }
-            return;
+            return evaluate_comparison(binary_expr, lhs_value, rhs_value, is_int, is_constant);
         }
 
         // all other binary expressions
@@ -250,6 +251,7 @@ namespace visitor {
             return is_int ? int_pred : float_pred;
         };
 
+        using operand = ast::binary_expr::operand;
         switch (binary_expr.op) {
         case operand::add:
             bin_op = int_or_float(bin_ops::Add, bin_ops::FAdd);
