@@ -51,7 +51,9 @@ namespace visitor {
 
     void type_checker::syscall(ast::func_call_data & func_call_data) {
         // Syscalls can only take between 1 and 7 arguments.
-        if (auto arg_count = func_call_data.args_count(); arg_count == 0 or arg_count > 7) {
+        static constexpr auto max_syscall_args = 7U;
+        if (const auto arg_count = func_call_data.args_count();
+            arg_count == 0 or arg_count > max_syscall_args) {
             std::cout << "syscalls can only take 1 to 7 arguments" << std::endl;
             assert(false);
         }
