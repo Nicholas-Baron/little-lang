@@ -1,0 +1,12 @@
+#ifndef VERSION_HPP
+#define VERSION_HPP
+
+// clang-format off
+
+namespace version {
+    constexpr auto full = "@PROJECT_VERSION@";
+    constexpr auto major = @PROJECT_VERSION_MAJOR@;
+    constexpr auto minor = @PROJECT_VERSION_MINOR@;
+} // namespace version
+
+#endif

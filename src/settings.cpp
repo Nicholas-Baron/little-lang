@@ -3,6 +3,7 @@
 #include "lyra/lyra.hpp"
 
 #include <iostream>
+#include <version.hpp>
 
 // clang-format off
 #define flags                \
@@ -44,10 +45,9 @@ std::shared_ptr<Settings> read_settings(int arg_count, const char * const * args
         exit(0);
     }
 
-    // TODO: Use cmake to generate version number
     if (print_version) {
-        std::cout << *args << "\nVersion: 0.0.1" << std::endl;
-        return nullptr;
+        std::cout << *args << "\nVersion: " << version::full << std::endl;
+        exit(0);
     }
 
 // clang-format off

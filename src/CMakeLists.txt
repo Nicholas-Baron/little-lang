@@ -12,6 +12,8 @@ if(BISON_FOUND)
   )
 endif()
 
+configure_file(${CMAKE_SOURCE_DIR}/src/version.hpp.in ${CMAKE_BINARY_DIR}/version.hpp @ONLY)
+
 set(
   proj_files
   ast/nodes.cpp
@@ -42,7 +44,7 @@ target_compile_options(
 target_link_libraries(littlec ${LLVM_CONFIG} CONAN_PKG::lyra)
 target_include_directories(
   littlec
-  PRIVATE ${CMAKE_SOURCE_DIR}/src CONAN_PKG::lyra
+  PRIVATE ${CMAKE_SOURCE_DIR}/src CONAN_PKG::lyra ${CMAKE_BINARY_DIR}
 )
 
 # the library for testing
@@ -55,6 +57,6 @@ target_link_libraries(littlec_lib ${LLVM_CONFIG} CONAN_PKG::lyra)
 target_include_directories(
   littlec_lib
   PUBLIC ${CMAKE_SOURCE_DIR}/src
-  PRIVATE CONAN_PKG::lyra
+  PRIVATE CONAN_PKG::lyra ${CMAKE_BINARY_DIR}
 )
 
