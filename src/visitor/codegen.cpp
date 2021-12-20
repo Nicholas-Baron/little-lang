@@ -359,8 +359,13 @@ namespace visitor {
         auto * func_type = llvm::FunctionType::get(
             find_type(func_decl.head.ret_type(), func_decl.location()), param_types, false);
 
-        auto * func = llvm::Function::Create(func_type, llvm::Function::ExternalLinkage,
-                                             func_decl.head.name(), ir_module.get());
+        // The only functions that need ExternalLinkage are "main" or exported ones
+        auto linkage = (func_decl.head.name() == "main" or func_decl.exported())
+                         ? llvm::Function::ExternalLinkage
+                         : llvm::Function::InternalLinkage;
+
+        auto * func
+            = llvm::Function::Create(func_type, linkage, func_decl.head.name(), ir_module.get());
 
         // add the function to the current scope
         active_values.back().emplace(func_decl.head.name(), func);
