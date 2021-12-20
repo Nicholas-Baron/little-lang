@@ -347,8 +347,8 @@ namespace visitor {
     void codegen::visit(ast::func_decl & func_decl) {
 
         std::vector<llvm::Type *> param_types;
-        auto param_count = func_decl.head.param_count();
-        param_types.reserve(func_decl.head.param_count());
+        const auto param_count = func_decl.head.param_count();
+        param_types.reserve(param_count);
 
         for (auto i = 0U; i < param_count; ++i) {
 
