@@ -156,7 +156,7 @@ namespace visitor {
         args.reserve(func_call_data.args_count());
 
         for (auto i = 0U; i < func_call_data.args_count(); ++i) {
-            args.push_back(get_value(*func_call_data.arg(i), *this));
+            args.push_back(get_value(func_call_data.arg(i), *this));
         }
 
         static const auto syscall_constraints = generate_syscall_constraints_array();
@@ -331,7 +331,7 @@ namespace visitor {
         args.reserve(func_call_data.args_count());
 
         for (auto i = 0U; i < func_call_data.args_count(); ++i) {
-            args.push_back(get_value(*func_call_data.arg(i), *this));
+            args.push_back(get_value(func_call_data.arg(i), *this));
         }
 
         store_result(ir_builder->CreateCall(func_type, func, args));

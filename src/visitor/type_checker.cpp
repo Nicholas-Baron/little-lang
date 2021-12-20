@@ -57,8 +57,8 @@ namespace visitor {
         }
 
         for (auto i = 0U; i < func_call_data.args_count(); ++i) {
-            const auto & arg = func_call_data.arg(i);
-            auto * arg_type = get_value(*arg, *this);
+            auto & arg = func_call_data.arg(i);
+            auto * arg_type = get_value(arg, *this);
             if (not arg_type->isIntOrPtrTy()) {
                 std::cout << "syscall can only take int, bool, or string arguments" << std::endl;
                 assert(false);
@@ -166,7 +166,7 @@ namespace visitor {
 
         for (auto i = 0U; i < func_call_data.args_count(); ++i) {
             auto * expected = func_type->getParamType(i);
-            if (expected != get_value(*func_call_data.arg(i), *this)) {
+            if (expected != get_value(func_call_data.arg(i), *this)) {
                 std::cout << "Argument #" << (i + 1) << " was of an incorrect type" << std::endl;
                 assert(false);
             }

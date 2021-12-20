@@ -614,8 +614,6 @@ TEST_CASE("the parser will parse function calls as expressions") {
     CHECK(value != nullptr);
     CHECK(value->data.name() == "foo");
     CHECK(value->data.args_count() == 2);
-    CHECK(value->data.arg(0) != nullptr);
-    CHECK(value->data.arg(1) != nullptr);
 }
 
 TEST_CASE("the parser will parse function calls as statements") {
@@ -634,8 +632,6 @@ TEST_CASE("the parser will parse function calls as statements") {
     CHECK(func_call != nullptr);
     CHECK(func_call->data.name() == "foo");
     CHECK(func_call->data.args_count() == 2);
-    CHECK(func_call->data.arg(0) != nullptr);
-    CHECK(func_call->data.arg(1) != nullptr);
 }
 
 TEST_CASE("the parser will parse a unit function") {

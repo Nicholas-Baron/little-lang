@@ -29,7 +29,7 @@ namespace visitor {
         std::cout << "func_call_data" << std::endl;
         std::cout << func_call_data.name() << std::endl;
         for (auto i = 0U; i < func_call_data.args_count(); ++i) {
-            func_call_data.arg(i)->accept(*this);
+            func_call_data.arg(i).accept(*this);
         }
     }
 

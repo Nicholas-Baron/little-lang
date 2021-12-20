@@ -46,10 +46,10 @@ namespace ast {
 
         [[nodiscard]] size_t args_count() const { return args_.size(); }
 
-        // TODO: stop returning const std::unique_ptr &
-        [[nodiscard]] const auto & arg(size_t i) const {
+        [[nodiscard]] ast::expr & arg(size_t i) const {
             assert(i < args_.size());
-            return args_.at(i);
+            assert(args_.at(i) != nullptr);
+            return *args_.at(i);
         }
 
       private:
