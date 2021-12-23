@@ -5,6 +5,7 @@
 #include "location.hpp"
 #include "value_getter.hpp"
 #include "visitor_base.hpp"
+#include <ast/node_utils.hpp>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Type.h>
 
@@ -16,7 +17,8 @@ namespace visitor {
     class type_checker final : public visitor_base,
                                public value_getter<type_checker, ast::node, llvm::Type *> {
       public:
-        type_checker(std::string filename, llvm::LLVMContext *, global_map<llvm::Type *> *);
+        type_checker(std::string filename, llvm::LLVMContext *,
+                     global_map<std::string, llvm::Type *> *);
 
         non_copyable(type_checker);
 
@@ -38,7 +40,11 @@ namespace visitor {
         // TODO: Actually implement this
         void printError(const std::string & name, std::optional<Location> loc = std::nullopt);
 
+        // Find the type of an identifier
         [[nodiscard]] llvm::Type * find_type_of(const std::string &) const;
+
+        // Find the llvm type of an ast type
+        [[nodiscard]] llvm::Type * find_type_of(const ast::type &) const;
         void bind_type(llvm::Type *, std::string, bool should_export = false);
 
         bool found_error{false};
@@ -47,7 +53,7 @@ namespace visitor {
         llvm::LLVMContext * context;
 
         std::vector<std::map<std::string, llvm::Type *>> active_typed_identifiers;
-        global_map<llvm::Type *> * program_globals;
+        global_map<std::string, llvm::Type *> * program_globals;
         std::map<std::string, void (type_checker::*)(ast::func_call_data &)> instrinics;
 
         llvm::Type * current_return_type{nullptr};

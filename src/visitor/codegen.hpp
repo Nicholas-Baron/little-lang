@@ -17,7 +17,8 @@ namespace visitor {
     class codegen final : public visitor_base,
                           public value_getter<codegen, ast::node, llvm::Value *> {
       public:
-        codegen(const std::string & name, llvm::LLVMContext *, global_map<llvm::GlobalObject *> *);
+        codegen(const std::string & name, llvm::LLVMContext *,
+                global_map<std::string, llvm::GlobalObject *> *);
 
         non_copyable(codegen);
 
@@ -37,8 +38,7 @@ namespace visitor {
         void dump() const;
 
       private:
-        llvm::Type * find_type(const std::string & name,
-                               std::optional<Location> loc = std::nullopt);
+        llvm::Type * find_type(const ast::type &, std::optional<Location> loc = std::nullopt);
         [[nodiscard]] llvm::Value * find_alive_value(const std::string & name) const;
 
         void evaluate_comparison(ast::binary_expr &, llvm::Value * lhs_value,
@@ -56,9 +56,9 @@ namespace visitor {
         std::unique_ptr<llvm::Module> ir_module;
         std::unique_ptr<llvm::IRBuilder<>> ir_builder;
 
-        std::map<std::string, llvm::Type *> types;
+        std::map<ast::type, llvm::Type *> types;
         std::vector<std::map<std::string, llvm::Value *>> active_values;
-        global_map<llvm::GlobalObject *> * program_globals;
+        global_map<std::string, llvm::GlobalObject *> * program_globals;
 
         std::map<std::string, void (codegen::*)(ast::func_call_data &)> instrinics;
     };

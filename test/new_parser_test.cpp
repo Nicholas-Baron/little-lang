@@ -441,7 +441,7 @@ TEST_CASE("the parser will parse let statement") {
     auto * let = dynamic_cast<ast::let_stmt *>(stmt.get());
     CHECK(let != nullptr);
     CHECK(let->name_and_type.name() == "x");
-    CHECK(let->name_and_type.type() == "auto");
+    CHECK(let->name_and_type.type().base_type() == "auto");
     CHECK(let->value != nullptr);
 
     auto * value = dynamic_cast<ast::user_val *>(let->value.get());
@@ -463,7 +463,7 @@ TEST_CASE("the parser will parse let statement without semicolons and with types
     auto * let = dynamic_cast<ast::let_stmt *>(stmt.get());
     CHECK(let != nullptr);
     CHECK(let->name_and_type.name() == "x");
-    CHECK(let->name_and_type.type() == "int");
+    CHECK(let->name_and_type.type().base_type() == "int");
     CHECK(let->value != nullptr);
 
     auto * value = dynamic_cast<ast::user_val *>(let->value.get());
@@ -506,7 +506,7 @@ TEST_CASE("the parser will parse const declaration") {
     auto * const_decl = dynamic_cast<ast::const_decl *>(decl.get());
     CHECK(const_decl != nullptr);
     CHECK(const_decl->name_and_type.name() == "x");
-    CHECK(const_decl->name_and_type.type() == "int");
+    CHECK(const_decl->name_and_type.type().base_type() == "int");
     CHECK(const_decl->expr != nullptr);
 
     auto * value = dynamic_cast<ast::binary_expr *>(const_decl->expr.get());
@@ -659,7 +659,7 @@ TEST_CASE("the parser will parse a unit function") {
 
     CHECK(func->head.name() == "main");
     CHECK(func->head.param_count() == 0);
-    CHECK(func->head.ret_type() == "unit");
+    CHECK(func->head.ret_type().base_type() == "unit");
     CHECK(func->body != nullptr);
 }
 
@@ -675,7 +675,7 @@ TEST_CASE("the parser will parse a function with return type") {
 
     CHECK(func->head.name() == "main");
     CHECK(func->head.param_count() == 0);
-    CHECK(func->head.ret_type() == "int");
+    CHECK(func->head.ret_type().base_type() == "int");
     CHECK(func->body != nullptr);
 }
 
@@ -692,10 +692,10 @@ TEST_CASE("the parser will parse a function with parameters") {
     CHECK(func->head.name() == "foo");
     CHECK(func->head.param_count() == 2);
     CHECK(func->head.arg(0).name() == "x");
-    CHECK(func->head.arg(0).type() == "int");
+    CHECK(func->head.arg(0).type().base_type() == "int");
     CHECK(func->head.arg(1).name() == "y");
-    CHECK(func->head.arg(1).type() == "bool");
-    CHECK(func->head.ret_type() == "int");
+    CHECK(func->head.arg(1).type().base_type() == "bool");
+    CHECK(func->head.ret_type().base_type() == "int");
     CHECK(func->body != nullptr);
 }
 
@@ -711,7 +711,7 @@ TEST_CASE("the parser will parse a function with an expression body") {
 
     CHECK(func->head.name() == "foo");
     CHECK(func->head.param_count() == 2);
-    CHECK(func->head.ret_type() == "int");
+    CHECK(func->head.ret_type() == ast::type{"int"});
     CHECK(func->body != nullptr);
 
     auto * ret_stmt = dynamic_cast<ast::return_stmt *>(func->body.get());
@@ -743,8 +743,8 @@ factorial(int input) -> int {
     CHECK(func->head.name() == "factorial");
     CHECK(func->head.param_count() == 1);
     CHECK(func->head.arg(0).name() == "input");
-    CHECK(func->head.arg(0).type() == "int");
-    CHECK(func->head.ret_type() == "int");
+    CHECK(func->head.arg(0).type().base_type() == "int");
+    CHECK(func->head.ret_type() == ast::type{"int"});
     CHECK(func->body != nullptr);
 
     auto * body = dynamic_cast<ast::stmt_sequence *>(func->body.get());

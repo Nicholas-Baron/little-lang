@@ -224,11 +224,7 @@ std::unique_ptr<ast::func_decl> parser::parse_function() {
     func_header.set_location(func_name_tok.location);
 
     // Parse the optional return type.
-    if (consume_if(token_type::arrow).has_value()) {
-        func_header.set_ret_type(parse_type());
-    } else {
-        func_header.set_ret_type("unit");
-    }
+    if (consume_if(token_type::arrow).has_value()) { func_header.set_ret_type(parse_type()); }
 
     // The body of a function may either be an `=` followed by an expression,
     // or just a statement.
@@ -396,13 +392,13 @@ ast::typed_identifier parser::parse_opt_typed_identifier() {
 
     if (peek_token() != token_type::identifier) {
         // the third case (`name`) has occured.
-        return {std::move(first_id.text), "auto", first_id.location};
+        return {std::move(first_id.text), ast::type{"auto"}, first_id.location};
     }
 
     // the first case (`type name`) has occured.
     auto second_id = next_token();
     assert(second_id == token_type::identifier);
-    return {std::move(second_id.text), std::move(first_id.text), first_id.location};
+    return {std::move(second_id.text), ast::type{std::move(first_id.text)}, first_id.location};
 }
 
 ast::typed_identifier parser::parse_typed_identifier() {
@@ -425,15 +421,15 @@ ast::typed_identifier parser::parse_typed_identifier() {
     // the first case (`type name`) has occured.
     auto second_id = next_token();
     assert(second_id == token_type::identifier);
-    return {std::move(second_id.text), std::move(first_id.text), first_id.location};
+    return {std::move(second_id.text), ast::type{std::move(first_id.text)}, first_id.location};
 }
 
-std::string parser::parse_type() {
+ast::type parser::parse_type() {
     // a type can either be some primitive or a user-defined type.
     switch (peek_token().type) {
     case token_type::identifier:
     case token_type::prim_type:
-        return next_token().text;
+        return ast::type{next_token().text};
     default:
         error = "Expected a type. Found " + peek_token().text;
         assert(false);

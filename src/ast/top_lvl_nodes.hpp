@@ -44,11 +44,12 @@ namespace ast {
           public:
             header(std::string && name, std::vector<typed_identifier> && parameters)
                 : name_(std::move(name))
-                , params(std::move(parameters)) {}
+                , params(std::move(parameters))
+                , ret_type_{"unit"} {}
 
-            void set_ret_type(std::string && type) { ret_type_ = std::move(type); }
+            void set_ret_type(ast::type && type) { ret_type_ = std::move(type); }
 
-            [[nodiscard]] const auto & ret_type() const { return ret_type_; }
+            [[nodiscard]] const ast::type & ret_type() const { return ret_type_; }
 
             [[nodiscard]] const typed_identifier & arg(unsigned index) const {
                 return params.at(index);
@@ -65,7 +66,7 @@ namespace ast {
           private:
             std::string name_;
             std::vector<typed_identifier> params;
-            std::string ret_type_{};
+            ast::type ret_type_;
             Location loc{};
         };
 

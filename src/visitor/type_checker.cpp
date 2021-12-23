@@ -12,7 +12,7 @@
 namespace visitor {
 
     type_checker::type_checker(std::string filename, llvm::LLVMContext * context,
-                               global_map<llvm::Type *> * imports)
+                               global_map<std::string, llvm::Type *> * imports)
         : filename{std::move(filename)}
         , context{context}
         , program_globals{imports} {
@@ -37,11 +37,25 @@ namespace visitor {
         active_typed_identifiers.back().emplace(std::move(identifier), type);
     }
 
-    [[nodiscard]] llvm::Type * type_checker::find_type_of(const std::string & identifier) const {
+    [[nodiscard]] llvm::Type * type_checker::find_type_of(const std::string & id) const {
 
         for (auto iter = active_typed_identifiers.rbegin(); iter != active_typed_identifiers.rend();
              ++iter) {
-            if (auto result = iter->find(identifier); result != iter->end()) {
+            if (auto result = iter->find(id); result != iter->end()) {
+                return result->second;
+            }
+        }
+
+        return nullptr;
+    }
+
+    [[nodiscard]] llvm::Type * type_checker::find_type_of(const ast::type & typ) const {
+
+        for (auto iter = active_typed_identifiers.rbegin(); iter != active_typed_identifiers.rend();
+             ++iter) {
+            // TODO: Compose pointer types
+			// TODO: Use a separate map for type names
+            if (auto result = iter->find(typ.base_type()); result != iter->end()) {
                 return result->second;
             }
         }
@@ -73,7 +87,7 @@ namespace visitor {
             }
         }
         // TODO: syscalls can return pointers and 64 bit numbers
-        store_result(find_type_of("int"));
+        store_result(find_type_of(ast::type{"int"}));
     }
 
     void type_checker::visit(ast::binary_expr & binary_expr) {
@@ -85,7 +99,7 @@ namespace visitor {
         switch (binary_expr.op) {
         case operand::bool_or:
         case operand::bool_and:
-            if (auto * bool_type = find_type_of("bool");
+            if (auto * bool_type = find_type_of(ast::type{"bool"});
                 lhs_type != bool_type or rhs_type != bool_type) {
                 std::cout << "Logical operations can only use booleans" << std::endl;
                 assert(false);
@@ -101,7 +115,7 @@ namespace visitor {
                 std::cout << "Comparisons can only be made within the same type" << std::endl;
                 assert(false);
             }
-            store_result(find_type_of("bool"));
+            store_result(find_type_of(ast::type{"bool"}));
             break;
         case operand::add:
         case operand::sub:
@@ -129,16 +143,17 @@ namespace visitor {
             assert(false);
         }
 
-        auto * expected = find_type_of(const_decl.name_and_type.type());
+        auto * expected = find_type_of(const_decl.name_and_type.type().base_type());
         if (expected == nullptr) {
-            std::cout << "Type " << const_decl.name_and_type.type() << " is not known" << std::endl;
+            std::cout << "Type " << const_decl.name_and_type.type().base_type() << " is not known"
+                      << std::endl;
             assert(false);
         }
 
         auto * actual = get_value(*const_decl.expr, *this);
         if (expected != actual) {
             std::cout << "Constant " << const_decl.name_and_type.name() << " is not of type "
-                      << const_decl.name_and_type.type() << std::endl;
+                      << const_decl.name_and_type.type().base_type() << std::endl;
             assert(false);
         }
 
@@ -195,7 +210,8 @@ namespace visitor {
         // TODO: The same logic may be present in the codegen module
         auto * ret_type = find_type_of(func_decl.head.ret_type());
         if (ret_type == nullptr) {
-            std::cout << func_decl.head.ret_type() << " is not a known type" << std::endl;
+            std::cout << func_decl.head.ret_type().base_type() << " is not a known type"
+                      << std::endl;
             assert(false);
         }
 
@@ -208,7 +224,7 @@ namespace visitor {
 
                 auto * arg_type = find_type_of(param.type());
                 if (arg_type == nullptr) {
-                    std::cout << param.type() << " is not a known type" << std::endl;
+                    std::cout << param.type().base_type() << " is not a known type" << std::endl;
                     assert(false);
                 }
                 args.emplace_back(arg_type);
@@ -280,10 +296,9 @@ namespace visitor {
 
         auto * val_type = get_value(*let_stmt.value, *this);
 
-        if (auto stated_type = let_stmt.name_and_type.type();
-            not stated_type.empty() and stated_type != "auto") {
+        if (auto stated_type = let_stmt.name_and_type.type(); stated_type.base_type() != "auto") {
             if (auto * found_type = find_type_of(stated_type); found_type != val_type) {
-                std::cout << stated_type << " is not the type of the initialization of "
+                std::cout << stated_type.base_type() << " is not the type of the initialization of "
                           << let_stmt.name_and_type.name() << std::endl;
                 assert(false);
             }

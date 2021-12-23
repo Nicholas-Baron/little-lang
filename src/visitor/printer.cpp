@@ -18,8 +18,8 @@ namespace visitor {
 
     void printer::visit(ast::const_decl & const_decl) {
         std::cout << "const_decl" << std::endl;
-        std::cout << const_decl.name_and_type.name() << " : " << const_decl.name_and_type.type()
-                  << std::endl;
+        std::cout << const_decl.name_and_type.name() << " : "
+                  << const_decl.name_and_type.type().base_type() << std::endl;
         const_decl.expr->accept(*this);
     }
 
@@ -40,11 +40,12 @@ namespace visitor {
     void printer::visit(ast::func_decl & func_decl) {
         std::cout << "func_decl" << std::endl;
         // TODO: Add accept to some other classes
-        std::cout << func_decl.head.name() << " : " << func_decl.head.ret_type() << std::endl;
+        std::cout << func_decl.head.name() << " : " << func_decl.head.ret_type().base_type()
+                  << std::endl;
         for (auto i = 0U; i < func_decl.head.param_count(); ++i) {
             const auto & typed_identifier = func_decl.head.arg(i);
-            std::cout << i << " : " << typed_identifier.name() << " : " << typed_identifier.type()
-                      << std::endl;
+            std::cout << i << " : " << typed_identifier.name() << " : "
+                      << typed_identifier.type().base_type() << std::endl;
         }
         func_decl.body->accept(*this);
     }
@@ -65,8 +66,8 @@ namespace visitor {
 
     void printer::visit(ast::let_stmt & let_stmt) {
         std::cout << "let_stmt" << std::endl;
-        std::cout << let_stmt.name_and_type.name() << " : " << let_stmt.name_and_type.type()
-                  << std::endl;
+        std::cout << let_stmt.name_and_type.name() << " : "
+                  << let_stmt.name_and_type.type().base_type() << std::endl;
         let_stmt.value->accept(*this);
     }
 

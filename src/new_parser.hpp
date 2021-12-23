@@ -3,6 +3,7 @@
 
 #include "location.hpp"
 #include <ast/base_nodes.hpp>
+#include <ast/node_utils.hpp>
 #include <ast/nodes_forward.hpp>
 #include <utils/move_copy.hpp>
 
@@ -70,7 +71,7 @@ class parser final {
     std::unique_ptr<ast::let_stmt> parse_let_statement();
     ast::typed_identifier parse_opt_typed_identifier();
     ast::typed_identifier parse_typed_identifier();
-    std::string parse_type();
+    ast::type parse_type();
 
     // The following parsing functions deal with expression syntax,
     // that is syntax that does map to some value at runtime.

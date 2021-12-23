@@ -6,10 +6,10 @@
 #include <map>
 #include <string>
 
-template<typename value_t>
+template<typename key_t, typename value_t>
 class global_map final {
   public:
-    [[nodiscard]] value_t lookup(const std::string & mod, const std::string & id) const {
+    [[nodiscard]] value_t lookup(const std::string & mod, const key_t & id) const {
         auto mod_iter = globals.find(mod);
         if (mod_iter == globals.end()) { return nullptr; }
 
@@ -17,7 +17,7 @@ class global_map final {
         return item_iter != mod_iter->second.end() ? item_iter->second : nullptr;
     }
 
-    void add(const std::string & mod, const std::string & id, value_t value) {
+    void add(const std::string & mod, const key_t & id, value_t value) {
 
         auto [mod_iter, _] = globals.emplace(mod, std::map<std::string, value_t>{});
         auto & module_exports = mod_iter->second;
@@ -26,7 +26,7 @@ class global_map final {
     }
 
   private:
-    std::map<std::string, std::map<std::string, value_t>> globals;
+    std::map<std::string, std::map<key_t, value_t>> globals;
 };
 
 #endif

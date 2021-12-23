@@ -63,15 +63,15 @@ namespace visitor {
     // TODO: Make a function to init type map with builtin types
 
     codegen::codegen(const std::string & name, llvm::LLVMContext * context,
-                     global_map<llvm::GlobalObject *> * program_globals)
+                     global_map<std::string, llvm::GlobalObject *> * program_globals)
         : context{context}
         , ir_module{std::make_unique<llvm::Module>(name, *context)}
         , ir_builder{std::make_unique<llvm::IRBuilder<>>(*context)}
-        , types{{"int", llvm::Type::getInt32Ty(*context)},
-                {"float", llvm::Type::getFloatTy(*context)},
-                {"unit", llvm::Type::getVoidTy(*context)},
-                {"bool", llvm::Type::getInt1Ty(*context)},
-                {"char", llvm::Type::getInt8Ty(*context)}}
+        , types{{ast::type{"int"}, llvm::Type::getInt32Ty(*context)},
+                {ast::type{"float"}, llvm::Type::getFloatTy(*context)},
+                {ast::type{"unit"}, llvm::Type::getVoidTy(*context)},
+                {ast::type{"bool"}, llvm::Type::getInt1Ty(*context)},
+                {ast::type{"char"}, llvm::Type::getInt8Ty(*context)}}
         , active_values{{}}
         , program_globals{program_globals}
         , instrinics{{"syscall", &codegen::syscall}} {
@@ -97,11 +97,11 @@ namespace visitor {
         return nullptr;
     }
 
-    llvm::Type * codegen::find_type(const std::string & name, std::optional<Location> loc) {
+    llvm::Type * codegen::find_type(const ast::type & name, std::optional<Location> loc) {
 
         const auto iter = types.find(name);
         if (iter != types.end()) { return iter->second; }
-        printError(name + " is an unknown type", loc);
+        printError(name.base_type() + " is an unknown type", loc);
         return nullptr;
     }
 
@@ -214,7 +214,7 @@ namespace visitor {
         param_types.reserve(args.size());
         for (auto * val : args) { param_types.push_back(val->getType()); }
 
-        auto * func_type = llvm::FunctionType::get(find_type("int"), param_types, false);
+        auto * func_type = llvm::FunctionType::get(find_type(ast::type{"int"}), param_types, false);
 
         assert(llvm::InlineAsm::Verify(func_type, constraint));
 

@@ -159,7 +159,7 @@ program::program(std::vector<ast::top_level_sequence> && modules,
     , ast_modules(std::move(modules)) {}
 
 bool program::type_check() {
-    global_map<llvm::Type *> program_globals;
+    global_map<std::string, llvm::Type *> program_globals;
     for (auto & mod : ast_modules) {
         // Note: currently, the ast imports are not updated with absolute paths,
         // but the ast filenames are absolute paths.
@@ -175,7 +175,7 @@ bool program::type_check() {
 }
 
 void program::generate_ir() {
-    global_map<llvm::GlobalObject *> globals;
+    global_map<std::string, llvm::GlobalObject *> globals;
     for (auto & mod : ast_modules) {
         auto filename = std::filesystem::relative(mod.filename, project_root);
         visitor::codegen codegen{filename, context.get(), &globals};
