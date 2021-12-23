@@ -6,6 +6,7 @@
 %token T_EQ "==" T_NE "!=" T_LT "<" T_GT ">" T_LE "<=" T_GE  ">="             // Comparisons
 %token T_LPAREN "(" T_RPAREN ")" T_LBRACE "{" T_RBRACE "}" T_LBRACK T_RBRACK  // Paired symbols
 %token T_PLUS "+" T_MINUS "-" T_DIV "/" T_MULT "*" T_MOD "%"                  // Math symbols
+%token T_AMP "&" T_QUESTION "?" T_NULL "null"
 %token T_COMMA "," T_IS "is" T_SEMI ";" T_DOT "."                             // Misc symbols
 %token T_RET "return" T_IF "if" T_ELSE "else" T_LET "let" T_CONST "const"     // Reserved words
 %token T_AND "and" T_OR "or" T_NOT "not"                                      // Boolean operators
@@ -128,6 +129,7 @@ func_call : T_IDENT arg_group
 literal : T_INT
         | T_FLOAT
         | T_CHAR
+        | T_NULL
         | T_BOOL
         | T_STRING
         ;
@@ -135,6 +137,7 @@ literal : T_INT
 expr : atom
      | T_IF expr T_THEN expr T_ELSE expr %prec if_expr
      | T_NOT expr
+     | T_MULT expr   %prec T_NOT
      | T_MINUS expr  %prec T_NOT
      | expr T_MULT expr
      | expr T_MOD expr
@@ -161,6 +164,8 @@ arg_list : expr
 
 type : T_PRIM_TYPE
      | T_IDENT
+     | T_QUESTION type
+     | T_AMP type
      ;
 
 %%
