@@ -40,7 +40,7 @@ namespace ast {
             , loc{loc} {}
 
         [[nodiscard]] const auto & name() const { return name_; }
-        [[nodiscard]] const auto & type() const { return type_; }
+        [[nodiscard]] const ast::type & type() const { return type_; }
         [[nodiscard]] const auto & location() const noexcept { return loc; }
 
       private:

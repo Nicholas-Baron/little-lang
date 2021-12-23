@@ -44,7 +44,7 @@ namespace visitor {
         [[nodiscard]] llvm::Type * find_type_of(const std::string &) const;
 
         // Find the llvm type of an ast type
-        [[nodiscard]] llvm::Type * find_type_of(const ast::type &) const;
+        [[nodiscard]] llvm::Type * find_type(const ast::type &) const;
         void bind_type(llvm::Type *, std::string, bool should_export = false);
 
         bool found_error{false};
@@ -52,6 +52,7 @@ namespace visitor {
         std::string filename;
         llvm::LLVMContext * context;
 
+        std::map<ast::type, llvm::Type *> active_types;
         std::vector<std::map<std::string, llvm::Type *>> active_typed_identifiers;
         global_map<std::string, llvm::Type *> * program_globals;
         std::map<std::string, void (type_checker::*)(ast::func_call_data &)> instrinics;

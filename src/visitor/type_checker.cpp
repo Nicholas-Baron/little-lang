@@ -15,18 +15,18 @@ namespace visitor {
                                global_map<std::string, llvm::Type *> * imports)
         : filename{std::move(filename)}
         , context{context}
-        , program_globals{imports} {
-        auto & global_scope = active_typed_identifiers.emplace_back();
-
-        global_scope.emplace("int", llvm::Type::getInt32Ty(*context));
-        global_scope.emplace("float", llvm::Type::getFloatTy(*context));
-        global_scope.emplace("unit", llvm::Type::getVoidTy(*context));
-        global_scope.emplace("bool", llvm::Type::getInt1Ty(*context));
-        global_scope.emplace("char", llvm::Type::getInt8Ty(*context));
-
-        // TODO: Move to a Rust style 2 ptr string instead of a C style null-terminated string
-        global_scope.emplace("string", llvm::Type::getInt8PtrTy(*context));
-
+		, active_types{
+			{ast::type{"int"}, llvm::Type::getInt32Ty(*context)},
+				{ast::type{"float"}, llvm::Type::getFloatTy(*context)},
+				{ast::type{"unit"}, llvm::Type::getVoidTy(*context)},
+				{ast::type{"bool"}, llvm::Type::getInt1Ty(*context)},
+				{ast::type{"char"}, llvm::Type::getInt8Ty(*context)},
+				// TODO: Move to a Rust style 2 ptr string instead of a C style null-terminated string
+				{ast::type{"string"}, llvm::Type::getInt8PtrTy(*context)},
+		}
+		, active_typed_identifiers{{}}
+        , program_globals{imports}
+		{
         instrinics.emplace("syscall", &type_checker::syscall);
     }
 
@@ -41,25 +41,16 @@ namespace visitor {
 
         for (auto iter = active_typed_identifiers.rbegin(); iter != active_typed_identifiers.rend();
              ++iter) {
-            if (auto result = iter->find(id); result != iter->end()) {
-                return result->second;
-            }
+            if (auto result = iter->find(id); result != iter->end()) { return result->second; }
         }
 
         return nullptr;
     }
 
-    [[nodiscard]] llvm::Type * type_checker::find_type_of(const ast::type & typ) const {
-
-        for (auto iter = active_typed_identifiers.rbegin(); iter != active_typed_identifiers.rend();
-             ++iter) {
-            // TODO: Compose pointer types
-			// TODO: Use a separate map for type names
-            if (auto result = iter->find(typ.base_type()); result != iter->end()) {
-                return result->second;
-            }
+    [[nodiscard]] llvm::Type * type_checker::find_type(const ast::type & typ) const {
+        for (const auto & [type, llvm_type] : active_types) {
+            if (type == typ) { return llvm_type; }
         }
-
         return nullptr;
     }
 
@@ -87,7 +78,7 @@ namespace visitor {
             }
         }
         // TODO: syscalls can return pointers and 64 bit numbers
-        store_result(find_type_of(ast::type{"int"}));
+        store_result(find_type(ast::type{"int"}));
     }
 
     void type_checker::visit(ast::binary_expr & binary_expr) {
@@ -99,7 +90,7 @@ namespace visitor {
         switch (binary_expr.op) {
         case operand::bool_or:
         case operand::bool_and:
-            if (auto * bool_type = find_type_of(ast::type{"bool"});
+            if (auto * bool_type = find_type(ast::type{"bool"});
                 lhs_type != bool_type or rhs_type != bool_type) {
                 std::cout << "Logical operations can only use booleans" << std::endl;
                 assert(false);
@@ -115,7 +106,7 @@ namespace visitor {
                 std::cout << "Comparisons can only be made within the same type" << std::endl;
                 assert(false);
             }
-            store_result(find_type_of(ast::type{"bool"}));
+            store_result(find_type(ast::type{"bool"}));
             break;
         case operand::add:
         case operand::sub:
@@ -143,7 +134,7 @@ namespace visitor {
             assert(false);
         }
 
-        auto * expected = find_type_of(const_decl.name_and_type.type().base_type());
+        auto * expected = find_type(const_decl.name_and_type.type());
         if (expected == nullptr) {
             std::cout << "Type " << const_decl.name_and_type.type().base_type() << " is not known"
                       << std::endl;
@@ -151,6 +142,7 @@ namespace visitor {
         }
 
         auto * actual = get_value(*const_decl.expr, *this);
+        assert(actual != nullptr);
         if (expected != actual) {
             std::cout << "Constant " << const_decl.name_and_type.name() << " is not of type "
                       << const_decl.name_and_type.type().base_type() << std::endl;
@@ -208,7 +200,7 @@ namespace visitor {
         }
 
         // TODO: The same logic may be present in the codegen module
-        auto * ret_type = find_type_of(func_decl.head.ret_type());
+        auto * ret_type = find_type(func_decl.head.ret_type());
         if (ret_type == nullptr) {
             std::cout << func_decl.head.ret_type().base_type() << " is not a known type"
                       << std::endl;
@@ -222,7 +214,7 @@ namespace visitor {
             for (auto i = 0U; i < func_decl.head.param_count(); ++i) {
                 const auto & param = func_decl.head.arg(i);
 
-                auto * arg_type = find_type_of(param.type());
+                auto * arg_type = find_type(param.type());
                 if (arg_type == nullptr) {
                     std::cout << param.type().base_type() << " is not a known type" << std::endl;
                     assert(false);
@@ -297,7 +289,7 @@ namespace visitor {
         auto * val_type = get_value(*let_stmt.value, *this);
 
         if (auto stated_type = let_stmt.name_and_type.type(); stated_type.base_type() != "auto") {
-            if (auto * found_type = find_type_of(stated_type); found_type != val_type) {
+            if (auto * found_type = find_type(stated_type); found_type != val_type) {
                 std::cout << stated_type.base_type() << " is not the type of the initialization of "
                           << let_stmt.name_and_type.name() << std::endl;
                 assert(false);
@@ -395,19 +387,19 @@ namespace visitor {
         case val_type::null:
             assert(false);
         case val_type::boolean:
-            store_result(find_type_of("bool"));
+            store_result(find_type(ast::type{"bool"}));
             break;
         case val_type::floating:
-            store_result(find_type_of("float"));
+            store_result(find_type(ast::type{"float"}));
             break;
         case val_type::integer:
-            store_result(find_type_of("int"));
+            store_result(find_type(ast::type{"int"}));
             break;
         case val_type::character:
-            store_result(find_type_of("char"));
+            store_result(find_type(ast::type{"char"}));
             break;
         case val_type::string:
-            store_result(find_type_of("string"));
+            store_result(find_type(ast::type{"string"}));
             break;
         }
     }

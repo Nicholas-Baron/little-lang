@@ -1,5 +1,6 @@
 #include "program.hpp"
 
+#include "ast/node_utils.hpp"
 #include "ast/top_lvl_nodes.hpp"
 #include "emit_asm.hpp"
 #include "global_map.hpp"
