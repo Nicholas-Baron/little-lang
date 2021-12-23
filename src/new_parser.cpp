@@ -716,6 +716,7 @@ parser::token parser::next_identifier(Location l) {
         {"if", token_type::if_},
         {"import", token_type::import_},
         {"let", token_type::let},
+        {"null", token_type::null},
         {"ret", token_type::return_},
         {"return", token_type::return_},
         {"then", token_type::then},
@@ -784,6 +785,8 @@ parser::token parser::next_symbol(Location l) {
         return {token_type::asterik, "*", l};
     case '%':
         return {token_type::percent, "%", l};
+    case '?':
+        return {token_type::question, "?", l};
     case '/':
         // at this point, we know that this is not a comment
         assert(peek_char() != c);
@@ -793,7 +796,7 @@ parser::token parser::next_symbol(Location l) {
             next_char();
             return {token_type::double_and, "&&", l};
         }
-        assert(false);
+        return {token_type::amp, "&", l};
     case '|':
         if (peek_char() == c) {
             next_char();

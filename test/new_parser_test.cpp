@@ -349,6 +349,17 @@ TEST_CASE("the parser will parse basic mathematical symbols") {
     CHECK(parser->next_token() == parser::token_type::eof);
 }
 
+TEST_CASE("the parser will parse pointer-related tokens") {
+    std::string buffer = " & ? null";
+
+    auto parser = parser::from_buffer(buffer);
+    CHECK(parser != nullptr);
+    CHECK(parser->next_token() == parser::token_type::amp);
+    CHECK(parser->next_token() == parser::token_type::question);
+    CHECK(parser->next_token() == parser::token_type::null);
+    CHECK(parser->next_token() == parser::token_type::eof);
+}
+
 // ast level
 TEST_CASE("the parser will parse braces as a compound statement") {
     std::string buffer = "{}";
