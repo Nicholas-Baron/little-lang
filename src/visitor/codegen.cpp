@@ -610,6 +610,8 @@ namespace visitor {
             }
             store_result(value);
         } break;
+        case value_type::null:
+            assert(false);
         case value_type::integer: {
             static constexpr auto hex_base = 16;
             static constexpr auto dec_base = 10;

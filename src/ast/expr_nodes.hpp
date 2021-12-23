@@ -11,7 +11,7 @@ namespace ast {
     // TODO: Mark some AST nodes as constants
     class user_val final : public expr {
       public:
-        enum class value_type { identifier, integer, floating, character, boolean, string };
+        enum class value_type { null, identifier, integer, floating, character, boolean, string };
 
         user_val(std::string && value, value_type type, Location loc = {})
             : val(std::move(value))

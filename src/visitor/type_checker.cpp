@@ -377,6 +377,8 @@ namespace visitor {
             }
             store_result(type);
         } break;
+        case val_type::null:
+            assert(false);
         case val_type::boolean:
             store_result(find_type_of("bool"));
             break;
