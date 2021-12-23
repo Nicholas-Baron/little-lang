@@ -20,6 +20,14 @@ namespace ast {
 
         [[nodiscard]] const auto & base_type() const { return base_type_; }
 
+        enum class pointer_type { nullable, non_nullable };
+
+        type pointed_to(pointer_type ptr_type) {
+            auto copy = ast::type{*this};
+            copy.pointers.push_back(ptr_type);
+            return copy;
+        }
+
       private:
         friend bool operator==(const type & lhs, const type & rhs) {
             return lhs.base_type_ == rhs.base_type_;
@@ -30,6 +38,7 @@ namespace ast {
         }
 
         std::string base_type_;
+        std::vector<pointer_type> pointers;
     };
 
     class typed_identifier final {

@@ -472,6 +472,28 @@ TEST_CASE("the parser will parse let statement without semicolons and with types
     CHECK(value->val == "10");
 }
 
+TEST_CASE("the parser will parse pointer types and expressions") {
+    std::string buffer = "let ? int x = null;";
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    auto stmt = parser->parse_statement();
+    CHECK(stmt != nullptr);
+    CHECK(parser->peek_token() == parser::token_type::eof);
+
+    auto * let = dynamic_cast<ast::let_stmt *>(stmt.get());
+    CHECK(let != nullptr);
+    CHECK(let->name_and_type.name() == "x");
+    CHECK(let->name_and_type.type().base_type() == "int");
+    CHECK(let->value != nullptr);
+
+    auto * value = dynamic_cast<ast::user_val *>(let->value.get());
+    CHECK(value != nullptr);
+    CHECK(value->type == ast::user_val::value_type::null);
+    CHECK(value->val == "null");
+}
+
 TEST_CASE("the parser will parse unary minus") {
     std::string buffer = "-3";
     auto parser = parser::from_buffer(buffer);

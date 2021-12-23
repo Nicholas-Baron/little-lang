@@ -381,6 +381,19 @@ ast::typed_identifier parser::parse_opt_typed_identifier() {
     // Assume that the first token we see is a type,
     // as that covers the identifier in the second case as well.
     auto first_id = next_token();
+
+    if (first_id == token_type::question or first_id == token_type::amp) {
+        // We have started parsing a pointer type in the type first case.
+        //     `(?|&) type name`
+        auto type = parse_type();
+        auto second_id = next_token();
+        assert(second_id == token_type::identifier);
+        return {std::move(second_id.text),
+                type.pointed_to(first_id == token_type::amp ? ast::type::pointer_type::non_nullable
+                                                            : ast::type::pointer_type::nullable),
+                first_id.location};
+    }
+
     assert(first_id == token_type::prim_type or first_id == token_type::identifier);
 
     if (consume_if(token_type::colon).has_value()) {
@@ -587,7 +600,7 @@ ast::expr_ptr parser::parse_atom() {
     // literals
     using val_type = ast::user_val::value_type;
     if (tok == token_type::integer or tok == token_type::floating or tok == token_type::string
-        or tok == token_type::boolean or tok == token_type::character) {
+        or tok == token_type::boolean or tok == token_type::character or tok == token_type::null) {
         switch (tok.type) {
         case token_type::string:
             return std::make_unique<ast::user_val>(next_token().text, val_type::string,
@@ -604,6 +617,8 @@ ast::expr_ptr parser::parse_atom() {
         case token_type::boolean:
             return std::make_unique<ast::user_val>(next_token().text, val_type::boolean,
                                                    tok.location);
+        case token_type::null:
+            return std::make_unique<ast::user_val>(next_token().text, val_type::null, tok.location);
         default:
             assert(false);
         }
