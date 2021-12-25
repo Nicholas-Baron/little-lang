@@ -31,7 +31,7 @@ namespace ast {
 
     class unary_expr final : public expr {
       public:
-        enum class operand { bool_not, negate };
+        enum class operand { bool_not, negate, deref };
 
         unary_expr(operand op, expr_ptr operand)
             : op(op)

@@ -1,0 +1,11 @@
+strlen(str is string) -> int
+	= if str == null then 0
+	else if *str == '\0' then 0
+	else 1 + strlen(str + 1)
+
+main() -> int {
+	let data = "Hello World";
+	let length = strlen(data);
+	syscall(1, 1, text, length);
+}
+

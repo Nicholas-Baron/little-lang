@@ -582,6 +582,15 @@ ast::expr_ptr parser::parse_unary() {
         expr->set_location(location);
         return expr;
     }
+    case token_type::asterik: {
+        // * expr
+        auto location = next_token().location;
+        auto expr = parse_atom();
+        assert(expr != nullptr);
+        expr = std::make_unique<ast::unary_expr>(operand::deref, std::move(expr));
+        expr->set_location(location);
+        return expr;
+    }
     default:
         return parse_atom();
     }

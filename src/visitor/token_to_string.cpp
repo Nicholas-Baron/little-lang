@@ -42,5 +42,7 @@
         return "operand::bool_not";
     case operand::negate:
         return "operand::negate";
+    case operand::deref:
+        return "operand::deref";
     }
 }
