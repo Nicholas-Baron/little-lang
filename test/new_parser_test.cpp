@@ -511,8 +511,8 @@ TEST_CASE("the parser will parse dereferences") {
 
     auto * value = dynamic_cast<ast::unary_expr *>(let->value.get());
     CHECK(value != nullptr);
-	CHECK(value->op == ast::unary_expr::operand::deref);
-	CHECK(value->expr != nullptr);
+    CHECK(value->op == ast::unary_expr::operand::deref);
+    CHECK(value->expr != nullptr);
 }
 
 TEST_CASE("the parser will parse unary minus") {
