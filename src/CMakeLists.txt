@@ -23,6 +23,7 @@ set(
   new_parser.cpp
   program.cpp
   settings.cpp
+  type_context.cpp
   utils/string_utils.cpp
   visitor/codegen.cpp
   visitor/printer.cpp

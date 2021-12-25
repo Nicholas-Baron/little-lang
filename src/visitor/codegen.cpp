@@ -4,6 +4,7 @@
 #include "ast/nodes.hpp"
 #include "emit_asm.hpp"
 #include "token_to_string.hpp"
+#include "type_context.hpp"
 #include <llvm/IR/BasicBlock.h>
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/Function.h>
@@ -63,15 +64,12 @@ namespace visitor {
     // TODO: Make a function to init type map with builtin types
 
     codegen::codegen(const std::string & name, llvm::LLVMContext * context,
-                     global_map<std::string, llvm::GlobalObject *> * program_globals)
+                     global_map<std::string, llvm::GlobalObject *> * program_globals,
+                     class type_context * typ_context)
         : context{context}
         , ir_module{std::make_unique<llvm::Module>(name, *context)}
         , ir_builder{std::make_unique<llvm::IRBuilder<>>(*context)}
-        , types{{ast::type{"int"}, llvm::Type::getInt32Ty(*context)},
-                {ast::type{"float"}, llvm::Type::getFloatTy(*context)},
-                {ast::type{"unit"}, llvm::Type::getVoidTy(*context)},
-                {ast::type{"bool"}, llvm::Type::getInt1Ty(*context)},
-                {ast::type{"char"}, llvm::Type::getInt8Ty(*context)}}
+        , type_context(typ_context)
         , active_values{{}}
         , program_globals{program_globals}
         , instrinics{{"syscall", &codegen::syscall}} {
@@ -99,10 +97,9 @@ namespace visitor {
 
     llvm::Type * codegen::find_type(const ast::type & name, std::optional<Location> loc) {
 
-        const auto iter = types.find(name);
-        if (iter != types.end()) { return iter->second; }
-        printError(name.base_type() + " is an unknown type", loc);
-        return nullptr;
+        auto * typ = type_context->lower_to_llvm(name);
+        if (typ == nullptr) { printError(name.base_type() + " is not a valid type?", loc); }
+        return typ;
     }
 
     void codegen::evaluate_comparison(ast::binary_expr & binary_expr, llvm::Value * lhs_value,

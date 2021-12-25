@@ -2,6 +2,7 @@
 
 #include "ast/nodes.hpp"
 #include "token_to_string.hpp"
+#include "type_context.hpp"
 #include <llvm/IR/DerivedTypes.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Type.h>
@@ -12,21 +13,13 @@
 namespace visitor {
 
     type_checker::type_checker(std::string filename, llvm::LLVMContext * context,
-                               global_map<std::string, llvm::Type *> * imports)
+                               global_map<std::string, llvm::Type *> * imports,
+                               class type_context * types)
         : filename{std::move(filename)}
         , context{context}
-		, active_types{
-			{ast::type{"int"}, llvm::Type::getInt32Ty(*context)},
-				{ast::type{"float"}, llvm::Type::getFloatTy(*context)},
-				{ast::type{"unit"}, llvm::Type::getVoidTy(*context)},
-				{ast::type{"bool"}, llvm::Type::getInt1Ty(*context)},
-				{ast::type{"char"}, llvm::Type::getInt8Ty(*context)},
-				// TODO: Move to a Rust style 2 ptr string instead of a C style null-terminated string
-				{ast::type{"string"}, llvm::Type::getInt8PtrTy(*context)},
-		}
-		, active_typed_identifiers{{}}
-        , program_globals{imports}
-		{
+        , type_context{types}
+        , active_typed_identifiers{{}}
+        , program_globals{imports} {
         instrinics.emplace("syscall", &type_checker::syscall);
     }
 
@@ -48,10 +41,7 @@ namespace visitor {
     }
 
     [[nodiscard]] llvm::Type * type_checker::find_type(const ast::type & typ) const {
-        for (const auto & [type, llvm_type] : active_types) {
-            if (type == typ) { return llvm_type; }
-        }
-        return nullptr;
+        return type_context->lower_to_llvm(typ);
     }
 
     void type_checker::syscall(ast::func_call_data & func_call_data) {

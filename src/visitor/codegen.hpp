@@ -4,6 +4,7 @@
 #include "ast/node_utils.hpp"
 #include "global_map.hpp"
 #include "location.hpp"
+#include "type_context.hpp"
 #include "value_getter.hpp"
 #include "visitor_base.hpp"
 #include <llvm/IR/IRBuilder.h>
@@ -18,7 +19,7 @@ namespace visitor {
                           public value_getter<codegen, ast::node, llvm::Value *> {
       public:
         codegen(const std::string & name, llvm::LLVMContext *,
-                global_map<std::string, llvm::GlobalObject *> *);
+                global_map<std::string, llvm::GlobalObject *> *, type_context *);
 
         non_copyable(codegen);
 
@@ -56,7 +57,7 @@ namespace visitor {
         std::unique_ptr<llvm::Module> ir_module;
         std::unique_ptr<llvm::IRBuilder<>> ir_builder;
 
-        std::map<ast::type, llvm::Type *> types;
+        type_context * type_context;
         std::vector<std::map<std::string, llvm::Value *>> active_values;
         global_map<std::string, llvm::GlobalObject *> * program_globals;
 

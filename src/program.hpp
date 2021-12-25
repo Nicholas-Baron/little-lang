@@ -3,6 +3,7 @@
 
 #include "ast/top_lvl_nodes.hpp"
 #include "settings.hpp"
+#include "type_context.hpp"
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Type.h>
 
@@ -29,6 +30,7 @@ class program final {
     std::shared_ptr<Settings> settings;
     std::vector<ast::top_level_sequence> ast_modules;
     std::vector<std::unique_ptr<llvm::Module>> ir_modules;
+    type_context typ_context;
 };
 
 #endif

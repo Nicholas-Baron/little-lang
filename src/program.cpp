@@ -157,7 +157,8 @@ program::program(std::vector<ast::top_level_sequence> && modules,
     : project_root{std::move(project_root)}
     , context{std::make_unique<llvm::LLVMContext>()}
     , settings{std::move(settings)}
-    , ast_modules(std::move(modules)) {}
+    , ast_modules(std::move(modules))
+    , typ_context(context.get()) {}
 
 bool program::type_check() {
     global_map<std::string, llvm::Type *> program_globals;
@@ -165,7 +166,8 @@ bool program::type_check() {
         // Note: currently, the ast imports are not updated with absolute paths,
         // but the ast filenames are absolute paths.
         auto filename = std::filesystem::relative(mod.filename, project_root);
-        visitor::type_checker type_checker{std::move(filename), context.get(), &program_globals};
+        visitor::type_checker type_checker{std::move(filename), context.get(), &program_globals,
+                                           &typ_context};
         type_checker.visit(mod);
         if (not type_checker.checked_good()) {
             std::cout << "Failed to type check" << std::endl;
@@ -179,7 +181,7 @@ void program::generate_ir() {
     global_map<std::string, llvm::GlobalObject *> globals;
     for (auto & mod : ast_modules) {
         auto filename = std::filesystem::relative(mod.filename, project_root);
-        visitor::codegen codegen{filename, context.get(), &globals};
+        visitor::codegen codegen{filename, context.get(), &globals, &typ_context};
         codegen.visit(mod);
         codegen.verify_module();
         if (settings->flag_is_set(cmd_flag::debug_ir)) { codegen.dump(); }
