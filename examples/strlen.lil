@@ -7,5 +7,5 @@ main() -> int {
 	let text = "Hello World";
 	let length = strlen(text);
 	syscall(1, 1, text, length);
+	return 0;
 }
-

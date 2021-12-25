@@ -105,12 +105,29 @@ namespace visitor {
     void codegen::evaluate_comparison(ast::binary_expr & binary_expr, llvm::Value * lhs_value,
                                       llvm::Value * rhs_value, bool is_int, bool is_constant) {
 
+        assert(lhs_value != nullptr or rhs_value != nullptr);
+        using operand = ast::binary_expr::operand;
+
+        if (lhs_value == nullptr or rhs_value == nullptr) {
+            // Compare the other value to `null`.
+            switch (auto * pointer = lhs_value == nullptr ? rhs_value : lhs_value; binary_expr.op) {
+            case operand::eq:
+                return store_result(ir_builder->CreateIsNull(pointer));
+            case operand::ne:
+                return store_result(ir_builder->CreateIsNotNull(pointer));
+            default:
+                printError("Comparison operator " + tok_to_string(binary_expr.op)
+                               + " cannot work on pointers.",
+                           binary_expr.location());
+                assert(false);
+            }
+        }
+
         using predicate = llvm::CmpInst::Predicate;
         auto int_or_float = [&is_int](predicate int_pred, predicate float_pred) {
             return is_int ? int_pred : float_pred;
         };
 
-        using operand = ast::binary_expr::operand;
         std::optional<predicate> p;
         switch (binary_expr.op) {
         case operand::le:
@@ -239,6 +256,30 @@ namespace visitor {
             return evaluate_comparison(binary_expr, lhs_value, rhs_value, is_int, is_constant);
         }
 
+        using operand = ast::binary_expr::operand;
+
+        // Specific for pointers
+        if (lhs_value->getType()->isPointerTy() or rhs_value->getType()->isPointerTy()) {
+            assert(
+                (lhs_value->getType()->isPointerTy() and rhs_value->getType()->isIntegerTy())
+                or (lhs_value->getType()->isIntegerTy() and rhs_value->getType()->isPointerTy()));
+
+            auto * pointer = lhs_value->getType()->isPointerTy() ? lhs_value : rhs_value;
+            auto * index = lhs_value->getType()->isPointerTy() ? rhs_value : lhs_value;
+            auto * element_ty
+                = llvm::dyn_cast<llvm::PointerType>(pointer->getType())->getElementType();
+
+            switch (binary_expr.op) {
+            case operand::add:
+            case operand::sub:
+                return store_result(ir_builder->CreateGEP(element_ty, pointer, index));
+            default:
+                printError(tok_to_string(binary_expr.op) + " is not implemented for pointers",
+                           binary_expr.location());
+                assert(false);
+            }
+        }
+
         // all other binary expressions
 
         using bin_ops = llvm::Instruction::BinaryOps;
@@ -248,7 +289,6 @@ namespace visitor {
             return is_int ? int_pred : float_pred;
         };
 
-        using operand = ast::binary_expr::operand;
         switch (binary_expr.op) {
         case operand::add:
             bin_op = int_or_float(bin_ops::Add, bin_ops::FAdd);
@@ -341,7 +381,11 @@ namespace visitor {
         visit(func_call_expr.data);
     }
 
-    void codegen::visit(ast::func_call_stmt & func_call_stmt) { visit(func_call_stmt.data); }
+    void codegen::visit(ast::func_call_stmt & func_call_stmt) {
+        visit(func_call_stmt.data);
+        // NOTE: the returned value is dropped in this case
+        drop_result();
+    }
 
     void codegen::visit(ast::func_decl & func_decl) {
 
@@ -389,6 +433,7 @@ namespace visitor {
         // Ensure termination for the whole function
         if (auto & last_bb = func->getBasicBlockList().back(); not last_bb.back().isTerminator()) {
             if (not func_type->getReturnType()->isVoidTy()) {
+                // TODO: Add the C and C++ rule about main
                 printError("Function " + func_decl.head.name()
                            + " does not return a value at the end");
                 assert(false);
@@ -590,12 +635,42 @@ namespace visitor {
         assert(false);
     }
 
-    void codegen::visit(ast::unary_expr & /*unary_expr*/) {
+    void codegen::visit(ast::unary_expr & unary_expr) {
+        auto * value = get_value(*unary_expr.expr, *this);
+        auto * const_val = llvm::dyn_cast<llvm::Constant>(value);
 
-        printError("In unimplemented function for unary_expr");
+        using operand = ast::unary_expr::operand;
+        switch (unary_expr.op) {
+        case operand::bool_not:
+            if (const_val != nullptr) {
+                store_result(llvm::ConstantExpr::getNot(const_val));
+            } else {
+                store_result(ir_builder->CreateNot(value));
+            }
+            break;
+        case operand::deref: {
+            assert(const_val == nullptr);
+
+            auto * ptr_ty = llvm::dyn_cast<llvm::PointerType>(value->getType());
+            assert(ptr_ty != nullptr);
+
+            // TODO: Align it?
+            store_result(ir_builder->CreateLoad(ptr_ty->getElementType(), value));
+        } break;
+        case operand::negate:
+            if (auto float_op = value->getType()->isFloatingPointTy(); const_val != nullptr) {
+                store_result(float_op ? llvm::ConstantExpr::getFNeg(const_val)
+                                      : llvm::ConstantExpr::getNeg(const_val));
+            } else {
+                store_result(float_op ? ir_builder->CreateFNeg(value)
+                                      : ir_builder->CreateNeg(value));
+            }
+            break;
+        }
     }
 
     void codegen::visit(ast::user_val & user_val) {
+        // TODO: Use `return store_result` a bit more.
         using value_type = ast::user_val::value_type;
         switch (user_val.type) {
         case value_type::identifier: {
@@ -608,11 +683,14 @@ namespace visitor {
             store_result(value);
         } break;
         case value_type::null:
-            assert(false);
+            // TODO: Use extra type information to create an actual llvm null value
+            store_result(nullptr);
+            break;
         case value_type::integer: {
             static constexpr auto hex_base = 16;
             static constexpr auto dec_base = 10;
             auto base = user_val.val.find_first_of('x') != std::string::npos ? hex_base : dec_base;
+            // TODO: Get the type from the type_context
             store_result(
                 llvm::ConstantInt::get(llvm::Type::getInt32Ty(*context), user_val.val, base));
         } break;
@@ -621,9 +699,25 @@ namespace visitor {
             assert(false);
             break;
         case value_type::character:
-            printError("Character IR not implemented");
-            assert(false);
-            break;
+            switch (user_val.val.size()) {
+            case 3:
+                return store_result(
+                    llvm::ConstantInt::get(llvm::Type::getInt8Ty(*context), user_val.val.at(1)));
+            case 4:
+                assert(user_val.val.at(1) == '\\');
+                switch (user_val.val.at(2)) {
+                case '0':
+                    return store_result(
+                        llvm::ConstantInt::get(llvm::Type::getInt8Ty(*context), '\0'));
+                case 'n':
+                    return store_result(
+                        llvm::ConstantInt::get(llvm::Type::getInt8Ty(*context), '\n'));
+                }
+                [[fallthrough]];
+            default:
+                llvm::outs() << user_val.val << " cannot be interpreted as a character.\n";
+                assert(false);
+            }
         case value_type::boolean: {
             auto iter = valid_bools.find(user_val.val);
             assert(iter != valid_bools.end());
