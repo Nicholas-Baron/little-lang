@@ -197,7 +197,11 @@ namespace visitor {
 
     void type_checker::visit(ast::func_call_expr & func_call_expr) { visit(func_call_expr.data); }
 
-    void type_checker::visit(ast::func_call_stmt & func_call_stmt) { visit(func_call_stmt.data); }
+    void type_checker::visit(ast::func_call_stmt & func_call_stmt) {
+        visit(func_call_stmt.data);
+        // NOTE: The statement must explicitly drop its type.
+        drop_result();
+    }
 
     void type_checker::visit(ast::func_decl & func_decl) {
 
