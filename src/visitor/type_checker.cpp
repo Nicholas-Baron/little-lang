@@ -6,6 +6,7 @@
 #include <llvm/IR/DerivedTypes.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Type.h>
+#include <llvm/Support/Casting.h>
 
 #include <iostream>
 #include <memory>
@@ -91,15 +92,35 @@ namespace visitor {
         case operand::gt:
         case operand::ge:
         case operand::lt:
-        case operand::le:
-            if (lhs_type != rhs_type) {
+        case operand::le: {
+            // Check if this is a pointer comparison
+            // TODO: Remove when `null` literal is improved.
+            bool pointer_comp = (lhs_type == nullptr and rhs_type == nullptr)
+                             or (lhs_type == nullptr and rhs_type->isPointerTy())
+                             or (lhs_type->isPointerTy() and rhs_type == nullptr);
+
+            if (not pointer_comp and lhs_type != rhs_type) {
                 std::cout << "Comparisons can only be made within the same type" << std::endl;
                 assert(false);
             }
             store_result(find_type(ast::type{"bool"}));
-            break;
+        } break;
         case operand::add:
         case operand::sub:
+            if (lhs_type == nullptr or rhs_type == nullptr) {
+                std::cout << "Arithmetic operations cannot be done on `null`" << std::endl;
+                assert(false);
+            }
+            if (lhs_type->isIntOrPtrTy() and rhs_type->isIntegerTy()) {
+                store_result(lhs_type);
+                return;
+            }
+            if (lhs_type->isIntegerTy() and rhs_type->isIntOrPtrTy()) {
+                store_result(rhs_type);
+                return;
+            }
+
+            [[fallthrough]];
         case operand::mult:
         case operand::div:
             if (lhs_type != rhs_type) {
@@ -234,7 +255,7 @@ namespace visitor {
         auto * cond_type = get_value(*if_expr.condition, *this);
 
         // TODO: improve this check
-        if (cond_type != find_type_of("bool")) {
+        if (cond_type != find_type(ast::type{"bool"})) {
             std::cout << "Conditions for ifs must be of type `bool`" << std::endl;
             assert(false);
         }
@@ -355,9 +376,32 @@ namespace visitor {
     }
 
     void type_checker::visit(ast::unary_expr & unary_expr) {
-        std::cout << "unary_expr" << std::endl;
-        std::cout << tok_to_string(unary_expr.op) << std::endl;
-        unary_expr.expr->accept(*this);
+        auto * type = get_value(*unary_expr.expr, *this);
+        switch (unary_expr.op) {
+        case ast::unary_expr::operand::bool_not:
+            if (type != find_type(ast::type{"bool"})) {
+                std::cout << "`not` can only be done on booleans" << std::endl;
+                assert(false);
+            }
+            break;
+        case ast::unary_expr::operand::deref:
+            if (auto * ptr_type = llvm::dyn_cast_or_null<llvm::PointerType>(type);
+                ptr_type != nullptr) {
+                type = ptr_type->getElementType();
+            } else {
+                std::cout << "Only pointers can be dereferenced" << std::endl;
+                assert(false);
+            }
+            break;
+        case ast::unary_expr::operand::negate:
+            if (not type->isIntegerTy() and not type->isFloatingPointTy()) {
+                std::cout << "Only ints and floats can be negated" << std::endl;
+                assert(false);
+            }
+            break;
+        }
+        assert(type != nullptr);
+        store_result(type);
     }
 
     void type_checker::visit(ast::user_val & user_val) {
@@ -375,7 +419,11 @@ namespace visitor {
             store_result(type);
         } break;
         case val_type::null:
-            assert(false);
+            // TODO: Use `find_type` like everyone else.
+            // This will probably require top-down type info as well as the current bottom up info
+            // TODO: Do not return the nullptr for null
+            store_result(nullptr);
+            break;
         case val_type::boolean:
             store_result(find_type(ast::type{"bool"}));
             break;

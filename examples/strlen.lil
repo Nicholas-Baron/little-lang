@@ -4,8 +4,8 @@ strlen(str is string) -> int
 	else 1 + strlen(str + 1)
 
 main() -> int {
-	let data = "Hello World";
-	let length = strlen(data);
+	let text = "Hello World";
+	let length = strlen(text);
 	syscall(1, 1, text, length);
 }
 
