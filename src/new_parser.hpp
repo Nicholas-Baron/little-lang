@@ -5,8 +5,10 @@
 #include <ast/base_nodes.hpp>
 #include <ast/node_utils.hpp>
 #include <ast/nodes_forward.hpp>
+#include <ast/type.hpp>
 #include <utils/move_copy.hpp>
 
+#include <deque>
 #include <map>
 #include <memory> // unique_ptr
 #include <optional>
@@ -71,7 +73,7 @@ class parser final {
     std::unique_ptr<ast::let_stmt> parse_let_statement();
     ast::typed_identifier parse_opt_typed_identifier();
     ast::typed_identifier parse_typed_identifier();
-    ast::type parse_type();
+    ast::type_ptr parse_type();
 
     // The following parsing functions deal with expression syntax,
     // that is syntax that does map to some value at runtime.
@@ -170,13 +172,13 @@ class parser final {
     }
 
     // `peek_token` returns the next token without removing it from the token stream.
-    token peek_token() {
-        if (not peeked_token.has_value()) { peeked_token = next_token(); }
-        return peeked_token.value();
+    token peek_token(size_t offset = 0) {
+        while (peeked_tokens.size() < offset + 1) { peeked_tokens.push_back(next_token(true)); }
+        return peeked_tokens.at(offset);
     }
 
     // `next_token` returns the next token and removes it from the token stream.
-    token next_token();
+    token next_token(bool increasing_lookahead = false);
 
     // The following are functions that operate on the character stream.
     // `next_char` returns the next character and removes it from the stream.
@@ -200,7 +202,7 @@ class parser final {
     token next_number(Location);
     token next_symbol(Location);
 
-    std::optional<token> peeked_token;
+    std::deque<token> peeked_tokens;
     std::string filename;
     std::string error;
 

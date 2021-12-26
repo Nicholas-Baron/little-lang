@@ -380,38 +380,30 @@ ast::typed_identifier parser::parse_opt_typed_identifier() {
 
     // Assume that the first token we see is a type,
     // as that covers the identifier in the second case as well.
-    auto first_id = next_token();
+    // TODO: Use a nullptr return of parse_type to decide the branch
+    auto location = peek_token().location;
 
-    if (first_id == token_type::question or first_id == token_type::amp) {
-        // We have started parsing a pointer type in the type first case.
-        //     `(?|&) type name`
-        auto type = parse_type();
-        auto second_id = next_token();
-        assert(second_id == token_type::identifier);
-        return {std::move(second_id.text),
-                type.pointed_to(first_id == token_type::amp ? ast::type::pointer_type::non_nullable
-                                                            : ast::type::pointer_type::nullable),
-                first_id.location};
-    }
-
-    assert(first_id == token_type::prim_type or first_id == token_type::identifier);
-
-    if (consume_if(token_type::colon).has_value()) {
+    if (peek_token(1) == token_type::colon) {
         // the second case (`name : type`) has occured.
-        assert(first_id == token_type::identifier);
+        auto name = next_token();
+        assert(name == token_type::identifier);
+        assert(next_token() == token_type::colon);
 
-        return {std::move(first_id.text), parse_type(), first_id.location};
+        return {std::move(name.text), parse_type(), location};
     }
 
-    if (peek_token() != token_type::identifier) {
-        // the third case (`name`) has occured.
-        return {std::move(first_id.text), ast::type{"auto"}, first_id.location};
+    // Since type may be null, this covers the third (`name`) and first (`type name`) cases.
+    // However, we need to check that there are at least 2 identifiers in a row before calling
+    // parse_type. Otherwise, we may interpret the third case of just a name as a type.
+    auto type = (peek_token() == token_type::identifier and peek_token(1) != token_type::identifier)
+                  ? nullptr
+                  : parse_type();
+    auto name = next_token();
+    if (name != token_type::identifier) {
+        std::cout << "Expected identifier, found " << name.text << std::endl;
+        assert(false);
     }
-
-    // the first case (`type name`) has occured.
-    auto second_id = next_token();
-    assert(second_id == token_type::identifier);
-    return {std::move(second_id.text), ast::type{std::move(first_id.text)}, first_id.location};
+    return {std::move(name.text), type, location};
 }
 
 ast::typed_identifier parser::parse_typed_identifier() {
@@ -419,33 +411,51 @@ ast::typed_identifier parser::parse_typed_identifier() {
     //     `type name`
     // or  `name : type`
 
+    auto location = peek_token().location;
+
     // Assume that the first token we see is a type,
     // as that covers the identifier in the second case as well.
-    auto first_id = next_token();
-    assert(first_id == token_type::prim_type or first_id == token_type::identifier);
-
-    if (consume_if(token_type::colon).has_value()) {
+    if (peek_token(1) == token_type::colon) {
         // the second case (`name : type`) has occured.
-        assert(first_id == token_type::identifier);
+        auto identifier = next_token();
+        assert(identifier == token_type::identifier);
+        assert(next_token() == token_type::colon);
 
-        return {std::move(first_id.text), parse_type(), first_id.location};
+        return {std::move(identifier.text), parse_type(), location};
     }
 
     // the first case (`type name`) has occured.
-    auto second_id = next_token();
-    assert(second_id == token_type::identifier);
-    return {std::move(second_id.text), ast::type{std::move(first_id.text)}, first_id.location};
+    auto type = parse_type();
+    assert(type != nullptr);
+    auto name = next_token();
+    assert(name == token_type::identifier);
+    return {std::move(name.text), std::move(type), location};
 }
 
-ast::type parser::parse_type() {
+ast::type_ptr parser::parse_type() {
     // a type can either be some primitive or a user-defined type.
     switch (peek_token().type) {
     case token_type::identifier:
-    case token_type::prim_type:
-        return ast::type{next_token().text};
+        return std::make_shared<ast::user_type>(next_token().text);
+    case token_type::prim_type: {
+        static const std::map<std::string, ast::type_ptr> prim_types{
+            {"int", ast::prim_type::int32},      {"float", ast::prim_type::float32},
+            {"char", ast::prim_type::character}, {"unit", ast::prim_type::unit},
+            {"bool", ast::prim_type::boolean},   {"string", ast::prim_type::str},
+        };
+        auto iter = prim_types.find(next_token().text);
+        assert(iter != prim_types.end());
+        return iter->second;
+    }
+    case token_type::amp:
+        next_token();
+        return std::make_shared<ast::nonnullable_ptr_type>(parse_type());
+    case token_type::question:
+        next_token();
+        return std::make_shared<ast::nullable_ptr_type>(parse_type());
     default:
         error = "Expected a type. Found " + peek_token().text;
-        assert(false);
+        return nullptr;
     }
 }
 
@@ -681,12 +691,12 @@ ast::func_call_data parser::parse_func_call(std::optional<std::string> func_name
     return {std::move(name), std::move(args)};
 }
 
-parser::token parser::next_token() {
+parser::token parser::next_token(bool increasing_lookahead) {
 
-    if (peeked_token.has_value()) {
+    if (not peeked_tokens.empty() and not increasing_lookahead) {
         // return the already processed token when one exists
-        auto result = peeked_token.value();
-        peeked_token.reset();
+        auto result = peeked_tokens.front();
+        peeked_tokens.pop_front();
         return result;
     }
 

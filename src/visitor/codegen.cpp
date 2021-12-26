@@ -2,6 +2,7 @@
 
 #include "ast/expr_nodes.hpp"
 #include "ast/nodes.hpp"
+#include "ast/type.hpp"
 #include "emit_asm.hpp"
 #include "token_to_string.hpp"
 #include "type_context.hpp"
@@ -96,7 +97,11 @@ namespace visitor {
     llvm::Type * codegen::find_type(const ast::type & name, std::optional<Location> loc) {
 
         auto * typ = type_context->lower_to_llvm(name);
-        if (typ == nullptr) { printError(name.base_type() + " is not a valid type?", loc); }
+        if (typ == nullptr) {
+            std::stringstream ss;
+            ss << name << " is not a valid type?";
+            printError(ss.str(), loc);
+        }
         return typ;
     }
 
@@ -226,7 +231,8 @@ namespace visitor {
         param_types.reserve(args.size());
         for (auto * val : args) { param_types.push_back(val->getType()); }
 
-        auto * func_type = llvm::FunctionType::get(find_type(ast::type{"int"}), param_types, false);
+        auto * func_type
+            = llvm::FunctionType::get(find_type(*ast::prim_type::int32), param_types, false);
 
         assert(llvm::InlineAsm::Verify(func_type, constraint));
 
@@ -394,11 +400,11 @@ namespace visitor {
         for (auto i = 0U; i < param_count; ++i) {
 
             auto param = func_decl.head.arg(i);
-            param_types.push_back(find_type(param.type(), param.location()));
+            param_types.push_back(find_type(*param.type(), param.location()));
         }
 
         auto * func_type = llvm::FunctionType::get(
-            find_type(func_decl.head.ret_type(), func_decl.location()), param_types, false);
+            find_type(*func_decl.head.ret_type(), func_decl.location()), param_types, false);
 
         // The only functions that need ExternalLinkage are "main" or exported ones
         auto linkage = (func_decl.head.name() == "main" or func_decl.exported())

@@ -1,6 +1,7 @@
 #include "type_checker.hpp"
 
 #include "ast/nodes.hpp"
+#include "ast/type.hpp"
 #include "token_to_string.hpp"
 #include "type_context.hpp"
 #include <llvm/IR/DerivedTypes.h>
@@ -69,7 +70,7 @@ namespace visitor {
             }
         }
         // TODO: syscalls can return pointers and 64 bit numbers
-        store_result(find_type(ast::type{"int"}));
+        store_result(find_type(*ast::prim_type::int32));
     }
 
     void type_checker::visit(ast::binary_expr & binary_expr) {
@@ -81,7 +82,7 @@ namespace visitor {
         switch (binary_expr.op) {
         case operand::bool_or:
         case operand::bool_and:
-            if (auto * bool_type = find_type(ast::type{"bool"});
+            if (auto * bool_type = find_type(*ast::prim_type::boolean);
                 lhs_type != bool_type or rhs_type != bool_type) {
                 std::cout << "Logical operations can only use booleans" << std::endl;
                 assert(false);
@@ -103,7 +104,7 @@ namespace visitor {
                 std::cout << "Comparisons can only be made within the same type" << std::endl;
                 assert(false);
             }
-            store_result(find_type(ast::type{"bool"}));
+            store_result(find_type(*ast::prim_type::boolean));
         } break;
         case operand::add:
         case operand::sub:
@@ -145,9 +146,9 @@ namespace visitor {
             assert(false);
         }
 
-        auto * expected = find_type(const_decl.name_and_type.type());
+        auto * expected = find_type(*const_decl.name_and_type.type());
         if (expected == nullptr) {
-            std::cout << "Type " << const_decl.name_and_type.type().base_type() << " is not known"
+            std::cout << "Type " << *const_decl.name_and_type.type() << " is not known"
                       << std::endl;
             assert(false);
         }
@@ -156,7 +157,7 @@ namespace visitor {
         assert(actual != nullptr);
         if (expected != actual) {
             std::cout << "Constant " << const_decl.name_and_type.name() << " is not of type "
-                      << const_decl.name_and_type.type().base_type() << std::endl;
+                      << *const_decl.name_and_type.type() << std::endl;
             assert(false);
         }
 
@@ -215,10 +216,9 @@ namespace visitor {
         }
 
         // TODO: The same logic may be present in the codegen module
-        auto * ret_type = find_type(func_decl.head.ret_type());
+        auto * ret_type = find_type(*func_decl.head.ret_type());
         if (ret_type == nullptr) {
-            std::cout << func_decl.head.ret_type().base_type() << " is not a known type"
-                      << std::endl;
+            std::cout << func_decl.head.ret_type() << " is not a known type" << std::endl;
             assert(false);
         }
 
@@ -229,9 +229,9 @@ namespace visitor {
             for (auto i = 0U; i < func_decl.head.param_count(); ++i) {
                 const auto & param = func_decl.head.arg(i);
 
-                auto * arg_type = find_type(param.type());
+                auto * arg_type = find_type(*param.type());
                 if (arg_type == nullptr) {
-                    std::cout << param.type().base_type() << " is not a known type" << std::endl;
+                    std::cout << param.type() << " is not a known type" << std::endl;
                     assert(false);
                 }
                 args.emplace_back(arg_type);
@@ -259,7 +259,7 @@ namespace visitor {
         auto * cond_type = get_value(*if_expr.condition, *this);
 
         // TODO: improve this check
-        if (cond_type != find_type(ast::type{"bool"})) {
+        if (cond_type != find_type(*ast::prim_type::boolean)) {
             std::cout << "Conditions for ifs must be of type `bool`" << std::endl;
             assert(false);
         }
@@ -284,7 +284,7 @@ namespace visitor {
         auto * cond_type = get_value(*if_stmt.condition, *this);
 
         // TODO: improve this check
-        if (cond_type != find_type_of("bool")) {
+        if (cond_type != find_type(*ast::prim_type::boolean)) {
             std::cout << "Conditions for ifs must be of type `bool`" << std::endl;
             assert(false);
         }
@@ -303,9 +303,9 @@ namespace visitor {
 
         auto * val_type = get_value(*let_stmt.value, *this);
 
-        if (auto stated_type = let_stmt.name_and_type.type(); stated_type.base_type() != "auto") {
-            if (auto * found_type = find_type(stated_type); found_type != val_type) {
-                std::cout << stated_type.base_type() << " is not the type of the initialization of "
+        if (const auto * stated_type = let_stmt.name_and_type.type(); stated_type != nullptr) {
+            if (auto * found_type = find_type(*stated_type); found_type != val_type) {
+                std::cout << *stated_type << " is not the type of the initialization of "
                           << let_stmt.name_and_type.name() << std::endl;
                 assert(false);
             }
@@ -383,7 +383,7 @@ namespace visitor {
         auto * type = get_value(*unary_expr.expr, *this);
         switch (unary_expr.op) {
         case ast::unary_expr::operand::bool_not:
-            if (type != find_type(ast::type{"bool"})) {
+            if (type != find_type(*ast::prim_type::boolean)) {
                 std::cout << "`not` can only be done on booleans" << std::endl;
                 assert(false);
             }
@@ -429,19 +429,19 @@ namespace visitor {
             store_result(nullptr);
             break;
         case val_type::boolean:
-            store_result(find_type(ast::type{"bool"}));
+            store_result(find_type(*ast::prim_type::boolean));
             break;
         case val_type::floating:
-            store_result(find_type(ast::type{"float"}));
+            store_result(find_type(*ast::prim_type::float32));
             break;
         case val_type::integer:
-            store_result(find_type(ast::type{"int"}));
+            store_result(find_type(*ast::prim_type::int32));
             break;
         case val_type::character:
-            store_result(find_type(ast::type{"char"}));
+            store_result(find_type(*ast::prim_type::character));
             break;
         case val_type::string:
-            store_result(find_type(ast::type{"string"}));
+            store_result(find_type(*ast::prim_type::str));
             break;
         }
     }

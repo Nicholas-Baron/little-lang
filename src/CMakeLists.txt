@@ -17,6 +17,7 @@ configure_file(${CMAKE_SOURCE_DIR}/src/version.hpp.in ${CMAKE_BINARY_DIR}/versio
 set(
   proj_files
   ast/nodes.cpp
+  ast/type.cpp
   emit_asm.cpp
   jit.cpp
   location.cpp

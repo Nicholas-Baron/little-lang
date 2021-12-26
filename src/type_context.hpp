@@ -16,7 +16,7 @@ class type_context final {
 
   private:
     global_map<std::string, llvm::Type *> global_types;
-    std::map<ast::type, llvm::Type *> active_types;
+    std::map<ast::type_ptr, llvm::Type *> active_types;
 };
 
 #endif

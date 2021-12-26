@@ -8,7 +8,7 @@
 #include <optional>
 
 namespace visitor {
-	// Invariant 1: `value_getter` will *never* implicitly drop a result.
+    // Invariant 1: `value_getter` will *never* implicitly drop a result.
     // NOTE: visitor_impl cannot be tested, as it is incomplete at the time of instantiation.
     template<typename visitor_impl, typename visitable, typename result_t>
     class value_getter {

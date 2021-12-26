@@ -45,11 +45,11 @@ namespace ast {
             header(std::string && name, std::vector<typed_identifier> && parameters)
                 : name_(std::move(name))
                 , params(std::move(parameters))
-                , ret_type_{"unit"} {}
+                , ret_type_{std::make_shared<ast::prim_type>(ast::prim_type::type::unit)} {}
 
-            void set_ret_type(ast::type && type) { ret_type_ = std::move(type); }
+            void set_ret_type(ast::type_ptr && type) { ret_type_ = std::move(type); }
 
-            [[nodiscard]] const ast::type & ret_type() const { return ret_type_; }
+            [[nodiscard]] const ast::type * ret_type() const { return ret_type_.get(); }
 
             [[nodiscard]] const typed_identifier & arg(unsigned index) const {
                 return params.at(index);
@@ -66,7 +66,7 @@ namespace ast {
           private:
             std::string name_;
             std::vector<typed_identifier> params;
-            ast::type ret_type_;
+            ast::type_ptr ret_type_;
             Location loc{};
         };
 

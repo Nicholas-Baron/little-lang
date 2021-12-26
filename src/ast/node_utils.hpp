@@ -3,6 +3,7 @@
 
 #include "base_nodes.hpp"
 #include "location.hpp"
+#include "type.hpp"
 #include "utils/move_copy.hpp"
 
 #include <cassert>
@@ -13,47 +14,21 @@
 // but not nodes themselves
 
 namespace ast {
-    class type final {
-      public:
-        explicit type(std::string && type)
-            : base_type_{std::move(type)} {}
-
-        [[nodiscard]] const auto & base_type() const { return base_type_; }
-
-        enum class pointer_type { nullable, non_nullable };
-
-        type pointed_to(pointer_type ptr_type) {
-            auto copy = ast::type{*this};
-            copy.pointers.push_back(ptr_type);
-            return copy;
-        }
-
-      private:
-        friend bool operator==(const type & lhs, const type & rhs) {
-            return lhs.base_type_ == rhs.base_type_;
-        }
-
-        friend bool operator<(const type & lhs, const type & rhs) {
-            return lhs.base_type_ < rhs.base_type_;
-        }
-
-        std::string base_type_;
-        std::vector<pointer_type> pointers;
-    };
 
     class typed_identifier final {
       public:
-        typed_identifier(std::string && name, ast::type && type, Location loc)
+        typed_identifier(std::string && name, ast::type_ptr type, Location loc)
             : type_{std::move(type)}
             , name_{std::move(name)}
             , loc{loc} {}
 
         [[nodiscard]] const auto & name() const { return name_; }
-        [[nodiscard]] const ast::type & type() const { return type_; }
+        // TODO: Allow copying?
+        [[nodiscard]] const ast::type * type() const { return type_.get(); }
         [[nodiscard]] const auto & location() const noexcept { return loc; }
 
       private:
-        ast::type type_;
+        ast::type_ptr type_;
         std::string name_;
         Location loc{};
     };
