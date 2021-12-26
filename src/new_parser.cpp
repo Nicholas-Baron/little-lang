@@ -380,7 +380,6 @@ ast::typed_identifier parser::parse_opt_typed_identifier() {
 
     // Assume that the first token we see is a type,
     // as that covers the identifier in the second case as well.
-    // TODO: Use a nullptr return of parse_type to decide the branch
     auto location = peek_token().location;
 
     if (peek_token(1) == token_type::colon) {
