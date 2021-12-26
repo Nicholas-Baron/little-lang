@@ -61,8 +61,6 @@ namespace visitor {
         }
     } // namespace
 
-    // TODO: Make a function to init type map with builtin types
-
     codegen::codegen(const std::string & name, llvm::LLVMContext * context,
                      global_map<std::string, llvm::GlobalObject *> * program_globals,
                      class type_context * typ_context)
@@ -670,7 +668,6 @@ namespace visitor {
     }
 
     void codegen::visit(ast::user_val & user_val) {
-        // TODO: Use `return store_result` a bit more.
         using value_type = ast::user_val::value_type;
         switch (user_val.type) {
         case value_type::identifier: {
@@ -680,20 +677,19 @@ namespace visitor {
                 // TODO: Better recovery
                 assert(false);
             }
-            store_result(value);
-        } break;
+            return store_result(value);
+        }
         case value_type::null:
             // TODO: Use extra type information to create an actual llvm null value
-            store_result(nullptr);
-            break;
+            return store_result(nullptr);
         case value_type::integer: {
             static constexpr auto hex_base = 16;
             static constexpr auto dec_base = 10;
             auto base = user_val.val.find_first_of('x') != std::string::npos ? hex_base : dec_base;
             // TODO: Get the type from the type_context
-            store_result(
+            return store_result(
                 llvm::ConstantInt::get(llvm::Type::getInt32Ty(*context), user_val.val, base));
-        } break;
+        }
         case value_type::floating:
             printError("Floating point IR not implemented");
             assert(false);
@@ -721,13 +717,13 @@ namespace visitor {
         case value_type::boolean: {
             auto iter = valid_bools.find(user_val.val);
             assert(iter != valid_bools.end());
-            store_result(llvm::ConstantInt::getBool(*context, iter->second));
-        } break;
+            return store_result(llvm::ConstantInt::getBool(*context, iter->second));
+        }
         case value_type::string: {
             assert(user_val.val.size() > 2);
             auto value = user_val.val.substr(1, user_val.val.size() - 2);
             return store_result(ir_builder->CreateGlobalStringPtr(value));
-        } break;
+        }
         }
     }
 } // namespace visitor
