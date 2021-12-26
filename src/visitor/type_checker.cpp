@@ -90,22 +90,26 @@ namespace visitor {
             [[fallthrough]];
         case operand::eq:
         case operand::ne:
+            // Check if this is a pointer comparison
+            // TODO: Remove when `null` literal is improved.
+            if (bool pointer_comp = (lhs_type == nullptr and rhs_type == nullptr)
+                                 or (lhs_type == nullptr and rhs_type->isPointerTy())
+                                 or (lhs_type->isPointerTy() and rhs_type == nullptr);
+                not pointer_comp and lhs_type != rhs_type) {
+                std::cout << "Equality can only be made within the same type" << std::endl;
+                assert(false);
+            }
+            return store_result(find_type(*ast::prim_type::boolean));
         case operand::gt:
         case operand::ge:
         case operand::lt:
-        case operand::le: {
-            // Check if this is a pointer comparison
-            // TODO: Remove when `null` literal is improved.
-            bool pointer_comp = (lhs_type == nullptr and rhs_type == nullptr)
-                             or (lhs_type == nullptr and rhs_type->isPointerTy())
-                             or (lhs_type->isPointerTy() and rhs_type == nullptr);
-
-            if (not pointer_comp and lhs_type != rhs_type) {
-                std::cout << "Comparisons can only be made within the same type" << std::endl;
+        case operand::le:
+            if (lhs_type != rhs_type) {
+                std::cout << "Ordering comparisons can only be made within the same type"
+                          << std::endl;
                 assert(false);
             }
-            store_result(find_type(*ast::prim_type::boolean));
-        } break;
+            return store_result(find_type(*ast::prim_type::boolean));
         case operand::add:
         case operand::sub:
             if (lhs_type == nullptr or rhs_type == nullptr) {
@@ -113,14 +117,11 @@ namespace visitor {
                 assert(false);
             }
             if (lhs_type->isIntOrPtrTy() and rhs_type->isIntegerTy()) {
-                store_result(lhs_type);
-                return;
+                return store_result(lhs_type);
             }
             if (lhs_type->isIntegerTy() and rhs_type->isIntOrPtrTy()) {
-                store_result(rhs_type);
-                return;
+                return store_result(rhs_type);
             }
-
             [[fallthrough]];
         case operand::mult:
         case operand::div:
@@ -129,8 +130,7 @@ namespace visitor {
                           << std::endl;
                 assert(false);
             }
-            store_result(lhs_type);
-            break;
+            return store_result(lhs_type);
         default:
             std::cout << "Unimplemented type check for " << tok_to_string(binary_expr.op)
                       << std::endl;
