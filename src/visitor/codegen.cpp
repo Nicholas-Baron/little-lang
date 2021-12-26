@@ -435,14 +435,19 @@ namespace visitor {
         active_values.pop_back();
 
         // Ensure termination for the whole function
+        // TODO: Iterate every block and check for termination on each?
         if (auto & last_bb = func->getBasicBlockList().back(); not last_bb.back().isTerminator()) {
-            if (not func_type->getReturnType()->isVoidTy()) {
-                // TODO: Add the C and C++ rule about main
+            ir_builder->SetInsertPoint(&last_bb);
+            if (auto * return_type = func_type->getReturnType(); return_type->isVoidTy()) {
+                ir_builder->CreateRetVoid();
+            } else if (func_decl.head.name() == "main" and return_type->isIntegerTy()) {
+                // Like C++, we add a `return 0` at the end.
+                ir_builder->CreateRet(llvm::ConstantInt::get(return_type, 0));
+            } else {
                 printError("Function " + func_decl.head.name()
                            + " does not return a value at the end");
                 assert(false);
             }
-            ir_builder->CreateRetVoid();
         }
 
         if (func_decl.exported()) {
