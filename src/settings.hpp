@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 // Some command line flags can be stored in a bitfield.
 enum class cmd_flag : unsigned {
@@ -23,6 +24,8 @@ struct Settings {
     void set_flag(cmd_flag flag) { flags |= static_cast<unsigned>(flag); }
 
     unsigned flags;
+
+    std::vector<std::string> extra_args;
 };
 
 std::shared_ptr<Settings> read_settings(int arg_count, const char * const * args);

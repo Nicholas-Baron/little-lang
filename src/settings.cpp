@@ -2,6 +2,7 @@
 
 #include "lyra/lyra.hpp"
 
+#include <cstring>
 #include <iostream>
 #include <version.hpp>
 
@@ -35,7 +36,21 @@ std::shared_ptr<Settings> read_settings(int arg_count, const char * const * args
              | lyra::opt(debug)["--debug"] | lyra::opt(debug_show_execs)["--exec"]
              | lyra::arg(settings->file_to_read, "file to read");
 
-    if (auto result = cli.parse({arg_count, args}); not result) {
+    // Make a new vector with all the args from before the "--"
+    std::vector<const char *> lyra_args;
+    bool seen_double_dash = false;
+    for (auto i = 0; i < arg_count; ++i) {
+        if (std::strcmp("--", args[i]) == 0) {
+            seen_double_dash = true;
+        } else if (seen_double_dash) {
+            settings->extra_args.emplace_back(args[i]);
+        } else {
+            lyra_args.push_back(args[i]);
+        }
+    }
+
+    if (auto result = cli.parse({static_cast<int>(lyra_args.size()), lyra_args.data()});
+        not result) {
         std::cerr << "Error in command line : " << result.errorMessage() << std::endl;
         exit(1);
     }
