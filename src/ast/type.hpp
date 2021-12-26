@@ -92,17 +92,17 @@ namespace ast {
         movable(prim_type);
         ~prim_type() final = default;
 
-        type prim;
-
-        static inline type_ptr int32
+        static inline const type_ptr int32
             = std::make_shared<ast::prim_type>(ast::prim_type::type::int32);
-        static inline type_ptr unit = std::make_shared<ast::prim_type>(ast::prim_type::type::unit);
-        static inline type_ptr float32
+        static inline const type_ptr unit
+            = std::make_shared<ast::prim_type>(ast::prim_type::type::unit);
+        static inline const type_ptr float32
             = std::make_shared<ast::prim_type>(ast::prim_type::type::float32);
-        static inline type_ptr boolean
+        static inline const type_ptr boolean
             = std::make_shared<ast::prim_type>(ast::prim_type::type::boolean);
-        static inline type_ptr str = std::make_shared<ast::prim_type>(ast::prim_type::type::str);
-        static inline type_ptr character
+        static inline const type_ptr str
+            = std::make_shared<ast::prim_type>(ast::prim_type::type::str);
+        static inline const type_ptr character
             = std::make_shared<ast::prim_type>(ast::prim_type::type::character);
 
       private:
@@ -112,6 +112,8 @@ namespace ast {
             const auto * rhs_cast = dynamic_cast<const prim_type *>(&rhs);
             return rhs_cast != nullptr and prim == rhs_cast->prim;
         }
+
+        type prim;
     };
 
     struct user_type final : public type {
