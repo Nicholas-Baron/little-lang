@@ -15,7 +15,7 @@
 namespace visitor {
 
     type_checker::type_checker(std::string filename, llvm::LLVMContext * context,
-                               global_map<std::string, llvm::Type *> * imports,
+                               global_map<std::string, ast::type_ptr> * imports,
                                class type_context * types)
         : filename{std::move(filename)}
         , context{context}
@@ -25,14 +25,14 @@ namespace visitor {
         instrinics.emplace("syscall", &type_checker::syscall);
     }
 
-    void type_checker::bind_type(llvm::Type * type, std::string identifier, bool should_export) {
+    void type_checker::bind_type(ast::type_ptr type, std::string identifier, bool should_export) {
         if (should_export and program_globals != nullptr) {
             program_globals->add(filename, identifier, type);
         }
-        active_typed_identifiers.back().emplace(std::move(identifier), type);
+        active_typed_identifiers.back().emplace(std::move(identifier), std::move(type));
     }
 
-    [[nodiscard]] llvm::Type * type_checker::find_type_of(const std::string & id) const {
+    [[nodiscard]] ast::type_ptr type_checker::find_type_of(const std::string & id) const {
 
         for (auto iter = active_typed_identifiers.rbegin(); iter != active_typed_identifiers.rend();
              ++iter) {
@@ -40,10 +40,6 @@ namespace visitor {
         }
 
         return nullptr;
-    }
-
-    [[nodiscard]] llvm::Type * type_checker::find_type(const ast::type & typ) const {
-        return type_context->lower_to_llvm(typ);
     }
 
     void type_checker::syscall(ast::func_call_data & func_call_data) {
@@ -57,32 +53,32 @@ namespace visitor {
 
         for (auto i = 0U; i < func_call_data.args_count(); ++i) {
             auto & arg = func_call_data.arg(i);
-            auto * arg_type = get_value(arg, *this);
-            if (not arg_type->isIntOrPtrTy()) {
-                std::cout << "syscall can only take int, bool, or string arguments" << std::endl;
+            auto arg_type = get_value(arg, *this);
+            if (not arg_type->is_pointer_type() and *arg_type != *ast::prim_type::int32) {
+                std::cout << "syscall can only take int or pointer arguments" << std::endl;
                 assert(false);
             }
 
             // The first argmuent must always be a syscall number.
-            if (i == 0 and not arg_type->isIntegerTy()) {
+            if (i == 0 and *arg_type != *ast::prim_type::int32.get()) {
                 std::cout << "syscall must have an integer as its first argument" << std::endl;
                 assert(false);
             }
         }
         // TODO: syscalls can return pointers and 64 bit numbers
-        store_result(find_type(*ast::prim_type::int32));
+        store_result(ast::prim_type::int32);
     }
 
     void type_checker::visit(ast::binary_expr & binary_expr) {
 
-        auto * lhs_type = get_value(*binary_expr.lhs, *this);
-        auto * rhs_type = get_value(*binary_expr.rhs, *this);
+        auto lhs_type = get_value(*binary_expr.lhs, *this);
+        auto rhs_type = get_value(*binary_expr.rhs, *this);
 
         using operand = ast::binary_expr::operand;
         switch (binary_expr.op) {
         case operand::bool_or:
         case operand::bool_and:
-            if (auto * bool_type = find_type(*ast::prim_type::boolean);
+            if (auto bool_type = ast::prim_type::boolean;
                 lhs_type != bool_type or rhs_type != bool_type) {
                 std::cout << "Logical operations can only use booleans" << std::endl;
                 assert(false);
@@ -93,13 +89,13 @@ namespace visitor {
             // Check if this is a pointer comparison
             // TODO: Remove when `null` literal is improved.
             if (bool pointer_comp = (lhs_type == nullptr and rhs_type == nullptr)
-                                 or (lhs_type == nullptr and rhs_type->isPointerTy())
-                                 or (lhs_type->isPointerTy() and rhs_type == nullptr);
+                                 or (lhs_type == nullptr and rhs_type->is_pointer_type())
+                                 or (lhs_type->is_pointer_type() and rhs_type == nullptr);
                 not pointer_comp and lhs_type != rhs_type) {
                 std::cout << "Equality can only be made within the same type" << std::endl;
                 assert(false);
             }
-            return store_result(find_type(*ast::prim_type::boolean));
+            return store_result(ast::prim_type::boolean);
         case operand::gt:
         case operand::ge:
         case operand::lt:
@@ -109,17 +105,17 @@ namespace visitor {
                           << std::endl;
                 assert(false);
             }
-            return store_result(find_type(*ast::prim_type::boolean));
+            return store_result(ast::prim_type::boolean);
         case operand::add:
         case operand::sub:
             if (lhs_type == nullptr or rhs_type == nullptr) {
                 std::cout << "Arithmetic operations cannot be done on `null`" << std::endl;
                 assert(false);
             }
-            if (lhs_type->isIntOrPtrTy() and rhs_type->isIntegerTy()) {
+            if (lhs_type->is_pointer_type() and *rhs_type == *ast::prim_type::int32) {
                 return store_result(lhs_type);
             }
-            if (lhs_type->isIntegerTy() and rhs_type->isIntOrPtrTy()) {
+            if (*lhs_type == *ast::prim_type::int32 and rhs_type->is_pointer_type()) {
                 return store_result(rhs_type);
             }
             [[fallthrough]];
@@ -146,22 +142,22 @@ namespace visitor {
             assert(false);
         }
 
-        auto * expected = find_type(*const_decl.name_and_type.type());
+        auto expected = const_decl.name_and_type.type();
         if (expected == nullptr) {
             std::cout << "Type " << *const_decl.name_and_type.type() << " is not known"
                       << std::endl;
             assert(false);
         }
 
-        auto * actual = get_value(*const_decl.expr, *this);
+        auto actual = get_value(*const_decl.expr, *this);
         assert(actual != nullptr);
-        if (expected != actual) {
+        if (*expected != *actual) {
             std::cout << "Constant " << const_decl.name_and_type.name() << " is not of type "
                       << *const_decl.name_and_type.type() << std::endl;
             assert(false);
         }
 
-        bind_type(actual, const_decl.name_and_type.name(), const_decl.exported());
+        bind_type(std::move(actual), const_decl.name_and_type.name(), const_decl.exported());
     }
 
     void type_checker::visit(ast::expr & expr) { expr.accept(*this); }
@@ -173,27 +169,28 @@ namespace visitor {
         }
 
         auto * func_type
-            = llvm::dyn_cast_or_null<llvm::FunctionType>(find_type_of(func_call_data.name()));
-        if (func_type == nullptr or not func_type->isFunctionTy()) {
+            = dynamic_cast<ast::function_type *>(find_type_of(func_call_data.name()).get());
+        if (func_type == nullptr) {
             std::cout << "Cannot call non-function " << func_call_data.name() << std::endl;
             assert(false);
         }
 
-        if (func_type->getNumParams() != func_call_data.args_count()) {
+        if (func_type->arg_types.size() != func_call_data.args_count()) {
             std::cout << func_call_data.name()
                       << " was called with an incorrect number of arguments" << std::endl;
             assert(false);
         }
 
         for (auto i = 0U; i < func_call_data.args_count(); ++i) {
-            auto * expected = func_type->getParamType(i);
-            if (expected != get_value(func_call_data.arg(i), *this)) {
+            auto expected = func_type->arg_types[i];
+            auto actual = get_value(func_call_data.arg(i), *this);
+            if ((actual == nullptr and not expected->is_pointer_type()) or *expected != *actual) {
                 std::cout << "Argument #" << (i + 1) << " was of an incorrect type" << std::endl;
                 assert(false);
             }
         }
 
-        store_result(func_type->getReturnType());
+        store_result(func_type->return_type);
     }
 
     void type_checker::visit(ast::func_call_expr & func_call_expr) { visit(func_call_expr.data); }
@@ -216,29 +213,17 @@ namespace visitor {
         }
 
         // TODO: The same logic may be present in the codegen module
-        auto * ret_type = find_type(*func_decl.head.ret_type());
-        if (ret_type == nullptr) {
+        current_return_type = func_decl.head.ret_type().get();
+        if (current_return_type == nullptr) {
             std::cout << func_decl.head.ret_type() << " is not a known type" << std::endl;
             assert(false);
         }
 
-        current_return_type = ret_type;
-
-        std::vector<llvm::Type *> args;
-        {
-            for (auto i = 0U; i < func_decl.head.param_count(); ++i) {
-                const auto & param = func_decl.head.arg(i);
-
-                auto * arg_type = find_type(*param.type());
-                if (arg_type == nullptr) {
-                    std::cout << param.type() << " is not a known type" << std::endl;
-                    assert(false);
-                }
-                args.emplace_back(arg_type);
-            }
+        auto func_type = std::make_shared<ast::function_type>(func_decl.head.ret_type());
+        for (auto i = 0U; i < func_decl.head.param_count(); ++i) {
+            const auto & param = func_decl.head.arg(i);
+            func_type->arg_types.push_back(param.type());
         }
-
-        auto * func_type = llvm::FunctionType::get(ret_type, args, false);
 
         bind_type(func_type, func_name, func_decl.exported());
 
@@ -246,7 +231,7 @@ namespace visitor {
 
         // bind the parameter types
         for (auto i = 0U; i < func_decl.head.param_count(); ++i) {
-            bind_type(args[i], func_decl.head.arg(i).name());
+            bind_type(func_type->arg_types[i], func_decl.head.arg(i).name());
         }
 
         func_decl.body->accept(*this);
@@ -256,18 +241,18 @@ namespace visitor {
 
     void type_checker::visit(ast::if_expr & if_expr) {
         // Check that the condition type is bool
-        auto * cond_type = get_value(*if_expr.condition, *this);
+        auto cond_type = get_value(*if_expr.condition, *this);
 
         // TODO: improve this check
-        if (cond_type != find_type(*ast::prim_type::boolean)) {
+        if (cond_type != ast::prim_type::boolean) {
             std::cout << "Conditions for ifs must be of type `bool`" << std::endl;
             assert(false);
         }
 
         // check that the then_case type is the same as the else_case
 
-        auto * then_type = get_value(*if_expr.then_case, *this);
-        auto * else_type = get_value(*if_expr.else_case, *this);
+        auto then_type = get_value(*if_expr.then_case, *this);
+        auto else_type = get_value(*if_expr.else_case, *this);
         assert(then_type != nullptr);
         assert(else_type != nullptr);
 
@@ -281,10 +266,10 @@ namespace visitor {
 
     void type_checker::visit(ast::if_stmt & if_stmt) {
         // Check that the condition type is bool
-        auto * cond_type = get_value(*if_stmt.condition, *this);
+        auto cond_type = get_value(*if_stmt.condition, *this);
 
         // TODO: improve this check
-        if (cond_type != find_type(*ast::prim_type::boolean)) {
+        if (cond_type != ast::prim_type::boolean) {
             std::cout << "Conditions for ifs must be of type `bool`" << std::endl;
             assert(false);
         }
@@ -301,14 +286,13 @@ namespace visitor {
             assert(false);
         }
 
-        auto * val_type = get_value(*let_stmt.value, *this);
+        auto val_type = get_value(*let_stmt.value, *this);
 
-        if (const auto * stated_type = let_stmt.name_and_type.type(); stated_type != nullptr) {
-            if (auto * found_type = find_type(*stated_type); found_type != val_type) {
-                std::cout << *stated_type << " is not the type of the initialization of "
-                          << let_stmt.name_and_type.name() << std::endl;
-                assert(false);
-            }
+        if (const auto stated_type = let_stmt.name_and_type.type();
+            stated_type != nullptr and stated_type != val_type) {
+            std::cout << *stated_type << " is not the type of the initialization of "
+                      << let_stmt.name_and_type.name() << std::endl;
+            assert(false);
         }
 
         bind_type(val_type, let_stmt.name_and_type.name());
@@ -320,7 +304,7 @@ namespace visitor {
         if (return_stmt.value == nullptr) {
             // we should be in a void function
 
-            if (not current_return_type->isVoidTy()) {
+            if (current_return_type != ast::prim_type::unit.get()) {
                 std::cout << "Return should have an expression in a 'non-void function'"
                           << std::endl;
                 assert(false);
@@ -331,9 +315,8 @@ namespace visitor {
 
         // the expression needs to be the same as the return type
 
-        auto * val_type = get_value(*return_stmt.value, *this);
-
-        if (val_type != current_return_type) {
+        if (auto val_type = get_value(*return_stmt.value, *this);
+            *val_type != *current_return_type) {
             std::cout << "Return statement with wrong type of expression found" << std::endl;
             assert(false);
         }
@@ -358,7 +341,7 @@ namespace visitor {
             }
             for (auto & [filename, imports] : top_level_sequence.imports) {
                 for (auto & id : imports) {
-                    auto * import_type = this->program_globals->lookup(filename, id);
+                    auto import_type = program_globals->lookup(filename, id);
                     if (import_type == nullptr) {
                         std::cout << "File " << filename << " does not export " << id << std::endl;
                         assert(false);
@@ -380,25 +363,27 @@ namespace visitor {
     }
 
     void type_checker::visit(ast::unary_expr & unary_expr) {
-        auto * type = get_value(*unary_expr.expr, *this);
+        auto type = get_value(*unary_expr.expr, *this);
         switch (unary_expr.op) {
         case ast::unary_expr::operand::bool_not:
-            if (type != find_type(*ast::prim_type::boolean)) {
+            if (type != ast::prim_type::boolean) {
                 std::cout << "`not` can only be done on booleans" << std::endl;
                 assert(false);
             }
             break;
         case ast::unary_expr::operand::deref:
-            if (auto * ptr_type = llvm::dyn_cast_or_null<llvm::PointerType>(type);
-                ptr_type != nullptr) {
-                type = ptr_type->getElementType();
+            if (auto * ptr_type = dynamic_cast<ast::ptr_type *>(type.get()); ptr_type != nullptr) {
+                type = ptr_type->pointed_to;
+            } else if (type == ast::prim_type::str) {
+				// TODO: This branch may be removed later
+                type = ast::prim_type::character;
             } else {
                 std::cout << "Only pointers can be dereferenced" << std::endl;
                 assert(false);
             }
             break;
         case ast::unary_expr::operand::negate:
-            if (not type->isIntegerTy() and not type->isFloatingPointTy()) {
+            if (type != ast::prim_type::int32 and type != ast::prim_type::float32) {
                 std::cout << "Only ints and floats can be negated" << std::endl;
                 assert(false);
             }
@@ -414,7 +399,7 @@ namespace visitor {
 
         switch (user_val.type) {
         case val_type::identifier: {
-            auto * type = find_type_of(user_val.val);
+            auto type = find_type_of(user_val.val);
             if (type == nullptr) {
                 std::cout << "Identifier " << user_val.val << " has not been typed yet"
                           << std::endl;
@@ -429,19 +414,19 @@ namespace visitor {
             store_result(nullptr);
             break;
         case val_type::boolean:
-            store_result(find_type(*ast::prim_type::boolean));
+            store_result(ast::prim_type::boolean);
             break;
         case val_type::floating:
-            store_result(find_type(*ast::prim_type::float32));
+            store_result(ast::prim_type::float32);
             break;
         case val_type::integer:
-            store_result(find_type(*ast::prim_type::int32));
+            store_result(ast::prim_type::int32);
             break;
         case val_type::character:
-            store_result(find_type(*ast::prim_type::character));
+            store_result(ast::prim_type::character);
             break;
         case val_type::string:
-            store_result(find_type(*ast::prim_type::str));
+            store_result(ast::prim_type::str);
             break;
         }
     }

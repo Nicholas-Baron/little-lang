@@ -49,7 +49,7 @@ namespace ast {
 
             void set_ret_type(ast::type_ptr && type) { ret_type_ = std::move(type); }
 
-            [[nodiscard]] const ast::type * ret_type() const { return ret_type_.get(); }
+            [[nodiscard]] ast::type_ptr ret_type() const { return ret_type_; }
 
             [[nodiscard]] const typed_identifier & arg(unsigned index) const {
                 return params.at(index);

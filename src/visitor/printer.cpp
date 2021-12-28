@@ -66,7 +66,7 @@ namespace visitor {
     void printer::visit(ast::let_stmt & let_stmt) {
         std::cout << "let_stmt" << std::endl;
         std::cout << let_stmt.name_and_type.name() << " : ";
-        if (const auto * type = let_stmt.name_and_type.type(); type == nullptr) {
+        if (const auto type = let_stmt.name_and_type.type(); type == nullptr) {
             std::cout << "auto";
         } else {
             std::cout << *type;

@@ -15,7 +15,7 @@ class type_context final {
     [[nodiscard]] llvm::Type * lower_to_llvm(const ast::type &);
 
   private:
-    global_map<std::string, llvm::Type *> global_types;
+    global_map<std::string, ast::type_ptr> global_types;
     std::map<ast::type_ptr, llvm::Type *> active_types;
 };
 

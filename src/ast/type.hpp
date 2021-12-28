@@ -99,7 +99,7 @@ namespace ast {
         movable(prim_type);
         ~prim_type() final = default;
 
-        [[nodiscard]] bool is_pointer_type() const final { return false; }
+        [[nodiscard]] bool is_pointer_type() const final { return prim == type::str; }
 
         static inline const type_ptr int32
             = std::make_shared<ast::prim_type>(ast::prim_type::type::int32);
@@ -148,14 +148,18 @@ namespace ast {
 
     struct function_type final : public type {
 
+        explicit function_type(ast::type_ptr ret_type, std::vector<ast::type_ptr> && arg_types = {})
+            : return_type{std::move(ret_type)}
+            , arg_types{std::move(arg_types)} {}
+
         non_copyable(function_type);
         movable(function_type);
         ~function_type() final = default;
 
         [[nodiscard]] bool is_pointer_type() const final { return false; }
 
-        std::vector<ast::type_ptr> arg_types;
         ast::type_ptr return_type;
+        std::vector<ast::type_ptr> arg_types;
 
       private:
         void print(std::ostream & /*output*/) const final;

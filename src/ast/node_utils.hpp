@@ -23,8 +23,7 @@ namespace ast {
             , loc{loc} {}
 
         [[nodiscard]] const auto & name() const { return name_; }
-        // TODO: Allow copying?
-        [[nodiscard]] const ast::type * type() const { return type_.get(); }
+        [[nodiscard]] ast::type_ptr type() const { return type_; }
         [[nodiscard]] const auto & location() const noexcept { return loc; }
 
       private:

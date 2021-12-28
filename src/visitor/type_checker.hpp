@@ -1,6 +1,7 @@
 #ifndef type_checker_HPP
 #define type_checker_HPP
 
+#include "ast/type.hpp"
 #include "global_map.hpp"
 #include "location.hpp"
 #include "type_context.hpp"
@@ -16,10 +17,10 @@
 
 namespace visitor {
     class type_checker final : public visitor_base,
-                               public value_getter<type_checker, ast::node, llvm::Type *> {
+                               public value_getter<type_checker, ast::node, ast::type_ptr> {
       public:
         type_checker(std::string filename, llvm::LLVMContext *,
-                     global_map<std::string, llvm::Type *> *, type_context *);
+                     global_map<std::string, ast::type_ptr> *, type_context *);
 
         non_copyable(type_checker);
 
@@ -42,11 +43,9 @@ namespace visitor {
         void printError(const std::string & name, std::optional<Location> loc = std::nullopt);
 
         // Find the type of an identifier
-        [[nodiscard]] llvm::Type * find_type_of(const std::string &) const;
+        [[nodiscard]] ast::type_ptr find_type_of(const std::string &) const;
 
-        // Find the llvm type of an ast type
-        [[nodiscard]] llvm::Type * find_type(const ast::type &) const;
-        void bind_type(llvm::Type *, std::string, bool should_export = false);
+        void bind_type(ast::type_ptr, std::string, bool should_export = false);
 
         bool found_error{false};
 
@@ -54,11 +53,11 @@ namespace visitor {
         llvm::LLVMContext * context;
 
         type_context * type_context;
-        std::vector<std::map<std::string, llvm::Type *>> active_typed_identifiers;
-        global_map<std::string, llvm::Type *> * program_globals;
+        std::vector<std::map<std::string, ast::type_ptr>> active_typed_identifiers;
+        global_map<std::string, ast::type_ptr> * program_globals;
         std::map<std::string, void (type_checker::*)(ast::func_call_data &)> instrinics;
 
-        llvm::Type * current_return_type{nullptr};
+        const ast::type * current_return_type{nullptr};
     };
 } // namespace visitor
 
