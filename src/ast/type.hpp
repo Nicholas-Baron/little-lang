@@ -15,6 +15,8 @@ namespace ast {
         movable(type);
         virtual ~type() noexcept = default;
 
+        [[nodiscard]] virtual bool is_pointer_type() const = 0;
+
       protected:
         type() = default;
 
@@ -38,6 +40,7 @@ namespace ast {
         type_ptr pointed_to;
 
         [[nodiscard]] virtual bool nullable() const noexcept = 0;
+        [[nodiscard]] bool is_pointer_type() const final { return true; }
 
       protected:
         ptr_type(type_ptr inner)
@@ -92,6 +95,8 @@ namespace ast {
         movable(prim_type);
         ~prim_type() final = default;
 
+        [[nodiscard]] bool is_pointer_type() const final { return false; }
+
         static inline const type_ptr int32
             = std::make_shared<ast::prim_type>(ast::prim_type::type::int32);
         static inline const type_ptr unit
@@ -123,6 +128,8 @@ namespace ast {
         non_copyable(user_type);
         movable(user_type);
         ~user_type() final = default;
+
+        [[nodiscard]] bool is_pointer_type() const final { return false; }
 
         std::string name;
 
