@@ -6,6 +6,7 @@
 #include <iosfwd> // ostream
 #include <memory> // shared_ptr
 #include <string>
+#include <vector>
 
 namespace ast {
     class type {
@@ -29,6 +30,9 @@ namespace ast {
 
         [[nodiscard]] friend bool operator==(const type & lhs, const type & rhs) {
             return lhs.equals(rhs);
+        }
+        [[nodiscard]] friend bool operator!=(const type & lhs, const type & rhs) {
+            return not(lhs == rhs);
         }
         [[nodiscard]] virtual bool equals(const type &) const = 0;
     };
@@ -141,6 +145,24 @@ namespace ast {
             return rhs_cast != nullptr and name == rhs_cast->name;
         }
     };
+
+    struct function_type final : public type {
+
+        non_copyable(function_type);
+        movable(function_type);
+        ~function_type() final = default;
+
+        [[nodiscard]] bool is_pointer_type() const final { return false; }
+
+        std::vector<ast::type_ptr> arg_types;
+        ast::type_ptr return_type;
+
+      private:
+        void print(std::ostream & /*output*/) const final;
+
+        [[nodiscard]] bool equals(const ast::type & rhs) const final;
+    };
+
 } // namespace ast
 
 #endif
