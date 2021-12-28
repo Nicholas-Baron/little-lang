@@ -74,6 +74,9 @@ namespace visitor {
         auto lhs_type = get_value(*binary_expr.lhs, *this);
         auto rhs_type = get_value(*binary_expr.rhs, *this);
 
+        assert(lhs_type != nullptr);
+        assert(rhs_type != nullptr);
+
         using operand = ast::binary_expr::operand;
         switch (binary_expr.op) {
         case operand::bool_or:
@@ -86,14 +89,33 @@ namespace visitor {
             [[fallthrough]];
         case operand::eq:
         case operand::ne:
-            // Check if this is a pointer comparison
-            // TODO: Remove when `null` literal is improved.
-            if (bool pointer_comp = (lhs_type == nullptr and rhs_type == nullptr)
-                                 or (lhs_type == nullptr and rhs_type->is_pointer_type())
-                                 or (lhs_type->is_pointer_type() and rhs_type == nullptr);
+            if (bool pointer_comp = lhs_type->is_pointer_type() and rhs_type->is_pointer_type();
                 not pointer_comp and lhs_type != rhs_type) {
                 std::cout << "Equality can only be made within the same type" << std::endl;
                 assert(false);
+            } else if (pointer_comp) {
+                // If either is null, no further checks are needed
+                if (lhs_type == ast::prim_type::null or rhs_type == ast::prim_type::null) {
+                    return store_result(ast::prim_type::boolean);
+                }
+
+                // Check that the pointed to types are the same.
+
+                // Shortcut for strings
+                if (lhs_type == ast::prim_type::str and rhs_type == ast::prim_type::str) {
+                    return store_result(ast::prim_type::boolean);
+                }
+
+                auto * lhs_ptr = dynamic_cast<ast::ptr_type *>(lhs_type.get());
+                auto * rhs_ptr = dynamic_cast<ast::ptr_type *>(rhs_type.get());
+
+                assert(lhs_ptr != nullptr);
+                assert(rhs_ptr != nullptr);
+
+                if (*lhs_ptr->pointed_to != *rhs_ptr->pointed_to) {
+                    std::cout << "Equality can only be made within the same type" << std::endl;
+                    assert(false);
+                }
             }
             return store_result(ast::prim_type::boolean);
         case operand::gt:
@@ -375,7 +397,7 @@ namespace visitor {
             if (auto * ptr_type = dynamic_cast<ast::ptr_type *>(type.get()); ptr_type != nullptr) {
                 type = ptr_type->pointed_to;
             } else if (type == ast::prim_type::str) {
-				// TODO: This branch may be removed later
+                // TODO: This branch may be removed later
                 type = ast::prim_type::character;
             } else {
                 std::cout << "Only pointers can be dereferenced" << std::endl;
@@ -408,10 +430,7 @@ namespace visitor {
             store_result(type);
         } break;
         case val_type::null:
-            // TODO: Use `find_type` like everyone else.
-            // This will probably require top-down type info as well as the current bottom up info
-            // TODO: Do not return the nullptr for null
-            store_result(nullptr);
+            store_result(ast::prim_type::null);
             break;
         case val_type::boolean:
             store_result(ast::prim_type::boolean);

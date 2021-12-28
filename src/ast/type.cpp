@@ -31,6 +31,9 @@ namespace ast {
         case type::unit:
             lhs << "unit";
             break;
+        case type::null:
+            lhs << "null";
+            break;
         }
     }
 
