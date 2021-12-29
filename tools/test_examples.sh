@@ -5,13 +5,14 @@
 
 compiler="$(realpath -m build/bin/littlec)"
 examples_dir=$(realpath -e examples)
+old_dir=$PWD
 
 # Build the compiler
+cd build
 [ -x "$compiler" ] || ninja littlec
 [ -x "$compiler" ] || exit
 
 # Setup a temp dir
-old_dir=$PWD
 active_dir=$(mktemp -d)
 cd $active_dir || exit
 
