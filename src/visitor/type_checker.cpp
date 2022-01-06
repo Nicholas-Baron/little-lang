@@ -14,9 +14,9 @@
 
 namespace visitor {
 
-    type_checker::type_checker(std::string filename, llvm::LLVMContext * context,
-                               global_map<std::string, ast::type_ptr> * imports,
-                               class type_context * types)
+    type_checker::type_checker(std::string filename, llvm::LLVMContext & context,
+                               global_map<std::string, ast::type_ptr> & imports,
+                               class type_context & types)
         : filename{std::move(filename)}
         , context{context}
         , type_context{types}
@@ -26,9 +26,7 @@ namespace visitor {
     }
 
     void type_checker::bind_type(ast::type_ptr type, std::string identifier, bool should_export) {
-        if (should_export and program_globals != nullptr) {
-            program_globals->add(filename, identifier, type);
-        }
+        if (should_export) { program_globals.add(filename, identifier, type); }
         active_typed_identifiers.back().emplace(std::move(identifier), std::move(type));
     }
 
@@ -357,13 +355,9 @@ namespace visitor {
     void type_checker::visit(ast::top_level_sequence & top_level_sequence) {
 
         if (not top_level_sequence.imports.empty()) {
-            if (this->program_globals == nullptr) {
-                std::cerr << "No import map was given" << std::endl;
-                assert(false);
-            }
             for (auto & [filename, imports] : top_level_sequence.imports) {
                 for (auto & id : imports) {
-                    auto import_type = program_globals->lookup(filename, id);
+                    auto import_type = program_globals.lookup(filename, id);
                     if (import_type == nullptr) {
                         std::cout << "File " << filename << " does not export " << id << std::endl;
                         assert(false);

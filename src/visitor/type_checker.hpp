@@ -19,12 +19,12 @@ namespace visitor {
     class type_checker final : public visitor_base,
                                public value_getter<type_checker, ast::node, ast::type_ptr> {
       public:
-        type_checker(std::string filename, llvm::LLVMContext *,
-                     global_map<std::string, ast::type_ptr> *, type_context *);
+        type_checker(std::string filename, llvm::LLVMContext &,
+                     global_map<std::string, ast::type_ptr> &, type_context &);
 
         non_copyable(type_checker);
 
-        movable(type_checker);
+        non_movable(type_checker);
 
         ~type_checker() override = default;
 
@@ -50,11 +50,11 @@ namespace visitor {
         bool found_error{false};
 
         std::string filename;
-        llvm::LLVMContext * context;
+        llvm::LLVMContext & context;
 
-        type_context * type_context;
+        type_context & type_context;
         std::vector<std::map<std::string, ast::type_ptr>> active_typed_identifiers;
-        global_map<std::string, ast::type_ptr> * program_globals;
+        global_map<std::string, ast::type_ptr> & program_globals;
         std::map<std::string, void (type_checker::*)(ast::func_call_data &)> instrinics;
 
         const ast::type * current_return_type{nullptr};
