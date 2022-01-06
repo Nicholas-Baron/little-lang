@@ -62,12 +62,12 @@ namespace visitor {
         }
     } // namespace
 
-    codegen::codegen(const std::string & name, llvm::LLVMContext * context,
-                     global_map<std::string, llvm::GlobalObject *> * program_globals,
-                     class type_context * typ_context)
+    codegen::codegen(const std::string & name, llvm::LLVMContext & context,
+                     global_map<std::string, llvm::GlobalObject *> & program_globals,
+                     class type_context & typ_context)
         : context{context}
-        , ir_module{std::make_unique<llvm::Module>(name, *context)}
-        , ir_builder{std::make_unique<llvm::IRBuilder<>>(*context)}
+        , ir_module{std::make_unique<llvm::Module>(name, context)}
+        , ir_builder{std::make_unique<llvm::IRBuilder<>>(context)}
         , type_context(typ_context)
         , active_values{{}}
         , program_globals{program_globals}
@@ -96,7 +96,7 @@ namespace visitor {
 
     llvm::Type * codegen::find_type(const ast::type & name, std::optional<Location> loc) {
 
-        auto * typ = type_context->lower_to_llvm(name);
+        auto * typ = type_context.lower_to_llvm(name);
         if (typ == nullptr) {
             std::stringstream ss;
             ss << name << " is not a valid type?";
@@ -173,9 +173,9 @@ namespace visitor {
 
         auto * lhs_block = ir_builder->GetInsertBlock();
         auto * current_function = lhs_block->getParent();
-        auto * rhs_block = llvm::BasicBlock::Create(*context, "", current_function);
+        auto * rhs_block = llvm::BasicBlock::Create(context, "", current_function);
 
-        auto * merge_block = llvm::BasicBlock::Create(*context, "", current_function);
+        auto * merge_block = llvm::BasicBlock::Create(context, "", current_function);
 
         // Check that this is an acutal short circuit
         // short on false if and-ing, short on true if or-ing
@@ -207,11 +207,11 @@ namespace visitor {
 
     void codegen::printError(const std::string & name, std::optional<Location> loc) const {
         if (loc == std::nullopt) {
-            context->emitError(name);
+            context.emitError(name);
         } else {
             std::stringstream to_print;
             to_print << *loc << " : " << name;
-            context->emitError(to_print.str());
+            context.emitError(to_print.str());
         }
     }
 
@@ -340,8 +340,8 @@ namespace visitor {
 
         active_values.back().emplace(const_decl.name_and_type.name(), global);
         if (const_decl.exported()) {
-            program_globals->add(ir_module->getModuleIdentifier(), const_decl.name_and_type.name(),
-                                 global);
+            program_globals.add(ir_module->getModuleIdentifier(), const_decl.name_and_type.name(),
+                                global);
         }
     }
 
@@ -426,7 +426,7 @@ namespace visitor {
             active_values.back().emplace(name, arg);
         }
 
-        auto * block = llvm::BasicBlock::Create(*context, func->getName(), func);
+        auto * block = llvm::BasicBlock::Create(context, func->getName(), func);
         ir_builder->SetInsertPoint(block);
 
         func_decl.body->accept(*this);
@@ -451,7 +451,7 @@ namespace visitor {
         }
 
         if (func_decl.exported()) {
-            program_globals->add(ir_module->getModuleIdentifier(), func_decl.head.name(), func);
+            program_globals.add(ir_module->getModuleIdentifier(), func_decl.head.name(), func);
         }
     }
 
@@ -463,7 +463,7 @@ namespace visitor {
         // Optimize if the condition is constant.
         if (auto * constant_condition = llvm::dyn_cast<llvm::Constant>(condition);
             constant_condition != nullptr) {
-            if (constant_condition == llvm::ConstantInt::getTrue(*context)) {
+            if (constant_condition == llvm::ConstantInt::getTrue(context)) {
                 store_result(get_value(*if_expr.then_case, *this));
                 return;
             }
@@ -475,14 +475,14 @@ namespace visitor {
         auto * current_function = start_block->getParent();
 
         // Generate the true branch
-        auto * then_block = llvm::BasicBlock::Create(*context, "", current_function);
+        auto * then_block = llvm::BasicBlock::Create(context, "", current_function);
         ir_builder->SetInsertPoint(then_block);
         auto * then_value = get_value(*if_expr.then_case, *this);
 
         auto * end_then = ir_builder->GetInsertBlock();
 
         // Generate the else block
-        auto * else_block = llvm::BasicBlock::Create(*context, "", current_function);
+        auto * else_block = llvm::BasicBlock::Create(context, "", current_function);
         ir_builder->SetInsertPoint(else_block);
         auto * else_value = get_value(*if_expr.else_case, *this);
 
@@ -495,7 +495,7 @@ namespace visitor {
             = [](const llvm::BasicBlock * block) -> bool { return block->back().isTerminator(); };
 
         // merge the expressions
-        auto * merge_block = llvm::BasicBlock::Create(*context, "", current_function);
+        auto * merge_block = llvm::BasicBlock::Create(context, "", current_function);
         if (not terminated(end_then)) {
             ir_builder->SetInsertPoint(end_then);
             ir_builder->CreateBr(merge_block);
@@ -522,7 +522,7 @@ namespace visitor {
         auto * current_function = start_block->getParent();
 
         // Generate the true branch
-        auto * then_block = llvm::BasicBlock::Create(*context, "", current_function);
+        auto * then_block = llvm::BasicBlock::Create(context, "", current_function);
         ir_builder->SetInsertPoint(then_block);
         if_stmt.true_branch->accept(*this);
 
@@ -534,7 +534,7 @@ namespace visitor {
         if (if_stmt.else_branch == nullptr) {
 
             // Short cut to just merging
-            auto * merge_block = llvm::BasicBlock::Create(*context, "", current_function);
+            auto * merge_block = llvm::BasicBlock::Create(context, "", current_function);
 
             if (not terminated(start_block)) {
                 ir_builder->SetInsertPoint(start_block);
@@ -552,7 +552,7 @@ namespace visitor {
         }
 
         // Generate the else block
-        auto * else_block = llvm::BasicBlock::Create(*context, "", current_function);
+        auto * else_block = llvm::BasicBlock::Create(context, "", current_function);
         ir_builder->SetInsertPoint(else_block);
         if_stmt.else_branch->accept(*this);
 
@@ -563,7 +563,7 @@ namespace visitor {
 
         // Ensure termination
         if (not terminated(end_else) and not terminated(end_true)) {
-            auto * merge_block = llvm::BasicBlock::Create(*context, "", current_function);
+            auto * merge_block = llvm::BasicBlock::Create(context, "", current_function);
             if (not terminated(end_true)) {
                 ir_builder->SetInsertPoint(end_true);
                 ir_builder->CreateBr(merge_block);
@@ -608,10 +608,9 @@ namespace visitor {
     void codegen::visit(ast::top_level_sequence & top_level_sequence) {
 
         if (not top_level_sequence.imports.empty()) {
-            assert(program_globals != nullptr);
             for (auto & [src_module, ids] : top_level_sequence.imports) {
                 for (auto & id : ids) {
-                    auto * global = program_globals->lookup(src_module, id);
+                    auto * global = program_globals.lookup(src_module, id);
                     if (global == nullptr) {
                         llvm::outs() << "Could not find " << id << " in exports of module "
                                      << src_module << '\n';
@@ -699,7 +698,7 @@ namespace visitor {
             auto base = user_val.val.find_first_of('x') != std::string::npos ? hex_base : dec_base;
             // TODO: Get the type from the type_context
             return store_result(
-                llvm::ConstantInt::get(llvm::Type::getInt32Ty(*context), user_val.val, base));
+                llvm::ConstantInt::get(llvm::Type::getInt32Ty(context), user_val.val, base));
         }
         case value_type::floating:
             printError("Floating point IR not implemented");
@@ -709,16 +708,16 @@ namespace visitor {
             switch (user_val.val.size()) {
             case 3:
                 return store_result(
-                    llvm::ConstantInt::get(llvm::Type::getInt8Ty(*context), user_val.val.at(1)));
+                    llvm::ConstantInt::get(llvm::Type::getInt8Ty(context), user_val.val.at(1)));
             case 4:
                 assert(user_val.val.at(1) == '\\');
                 switch (user_val.val.at(2)) {
                 case '0':
                     return store_result(
-                        llvm::ConstantInt::get(llvm::Type::getInt8Ty(*context), '\0'));
+                        llvm::ConstantInt::get(llvm::Type::getInt8Ty(context), '\0'));
                 case 'n':
                     return store_result(
-                        llvm::ConstantInt::get(llvm::Type::getInt8Ty(*context), '\n'));
+                        llvm::ConstantInt::get(llvm::Type::getInt8Ty(context), '\n'));
                 }
                 [[fallthrough]];
             default:
@@ -728,7 +727,7 @@ namespace visitor {
         case value_type::boolean: {
             auto iter = valid_bools.find(user_val.val);
             assert(iter != valid_bools.end());
-            return store_result(llvm::ConstantInt::getBool(*context, iter->second));
+            return store_result(llvm::ConstantInt::getBool(context, iter->second));
         }
         case value_type::string: {
             assert(user_val.val.size() > 2);

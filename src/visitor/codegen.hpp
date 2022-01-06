@@ -18,12 +18,12 @@ namespace visitor {
     class codegen final : public visitor_base,
                           public value_getter<codegen, ast::node, llvm::Value *> {
       public:
-        codegen(const std::string & name, llvm::LLVMContext *,
-                global_map<std::string, llvm::GlobalObject *> *, type_context *);
+        codegen(const std::string & name, llvm::LLVMContext &,
+                global_map<std::string, llvm::GlobalObject *> &, type_context &);
 
         non_copyable(codegen);
 
-        movable(codegen);
+        non_movable(codegen);
 
         ~codegen() override = default;
 
@@ -53,13 +53,13 @@ namespace visitor {
 
         // Keep these behind unique_ptr to allow for moving the visitor
         // context is not owned by us, but is sent to us via the constructor.
-        llvm::LLVMContext * context;
+        llvm::LLVMContext & context;
         std::unique_ptr<llvm::Module> ir_module;
         std::unique_ptr<llvm::IRBuilder<>> ir_builder;
 
-        type_context * type_context;
+        type_context & type_context;
         std::vector<std::map<std::string, llvm::Value *>> active_values;
-        global_map<std::string, llvm::GlobalObject *> * program_globals;
+        global_map<std::string, llvm::GlobalObject *> & program_globals;
 
         std::map<std::string, void (codegen::*)(ast::func_call_data &)> instrinics;
     };

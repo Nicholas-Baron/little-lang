@@ -181,7 +181,7 @@ void program::generate_ir() {
     global_map<std::string, llvm::GlobalObject *> globals;
     for (auto & mod : ast_modules) {
         auto filename = std::filesystem::relative(mod.filename, project_root);
-        visitor::codegen codegen{filename, context.get(), &globals, &typ_context};
+        visitor::codegen codegen{filename, *context, globals, typ_context};
         codegen.visit(mod);
         codegen.verify_module();
         if (settings->flag_is_set(cmd_flag::debug_ir)) { codegen.dump(); }
