@@ -586,7 +586,7 @@ namespace visitor {
     void codegen::visit(ast::let_stmt & let_stmt) {
 
         auto * value = get_value(*let_stmt.value, *this);
-
+        value->setName(let_stmt.name_and_type.name());
         active_values.back().emplace(let_stmt.name_and_type.name(), value);
     }
 
