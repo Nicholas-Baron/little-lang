@@ -45,6 +45,9 @@ namespace visitor {
         void evaluate_comparison(ast::binary_expr &, llvm::Value * lhs_value,
                                  llvm::Value * rhs_value, bool is_int, bool is_constant);
 
+        void evaluate_pointer_math(ast::binary_expr &, llvm::Value * lhs_value,
+                                   llvm::Value * rhs_value);
+
         void evaluate_short_circuit(ast::binary_expr &, llvm::Value * lhs_value);
 
         void syscall(ast::func_call_data &);

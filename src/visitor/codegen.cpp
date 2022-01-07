@@ -169,6 +169,29 @@ namespace visitor {
         }
     }
 
+    void codegen::evaluate_pointer_math(ast::binary_expr & binary_expr, llvm::Value * lhs_value,
+                                        llvm::Value * rhs_value) {
+
+        assert((lhs_value->getType()->isPointerTy() and rhs_value->getType()->isIntegerTy())
+               or (lhs_value->getType()->isIntegerTy() and rhs_value->getType()->isPointerTy()));
+
+        auto * pointer = lhs_value->getType()->isPointerTy() ? lhs_value : rhs_value;
+        auto * index = lhs_value->getType()->isPointerTy() ? rhs_value : lhs_value;
+        auto * element_ty = llvm::dyn_cast<llvm::PointerType>(pointer->getType())->getElementType();
+
+        using operand = ast::binary_expr::operand;
+
+        switch (binary_expr.op) {
+        case operand::add:
+        case operand::sub:
+            return store_result(ir_builder->CreateGEP(element_ty, pointer, index));
+        default:
+            printError(tok_to_string(binary_expr.op) + " is not implemented for pointers",
+                       binary_expr.location());
+            assert(false);
+        }
+    }
+
     void codegen::evaluate_short_circuit(ast::binary_expr & binary_expr, llvm::Value * lhs_value) {
 
         auto * lhs_block = ir_builder->GetInsertBlock();
@@ -260,32 +283,14 @@ namespace visitor {
             return evaluate_comparison(binary_expr, lhs_value, rhs_value, is_int, is_constant);
         }
 
-        using operand = ast::binary_expr::operand;
-
         // Specific for pointers
         if (lhs_value->getType()->isPointerTy() or rhs_value->getType()->isPointerTy()) {
-            assert(
-                (lhs_value->getType()->isPointerTy() and rhs_value->getType()->isIntegerTy())
-                or (lhs_value->getType()->isIntegerTy() and rhs_value->getType()->isPointerTy()));
-
-            auto * pointer = lhs_value->getType()->isPointerTy() ? lhs_value : rhs_value;
-            auto * index = lhs_value->getType()->isPointerTy() ? rhs_value : lhs_value;
-            auto * element_ty
-                = llvm::dyn_cast<llvm::PointerType>(pointer->getType())->getElementType();
-
-            switch (binary_expr.op) {
-            case operand::add:
-            case operand::sub:
-                return store_result(ir_builder->CreateGEP(element_ty, pointer, index));
-            default:
-                printError(tok_to_string(binary_expr.op) + " is not implemented for pointers",
-                           binary_expr.location());
-                assert(false);
-            }
+            return evaluate_pointer_math(binary_expr, lhs_value, rhs_value);
         }
 
         // all other binary expressions
 
+        using operand = ast::binary_expr::operand;
         using bin_ops = llvm::Instruction::BinaryOps;
         std::optional<bin_ops> bin_op;
 
