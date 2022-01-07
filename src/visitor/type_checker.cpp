@@ -66,6 +66,52 @@ namespace visitor {
         // TODO: syscalls can return pointers and 64 bit numbers
         store_result(ast::prim_type::int32);
     }
+    void type_checker::evaluate_arithmetic(ast::type_ptr && lhs_type, ast::type_ptr && rhs_type) {
+        if (lhs_type != rhs_type) {
+            std::cout << "Arithmetic operations can only be made within the same type" << std::endl;
+            assert(false);
+        }
+
+        if (*lhs_type == *ast::prim_type::boolean) {
+            std::cout << "Arithmetic operations cannot be done on booleans" << std::endl;
+            assert(false);
+		}
+
+        return store_result(lhs_type);
+    }
+
+    void type_checker::evaluate_equality(ast::type_ptr && lhs_type, ast::type_ptr && rhs_type) {
+
+        if (bool pointer_comp = lhs_type->is_pointer_type() and rhs_type->is_pointer_type();
+            not pointer_comp and lhs_type != rhs_type) {
+            std::cout << "Equality can only be made within the same type" << std::endl;
+            assert(false);
+        } else if (pointer_comp) {
+            // If either is null, no further checks are needed
+            if (lhs_type == ast::prim_type::null or rhs_type == ast::prim_type::null) {
+                return store_result(ast::prim_type::boolean);
+            }
+
+            // Check that the pointed to types are the same.
+
+            // Shortcut for strings
+            if (lhs_type == ast::prim_type::str and rhs_type == ast::prim_type::str) {
+                return store_result(ast::prim_type::boolean);
+            }
+
+            auto * lhs_ptr = dynamic_cast<ast::ptr_type *>(lhs_type.get());
+            auto * rhs_ptr = dynamic_cast<ast::ptr_type *>(rhs_type.get());
+
+            assert(lhs_ptr != nullptr);
+            assert(rhs_ptr != nullptr);
+
+            if (*lhs_ptr->pointed_to != *rhs_ptr->pointed_to) {
+                std::cout << "Equality can only be made within the same type" << std::endl;
+                assert(false);
+            }
+        }
+        return store_result(ast::prim_type::boolean);
+    }
 
     void type_checker::visit(ast::binary_expr & binary_expr) {
 
@@ -87,35 +133,7 @@ namespace visitor {
             [[fallthrough]];
         case operand::eq:
         case operand::ne:
-            if (bool pointer_comp = lhs_type->is_pointer_type() and rhs_type->is_pointer_type();
-                not pointer_comp and lhs_type != rhs_type) {
-                std::cout << "Equality can only be made within the same type" << std::endl;
-                assert(false);
-            } else if (pointer_comp) {
-                // If either is null, no further checks are needed
-                if (lhs_type == ast::prim_type::null or rhs_type == ast::prim_type::null) {
-                    return store_result(ast::prim_type::boolean);
-                }
-
-                // Check that the pointed to types are the same.
-
-                // Shortcut for strings
-                if (lhs_type == ast::prim_type::str and rhs_type == ast::prim_type::str) {
-                    return store_result(ast::prim_type::boolean);
-                }
-
-                auto * lhs_ptr = dynamic_cast<ast::ptr_type *>(lhs_type.get());
-                auto * rhs_ptr = dynamic_cast<ast::ptr_type *>(rhs_type.get());
-
-                assert(lhs_ptr != nullptr);
-                assert(rhs_ptr != nullptr);
-
-                if (*lhs_ptr->pointed_to != *rhs_ptr->pointed_to) {
-                    std::cout << "Equality can only be made within the same type" << std::endl;
-                    assert(false);
-                }
-            }
-            return store_result(ast::prim_type::boolean);
+            return evaluate_equality(std::move(lhs_type), std::move(rhs_type));
         case operand::gt:
         case operand::ge:
         case operand::lt:
@@ -141,12 +159,7 @@ namespace visitor {
             [[fallthrough]];
         case operand::mult:
         case operand::div:
-            if (lhs_type != rhs_type) {
-                std::cout << "Arithmetic operations can only be made within the same type"
-                          << std::endl;
-                assert(false);
-            }
-            return store_result(lhs_type);
+            return evaluate_arithmetic(std::move(lhs_type), std::move(rhs_type));
         default:
             std::cout << "Unimplemented type check for " << tok_to_string(binary_expr.op)
                       << std::endl;

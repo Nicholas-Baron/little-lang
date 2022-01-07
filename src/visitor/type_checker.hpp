@@ -39,6 +39,9 @@ namespace visitor {
       private:
         void syscall(ast::func_call_data &);
 
+        void evaluate_arithmetic(ast::type_ptr && lhs, ast::type_ptr && rhs);
+        void evaluate_equality(ast::type_ptr && lhs, ast::type_ptr && rhs);
+
         // TODO: Actually implement this
         void printError(const std::string & name, std::optional<Location> loc = std::nullopt);
 
