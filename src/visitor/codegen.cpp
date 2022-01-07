@@ -338,10 +338,12 @@ namespace visitor {
             assert(false);
         }
 
+        const auto linkage = const_decl.exported()
+                               ? llvm::GlobalVariable::LinkageTypes::ExternalLinkage
+                               : llvm::GlobalVariable::LinkageTypes::InternalLinkage;
+
         auto * global = new llvm::GlobalVariable{
-            *ir_module, value->getType(),
-            true,       llvm::GlobalVariable::LinkageTypes::ExternalLinkage,
-            value,      const_decl.name_and_type.name()};
+            *ir_module, value->getType(), true, linkage, value, const_decl.name_and_type.name()};
 
         active_values.back().emplace(const_decl.name_and_type.name(), global);
         if (const_decl.exported()) {
