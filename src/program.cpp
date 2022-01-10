@@ -191,7 +191,7 @@ void program::generate_ir() {
 
 void program::emit_and_link() {
 
-    std::vector<std::string> gcc_args{"gcc", "-static"};
+    std::vector<std::string> gcc_args{"cc", "-static", "-Wl,--gc-sections"};
     for (auto && mod : ir_modules) {
         auto output_name = std::filesystem::path(mod->getSourceFileName()).replace_extension("o");
         gcc_args.emplace_back(output_name);

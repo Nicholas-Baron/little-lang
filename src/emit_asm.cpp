@@ -36,6 +36,8 @@ void emit_asm(std::unique_ptr<llvm::Module> ir_module, std::string && output_fil
     }
 
     llvm::TargetOptions opt;
+    opt.FunctionSections = true;
+    opt.DataSections = true;
     const auto * cpu = "generic";
 
     auto * target_machine = target->createTargetMachine(ir_module->getTargetTriple(), cpu, "", opt,
