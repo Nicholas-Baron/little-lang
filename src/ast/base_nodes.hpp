@@ -3,6 +3,7 @@
 
 #include "location.hpp"
 #include "nodes_forward.hpp"
+#include "type.hpp"
 #include "utils/move_copy.hpp"
 #include "visitor/visitor_base.hpp"
 
@@ -37,7 +38,11 @@ namespace ast {
     };
 
     // Base classes
-    class expr : public virtual node {};
+    class expr : public virtual node {
+      public:
+        ast::type_ptr type;
+    };
+
     class stmt : public virtual node {};
     class top_level : public virtual node {
 
