@@ -66,25 +66,39 @@ namespace visitor {
         // TODO: syscalls can return pointers and 64 bit numbers
         store_result(ast::prim_type::int32);
     }
+
     void type_checker::evaluate_arithmetic(ast::type_ptr && lhs_type, ast::type_ptr && rhs_type) {
+
+        // Special case: ptr + int
+        if (lhs_type->is_pointer_type() or rhs_type->is_pointer_type()) {
+            if (const auto other_type = lhs_type->is_pointer_type() ? rhs_type : lhs_type;
+                *other_type != *ast::prim_type::int32) {
+                std::cout << "Pointer types can only be added with integers" << std::endl;
+                assert(false);
+            }
+
+            return store_result(lhs_type->is_pointer_type() ? lhs_type : rhs_type);
+        }
+
         if (lhs_type != rhs_type) {
             std::cout << "Arithmetic operations can only be made within the same type" << std::endl;
             assert(false);
         }
 
-        if (*lhs_type == *ast::prim_type::boolean) {
+        if (*lhs_type == *ast::prim_type::boolean or *rhs_type == *ast::prim_type::boolean) {
             std::cout << "Arithmetic operations cannot be done on booleans" << std::endl;
             assert(false);
-		}
+        }
 
         return store_result(lhs_type);
     }
 
-    void type_checker::evaluate_equality(ast::type_ptr && lhs_type, ast::type_ptr && rhs_type) {
+    void type_checker::evaluate_comparison(ast::binary_expr & /*expr*/, ast::type_ptr && lhs_type,
+                                           ast::type_ptr && rhs_type) {
 
         if (bool pointer_comp = lhs_type->is_pointer_type() and rhs_type->is_pointer_type();
             not pointer_comp and lhs_type != rhs_type) {
-            std::cout << "Equality can only be made within the same type" << std::endl;
+            std::cout << "Comparisons can only be made within the same type" << std::endl;
             assert(false);
         } else if (pointer_comp) {
             // If either is null, no further checks are needed
@@ -118,45 +132,23 @@ namespace visitor {
         auto lhs_type = get_value(*binary_expr.lhs, *this);
         auto rhs_type = get_value(*binary_expr.rhs, *this);
 
-        assert(lhs_type != nullptr);
-        assert(rhs_type != nullptr);
-
-        using operand = ast::binary_expr::operand;
-        switch (binary_expr.op) {
-        case operand::bool_or:
-        case operand::bool_and:
-            if (auto bool_type = ast::prim_type::boolean;
-                lhs_type != bool_type or rhs_type != bool_type) {
+        if (binary_expr.is_shortcircuiting()) {
+            const auto bool_type = ast::prim_type::boolean;
+            if (lhs_type != bool_type or rhs_type != bool_type) {
                 std::cout << "Logical operations can only use booleans" << std::endl;
                 assert(false);
             }
-            [[fallthrough]];
-        case operand::eq:
-        case operand::ne:
-            return evaluate_equality(std::move(lhs_type), std::move(rhs_type));
-        case operand::gt:
-        case operand::ge:
-        case operand::lt:
-        case operand::le:
-            if (lhs_type != rhs_type) {
-                std::cout << "Ordering comparisons can only be made within the same type"
-                          << std::endl;
-                assert(false);
-            }
-            return store_result(ast::prim_type::boolean);
+            return store_result(bool_type);
+        }
+
+        if (binary_expr.is_comparison()) {
+            return evaluate_comparison(binary_expr, std::move(lhs_type), std::move(rhs_type));
+        }
+
+        using operand = ast::binary_expr::operand;
+        switch (binary_expr.op) {
         case operand::add:
         case operand::sub:
-            if (lhs_type == nullptr or rhs_type == nullptr) {
-                std::cout << "Arithmetic operations cannot be done on `null`" << std::endl;
-                assert(false);
-            }
-            if (lhs_type->is_pointer_type() and *rhs_type == *ast::prim_type::int32) {
-                return store_result(lhs_type);
-            }
-            if (*lhs_type == *ast::prim_type::int32 and rhs_type->is_pointer_type()) {
-                return store_result(rhs_type);
-            }
-            [[fallthrough]];
         case operand::mult:
         case operand::div:
             return evaluate_arithmetic(std::move(lhs_type), std::move(rhs_type));
