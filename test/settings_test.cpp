@@ -27,7 +27,7 @@ TEST_CASE("Extra args are left untouched") {
     CHECK(settings != nullptr);
     CHECK(settings->file_to_read == "input.txt");
     CHECK(settings->flag_is_set(cmd_flag::simulate));
-	CHECK(settings->extra_args.size() == 2);
-	CHECK(settings->extra_args[0] == "5");
-	CHECK(settings->extra_args[1] == "10");
+    CHECK(settings->extra_args.size() == 2);
+    CHECK(settings->extra_args[0] == "5");
+    CHECK(settings->extra_args[1] == "10");
 }
