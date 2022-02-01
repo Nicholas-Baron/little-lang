@@ -45,11 +45,13 @@ The context can be yourself (`*this`) or a fresh context.
 
 ### Modifying the Visited Nodes
 There are cases where the visited nodes (i.e. the AST) need to be modified.
-In this case, the basic `value_getter::store_result` is not useful,
+In this case, the basic `value_getter::get_value` is not useful,
 as it knows rather little of the node type.
 
 To simultaneously return a value and modify a node,
 overload `store_result` on the visitor to take both the result and the node that should be modified.
+In the new `store_result`, modify the node as necessary and,
+at some point, call `value_getter::store_result` to return the value to the parent node.
 
 ### Resources
  - [Visitor with Return Values](https://www.codeproject.com/Tips/1018315/Visitor-with-the-Return-Value)
