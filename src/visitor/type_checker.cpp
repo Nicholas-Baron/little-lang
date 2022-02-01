@@ -63,12 +63,13 @@ namespace visitor {
                 assert(false);
             }
         }
+
         // TODO: syscalls can return pointers and 64 bit numbers
-        store_result(ast::prim_type::int32);
+        value_getter::store_result(ast::prim_type::int32);
     }
 
-    void type_checker::evaluate_arithmetic(ast::type_ptr && lhs_type, ast::type_ptr && rhs_type) {
-
+    ast::type_ptr type_checker::evaluate_arithmetic(ast::type_ptr && lhs_type,
+                                                    ast::type_ptr && rhs_type) {
         // Special case: ptr + int
         if (lhs_type->is_pointer_type() or rhs_type->is_pointer_type()) {
             if (const auto other_type = lhs_type->is_pointer_type() ? rhs_type : lhs_type;
@@ -77,7 +78,7 @@ namespace visitor {
                 assert(false);
             }
 
-            return store_result(lhs_type->is_pointer_type() ? lhs_type : rhs_type);
+            return lhs_type->is_pointer_type() ? lhs_type : rhs_type;
         }
 
         if (lhs_type != rhs_type) {
@@ -90,11 +91,11 @@ namespace visitor {
             assert(false);
         }
 
-        return store_result(lhs_type);
+        return lhs_type;
     }
 
-    void type_checker::evaluate_comparison(ast::binary_expr & /*expr*/, ast::type_ptr && lhs_type,
-                                           ast::type_ptr && rhs_type) {
+    ast::type_ptr type_checker::evaluate_comparison(ast::type_ptr && lhs_type,
+                                                    ast::type_ptr && rhs_type) {
 
         if (bool pointer_comp = lhs_type->is_pointer_type() and rhs_type->is_pointer_type();
             not pointer_comp and lhs_type != rhs_type) {
@@ -103,14 +104,14 @@ namespace visitor {
         } else if (pointer_comp) {
             // If either is null, no further checks are needed
             if (lhs_type == ast::prim_type::null or rhs_type == ast::prim_type::null) {
-                return store_result(ast::prim_type::boolean);
+                return ast::prim_type::boolean;
             }
 
             // Check that the pointed to types are the same.
 
             // Shortcut for strings
             if (lhs_type == ast::prim_type::str and rhs_type == ast::prim_type::str) {
-                return store_result(ast::prim_type::boolean);
+                return ast::prim_type::boolean;
             }
 
             auto * lhs_ptr = dynamic_cast<ast::ptr_type *>(lhs_type.get());
@@ -124,7 +125,7 @@ namespace visitor {
                 assert(false);
             }
         }
-        return store_result(ast::prim_type::boolean);
+        return ast::prim_type::boolean;
     }
 
     void type_checker::visit(ast::binary_expr & binary_expr) {
@@ -138,20 +139,33 @@ namespace visitor {
                 std::cout << "Logical operations can only use booleans" << std::endl;
                 assert(false);
             }
-            return store_result(bool_type);
+            return store_result(bool_type, binary_expr);
         }
 
         if (binary_expr.is_comparison()) {
-            return evaluate_comparison(binary_expr, std::move(lhs_type), std::move(rhs_type));
+            return store_result(evaluate_comparison(std::move(lhs_type), std::move(rhs_type)),
+                                binary_expr);
         }
 
         using operand = ast::binary_expr::operand;
         switch (binary_expr.op) {
         case operand::add:
         case operand::sub:
+            if (lhs_type == nullptr or rhs_type == nullptr) {
+                std::cout << "Arithmetic operations cannot be done on `null`" << std::endl;
+                assert(false);
+            }
+            if (lhs_type->is_pointer_type() and *rhs_type == *ast::prim_type::int32) {
+                return store_result(lhs_type, binary_expr);
+            }
+            if (*lhs_type == *ast::prim_type::int32 and rhs_type->is_pointer_type()) {
+                return store_result(rhs_type, binary_expr);
+            }
+            [[fallthrough]];
         case operand::mult:
         case operand::div:
-            return evaluate_arithmetic(std::move(lhs_type), std::move(rhs_type));
+            return store_result(evaluate_arithmetic(std::move(lhs_type), std::move(rhs_type)),
+                                binary_expr);
         default:
             std::cout << "Unimplemented type check for " << tok_to_string(binary_expr.op)
                       << std::endl;
@@ -215,10 +229,14 @@ namespace visitor {
             }
         }
 
-        store_result(func_type->return_type);
+        value_getter::store_result(func_type->return_type);
     }
 
-    void type_checker::visit(ast::func_call_expr & func_call_expr) { visit(func_call_expr.data); }
+    void type_checker::visit(ast::func_call_expr & func_call_expr) {
+        visit(func_call_expr.data);
+        auto type = get_result();
+        store_result(type, func_call_expr);
+    }
 
     void type_checker::visit(ast::func_call_stmt & func_call_stmt) {
         visit(func_call_stmt.data);
@@ -286,7 +304,7 @@ namespace visitor {
                       << std::endl;
             assert(false);
         }
-        store_result(then_type);
+        store_result(then_type, if_expr);
     }
 
     void type_checker::visit(ast::if_stmt & if_stmt) {
@@ -411,7 +429,7 @@ namespace visitor {
             break;
         }
         assert(type != nullptr);
-        store_result(type);
+        store_result(type, unary_expr);
     }
 
     void type_checker::visit(ast::user_val & user_val) {
@@ -426,25 +444,25 @@ namespace visitor {
                           << std::endl;
                 assert(false);
             }
-            store_result(type);
+            store_result(type, user_val);
         } break;
         case val_type::null:
-            store_result(ast::prim_type::null);
+            store_result(ast::prim_type::null, user_val);
             break;
         case val_type::boolean:
-            store_result(ast::prim_type::boolean);
+            store_result(ast::prim_type::boolean, user_val);
             break;
         case val_type::floating:
-            store_result(ast::prim_type::float32);
+            store_result(ast::prim_type::float32, user_val);
             break;
         case val_type::integer:
-            store_result(ast::prim_type::int32);
+            store_result(ast::prim_type::int32, user_val);
             break;
         case val_type::character:
-            store_result(ast::prim_type::character);
+            store_result(ast::prim_type::character, user_val);
             break;
         case val_type::string:
-            store_result(ast::prim_type::str);
+            store_result(ast::prim_type::str, user_val);
             break;
         }
     }
