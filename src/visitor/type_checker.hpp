@@ -39,9 +39,9 @@ namespace visitor {
       private:
         void syscall(ast::func_call_data &);
 
-        void evaluate_arithmetic(ast::type_ptr && lhs, ast::type_ptr && rhs);
-        void evaluate_comparison(ast::binary_expr & expr, ast::type_ptr && lhs,
-                                 ast::type_ptr && rhs);
+        ast::type_ptr evaluate_arithmetic(ast::type_ptr && lhs, ast::type_ptr && rhs);
+
+        ast::type_ptr evaluate_comparison(ast::type_ptr && lhs, ast::type_ptr && rhs);
 
         // TODO: Actually implement this
         void printError(const std::string & name, std::optional<Location> loc = std::nullopt);
@@ -50,6 +50,12 @@ namespace visitor {
         [[nodiscard]] ast::type_ptr find_type_of(const std::string &) const;
 
         void bind_type(ast::type_ptr, std::string, bool should_export = false);
+
+        // Stores the `type_ptr` into both the value_getter and the `ast::expr &`
+        void store_result(const ast::type_ptr & type, ast::expr & expr) {
+            value_getter::store_result(type);
+            expr.type = type;
+        }
 
         bool found_error{false};
 
