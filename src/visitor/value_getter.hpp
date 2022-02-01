@@ -17,16 +17,23 @@ namespace visitor {
         [[nodiscard]] static result_t get_value(visitable & n, visitor_impl & context) {
             assert(not context.result.has_value());
             n.accept(context);
-            assert(context.result.has_value());
-            auto value = std::move(context.result).value();
-            context.result.reset();
-            return value;
+            return context.get_result();
         }
 
         static_assert(not std::is_reference_v<result_t>, "we can only return non-references");
         void store_result(result_t value) {
             assert(not result.has_value());
             result = value;
+        }
+
+        // This function returns the result previously stored.
+        // Only call this if `get_value` cannot be used.
+        [[nodiscard]] result_t get_result() {
+            assert(result.has_value());
+            auto value = std::move(result).value();
+            result.reset();
+            assert(not result.has_value());
+            return value;
         }
 
         // This function drops the result that was previously stored.
