@@ -151,17 +151,6 @@ namespace visitor {
         switch (binary_expr.op) {
         case operand::add:
         case operand::sub:
-            if (lhs_type == nullptr or rhs_type == nullptr) {
-                std::cout << "Arithmetic operations cannot be done on `null`" << std::endl;
-                assert(false);
-            }
-            if (lhs_type->is_pointer_type() and *rhs_type == *ast::prim_type::int32) {
-                return store_result(lhs_type, binary_expr);
-            }
-            if (*lhs_type == *ast::prim_type::int32 and rhs_type->is_pointer_type()) {
-                return store_result(rhs_type, binary_expr);
-            }
-            [[fallthrough]];
         case operand::mult:
         case operand::div:
             return store_result(evaluate_arithmetic(std::move(lhs_type), std::move(rhs_type)),
