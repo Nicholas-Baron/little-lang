@@ -35,5 +35,21 @@ This entails a few things about the node classes:
 
 Note: Number 2 in the previous list may not be a permanent rule.
 
+### Returning Values from Child Nodes
+Many visitors need to return values up the tree,
+as parent nodes need to know some extra or new information about their children.
+In this case, there is a `value_getter` template base class that should be inherited from.
+
+To get a value from the child, call `value_getter::get_value` with the child and a "context".
+The context can be yourself (`*this`) or a fresh context.
+
+### Modifying the Visited Nodes
+There are cases where the visited nodes (i.e. the AST) need to be modified.
+In this case, the basic `value_getter::store_result` is not useful,
+as it knows rather little of the node type.
+
+To simultaneously return a value and modify a node,
+overload `store_result` on the visitor to take both the result and the node that should be modified.
+
 ### Resources
  - [Visitor with Return Values](https://www.codeproject.com/Tips/1018315/Visitor-with-the-Return-Value)
