@@ -147,19 +147,21 @@ namespace visitor {
                                 binary_expr);
         }
 
-        using operand = ast::binary_expr::operand;
-        switch (binary_expr.op) {
-        case operand::add:
-        case operand::sub:
-        case operand::mult:
-        case operand::div:
-            return store_result(evaluate_arithmetic(std::move(lhs_type), std::move(rhs_type)),
-                                binary_expr);
-        default:
-            std::cout << "Unimplemented type check for " << tok_to_string(binary_expr.op)
-                      << std::endl;
-            assert(false);
+        if (binary_expr.is_arithmetic()) {
+            auto type = evaluate_arithmetic(std::move(lhs_type), std::move(rhs_type));
+
+            if (type->is_pointer_type()) {
+                // Annotate both children to be this type.
+                // This makes `null` literals be the correct type.
+                binary_expr.lhs->type = type;
+                binary_expr.rhs->type = type;
+            }
+
+            return store_result(type, binary_expr);
         }
+
+        std::cout << "Unimplemented type check for " << tok_to_string(binary_expr.op) << std::endl;
+        assert(false);
     }
 
     void type_checker::visit(ast::const_decl & const_decl) {
