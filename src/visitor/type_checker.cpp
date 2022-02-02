@@ -427,7 +427,7 @@ namespace visitor {
 
         using val_type = ast::user_val::value_type;
 
-        switch (user_val.type) {
+        switch (user_val.val_type) {
         case val_type::identifier: {
             auto type = find_type_of(user_val.val);
             if (type == nullptr) {

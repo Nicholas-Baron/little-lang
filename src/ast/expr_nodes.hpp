@@ -15,7 +15,7 @@ namespace ast {
 
         user_val(std::string && value, value_type type, Location loc = {})
             : val(std::move(value))
-            , type{type} {
+            , val_type{type} {
             set_location(loc);
         }
 
@@ -26,7 +26,7 @@ namespace ast {
         make_visitable;
 
         std::string val;
-        value_type type;
+        value_type val_type;
     };
 
     class unary_expr final : public expr {

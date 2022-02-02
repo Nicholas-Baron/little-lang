@@ -446,7 +446,7 @@ TEST_CASE("the parser will parse let statement") {
 
     auto * value = dynamic_cast<ast::user_val *>(let->value.get());
     CHECK(value != nullptr);
-    CHECK(value->type == ast::user_val::value_type::string);
+    CHECK(value->val_type == ast::user_val::value_type::string);
     CHECK(value->val == "\"hello\"");
 }
 
@@ -468,7 +468,7 @@ TEST_CASE("the parser will parse let statement without semicolons and with types
 
     auto * value = dynamic_cast<ast::user_val *>(let->value.get());
     CHECK(value != nullptr);
-    CHECK(value->type == ast::user_val::value_type::integer);
+    CHECK(value->val_type == ast::user_val::value_type::integer);
     CHECK(value->val == "10");
 }
 
@@ -491,7 +491,7 @@ TEST_CASE("the parser will parse pointer types and expressions") {
 
     auto * value = dynamic_cast<ast::user_val *>(let->value.get());
     CHECK(value != nullptr);
-    CHECK(value->type == ast::user_val::value_type::null);
+    CHECK(value->val_type == ast::user_val::value_type::null);
     CHECK(value->val == "null");
 }
 
@@ -533,7 +533,7 @@ TEST_CASE("the parser will parse unary minus") {
 
     auto * val = dynamic_cast<ast::user_val *>(unary_expr->expr.get());
     CHECK(val != nullptr);
-    CHECK(val->type == ast::user_val::value_type::integer);
+    CHECK(val->val_type == ast::user_val::value_type::integer);
     CHECK(val->val == "3");
 }
 
@@ -598,7 +598,7 @@ TEST_CASE("the parser will parse if statements") {
 
     auto * cond = dynamic_cast<ast::user_val *>(if_stmt->condition.get());
     CHECK(cond != nullptr);
-    CHECK(cond->type == ast::user_val::value_type::identifier);
+    CHECK(cond->val_type == ast::user_val::value_type::identifier);
     CHECK(cond->val == "x");
 }
 
@@ -617,7 +617,7 @@ TEST_CASE("the parser will parse if-else statements") {
 
     auto * cond = dynamic_cast<ast::user_val *>(if_stmt->condition.get());
     CHECK(cond != nullptr);
-    CHECK(cond->type == ast::user_val::value_type::identifier);
+    CHECK(cond->val_type == ast::user_val::value_type::identifier);
     CHECK(cond->val == "x");
 }
 

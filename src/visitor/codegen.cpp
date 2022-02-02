@@ -686,7 +686,7 @@ namespace visitor {
 
     void codegen::visit(ast::user_val & user_val) {
         using value_type = ast::user_val::value_type;
-        switch (user_val.type) {
+        switch (user_val.val_type) {
         case value_type::identifier: {
             auto * value = find_alive_value(user_val.val);
             if (value == nullptr) {
