@@ -43,7 +43,7 @@ namespace visitor {
         [[nodiscard]] llvm::Value * find_alive_value(const std::string & name) const;
 
         void evaluate_comparison(ast::binary_expr &, llvm::Value * lhs_value,
-                                 llvm::Value * rhs_value, bool is_int, bool is_constant);
+                                 llvm::Value * rhs_value, bool is_float, bool is_constant);
 
         void evaluate_pointer_math(ast::binary_expr &, llvm::Value * lhs_value,
                                    llvm::Value * rhs_value);

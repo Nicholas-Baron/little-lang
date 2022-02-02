@@ -106,7 +106,7 @@ namespace visitor {
     }
 
     void codegen::evaluate_comparison(ast::binary_expr & binary_expr, llvm::Value * lhs_value,
-                                      llvm::Value * rhs_value, bool is_int, bool is_constant) {
+                                      llvm::Value * rhs_value, bool is_float, bool is_constant) {
 
         assert(lhs_value != nullptr or rhs_value != nullptr);
         using operand = ast::binary_expr::operand;
@@ -127,8 +127,8 @@ namespace visitor {
         }
 
         using predicate = llvm::CmpInst::Predicate;
-        auto int_or_float = [&is_int](predicate int_pred, predicate float_pred) {
-            return is_int ? int_pred : float_pred;
+        auto int_or_float = [&is_float](predicate int_pred, predicate float_pred) {
+            return is_float ? float_pred : int_pred;
         };
 
         std::optional<predicate> p;
@@ -162,10 +162,10 @@ namespace visitor {
             auto * constant_lhs = llvm::dyn_cast<llvm::Constant>(lhs_value);
             auto * constant_rhs = llvm::dyn_cast<llvm::Constant>(rhs_value);
             store_result(llvm::ConstantExpr::getCompare(*p, constant_lhs, constant_rhs));
-        } else if (is_int) {
-            store_result(ir_builder->CreateICmp(*p, lhs_value, rhs_value));
-        } else {
+        } else if (is_float) {
             store_result(ir_builder->CreateFCmp(*p, lhs_value, rhs_value));
+        } else {
+            store_result(ir_builder->CreateICmp(*p, lhs_value, rhs_value));
         }
     }
 
@@ -276,11 +276,11 @@ namespace visitor {
         const bool is_constant
             = llvm::isa<llvm::Constant>(lhs_value) and llvm::isa<llvm::Constant>(rhs_value);
 
-        const bool is_int
-            = lhs_value->getType()->isIntegerTy() and rhs_value->getType()->isIntegerTy();
+        const bool is_float = lhs_value->getType()->isFloatingPointTy()
+                           or rhs_value->getType()->isFloatingPointTy();
 
         if (binary_expr.is_comparison()) {
-            return evaluate_comparison(binary_expr, lhs_value, rhs_value, is_int, is_constant);
+            return evaluate_comparison(binary_expr, lhs_value, rhs_value, is_float, is_constant);
         }
 
         // Specific for pointers
@@ -294,8 +294,8 @@ namespace visitor {
         using bin_ops = llvm::Instruction::BinaryOps;
         std::optional<bin_ops> bin_op;
 
-        auto int_or_float = [&is_int](bin_ops int_pred, bin_ops float_pred) {
-            return is_int ? int_pred : float_pred;
+        auto int_or_float = [&is_float](bin_ops int_pred, bin_ops float_pred) {
+            return is_float ? float_pred : int_pred;
         };
 
         switch (binary_expr.op) {
