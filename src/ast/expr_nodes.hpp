@@ -76,6 +76,7 @@ namespace ast {
 
         make_visitable;
 
+        [[nodiscard]] bool is_arithmetic() const noexcept;
         [[nodiscard]] bool is_comparison() const noexcept;
         [[nodiscard]] bool is_shortcircuiting() const noexcept;
 

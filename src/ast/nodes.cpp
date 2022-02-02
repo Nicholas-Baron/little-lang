@@ -20,4 +20,17 @@ namespace ast {
         return op == operand::bool_or or op == operand::bool_and;
     }
 
+    [[nodiscard]] bool binary_expr::is_arithmetic() const noexcept {
+        switch (op) {
+        case operand::add:
+        case operand::sub:
+        case operand::mult:
+        case operand::div:
+        case operand::mod:
+            return true;
+        default:
+            return false;
+        }
+    }
+
 } // namespace ast
