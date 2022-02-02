@@ -97,15 +97,21 @@ namespace visitor {
     ast::type_ptr type_checker::evaluate_comparison(ast::type_ptr && lhs_type,
                                                     ast::type_ptr && rhs_type) {
 
-        if (bool pointer_comp = lhs_type->is_pointer_type() and rhs_type->is_pointer_type();
+        if (bool pointer_comp = (lhs_type == nullptr or lhs_type->is_pointer_type())
+                            and (rhs_type == nullptr or rhs_type->is_pointer_type());
             not pointer_comp and lhs_type != rhs_type) {
             std::cout << "Comparisons can only be made within the same type" << std::endl;
             assert(false);
         } else if (pointer_comp) {
-            // If either is null, no further checks are needed
-            if (lhs_type == ast::prim_type::null or rhs_type == ast::prim_type::null) {
-                return ast::prim_type::boolean;
+
+            // If both are null, fail.
+            if (lhs_type == nullptr and rhs_type == nullptr) {
+                std::cout << "`null` cannot be on both sides of a binary expression" << std::endl;
+                assert(false);
             }
+
+            // If either is null, no further checks are needed
+            if (lhs_type == nullptr or rhs_type == nullptr) { return ast::prim_type::boolean; }
 
             // Check that the pointed to types are the same.
 
@@ -133,6 +139,14 @@ namespace visitor {
         auto lhs_type = get_value(*binary_expr.lhs, *this);
         auto rhs_type = get_value(*binary_expr.rhs, *this);
 
+        if (lhs_type == nullptr) {
+            assert(rhs_type != nullptr);
+            binary_expr.lhs->type = rhs_type;
+        } else if (rhs_type == nullptr) {
+            assert(lhs_type != nullptr);
+            binary_expr.rhs->type = lhs_type;
+        }
+
         if (binary_expr.is_shortcircuiting()) {
             const auto bool_type = ast::prim_type::boolean;
             if (lhs_type != bool_type or rhs_type != bool_type) {
@@ -148,16 +162,8 @@ namespace visitor {
         }
 
         if (binary_expr.is_arithmetic()) {
-            auto type = evaluate_arithmetic(std::move(lhs_type), std::move(rhs_type));
-
-            if (type->is_pointer_type()) {
-                // Annotate both children to be this type.
-                // This makes `null` literals be the correct type.
-                binary_expr.lhs->type = type;
-                binary_expr.rhs->type = type;
-            }
-
-            return store_result(type, binary_expr);
+            return store_result(evaluate_arithmetic(std::move(lhs_type), std::move(rhs_type)),
+                                binary_expr);
         }
 
         std::cout << "Unimplemented type check for " << tok_to_string(binary_expr.op) << std::endl;
@@ -438,7 +444,7 @@ namespace visitor {
             store_result(type, user_val);
         } break;
         case val_type::null:
-            store_result(ast::prim_type::null, user_val);
+            store_result(nullptr, user_val);
             break;
         case val_type::boolean:
             store_result(ast::prim_type::boolean, user_val);

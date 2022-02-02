@@ -91,7 +91,15 @@ namespace ast {
     };
 
     struct prim_type final : public type {
-        enum class type { int32, boolean, character, float32, str, unit, null };
+        enum class type {
+            int32,
+            boolean,
+            character,
+            float32,
+            str,
+            unit,
+        };
+
         explicit prim_type(type t)
             : prim{t} {}
 
@@ -100,7 +108,8 @@ namespace ast {
         ~prim_type() final = default;
 
         [[nodiscard]] bool is_pointer_type() const final {
-            return prim == type::str or prim == type::null;
+            // TODO: Should `str` still be a pointer type?
+            return prim == type::str;
         }
 
         static inline const type_ptr int32
@@ -115,8 +124,6 @@ namespace ast {
             = std::make_shared<ast::prim_type>(ast::prim_type::type::str);
         static inline const type_ptr character
             = std::make_shared<ast::prim_type>(ast::prim_type::type::character);
-        static inline const type_ptr null
-            = std::make_shared<ast::prim_type>(ast::prim_type::type::null);
 
       private:
         void print(std::ostream & /*output*/) const final;

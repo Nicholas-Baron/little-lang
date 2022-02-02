@@ -20,8 +20,19 @@ type_context::type_context(llvm::LLVMContext * context)
     } {}
 
 llvm::Type * type_context::lower_to_llvm(const ast::type & type) {
+
     auto iter = std::find_if(active_types.begin(), active_types.end(),
                              [&type](const auto & entry) -> bool { return *entry.first == type; });
-    if (iter == active_types.end()) { return nullptr; }
+
+    if (iter == active_types.end()) {
+        if (type.is_pointer_type()) {
+            // Find the pointed-to type.
+            const auto & ast_ptr_type = dynamic_cast<const ast::ptr_type &>(type);
+            auto * pointed_to_type = lower_to_llvm(*ast_ptr_type.pointed_to);
+            assert(pointed_to_type != nullptr);
+            return pointed_to_type->getPointerTo();
+        }
+        return nullptr;
+    }
     return iter->second;
 }

@@ -108,23 +108,8 @@ namespace visitor {
     void codegen::evaluate_comparison(ast::binary_expr & binary_expr, llvm::Value * lhs_value,
                                       llvm::Value * rhs_value, bool is_float, bool is_constant) {
 
-        assert(lhs_value != nullptr or rhs_value != nullptr);
+        assert(lhs_value != nullptr and rhs_value != nullptr);
         using operand = ast::binary_expr::operand;
-
-        if (lhs_value == nullptr or rhs_value == nullptr) {
-            // Compare the other value to `null`.
-            switch (auto * pointer = lhs_value == nullptr ? rhs_value : lhs_value; binary_expr.op) {
-            case operand::eq:
-                return store_result(ir_builder->CreateIsNull(pointer));
-            case operand::ne:
-                return store_result(ir_builder->CreateIsNotNull(pointer));
-            default:
-                printError("Comparison operator " + tok_to_string(binary_expr.op)
-                               + " cannot work on pointers.",
-                           binary_expr.location());
-                assert(false);
-            }
-        }
 
         using predicate = llvm::CmpInst::Predicate;
         auto int_or_float = [&is_float](predicate int_pred, predicate float_pred) {
@@ -696,9 +681,13 @@ namespace visitor {
             }
             return store_result(value);
         }
-        case value_type::null:
-            // TODO: Use extra type information to create an actual llvm null value
-            return store_result(nullptr);
+        case value_type::null: {
+            auto & type = user_val.type;
+            assert(type->is_pointer_type());
+            auto * llvm_type = type_context.lower_to_llvm(*type);
+            assert(llvm_type != nullptr);
+            return store_result(llvm::Constant::getNullValue(llvm_type));
+        }
         case value_type::integer: {
             static constexpr auto hex_base = 16;
             static constexpr auto dec_base = 10;
