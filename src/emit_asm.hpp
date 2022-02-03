@@ -8,7 +8,7 @@
 
 [[nodiscard]] std::string init_llvm_targets();
 
-void emit_asm(std::unique_ptr<llvm::Module>, std::string && output_filename,
+void emit_asm(std::unique_ptr<llvm::Module> ir_module, std::string && output_filename,
               bool debug_optimized_ir);
 
 #endif

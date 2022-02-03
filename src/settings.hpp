@@ -23,7 +23,7 @@ struct Settings {
 
     void set_flag(cmd_flag flag) { flags |= static_cast<unsigned>(flag); }
 
-    unsigned flags;
+    unsigned flags{};
 
     std::vector<std::string> extra_args;
 };

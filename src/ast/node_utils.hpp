@@ -44,6 +44,8 @@ namespace ast {
 
         movable(func_call_data);
 
+        ~func_call_data() noexcept = default;
+
         [[nodiscard]] const auto & name() const { return name_; }
 
         [[nodiscard]] size_t args_count() const { return args_.size(); }

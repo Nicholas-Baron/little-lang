@@ -5,7 +5,7 @@
 
 using namespace llvm;
 
-int run_module(std::vector<std::unique_ptr<Module>> ir_modules) {
+uint64_t run_module(std::vector<std::unique_ptr<Module>> ir_modules) {
 
     // pass some module to get the jit setup correctly
     auto * executionEngine
