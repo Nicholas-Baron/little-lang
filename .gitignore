@@ -1,7 +1,11 @@
-build/
-temp/
-logs/
+# Directories
 .cache/
+build/
+logs/
+temp/
+
+# Specific filenames
 compile_commands.json
-todo.*
 includes.svg
+tidy.txt
+todo.*
