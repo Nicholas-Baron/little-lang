@@ -1,5 +1,5 @@
 ---
-Checks:          '-*,clang-analyzer-*,misc-*,-misc-no-recursion,modernize-*,-modernize-use-trailing-return-type,performance-*,readability-*,portability-*'
+Checks:          '-*,clang-analyzer-*,misc-*,-misc-no-recursion,modernize-*,-modernize-use-trailing-return-type,performance-*,readability-*,portability-*,cppcore*,-cppcoreguidelines-pro-bounds-array-to-pointer-decay,-cppcoreguidelines-macro-usage'
 WarningsAsErrors: ''
 HeaderFilterRegex: './src/*'
 AnalyzeTemporaryDtors: false
