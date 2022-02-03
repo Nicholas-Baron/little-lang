@@ -7,4 +7,4 @@ echo "Beginning linting..."
 clang-tidy src/*.cpp src/*.hpp -- $flags 2>&1 | tee tidy.txt
 
 echo "Summary"
-grep '[a-z_]+\.(c|h)pp' tidy.txt -Eo | sort | uniq -c | sort -rn
+grep '[a-z_]+\.(c|h)pp' tidy.txt -Eo | sort | uniq -c | sort -rn | tee -a tidy.txt
