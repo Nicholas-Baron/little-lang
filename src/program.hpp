@@ -19,7 +19,7 @@ class program final {
     [[nodiscard]] bool type_check();
     void generate_ir();
     void emit_and_link();
-    [[nodiscard]] int jit();
+    [[nodiscard]] uint64_t jit();
 
   private:
     program(std::vector<ast::top_level_sequence> && modules, std::shared_ptr<Settings> settings,

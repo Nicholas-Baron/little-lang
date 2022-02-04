@@ -12,6 +12,7 @@
 #include <llvm/IR/LLVMContext.h>
 #include <sys/wait.h> // waitpid
 
+#include <cstring> // strlcpy
 #include <iostream>
 #include <set>
 #include <unistd.h> // execve
@@ -29,7 +30,12 @@ static bool exec_command(std::vector<std::string> && cmd, bool debug) {
 
         std::vector<char *> args;
         args.reserve(cmd.size());
-        for (auto & arg : cmd) { args.emplace_back(strcpy(new char[arg.size() + 1], arg.c_str())); }
+        for (auto & arg : cmd) {
+            auto arg_length = arg.size() + 1;
+            // NOLINTNEXTLINE (cppcoreguidelines-owning-memory)
+            args.emplace_back(strncpy(new char[arg_length], arg.c_str(), arg_length));
+        }
+
         args.push_back(nullptr);
 
         if (execvp(args[0], args.data()) == -1) {
@@ -43,7 +49,7 @@ static bool exec_command(std::vector<std::string> && cmd, bool debug) {
         return false;
     } else {
 
-        int wait_status;
+        int wait_status = 0;
         if (waitpid(pid, &wait_status, 0) != pid) {
             perror("waitpid");
             return false;
@@ -208,4 +214,4 @@ void program::emit_and_link() {
     exec_command(std::move(gcc_args), settings->flag_is_set(cmd_flag::debug_show_execs));
 }
 
-int program::jit() { return run_module(std::move(ir_modules)); }
+uint64_t program::jit() { return run_module(std::move(ir_modules)); }
