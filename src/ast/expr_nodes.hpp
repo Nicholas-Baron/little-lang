@@ -23,6 +23,8 @@ namespace ast {
 
         movable(user_val);
 
+        ~user_val() noexcept final = default;
+
         make_visitable;
 
         std::string val;
@@ -40,6 +42,8 @@ namespace ast {
         non_copyable(unary_expr);
 
         movable(unary_expr);
+
+        ~unary_expr() noexcept final = default;
 
         make_visitable;
 
@@ -76,6 +80,8 @@ namespace ast {
 
         make_visitable;
 
+        ~binary_expr() noexcept final = default;
+
         [[nodiscard]] bool is_arithmetic() const noexcept;
         [[nodiscard]] bool is_comparison() const noexcept;
         [[nodiscard]] bool is_shortcircuiting() const noexcept;
@@ -94,6 +100,8 @@ namespace ast {
         non_copyable(if_expr);
 
         movable(if_expr);
+
+        ~if_expr() noexcept final = default;
 
         make_visitable;
 
