@@ -40,12 +40,13 @@ std::shared_ptr<Settings> read_settings(int arg_count, const char * const * args
     std::vector<const char *> lyra_args;
     bool seen_double_dash = false;
     for (auto i = 0; i < arg_count; ++i) {
-        if (std::strcmp("--", args[i]) == 0) {
+        // NOLINTNEXTLINE (*-pointer-arithmetic)
+        if (auto * arg = args[i]; std::strcmp("--", arg) == 0) {
             seen_double_dash = true;
         } else if (seen_double_dash) {
-            settings->extra_args.emplace_back(args[i]);
+            settings->extra_args.emplace_back(arg);
         } else {
-            lyra_args.push_back(args[i]);
+            lyra_args.push_back(arg);
         }
     }
 
