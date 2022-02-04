@@ -50,8 +50,8 @@ class parser final {
     ~parser() noexcept;
 
   private:
-    parser(std::string filename, const char * data, size_t);
-    parser(const char * data, size_t);
+    parser(std::string filename, const char * data, size_t size);
+    parser(const char * data, size_t size);
 
     // As stated above,
     // there are some internals which need to be tested independently of each other.
@@ -190,7 +190,7 @@ class parser final {
 
     // `next_chars` checks that the characters at some offset into the stream are equal to the
     // provided string.
-    bool next_chars(const std::string &, unsigned offset = 0);
+    bool next_chars(const std::string & text, unsigned offset = 0);
 
 #ifdef PARSER_TEST
   private:
@@ -198,9 +198,9 @@ class parser final {
 
     // `next_token` has some complex, yet modular, logic for determining a token's type.
     // These 3 functions are helpers to `next_token` that handle some, but not all, tokens each.
-    token next_identifier(Location);
-    token next_number(Location);
-    token next_symbol(Location);
+    token next_identifier(Location l);
+    token next_number(Location l);
+    token next_symbol(Location l);
 
     std::deque<token> peeked_tokens;
     std::string filename;
