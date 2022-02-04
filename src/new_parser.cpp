@@ -17,6 +17,7 @@
 std::unique_ptr<parser> parser::from_file(const std::string & filename) {
 
     // First, we open the file via a Linux syscall.
+    // NOLINTNEXTLINE (*-vararg)
     auto fd = open(filename.c_str(), O_CLOEXEC | O_RDONLY);
     if (fd == -1) {
         perror("parser open");
@@ -24,7 +25,7 @@ std::unique_ptr<parser> parser::from_file(const std::string & filename) {
     }
 
     // Then, we read the open file's size.
-    struct stat file_stats;
+    struct stat file_stats {};
     if (fstat(fd, &file_stats) == -1) {
         perror("parser stat");
         return nullptr;
@@ -33,7 +34,8 @@ std::unique_ptr<parser> parser::from_file(const std::string & filename) {
     const auto file_length = file_stats.st_size;
 
     // Next, we map the file into our memory.
-    auto * data = (char *)mmap(nullptr, file_length, PROT_READ, MAP_PRIVATE, fd, 0);
+    auto * data = static_cast<char *>(mmap(nullptr, file_length, PROT_READ, MAP_PRIVATE, fd, 0));
+    // NOLINTNEXTLINE
     if (data == MAP_FAILED) {
         perror("parser mmap");
         return nullptr;
@@ -68,6 +70,8 @@ parser::parser(const char * data, size_t size)
 parser::~parser() {
     if (type == data_type::mmapped) {
         // If we mapped in a file for our input, we need to clean up that mapping.
+        // Since we are being destroyed, we can mutate our member variables.
+        // NOLINTNEXTLINE (*-const-cast)
         if (munmap(const_cast<char *>(data), length) == -1) { perror("parser munmap"); }
     }
 }
@@ -887,17 +891,20 @@ parser::token parser::next_symbol(Location l) {
 
 char parser::next_char() {
     if (current_pos >= length) { return EOF; }
+    // NOLINTNEXTLINE (*-pointer-arithmetic)
     if (data[current_pos] == '\n') {
         ++line_num;
         col_num = 0;
     } else {
         ++col_num;
     }
+    // NOLINTNEXTLINE (*-pointer-arithmetic)
     return data[current_pos++];
 }
 
 char parser::peek_char(unsigned offset) {
     if (offset + current_pos >= length) { return EOF; }
+    // NOLINTNEXTLINE (*-pointer-arithmetic)
     return data[current_pos + offset];
 }
 
