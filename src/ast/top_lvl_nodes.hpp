@@ -78,6 +78,8 @@ namespace ast {
 
         movable(func_decl);
 
+        ~func_decl() noexcept final = default;
+
         make_visitable;
 
         header head;
@@ -96,6 +98,8 @@ namespace ast {
         non_copyable(const_decl);
 
         movable(const_decl);
+
+        ~const_decl() noexcept final = default;
 
         make_visitable;
 
