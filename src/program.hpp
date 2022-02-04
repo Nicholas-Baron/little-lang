@@ -13,8 +13,8 @@
 class program final {
   public:
     static std::optional<program> from_modules(const std::string & root_file,
-                                               std::vector<ast::top_level_sequence> &&,
-                                               std::shared_ptr<Settings>);
+                                               std::vector<ast::top_level_sequence> && modules,
+                                               std::shared_ptr<Settings> settings);
 
     [[nodiscard]] bool type_check();
     void generate_ir();
@@ -22,7 +22,7 @@ class program final {
     [[nodiscard]] int jit();
 
   private:
-    program(std::vector<ast::top_level_sequence> &&, std::shared_ptr<Settings>,
+    program(std::vector<ast::top_level_sequence> && modules, std::shared_ptr<Settings> settings,
             std::string && project_root);
 
     std::string project_root;
