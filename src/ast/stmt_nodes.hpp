@@ -18,6 +18,8 @@ namespace ast {
 
         movable(if_stmt);
 
+        ~if_stmt() noexcept final = default;
+
         make_visitable;
 
         expr_ptr condition;
@@ -34,6 +36,8 @@ namespace ast {
         non_copyable(let_stmt);
 
         movable(let_stmt);
+
+        ~let_stmt() noexcept final = default;
 
         make_visitable;
 
@@ -76,6 +80,8 @@ namespace ast {
         non_copyable(return_stmt);
 
         movable(return_stmt);
+
+        ~return_stmt() noexcept final = default;
 
         make_visitable;
 
