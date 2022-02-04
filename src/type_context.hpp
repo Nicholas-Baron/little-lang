@@ -10,9 +10,9 @@
 
 class type_context final {
   public:
-    explicit type_context(llvm::LLVMContext *);
+    explicit type_context(llvm::LLVMContext * context);
 
-    [[nodiscard]] llvm::Type * lower_to_llvm(const ast::type &);
+    [[nodiscard]] llvm::Type * lower_to_llvm(const ast::type & type);
 
   private:
     global_map<std::string, ast::type_ptr> global_types;
