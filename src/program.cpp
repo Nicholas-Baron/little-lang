@@ -197,7 +197,20 @@ void program::generate_ir() {
 
 void program::emit_and_link() {
 
-    std::vector<std::string> gcc_args{"cc", "-static", "-Wl,--gc-sections"};
+    const auto debug_print_execs = settings->flag_is_set(cmd_flag::debug_show_execs);
+
+    // TODO: make a better path to stdlib
+    // TODO: do not invoke as if start.o already exists
+    auto main_file = std::filesystem::path(ast_modules.back().filename);
+
+    auto bootstrap = main_file.parent_path() / "stdlib/start.S";
+    exec_command({"as", std::move(bootstrap), "-o", "start.o"}, debug_print_execs);
+
+    auto program_name = main_file.stem();
+    std::vector<std::string> gcc_args{
+        "ld", "-static", "--gc-sections", "-o", std::move(program_name), "start.o"};
+    if (debug_print_execs) { gcc_args.emplace_back("--print-gc-sections"); }
+
     for (auto && mod : ir_modules) {
         auto output_name = std::filesystem::path(mod->getSourceFileName()).replace_extension("o");
         gcc_args.emplace_back(output_name);
@@ -205,13 +218,7 @@ void program::emit_and_link() {
                  settings->flag_is_set(cmd_flag::debug_optimized_ir));
     }
 
-    auto program_name = std::filesystem::path(ast_modules.back().filename).stem();
-
-    gcc_args.emplace_back("-o");
-    gcc_args.emplace_back(program_name);
-
-    // TODO: Get away from C's standard library
-    exec_command(std::move(gcc_args), settings->flag_is_set(cmd_flag::debug_show_execs));
+    exec_command(std::move(gcc_args), debug_print_execs);
 }
 
 uint64_t program::jit() { return run_module(std::move(ir_modules)); }
