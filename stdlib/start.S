@@ -40,7 +40,7 @@ store_envp:
     add rax, 8
     mov [envp], rax
 
-	call main
+    call main
 
 exit:
     mov ax, 60
