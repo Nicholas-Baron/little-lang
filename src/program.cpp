@@ -9,13 +9,14 @@
 #include "visitor/codegen.hpp"
 #include "visitor/printer.hpp"
 #include "visitor/type_checker.hpp"
-#include <llvm/IR/LLVMContext.h>
-#include <sys/wait.h> // waitpid
 
 #include <cstring> // strlcpy
 #include <iostream>
 #include <set>
-#include <unistd.h> // execve
+
+#include <llvm/IR/LLVMContext.h>
+#include <sys/wait.h> // waitpid
+#include <unistd.h>   // execve
 
 static bool exec_command(std::vector<std::string> && cmd, bool debug) {
 

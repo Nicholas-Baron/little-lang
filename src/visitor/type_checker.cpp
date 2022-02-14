@@ -4,13 +4,14 @@
 #include "ast/type.hpp"
 #include "token_to_string.hpp"
 #include "type_context.hpp"
+
+#include <iostream>
+#include <memory>
+
 #include <llvm/IR/DerivedTypes.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Type.h>
 #include <llvm/Support/Casting.h>
-
-#include <iostream>
-#include <memory>
 
 namespace visitor {
 

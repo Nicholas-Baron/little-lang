@@ -1,19 +1,20 @@
 #ifndef type_checker_HPP
 #define type_checker_HPP
 
+#include "ast/node_utils.hpp"
 #include "ast/type.hpp"
 #include "global_map.hpp"
 #include "location.hpp"
 #include "type_context.hpp"
 #include "value_getter.hpp"
 #include "visitor_base.hpp"
-#include <ast/node_utils.hpp>
-#include <llvm/IR/LLVMContext.h>
-#include <llvm/IR/Type.h>
 
 #include <map>
 #include <optional>
 #include <vector>
+
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/Type.h>
 
 namespace visitor {
     class type_checker final : public visitor_base,

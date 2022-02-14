@@ -3,10 +3,11 @@
 
 #include "ast/node_utils.hpp"
 #include "global_map.hpp"
-#include <llvm/IR/LLVMContext.h>
-#include <llvm/IR/Type.h>
 
 #include <map>
+
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/Type.h>
 
 class type_context final {
   public:

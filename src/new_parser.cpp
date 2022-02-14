@@ -2,17 +2,18 @@
 
 #include "ast/node_utils.hpp"
 #include "ast/nodes.hpp"
-#include "unistd.h"               // close
 #include "utils/string_utils.hpp" // unquote
-#include <sys/mman.h>             // mmap
-#include <sys/stat.h>             // fstat
 
 #include <cassert>
 #include <cctype>   // isspace
-#include <fcntl.h>  // open
 #include <iostream> // cerr
 #include <map>
 #include <memory> // unique_ptr
+
+#include <fcntl.h>    // open
+#include <sys/mman.h> // mmap
+#include <sys/stat.h> // fstat
+#include <unistd.h>   // close
 
 std::unique_ptr<parser> parser::from_file(const std::string & filename) {
 

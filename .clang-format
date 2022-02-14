@@ -38,8 +38,13 @@ SortUsingDeclarations: true
 
 IncludeBlocks: Regroup
 IncludeCategories:
-  - Regex: '^".*\.h"'
+# local includes
+  - Regex: '".*\.hp*"'
     Priority: 1
-  - Regex: '<[[:alnum:].]+>'
+# standard library
+  - Regex: '<[[:alpha:]_]+>'
     Priority: 2
+# other angled
+  - Regex: '<[[:alnum:]./_]+>'
+    Priority: 3
 

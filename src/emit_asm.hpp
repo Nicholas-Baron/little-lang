@@ -1,10 +1,10 @@
 #ifndef EMIT_ASM_HPP
 #define EMIT_ASM_HPP
 
-#include <llvm/IR/Module.h>
-
 #include <memory>
 #include <string>
+
+#include <llvm/IR/Module.h>
 
 [[nodiscard]] std::string init_llvm_targets();
 

@@ -4,11 +4,12 @@
 #include "ast/top_lvl_nodes.hpp"
 #include "settings.hpp"
 #include "type_context.hpp"
-#include <llvm/IR/LLVMContext.h>
-#include <llvm/IR/Type.h>
 
 #include <optional>
 #include <vector>
+
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/Type.h>
 
 class program final {
   public:
