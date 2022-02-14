@@ -7,12 +7,13 @@
 #include "type_context.hpp"
 #include "value_getter.hpp"
 #include "visitor_base.hpp"
+
+#include <optional>
+
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Value.h>
-
-#include <optional>
 
 namespace visitor {
     class codegen final : public visitor_base,

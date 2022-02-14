@@ -1,7 +1,8 @@
 #include "settings.hpp"
-#include <catch2/catch.hpp>
 
 #include <array>
+
+#include <catch2/catch.hpp>
 
 // TODO: Test debug flags
 

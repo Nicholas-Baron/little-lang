@@ -2,10 +2,10 @@
 #define VALUE_GETTER_HPP
 
 #include "visitor_base.hpp"
-#include <type_traits>
 
 #include <cassert>
 #include <optional>
+#include <type_traits>
 
 namespace visitor {
     // Invariant 1: `value_getter` will *never* implicitly drop a result.

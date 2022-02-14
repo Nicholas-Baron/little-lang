@@ -1,10 +1,10 @@
 #ifndef GLOBAL_VALUES_HPP
 #define GLOBAL_VALUES_HPP
 
-#include <llvm/IR/GlobalObject.h>
-
 #include <map>
 #include <string>
+
+#include <llvm/IR/GlobalObject.h>
 
 template<typename key_t, typename value_t>
 class global_map final {

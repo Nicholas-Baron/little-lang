@@ -6,6 +6,9 @@
 #include "emit_asm.hpp"
 #include "token_to_string.hpp"
 #include "type_context.hpp"
+
+#include <sstream>
+
 #include <llvm/IR/BasicBlock.h>
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/Function.h>
@@ -15,8 +18,6 @@
 #include <llvm/IR/Verifier.h>
 #include <llvm/Support/Casting.h>
 #include <llvm/Support/raw_ostream.h>
-
-#include <sstream>
 
 namespace visitor {
 
