@@ -1,0 +1,22 @@
+from "env" import arg_count, arg_at;
+from "stdlib/syscall_nums.lil" import write_num;
+
+strlen(str is string) -> int
+	= if str == null then 0
+	else if *str == '\0' then 0
+	else 1 + strlen(str + 1)
+
+print_args(index: int) -> unit {
+	if index >= arg_count() { return; }
+
+	let arg = arg_at(index);
+
+	syscall(write_num, 1, arg, strlen(arg));
+	syscall(write_num, 1, "\n", 1);
+
+	print_args(index + 1)
+}
+
+main ()
+	print_args(0)
+
