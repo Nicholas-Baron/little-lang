@@ -131,6 +131,9 @@ std::optional<program> program::from_modules(const std::string & root_file,
         auto abs_path = normalized_absolute_path(mod.filename);
         std::set<std::string> imports;
         for (auto & [dependency, _] : mod.imports) {
+            // TODO: Make generic for other pseudo-modules
+            if (dependency == "env") { continue; }
+
             imports.emplace(abs_path.parent_path() / dependency);
         }
         dependencies.emplace(abs_path, std::move(imports));
@@ -169,6 +172,12 @@ program::program(std::vector<ast::top_level_sequence> && modules,
 
 bool program::type_check() {
     global_map<std::string, ast::type_ptr> program_globals;
+    program_globals.add("env", "arg_count",
+                        std::make_shared<ast::function_type>(ast::prim_type::int32));
+    program_globals.add("env", "arg_at",
+                        std::make_shared<ast::function_type>(
+                            ast::function_type{ast::prim_type::str, {ast::prim_type::int32}}));
+
     for (auto & mod : ast_modules) {
         // Note: currently, the ast imports are not updated with absolute paths,
         // but the ast filenames are absolute paths.
@@ -190,8 +199,8 @@ void program::generate_ir() {
         auto filename = std::filesystem::relative(mod.filename, project_root);
         visitor::codegen codegen{filename, *context, globals, typ_context};
         codegen.visit(mod);
-        codegen.verify_module();
         if (settings->flag_is_set(cmd_flag::debug_ir)) { codegen.dump(); }
+        codegen.verify_module();
         ir_modules.push_back(std::move(codegen).take_ir_module());
     }
 }

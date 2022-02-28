@@ -41,7 +41,8 @@ namespace visitor {
 
       private:
         llvm::Type * find_type(const ast::type &, std::optional<Location> loc = std::nullopt);
-        [[nodiscard]] llvm::Value * find_alive_value(const std::string & name) const;
+        [[nodiscard]] llvm::Value * find_alive_value(const std::string & name,
+                                                     bool should_error = true) const;
 
         void evaluate_comparison(ast::binary_expr &, llvm::Value * lhs_value,
                                  llvm::Value * rhs_value, bool is_float, bool is_constant);
@@ -51,6 +52,8 @@ namespace visitor {
 
         void evaluate_short_circuit(ast::binary_expr &, llvm::Value * lhs_value);
 
+        void arg_count(ast::func_call_data &);
+        void arg_at(ast::func_call_data &);
         void syscall(ast::func_call_data &);
 
         void printError(const std::string & name, std::optional<Location> loc = std::nullopt) const;

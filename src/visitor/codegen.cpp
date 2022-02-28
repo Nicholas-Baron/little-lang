@@ -72,13 +72,15 @@ namespace visitor {
         , type_context(typ_context)
         , active_values{{}}
         , program_globals{program_globals}
-        , instrinics{{"syscall", &codegen::syscall}} {
+        , instrinics{{"syscall", &codegen::syscall},
+                     {"arg_count", &codegen::arg_count},
+                     {"arg_at", &codegen::arg_at}} {
         ir_module->setTargetTriple(init_llvm_targets());
     }
 
     void codegen::dump() const { llvm::outs() << *ir_module << '\n'; }
 
-    llvm::Value * codegen::find_alive_value(const std::string & name) const {
+    llvm::Value * codegen::find_alive_value(const std::string & name, bool should_error) const {
         // Walk backwards thru scopes
         for (auto scope = active_values.rbegin(); scope != active_values.rend(); ++scope) {
             if (auto iter = scope->find(name); iter != scope->end()) {
@@ -91,7 +93,7 @@ namespace visitor {
                 return iter->second;
             }
         }
-        printError("Could not find value " + name);
+        if (should_error) { printError("Could not find value " + name); }
         return nullptr;
     }
 
@@ -222,6 +224,50 @@ namespace visitor {
             to_print << *loc << " : " << name;
             context.emitError(to_print.str());
         }
+    }
+
+    void codegen::arg_at(ast::func_call_data & data) {
+
+        auto * raw_arg_vector = find_alive_value("argv", false);
+        auto * llvm_str_ty = llvm::Type::getInt8PtrTy(context);
+
+        if (raw_arg_vector == nullptr) {
+            auto * new_raw_arg_vector = new llvm::GlobalVariable{
+                *ir_module, llvm_str_ty->getPointerTo(),
+                true,       llvm::GlobalValue::LinkageTypes::ExternalLinkage,
+                nullptr,    "argv"};
+            new_raw_arg_vector->setExternallyInitialized(true);
+
+            active_values.front().emplace("argv", new_raw_arg_vector);
+            raw_arg_vector = new_raw_arg_vector;
+        }
+
+        assert(data.args_count() == 1);
+
+        auto * index = get_value(data.arg(0), *this);
+        auto * ptr_to_index = ir_builder->CreateGEP(
+            llvm_str_ty, ir_builder->CreateLoad(llvm_str_ty->getPointerTo(), raw_arg_vector),
+            index);
+
+        store_result(ir_builder->CreateLoad(llvm_str_ty, ptr_to_index));
+    }
+
+    void codegen::arg_count(ast::func_call_data & /*unused*/) {
+
+        auto * raw_arg_count = find_alive_value("argc", false);
+        auto * llvm_i64_ty = llvm::Type::getInt64Ty(context);
+
+        if (raw_arg_count == nullptr) {
+            auto * new_raw_arg_count = new llvm::GlobalVariable{
+                *ir_module, llvm_i64_ty, true, llvm::GlobalValue::LinkageTypes::ExternalLinkage,
+                nullptr,    "argc"};
+            new_raw_arg_count->setExternallyInitialized(true);
+
+            active_values.front().emplace("argc", new_raw_arg_count);
+            raw_arg_count = new_raw_arg_count;
+        }
+        auto * long_argc = ir_builder->CreateLoad(llvm_i64_ty, raw_arg_count);
+        store_result(ir_builder->CreateTrunc(long_argc, find_type(*ast::prim_type::int32)));
     }
 
     void codegen::syscall(ast::func_call_data & func_call_data) {
@@ -602,6 +648,7 @@ namespace visitor {
 
         if (not top_level_sequence.imports.empty()) {
             for (auto & [src_module, ids] : top_level_sequence.imports) {
+                if (src_module == "env") { continue; }
                 for (auto & id : ids) {
                     auto * global = program_globals.lookup(src_module, id);
                     if (global == nullptr) {
