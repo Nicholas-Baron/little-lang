@@ -69,6 +69,7 @@ namespace visitor {
         std::map<std::string, void (type_checker::*)(ast::func_call_data &)> instrinics;
 
         const ast::type * current_return_type{nullptr};
+        const std::string * current_function_name{nullptr};
     };
 } // namespace visitor
 
