@@ -60,6 +60,9 @@ static std::vector<ast::top_level_sequence> load_modules(const std::string & inp
         }
 
         for (const auto & iter : parsed_module->imports) {
+            // certain modules are "pseudo" (only containing intrinsics)
+            if (iter.first == "env") { continue; }
+
             to_load.push(project_root / unquote(iter.first));
         }
 
