@@ -57,7 +57,7 @@ namespace ast {
 
             [[nodiscard]] size_t param_count() const { return params.size(); }
 
-            [[nodiscard]] const std::string & name() const { return name_; }
+            [[nodiscard]] const std::string & name() const & { return name_; }
 
             void set_location(const Location & loc_new) { loc = loc_new; }
 
