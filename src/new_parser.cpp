@@ -866,7 +866,25 @@ parser::token parser::next_symbol(Location l) {
     case '\"': {
         std::string to_ret;
         to_ret += c;
-        while (peek_char() != c) { to_ret += next_char(); }
+        while (peek_char() != c) {
+            if (peek_char() == '\\') {
+                next_char();
+                switch (auto escaped = next_char(); escaped) {
+                case 'n':
+                    to_ret += '\n';
+                    break;
+                case 'r':
+                    to_ret += '\r';
+                    break;
+                default:
+                    std::cerr << "Unknown escaped character: " << static_cast<unsigned>(c) << " \'"
+                              << c << "\'" << std::endl;
+                    assert(false);
+                }
+            } else {
+                to_ret += next_char();
+            }
+        }
         // consume the quote
         to_ret += next_char();
         return {token_type::string, std::move(to_ret), l};
