@@ -254,6 +254,7 @@ namespace visitor {
         }
 
         // TODO: The same logic may be present in the codegen module
+        current_function_name = &func_name;
         current_return_type = func_decl.head.ret_type().get();
         if (current_return_type == nullptr) {
             std::cout << func_decl.head.ret_type() << " is not a known type" << std::endl;
@@ -346,8 +347,8 @@ namespace visitor {
             // we should be in a void function
 
             if (current_return_type != ast::prim_type::unit.get()) {
-                std::cout << "Return should have an expression in a 'non-void function'"
-                          << std::endl;
+                std::cout << "Return should have an expression in a 'non-void function' "
+                          << *current_function_name << std::endl;
                 assert(false);
             }
 
@@ -358,7 +359,8 @@ namespace visitor {
 
         if (auto val_type = get_value(*return_stmt.value, *this);
             *val_type != *current_return_type) {
-            std::cout << "Return statement with wrong type of expression found" << std::endl;
+            std::cout << "Return statement with wrong type of expression found in function "
+                      << *current_function_name << std::endl;
             assert(false);
         }
     }
