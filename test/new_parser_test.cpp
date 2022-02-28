@@ -125,6 +125,18 @@ TEST_CASE("the parser will parse a plain string") {
     CHECK(parser->next_token() == parser::token_type::eof);
 }
 
+TEST_CASE("the parser will parse a string with escaped character") {
+    std::string buffer = R"("raw\n")";
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    auto tok = parser->next_token();
+    CHECK(tok == parser::token_type::string);
+    CHECK(tok == "\"raw\n\"");
+    CHECK(parser->next_token() == parser::token_type::eof);
+}
+
 TEST_CASE("the parser will parse a character literal") {
     std::string buffer = "\'w\'";
     auto parser = parser::from_buffer(buffer);
