@@ -20,8 +20,8 @@ namespace visitor {
     class type_checker final : public visitor_base,
                                public value_getter<type_checker, ast::node, ast::type_ptr> {
       public:
-        type_checker(std::string filename, llvm::LLVMContext &,
-                     global_map<std::string, ast::type_ptr> &, type_context &);
+        type_checker(std::string filename, llvm::LLVMContext & context,
+                     global_map<std::string, ast::type_ptr> & globals, type_context & types);
 
         non_copyable(type_checker);
 
@@ -38,7 +38,7 @@ namespace visitor {
         // clang-format on
 
       private:
-        void syscall(ast::func_call_data &);
+        void syscall(ast::func_call_data & func_call_data);
 
         ast::type_ptr evaluate_arithmetic(ast::type_ptr && lhs, ast::type_ptr && rhs);
 
@@ -48,9 +48,9 @@ namespace visitor {
         void printError(const std::string & name, std::optional<Location> loc = std::nullopt);
 
         // Find the type of an identifier
-        [[nodiscard]] ast::type_ptr find_type_of(const std::string &) const;
+        [[nodiscard]] ast::type_ptr find_type_of(const std::string & id) const;
 
-        void bind_type(ast::type_ptr, std::string, bool should_export = false);
+        void bind_type(ast::type_ptr type, std::string identifier, bool should_export = false);
 
         // Stores the `type_ptr` into both the value_getter and the `ast::expr &`
         void store_result(const ast::type_ptr & type, ast::expr & expr) {

@@ -19,8 +19,9 @@ namespace visitor {
     class codegen final : public visitor_base,
                           public value_getter<codegen, ast::node, llvm::Value *> {
       public:
-        codegen(const std::string & name, llvm::LLVMContext &,
-                global_map<std::string, llvm::GlobalObject *> &, type_context &);
+        codegen(const std::string & name, llvm::LLVMContext & context,
+                global_map<std::string, llvm::GlobalObject *> & globals,
+                type_context & typ_context);
 
         non_copyable(codegen);
 
@@ -40,21 +41,23 @@ namespace visitor {
         void dump() const;
 
       private:
-        llvm::Type * find_type(const ast::type &, std::optional<Location> loc = std::nullopt);
+        llvm::Type * find_type(const ast::type & ast_type,
+                               std::optional<Location> loc = std::nullopt);
+
         [[nodiscard]] llvm::Value * find_alive_value(const std::string & name,
                                                      bool should_error = true) const;
 
-        void evaluate_comparison(ast::binary_expr &, llvm::Value * lhs_value,
+        void evaluate_comparison(ast::binary_expr & expr, llvm::Value * lhs_value,
                                  llvm::Value * rhs_value, bool is_float, bool is_constant);
 
-        void evaluate_pointer_math(ast::binary_expr &, llvm::Value * lhs_value,
+        void evaluate_pointer_math(ast::binary_expr & expr, llvm::Value * lhs_value,
                                    llvm::Value * rhs_value);
 
-        void evaluate_short_circuit(ast::binary_expr &, llvm::Value * lhs_value);
+        void evaluate_short_circuit(ast::binary_expr & binary_expr, llvm::Value * lhs_value);
 
-        void arg_count(ast::func_call_data &);
-        void arg_at(ast::func_call_data &);
-        void syscall(ast::func_call_data &);
+        void arg_count(ast::func_call_data & /*unused*/);
+        void arg_at(ast::func_call_data & /*data*/);
+        void syscall(ast::func_call_data & /*func_call_data*/);
 
         void printError(const std::string & name, std::optional<Location> loc = std::nullopt) const;
 
