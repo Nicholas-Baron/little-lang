@@ -33,6 +33,7 @@ namespace visitor {
                 auto count = 0U;
                 while (text != nullptr and *text != '\0') {
                     count += static_cast<unsigned int>(*text == c);
+                    // NOLINTNEXTLINE (*-pointer-arithmetic)
                     ++text;
                 }
                 return count;
@@ -49,13 +50,16 @@ namespace visitor {
             std::array<std::string, count> result;
 
             auto i = 0U;
+            // NOLINTNEXTLINE (*-pointer-arithmetic)
             for (const auto * iter = strchr(first_part, ',') + 1; iter != nullptr and *iter != '\0';
+                 // NOLINTNEXTLINE (*-pointer-arithmetic)
                  ++iter) {
 
                 if (*iter != ',') { continue; }
 
                 auto constraints = std::string{first_part, static_cast<size_t>(iter - first_part)};
 
+                // NOLINTNEXTLINE (*-pointer-arithmetic)
                 result[i++] = constraints + suffix;
             }
 
