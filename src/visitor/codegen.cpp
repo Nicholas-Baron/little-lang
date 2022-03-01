@@ -97,12 +97,12 @@ namespace visitor {
         return nullptr;
     }
 
-    llvm::Type * codegen::find_type(const ast::type & name, std::optional<Location> loc) {
+    llvm::Type * codegen::find_type(const ast::type & type, std::optional<Location> loc) {
 
-        auto * typ = type_context.lower_to_llvm(name);
+        auto * typ = type_context.lower_to_llvm(type);
         if (typ == nullptr) {
             std::stringstream ss;
-            ss << name << " is not a valid type?";
+            ss << type << " is not a valid type?";
             printError(ss.str(), loc);
         }
         return typ;

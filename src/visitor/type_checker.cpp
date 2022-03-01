@@ -16,13 +16,13 @@
 namespace visitor {
 
     type_checker::type_checker(std::string filename, llvm::LLVMContext & context,
-                               global_map<std::string, ast::type_ptr> & imports,
+                               global_map<std::string, ast::type_ptr> & globals,
                                class type_context & types)
         : filename{std::move(filename)}
         , context{context}
         , type_context{types}
         , active_typed_identifiers{{}}
-        , program_globals{imports} {
+        , program_globals{globals} {
         instrinics.emplace("syscall", &type_checker::syscall);
     }
 
