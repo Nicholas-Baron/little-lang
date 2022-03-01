@@ -169,7 +169,10 @@ namespace visitor {
 
         auto * pointer = lhs_value->getType()->isPointerTy() ? lhs_value : rhs_value;
         auto * index = lhs_value->getType()->isPointerTy() ? rhs_value : lhs_value;
-        auto * element_ty = llvm::dyn_cast<llvm::PointerType>(pointer->getType())->getElementType();
+
+        auto * pointer_type = llvm::dyn_cast_or_null<llvm::PointerType>(pointer->getType());
+        assert(pointer_type != nullptr);
+        auto * element_ty = pointer_type->getElementType();
 
         using operand = ast::binary_expr::operand;
 
