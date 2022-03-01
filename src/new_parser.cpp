@@ -794,6 +794,20 @@ parser::token parser::next_number(Location l) {
     assert(false);
 }
 
+static char escaped(char c) {
+    switch (c) {
+    case 'n':
+        return '\n';
+    case 'r':
+        return '\r';
+    case '0':
+        return '\0';
+    }
+    std::cerr << "Unknown escaped character: " << static_cast<unsigned>(c) << " \'" << c << "\'"
+              << std::endl;
+    assert(false);
+}
+
 parser::token parser::next_symbol(Location l) {
 
     switch (const auto c = next_char(); c) {
@@ -869,18 +883,7 @@ parser::token parser::next_symbol(Location l) {
         while (peek_char() != c) {
             if (peek_char() == '\\') {
                 next_char();
-                switch (auto escaped = next_char(); escaped) {
-                case 'n':
-                    to_ret += '\n';
-                    break;
-                case 'r':
-                    to_ret += '\r';
-                    break;
-                default:
-                    std::cerr << "Unknown escaped character: " << static_cast<unsigned>(c) << " \'"
-                              << c << "\'" << std::endl;
-                    assert(false);
-                }
+                to_ret += escaped(next_char());
             } else {
                 to_ret += next_char();
             }
@@ -894,10 +897,15 @@ parser::token parser::next_symbol(Location l) {
         to_ret += c;
         assert(peek_char() != c);
 
-        if (peek_char() == '\\') { to_ret += next_char(); }
-        to_ret += next_char();
+        if (peek_char() == '\\') {
+            next_char();
+            to_ret += escaped(next_char());
+        } else {
+            to_ret += next_char();
+        }
 
         // consume the quote
+        assert(peek_char() == c);
         to_ret += next_char();
         return {token_type::character, std::move(to_ret), l};
     } break;
