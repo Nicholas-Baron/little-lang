@@ -41,7 +41,9 @@ endif()
 add_library(littlec_lib ${proj_files})
 target_compile_options(
   littlec_lib
-  PUBLIC -Og ${LLVM_CONFIG} -Wno-unused-command-line-argument -Wno-unused-parameter
+  PUBLIC -Og ${LLVM_CONFIG}
+    -Wno-unused-command-line-argument -Wno-unused-parameter
+    -fdata-sections -ffunction-sections
 )
 target_link_libraries(littlec_lib ${LLVM_CONFIG} CONAN_PKG::lyra)
 target_link_options(littlec_lib PUBLIC -Wl,--gc-sections)
@@ -56,7 +58,8 @@ target_include_directories(
 add_executable(littlec main.cpp)
 target_compile_options(
   littlec
-  PRIVATE -O2 ${LLVM_CONFIG} -Wno-unused-command-line-argument -Wno-unused-parameter
+  PRIVATE -O2 ${LLVM_CONFIG}
+    -Wno-unused-command-line-argument -Wno-unused-parameter
 )
 target_link_libraries(littlec ${LLVM_CONFIG} CONAN_PKG::lyra littlec_lib)
 target_include_directories(
