@@ -37,18 +37,6 @@ if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "13")
   add_compile_options(-Wreserved-identifier)
 endif()
 
-# the actual executable
-add_executable(littlec main.cpp ${proj_files})
-target_compile_options(
-  littlec
-  PRIVATE -O2 ${LLVM_CONFIG} -Wno-unused-command-line-argument -Wno-unused-parameter
-)
-target_link_libraries(littlec ${LLVM_CONFIG} CONAN_PKG::lyra)
-target_include_directories(
-  littlec
-  PRIVATE ${CMAKE_SOURCE_DIR}/src CONAN_PKG::lyra ${CMAKE_BINARY_DIR}
-)
-
 # the library for testing
 add_library(littlec_lib ${proj_files})
 target_compile_options(
@@ -61,5 +49,18 @@ target_include_directories(
   littlec_lib
   PUBLIC ${CMAKE_SOURCE_DIR}/src
   PRIVATE CONAN_PKG::lyra ${CMAKE_BINARY_DIR}
+)
+
+
+# the actual executable
+add_executable(littlec main.cpp)
+target_compile_options(
+  littlec
+  PRIVATE -O2 ${LLVM_CONFIG} -Wno-unused-command-line-argument -Wno-unused-parameter
+)
+target_link_libraries(littlec ${LLVM_CONFIG} CONAN_PKG::lyra littlec_lib)
+target_include_directories(
+  littlec
+  PRIVATE ${CMAKE_SOURCE_DIR}/src CONAN_PKG::lyra ${CMAKE_BINARY_DIR}
 )
 
