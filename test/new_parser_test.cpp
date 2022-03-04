@@ -4,6 +4,7 @@
 #define PARSER_TEST
 #include "new_parser.hpp"
 
+#define CATCH_CONFIG_MAIN
 #include <catch2/catch.hpp>
 
 // TODO: This split in the tests should probably be reflected in a lexer-parser split

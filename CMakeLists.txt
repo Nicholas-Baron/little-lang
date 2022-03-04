@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS YES)
 cmake_policy(SET CMP0048 NEW)
+cmake_policy(SET CMP0115 NEW)
 
 project(
 	Little_Compiler
