@@ -52,6 +52,9 @@ target_include_directories(
   PUBLIC ${CMAKE_SOURCE_DIR}/src
   PRIVATE CONAN_PKG::lyra ${CMAKE_BINARY_DIR}
 )
+target_precompile_headers(littlec_lib
+	PUBLIC ast/nodes.hpp program.hpp
+)
 
 
 # the actual executable
