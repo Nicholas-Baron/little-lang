@@ -56,6 +56,7 @@ target_compile_options(
   PUBLIC -Og ${LLVM_CONFIG} -Wno-unused-command-line-argument -Wno-unused-parameter
 )
 target_link_libraries(littlec_lib ${LLVM_CONFIG} CONAN_PKG::lyra)
+target_link_options(littlec_lib PUBLIC -Wl,--gc-sections)
 target_include_directories(
   littlec_lib
   PUBLIC ${CMAKE_SOURCE_DIR}/src
