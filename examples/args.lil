@@ -6,7 +6,7 @@ strlen(str is string) -> int
 	else if *str == '\0' then 0
 	else 1 + strlen(str + 1)
 
-print_args(index: int) -> unit {
+print_args(index: int) {
 	if index >= arg_count() { return; }
 
 	let arg = arg_at(index);

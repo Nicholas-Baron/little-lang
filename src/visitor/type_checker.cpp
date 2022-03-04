@@ -346,9 +346,10 @@ namespace visitor {
         if (return_stmt.value == nullptr) {
             // we should be in a void function
 
-            if (current_return_type != ast::prim_type::unit.get()) {
+            if (*current_return_type != *ast::prim_type::unit) {
                 std::cout << "Return should have an expression in a 'non-void function' "
-                          << *current_function_name << std::endl;
+                          << *current_function_name << "\nExpected expression of type "
+                          << *current_return_type << std::endl;
                 assert(false);
             }
 
