@@ -1,6 +1,5 @@
 #include "utils/string_utils.hpp"
 
-#define CATCH_CONFIG_MAIN
 #include <catch2/catch.hpp>
 
 TEST_CASE("unquote preserves unpaired quotes") { CHECK(unquote("\'") == "\'"); }

@@ -2,7 +2,6 @@
 
 #include <array>
 
-#define CATCH_CONFIG_MAIN
 #include <catch2/catch.hpp>
 
 // TODO: Test debug flags
