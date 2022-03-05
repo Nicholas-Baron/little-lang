@@ -1,379 +1,9 @@
-#include "ast/nodes.hpp"
-
-#include <iostream>
 #define PARSER_TEST
+#include "ast/nodes.hpp"
 #include "new_parser.hpp"
 
 #include <catch2/catch.hpp>
 
-// TODO: This split in the tests should probably be reflected in a lexer-parser split
-
-// token level
-TEST_CASE("the parser will not accept empty inputs") {
-    std::string buffer;
-    auto parser = parser::from_buffer(buffer);
-
-    CHECK(parser != nullptr);
-
-    CHECK(parser->peek_token() == parser::token_type::eof);
-
-    CHECK(parser->parse() == nullptr);
-    CHECK(parser->error_message() == "Found empty file");
-}
-
-TEST_CASE("the parser will report locations for tokens") {
-    std::string buffer = "foo\n  bar";
-    auto parser = parser::from_buffer(buffer);
-
-    CHECK(parser != nullptr);
-
-    CHECK(parser->next_token().location == Location{1, 0});
-    CHECK(parser->next_token().location == Location{2, 2});
-    CHECK(parser->next_token().location == Location{2, 5});
-
-    CHECK(parser->error_message().empty());
-}
-
-TEST_CASE("the parser can look ahead for whole text fragments") {
-    std::string buffer = "foo bar baz";
-    auto parser = parser::from_buffer(buffer);
-
-    CHECK(parser != nullptr);
-
-    CHECK(parser->next_chars("foo"));
-    CHECK(parser->next_chars("oo", 1));
-    CHECK(parser->next_chars("bar", 4));
-    CHECK(parser->next_chars("baz", 8));
-}
-
-TEST_CASE("the parser will ignore comments") {
-    std::string buffer = R"(// this is a comment
-                         # this is another comment
-                         comment I am from the 1960s
-                         Comment I am also from the 1960s
-                         foo bar baz)";
-    auto parser = parser::from_buffer(buffer);
-
-    CHECK(parser != nullptr);
-
-    CHECK(parser->next_token() == "foo");
-    CHECK(parser->next_token() == "bar");
-    CHECK(parser->next_token() == "baz");
-    CHECK(parser->next_token() == parser::token_type::eof);
-}
-
-TEST_CASE("the parser will parse an identifier") {
-    std::string buffer = "main";
-    auto parser = parser::from_buffer(buffer);
-
-    CHECK(parser != nullptr);
-
-    auto tok = parser->next_token();
-    CHECK(tok == parser::token_type::identifier);
-    CHECK(tok == "main");
-    CHECK(parser->next_token() == parser::token_type::eof);
-}
-
-TEST_CASE("the parser will parse primitive types") {
-    std::string buffer = "int unit string char bool float";
-    auto parser = parser::from_buffer(buffer);
-
-    CHECK(parser != nullptr);
-
-    CHECK(parser->next_token() == parser::token_type::prim_type);
-    CHECK(parser->next_token() == parser::token_type::prim_type);
-    CHECK(parser->next_token() == parser::token_type::prim_type);
-    CHECK(parser->next_token() == parser::token_type::prim_type);
-    CHECK(parser->next_token() == parser::token_type::prim_type);
-    CHECK(parser->next_token() == parser::token_type::prim_type);
-    CHECK(parser->next_token() == parser::token_type::eof);
-}
-
-TEST_CASE("the parser will parse an identifier containing underscores") {
-    std::string buffer = "my_value";
-    auto parser = parser::from_buffer(buffer);
-
-    CHECK(parser != nullptr);
-
-    auto tok = parser->next_token();
-    CHECK(tok == parser::token_type::identifier);
-    CHECK(tok == "my_value");
-    CHECK(parser->next_token() == parser::token_type::eof);
-}
-
-TEST_CASE("the parser will parse an identifier starting with underscores") {
-    std::string buffer = "_value";
-    auto parser = parser::from_buffer(buffer);
-
-    CHECK(parser != nullptr);
-
-    auto tok = parser->next_token();
-    CHECK(tok == parser::token_type::identifier);
-    CHECK(tok == "_value");
-    CHECK(parser->next_token() == parser::token_type::eof);
-}
-
-TEST_CASE("the parser will parse a plain string") {
-    std::string buffer = "\"raw\"";
-    auto parser = parser::from_buffer(buffer);
-
-    CHECK(parser != nullptr);
-
-    auto tok = parser->next_token();
-    CHECK(tok == parser::token_type::string);
-    CHECK(tok == "\"raw\"");
-    CHECK(parser->next_token() == parser::token_type::eof);
-}
-
-TEST_CASE("the parser will parse a string with escaped character") {
-    std::string buffer = R"("raw\n")";
-    auto parser = parser::from_buffer(buffer);
-
-    CHECK(parser != nullptr);
-
-    auto tok = parser->next_token();
-    CHECK(tok == parser::token_type::string);
-    CHECK(tok == "\"raw\n\"");
-    CHECK(parser->next_token() == parser::token_type::eof);
-}
-
-TEST_CASE("the parser will parse a character literal") {
-    std::string buffer = "\'w\'";
-    auto parser = parser::from_buffer(buffer);
-
-    CHECK(parser != nullptr);
-
-    auto tok = parser->next_token();
-    CHECK(tok == parser::token_type::character);
-    CHECK(tok == "\'w\'");
-    CHECK(parser->next_token() == parser::token_type::eof);
-}
-
-TEST_CASE("the parser will parse an integer") {
-    std::string buffer = "1234";
-    auto parser = parser::from_buffer(buffer);
-
-    CHECK(parser != nullptr);
-
-    auto tok = parser->next_token();
-    CHECK(tok == parser::token_type::integer);
-    CHECK(tok == "1234");
-    CHECK(parser->next_token() == parser::token_type::eof);
-}
-
-TEST_CASE("the parser will parse a hexadecimal integer") {
-    std::string buffer = "0x123456789aBcDeF";
-    auto parser = parser::from_buffer(buffer);
-
-    CHECK(parser != nullptr);
-
-    auto tok = parser->next_token();
-    CHECK(tok == parser::token_type::integer);
-    CHECK(tok == buffer);
-    CHECK(parser->next_token() == parser::token_type::eof);
-}
-
-TEST_CASE("the parser will parse a colon and the word 'is' as the same token") {
-    std::string buffer = "is:";
-    auto parser = parser::from_buffer(buffer);
-
-    CHECK(parser != nullptr);
-
-    CHECK(parser->next_token() == parser::token_type::colon);
-    CHECK(parser->next_token() == parser::token_type::colon);
-    CHECK(parser->next_token() == parser::token_type::eof);
-}
-
-TEST_CASE("the parser will parse parentheses") {
-    std::string buffer = "()";
-    auto parser = parser::from_buffer(buffer);
-
-    CHECK(parser != nullptr);
-
-    CHECK(parser->next_token() == parser::token_type::lparen);
-    CHECK(parser->next_token() == parser::token_type::rparen);
-    CHECK(parser->next_token() == parser::token_type::eof);
-}
-
-TEST_CASE("the parser will parse braces") {
-    std::string buffer = "{}";
-    auto parser = parser::from_buffer(buffer);
-
-    CHECK(parser != nullptr);
-
-    CHECK(parser->next_token() == parser::token_type::lbrace);
-    CHECK(parser->next_token() == parser::token_type::rbrace);
-    CHECK(parser->next_token() == parser::token_type::eof);
-}
-
-TEST_CASE("the parser will parse a 'skinny' arrow") {
-    std::string buffer = "->";
-    auto parser = parser::from_buffer(buffer);
-
-    CHECK(parser != nullptr);
-
-    CHECK(parser->next_token() == parser::token_type::arrow);
-    CHECK(parser->next_token() == parser::token_type::eof);
-}
-
-TEST_CASE("the parser will parse a comma") {
-    std::string buffer = ",";
-    auto parser = parser::from_buffer(buffer);
-
-    CHECK(parser != nullptr);
-
-    CHECK(parser->next_token() == parser::token_type::comma);
-    CHECK(parser->next_token() == parser::token_type::eof);
-}
-
-TEST_CASE("the parser will parse a semicolon") {
-    std::string buffer = ";";
-    auto parser = parser::from_buffer(buffer);
-
-    CHECK(parser != nullptr);
-
-    CHECK(parser->next_token() == parser::token_type::semi);
-    CHECK(parser->next_token() == parser::token_type::eof);
-}
-
-TEST_CASE("the parser will parse 'from', 'import', and 'export'") {
-    std::string buffer = "from import export";
-
-    auto parser = parser::from_buffer(buffer);
-
-    CHECK(parser != nullptr);
-
-    CHECK(parser->next_token() == parser::token_type::from);
-    CHECK(parser->next_token() == parser::token_type::import_);
-    CHECK(parser->next_token() == parser::token_type::export_);
-    CHECK(parser->next_token() == parser::token_type::eof);
-}
-
-TEST_CASE("the parser will parse 'if', 'then', and 'else'") {
-    std::string buffer = "if else then";
-
-    auto parser = parser::from_buffer(buffer);
-
-    CHECK(parser != nullptr);
-
-    CHECK(parser->next_token() == parser::token_type::if_);
-    CHECK(parser->next_token() == parser::token_type::else_);
-    CHECK(parser->next_token() == parser::token_type::then);
-    CHECK(parser->next_token() == parser::token_type::eof);
-}
-
-TEST_CASE("the parser will parse 'return' and 'ret' the same") {
-    std::string buffer = "return ret";
-
-    auto parser = parser::from_buffer(buffer);
-
-    CHECK(parser != nullptr);
-
-    CHECK(parser->next_token() == parser::token_type::return_);
-    CHECK(parser->next_token() == parser::token_type::return_);
-    CHECK(parser->next_token() == parser::token_type::eof);
-}
-
-TEST_CASE("the parser will parse '<' and '>'") {
-    std::string buffer = "< >";
-
-    auto parser = parser::from_buffer(buffer);
-
-    CHECK(parser != nullptr);
-
-    CHECK(parser->next_token() == parser::token_type::lt);
-    CHECK(parser->next_token() == parser::token_type::gt);
-    CHECK(parser->next_token() == parser::token_type::eof);
-}
-
-TEST_CASE("the parser will parse '<=' and '>=' as 1 token each") {
-    std::string buffer = "<= >=";
-
-    auto parser = parser::from_buffer(buffer);
-
-    CHECK(parser != nullptr);
-
-    CHECK(parser->next_token() == parser::token_type::le);
-    CHECK(parser->next_token() == parser::token_type::ge);
-    CHECK(parser->next_token() == parser::token_type::eof);
-}
-
-TEST_CASE("the parser will parse 'let' and 'const'") {
-    std::string buffer = "let const";
-
-    auto parser = parser::from_buffer(buffer);
-
-    CHECK(parser != nullptr);
-
-    CHECK(parser->next_token() == parser::token_type::let);
-    CHECK(parser->next_token() == parser::token_type::const_);
-    CHECK(parser->next_token() == parser::token_type::eof);
-}
-
-TEST_CASE("the parser will parse 'and' as '&&'") {
-    std::string buffer = "and &&";
-
-    auto parser = parser::from_buffer(buffer);
-
-    CHECK(parser != nullptr);
-
-    CHECK(parser->next_token() == parser::token_type::double_and);
-    CHECK(parser->next_token() == parser::token_type::double_and);
-    CHECK(parser->next_token() == parser::token_type::eof);
-}
-
-TEST_CASE("the parser will parse 'or' as '||'") {
-    std::string buffer = "or ||";
-
-    auto parser = parser::from_buffer(buffer);
-
-    CHECK(parser != nullptr);
-
-    CHECK(parser->next_token() == parser::token_type::double_or);
-    CHECK(parser->next_token() == parser::token_type::double_or);
-    CHECK(parser->next_token() == parser::token_type::eof);
-}
-
-TEST_CASE("the parser will parse 'equals' as '=='") {
-    std::string buffer = "equals ==";
-
-    auto parser = parser::from_buffer(buffer);
-
-    CHECK(parser != nullptr);
-
-    CHECK(parser->next_token() == parser::token_type::eq);
-    CHECK(parser->next_token() == parser::token_type::eq);
-    CHECK(parser->next_token() == parser::token_type::eof);
-}
-
-TEST_CASE("the parser will parse basic mathematical symbols") {
-    std::string buffer = "= + - / * %";
-
-    auto parser = parser::from_buffer(buffer);
-
-    CHECK(parser != nullptr);
-
-    CHECK(parser->next_token() == parser::token_type::equal);
-    CHECK(parser->next_token() == parser::token_type::plus);
-    CHECK(parser->next_token() == parser::token_type::minus);
-    CHECK(parser->next_token() == parser::token_type::slash);
-    CHECK(parser->next_token() == parser::token_type::asterik);
-    CHECK(parser->next_token() == parser::token_type::percent);
-    CHECK(parser->next_token() == parser::token_type::eof);
-}
-
-TEST_CASE("the parser will parse pointer-related tokens") {
-    std::string buffer = " & ? null";
-
-    auto parser = parser::from_buffer(buffer);
-    CHECK(parser != nullptr);
-    CHECK(parser->next_token() == parser::token_type::amp);
-    CHECK(parser->next_token() == parser::token_type::question);
-    CHECK(parser->next_token() == parser::token_type::null);
-    CHECK(parser->next_token() == parser::token_type::eof);
-}
-
-// ast level
 TEST_CASE("the parser will parse braces as a compound statement") {
     std::string buffer = "{}";
     auto parser = parser::from_buffer(buffer);
@@ -449,7 +79,7 @@ TEST_CASE("the parser will parse let statement") {
 
     auto stmt = parser->parse_statement();
     CHECK(stmt != nullptr);
-    CHECK(parser->peek_token() == parser::token_type::eof);
+    CHECK(parser->is_eof());
 
     auto * let = dynamic_cast<ast::let_stmt *>(stmt.get());
     CHECK(let != nullptr);
@@ -471,7 +101,7 @@ TEST_CASE("the parser will parse let statement without semicolons and with types
 
     auto stmt = parser->parse_statement();
     CHECK(stmt != nullptr);
-    CHECK(parser->peek_token() == parser::token_type::eof);
+    CHECK(parser->is_eof());
 
     auto * let = dynamic_cast<ast::let_stmt *>(stmt.get());
     CHECK(let != nullptr);
@@ -493,7 +123,7 @@ TEST_CASE("the parser will parse pointer types and expressions") {
 
     auto stmt = parser->parse_statement();
     CHECK(stmt != nullptr);
-    CHECK(parser->peek_token() == parser::token_type::eof);
+    CHECK(parser->is_eof());
 
     auto * let = dynamic_cast<ast::let_stmt *>(stmt.get());
     CHECK(let != nullptr);
@@ -516,7 +146,7 @@ TEST_CASE("the parser will parse dereferences") {
 
     auto stmt = parser->parse_statement();
     CHECK(stmt != nullptr);
-    CHECK(parser->peek_token() == parser::token_type::eof);
+    CHECK(parser->is_eof());
 
     auto * let = dynamic_cast<ast::let_stmt *>(stmt.get());
     CHECK(let != nullptr);
@@ -537,7 +167,7 @@ TEST_CASE("the parser will parse unary minus") {
 
     auto expr = parser->parse_expression();
     CHECK(expr != nullptr);
-    CHECK(parser->peek_token() == parser::token_type::eof);
+    CHECK(parser->is_eof());
 
     auto * unary_expr = dynamic_cast<ast::unary_expr *>(expr.get());
     CHECK(unary_expr != nullptr);
@@ -558,7 +188,7 @@ TEST_CASE("the parser will parse const declaration") {
 
     auto decl = parser->parse_top_level();
     CHECK(decl != nullptr);
-    CHECK(parser->peek_token() == parser::token_type::eof);
+    CHECK(parser->is_eof());
 
     auto * const_decl = dynamic_cast<ast::const_decl *>(decl.get());
     CHECK(const_decl != nullptr);
@@ -708,8 +338,6 @@ TEST_CASE("the parser will parse a unit function") {
 
     CHECK(parser != nullptr);
 
-    CHECK(parser->peek_token() == parser::token_type::identifier);
-
     auto func = parser->parse_function();
     CHECK(func != nullptr);
     CHECK(parser->error_message().empty());
@@ -820,12 +448,10 @@ TEST_CASE("the parser will parse a module with one import") {
     auto parser = parser::from_buffer(buffer);
 
     CHECK(parser != nullptr);
-    CHECK(parser->peek_token() == parser::token_type::from);
 
     auto mod = parser->parse();
     CHECK(mod != nullptr);
     CHECK(parser->error_message().empty());
-    std::cout << parser->error_message() << std::endl;
 
     CHECK(mod->imports.size() == 1);
     {
@@ -843,12 +469,10 @@ TEST_CASE("the parser will parse imports with or without semicolons") {
     auto parser = parser::from_buffer(buffer);
 
     CHECK(parser != nullptr);
-    CHECK(parser->peek_token() == parser::token_type::from);
 
     auto mod = parser->parse();
     CHECK(mod != nullptr);
     CHECK(parser->error_message().empty());
-    std::cout << parser->error_message() << std::endl;
 
     CHECK(mod->imports.size() == 1);
     {
@@ -866,12 +490,10 @@ TEST_CASE("the parser will parse a module with multiple imports") {
     auto parser = parser::from_buffer(buffer);
 
     CHECK(parser != nullptr);
-    CHECK(parser->peek_token() == parser::token_type::from);
 
     auto mod = parser->parse();
     CHECK(mod != nullptr);
     CHECK(parser->error_message().empty());
-    std::cout << parser->error_message() << std::endl;
 
     CHECK(mod->imports.size() == 2);
     {

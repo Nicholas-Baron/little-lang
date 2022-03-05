@@ -21,6 +21,7 @@ set(
   emit_asm.cpp
   jit.cpp
   location.cpp
+  new_lexer.cpp
   new_parser.cpp
   program.cpp
   settings.cpp
