@@ -41,10 +41,10 @@ endif()
 add_library(littlec_lib ${proj_files})
 target_compile_options(
   littlec_lib
-  PRIVATE -Og -Wno-unused-parameter
+  PRIVATE -Og
+    -fdata-sections -ffunction-sections
   PUBLIC ${LLVM_CONFIG}
     -Wno-unused-command-line-argument
-    -fdata-sections -ffunction-sections
 )
 target_link_libraries(littlec_lib ${LLVM_CONFIG} CONAN_PKG::lyra)
 target_link_options(littlec_lib PUBLIC -Wl,--gc-sections)
