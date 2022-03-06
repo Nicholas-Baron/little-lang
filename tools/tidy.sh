@@ -2,7 +2,20 @@
 
 flags=$(jq '.[]["command"]' compile_commands.json | sed 's:"/usr/bin/clang++ \(.*\) -o.*:\1:g' | head -n1)
 files=$(git ls-files -- 'src/*.cpp' 'src/*.hpp')
-clang-tidy --quiet $files -- $flags 2>&1 > tidy.txt
+
+temp_dir=$(mktemp -d)
+
+for file in $files; do
+	outfile="$temp_dir/$file.txt"
+	mkdir -p "$(dirname "$outfile")"
+	clang-tidy --quiet "$file" -- $flags > "$outfile" 2>&1 &
+done
+
+wait
+
+grep -Exv '[0-9]+ warnings generated.' $(fd -a 'txt$' "$temp_dir") > tidy.txt
+
+rm -r "$temp_dir"
 
 {
 	echo "Summary"
