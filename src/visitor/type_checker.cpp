@@ -351,6 +351,14 @@ namespace visitor {
             std::cout << *stated_type << " is not the type of the initialization of "
                       << let_stmt.name_and_type.name() << std::endl;
             assert(false);
+        } else if (val_type == nullptr) {
+            if (stated_type == nullptr) {
+                std::cout << "An explict type is required for `" << let_stmt.name_and_type.name()
+                          << "` in its let statement" << std::endl;
+                assert(false);
+            }
+
+            val_type = stated_type;
         }
 
         bind_type(val_type, let_stmt.name_and_type.name());
