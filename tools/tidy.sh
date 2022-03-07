@@ -8,9 +8,15 @@ temp_dir=$(mktemp -d)
 for file in $files; do
 	outfile="$temp_dir/$file.txt"
 	mkdir -p "$(dirname "$outfile")"
+
+	if [ "$(jobs | wc -l)" -ge "$(nproc)" ]; then
+		sleep 5
+	fi
+
 	clang-tidy --quiet "$file" -- $flags > "$outfile" 2>&1 &
 done
 
+echo "Waiting for all files to finish"
 wait
 
 grep -Exv '[0-9]+ warnings generated.' $(fd -a 'txt$' "$temp_dir") > tidy.txt
