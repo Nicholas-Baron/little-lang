@@ -86,7 +86,7 @@ namespace ast {
         stmt_ptr body;
 
       private:
-        void update_export(bool val) final {}
+        void update_export(bool /*val*/) final {}
     };
 
     class const_decl final : public top_level {
@@ -107,7 +107,7 @@ namespace ast {
         expr_ptr expr;
 
       private:
-        void update_export(bool val) final {}
+        void update_export(bool /*val*/) final {}
     };
 } // namespace ast
 
