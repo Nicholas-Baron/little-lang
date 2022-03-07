@@ -111,6 +111,22 @@ namespace visitor {
                 assert(false);
             }
 
+            // Check that the other pointer is nullable
+            if (lhs_type == nullptr) {
+                if (auto * rhs = dynamic_cast<ast::ptr_type *>(rhs_type.get());
+                    rhs == nullptr or not rhs->nullable()) {
+                    std::cout << "Only nullable pointers can be compared with `null`" << std::endl;
+                    assert(false);
+                }
+            } else if (rhs_type == nullptr) {
+                std::cout << "LHS ptr: " << *lhs_type << std::endl;
+                if (auto * lhs = dynamic_cast<ast::ptr_type *>(lhs_type.get());
+                    lhs == nullptr or not lhs->nullable()) {
+                    std::cout << "Only nullable pointers can be compared with `null`" << std::endl;
+                    assert(false);
+                }
+            }
+
             // If either is null, no further checks are needed
             if (lhs_type == nullptr or rhs_type == nullptr) { return ast::prim_type::boolean; }
 
