@@ -4,8 +4,8 @@
 #include "ast/type.hpp"
 #include "token_to_string.hpp"
 
-#include <iostream>
-#include <memory>
+#include <memory> // make_shared
+#include <sstream>
 
 #include <llvm/IR/DerivedTypes.h>
 #include <llvm/IR/LLVMContext.h>
@@ -28,6 +28,19 @@ namespace visitor {
         active_typed_identifiers.back().emplace(std::move(identifier), std::move(type));
     }
 
+    template<class... arg_t>
+    void type_checker::printError(std::optional<Location> loc, const arg_t &... args) {
+        std::stringstream to_print;
+
+        if (loc.has_value()) { to_print << *loc << " : "; }
+
+        (to_print << ... << args);
+
+        context.emitError(to_print.str());
+
+        found_error = true;
+    }
+
     [[nodiscard]] ast::type_ptr type_checker::find_type_of(const std::string & id) const {
 
         for (auto iter = active_typed_identifiers.rbegin(); iter != active_typed_identifiers.rend();
@@ -43,22 +56,20 @@ namespace visitor {
         static constexpr auto max_syscall_args = 7U;
         if (const auto arg_count = func_call_data.args_count();
             arg_count == 0 or arg_count > max_syscall_args) {
-            std::cout << "syscalls can only take 1 to 7 arguments" << std::endl;
-            assert(false);
+            printError(std::nullopt, "syscalls can only take 1 to 7 arguments\nFound one with ",
+                       arg_count);
         }
 
         for (auto i = 0U; i < func_call_data.args_count(); ++i) {
             auto & arg = func_call_data.arg(i);
             auto arg_type = get_value(arg, *this);
             if (not arg_type->is_pointer_type() and *arg_type != *ast::prim_type::int32) {
-                std::cout << "syscall can only take int or pointer arguments" << std::endl;
-                assert(false);
+                printError(std::nullopt, "syscall can only take int or pointer arguments");
             }
 
             // The first argmuent must always be a syscall number.
             if (i == 0 and *arg_type != *ast::prim_type::int32.get()) {
-                std::cout << "syscall must have an integer as its first argument" << std::endl;
-                assert(false);
+                printError(std::nullopt, "syscall must have an integer as its first argument");
             }
         }
 
@@ -72,20 +83,19 @@ namespace visitor {
         if (lhs_type->is_pointer_type() or rhs_type->is_pointer_type()) {
             if (const auto other_type = lhs_type->is_pointer_type() ? rhs_type : lhs_type;
                 *other_type != *ast::prim_type::int32) {
-                std::cout << "Pointer types can only be added with integers" << std::endl;
-                assert(false);
+                printError(std::nullopt, "Pointer types can only be added with integers");
             }
 
             return lhs_type->is_pointer_type() ? lhs_type : rhs_type;
         }
 
         if (lhs_type != rhs_type) {
-            std::cout << "Arithmetic operations can only be made within the same type" << std::endl;
+            printError(std::nullopt, "Arithmetic operations can only be made within the same type");
             assert(false);
         }
 
         if (*lhs_type == *ast::prim_type::boolean or *rhs_type == *ast::prim_type::boolean) {
-            std::cout << "Arithmetic operations cannot be done on booleans" << std::endl;
+            printError(std::nullopt, "Arithmetic operations cannot be done on booleans");
             assert(false);
         }
 
@@ -98,29 +108,24 @@ namespace visitor {
         if (bool pointer_comp = (lhs_type == nullptr or lhs_type->is_pointer_type())
                             and (rhs_type == nullptr or rhs_type->is_pointer_type());
             not pointer_comp and lhs_type != rhs_type) {
-            std::cout << "Comparisons can only be made within the same type" << std::endl;
-            assert(false);
+            printError(std::nullopt, "Comparisons can only be made within the same type");
         } else if (pointer_comp) {
 
             // If both are null, fail.
             if (lhs_type == nullptr and rhs_type == nullptr) {
-                std::cout << "`null` cannot be on both sides of a binary expression" << std::endl;
-                assert(false);
+                printError(std::nullopt, "`null` cannot be on both sides of a binary expression");
             }
 
             // Check that the other pointer is nullable
             if (lhs_type == nullptr) {
                 if (auto * rhs = dynamic_cast<ast::ptr_type *>(rhs_type.get());
                     rhs == nullptr or not rhs->nullable()) {
-                    std::cout << "Only nullable pointers can be compared with `null`" << std::endl;
-                    assert(false);
+                    printError(std::nullopt, "Only nullable pointers can be compared with `null`");
                 }
             } else if (rhs_type == nullptr) {
-                std::cout << "LHS ptr: " << *lhs_type << std::endl;
                 if (auto * lhs = dynamic_cast<ast::ptr_type *>(lhs_type.get());
                     lhs == nullptr or not lhs->nullable()) {
-                    std::cout << "Only nullable pointers can be compared with `null`" << std::endl;
-                    assert(false);
+                    printError(std::nullopt, "Only nullable pointers can be compared with `null`");
                 }
             }
 
@@ -141,8 +146,8 @@ namespace visitor {
             assert(rhs_ptr != nullptr);
 
             if (*lhs_ptr->pointed_to != *rhs_ptr->pointed_to) {
-                std::cout << "Equality can only be made within the same type" << std::endl;
-                assert(false);
+                printError(std::nullopt, "Equality can only be made within the same type\nFound ",
+                           *lhs_ptr->pointed_to, " and ", *rhs_ptr->pointed_to);
             }
         }
         return ast::prim_type::boolean;
@@ -153,6 +158,9 @@ namespace visitor {
         auto lhs_type = get_value(*binary_expr.lhs, *this);
         auto rhs_type = get_value(*binary_expr.rhs, *this);
 
+        // If one side of a binary_expr is the `null` primitive,
+        // the other side should lend it its type.
+        // TODO: Check that the other side is a pointer.
         if (lhs_type == nullptr) {
             assert(rhs_type != nullptr);
             binary_expr.lhs->type = rhs_type;
@@ -164,8 +172,7 @@ namespace visitor {
         if (binary_expr.is_shortcircuiting()) {
             const auto bool_type = ast::prim_type::boolean;
             if (lhs_type != bool_type or rhs_type != bool_type) {
-                std::cout << "Logical operations can only use booleans" << std::endl;
-                assert(false);
+                printError(binary_expr.location(), "Logical operations can only use booleans");
             }
             return store_result(bool_type, binary_expr);
         }
@@ -180,34 +187,35 @@ namespace visitor {
                                 binary_expr);
         }
 
-        std::cout << "Unimplemented type check for " << tok_to_string(binary_expr.op) << std::endl;
+        printError(binary_expr.location(), "Unimplemented binary_expr type check for ",
+                   tok_to_string(binary_expr.op));
         assert(false);
     }
 
     void type_checker::visit(ast::const_decl & const_decl) {
 
         if (find_type_of(const_decl.name_and_type.name()) != nullptr) {
-            std::cout << "Constant " << const_decl.name_and_type.name()
-                      << " has already been declared" << std::endl;
+            printError(const_decl.location(), "Constant ", const_decl.name_and_type.name(),
+                       " has already been declared");
             assert(false);
         }
 
         auto expected = const_decl.name_and_type.type();
         if (expected == nullptr) {
-            std::cout << "Type " << *const_decl.name_and_type.type() << " is not known"
-                      << std::endl;
+            printError(const_decl.location(), "Type ", *const_decl.name_and_type.type(),
+                       " is not known");
             assert(false);
         }
 
         auto actual = get_value(*const_decl.expr, *this);
         assert(actual != nullptr);
+
         if (*expected != *actual) {
-            std::cout << "Constant " << const_decl.name_and_type.name() << " is not of type "
-                      << *const_decl.name_and_type.type() << std::endl;
-            assert(false);
+            printError(const_decl.location(), "Constant ", const_decl.name_and_type.name(),
+                       " is not of type ", *expected, ".\nFound type ", *actual);
         }
 
-        bind_type(std::move(actual), const_decl.name_and_type.name(), const_decl.exported());
+        bind_type(std::move(expected), const_decl.name_and_type.name(), const_decl.exported());
     }
 
     void type_checker::visit(ast::expr & expr) { expr.accept(*this); }
@@ -221,21 +229,24 @@ namespace visitor {
         auto * func_type
             = dynamic_cast<ast::function_type *>(find_type_of(func_call_data.name()).get());
         if (func_type == nullptr) {
-            std::cout << "Cannot call non-function " << func_call_data.name() << std::endl;
+            printError(std::nullopt, "Cannot call non-function ", func_call_data.name());
             assert(false);
         }
 
         if (func_type->arg_types.size() != func_call_data.args_count()) {
-            std::cout << func_call_data.name()
-                      << " was called with an incorrect number of arguments" << std::endl;
+            printError(std::nullopt, func_call_data.name(), " expects ",
+                       func_type->arg_types.size(), "arguments\nFound ",
+                       func_call_data.args_count());
             assert(false);
         }
 
         for (auto i = 0U; i < func_call_data.args_count(); ++i) {
             auto expected = func_type->arg_types[i];
             auto actual = get_value(func_call_data.arg(i), *this);
+            // TODO: Wrap condition into function
             if ((actual == nullptr and not expected->is_pointer_type()) or *expected != *actual) {
-                std::cout << "Argument #" << (i + 1) << " was of an incorrect type" << std::endl;
+                printError(func_call_data.arg(i).location(), "Argument ", (i + 1), " expects type ",
+                           *expected, "\nFound ", *actual);
                 assert(false);
             }
         }
@@ -262,7 +273,7 @@ namespace visitor {
         const auto & func_name = func_decl.head.name();
 
         if (find_type_of(func_name) != nullptr) {
-            std::cout << "Function " << func_name << " has already been defined?" << std::endl;
+            printError(func_decl.location(), "Function ", func_name, " has already been defined");
             assert(false);
         }
 
@@ -270,7 +281,8 @@ namespace visitor {
         current_function_name = &func_name;
         current_return_type = func_decl.head.ret_type().get();
         if (current_return_type == nullptr) {
-            std::cout << func_decl.head.ret_type() << " is not a known type" << std::endl;
+            printError(func_decl.location(), "Function ", func_name, " has an unknown return type ",
+                       *func_decl.head.ret_type());
             assert(false);
         }
 
@@ -298,22 +310,25 @@ namespace visitor {
         // Check that the condition type is bool
         auto cond_type = get_value(*if_expr.condition, *this);
 
-        // TODO: improve this check
         if (cond_type != ast::prim_type::boolean) {
-            std::cout << "Conditions for ifs must be of type `bool`" << std::endl;
-            assert(false);
+            printError(if_expr.condition->location(),
+                       "Conditions for ifs must be of type `bool`\nFound ", *cond_type);
         }
 
         // check that the then_case type is the same as the else_case
 
         auto then_type = get_value(*if_expr.then_case, *this);
         auto else_type = get_value(*if_expr.else_case, *this);
+
+        // TODO: This seems wrong, as the `null` primitive is represented by `nullptr`
         assert(then_type != nullptr);
         assert(else_type != nullptr);
 
         if (then_type != else_type) {
-            std::cout << "The then and else branches of an if expression must be of the same type"
-                      << std::endl;
+            printError(
+                if_expr.location(),
+                "The then and else branches of an if expression must be of the same type\nFound ",
+                *then_type, " and ", *else_type);
             assert(false);
         }
         store_result(then_type, if_expr);
@@ -323,10 +338,9 @@ namespace visitor {
         // Check that the condition type is bool
         auto cond_type = get_value(*if_stmt.condition, *this);
 
-        // TODO: improve this check
         if (cond_type != ast::prim_type::boolean) {
-            std::cout << "Conditions for ifs must be of type `bool`" << std::endl;
-            assert(false);
+            printError(if_stmt.condition->location(),
+                       "Conditions for ifs must be of type `bool`\nFound ", *cond_type);
         }
 
         if_stmt.true_branch->accept(*this);
@@ -336,8 +350,8 @@ namespace visitor {
     void type_checker::visit(ast::let_stmt & let_stmt) {
 
         if (find_type_of(let_stmt.name_and_type.name()) != nullptr) {
-            std::cout << let_stmt.name_and_type.name() << " has already been bound to a type"
-                      << std::endl;
+            printError(let_stmt.location(), let_stmt.name_and_type.name(),
+                       " has already been bound to a type");
             assert(false);
         }
 
@@ -345,13 +359,14 @@ namespace visitor {
 
         if (const auto stated_type = let_stmt.name_and_type.type();
             stated_type != nullptr and stated_type != val_type) {
-            std::cout << *stated_type << " is not the type of the initialization of "
-                      << let_stmt.name_and_type.name() << std::endl;
-            assert(false);
+            printError(let_stmt.location(), let_stmt.name_and_type.name(),
+                       " is expected to be of type ", *stated_type,
+                       "\nFound initialization of type ", *val_type);
         } else if (val_type == nullptr) {
             if (stated_type == nullptr) {
-                std::cout << "An explict type is required for `" << let_stmt.name_and_type.name()
-                          << "` in its let statement" << std::endl;
+                printError(let_stmt.location(), let_stmt.name_and_type.name(),
+                           " does not specify a type, but has a `null` initialization.\nPlease "
+                           "state a specific nullable pointer type for it.");
                 assert(false);
             }
 
@@ -368,10 +383,9 @@ namespace visitor {
             // we should be in a void function
 
             if (*current_return_type != *ast::prim_type::unit) {
-                std::cout << "Return should have an expression in a 'non-void function' "
-                          << *current_function_name << "\nExpected expression of type "
-                          << *current_return_type << std::endl;
-                assert(false);
+                printError(return_stmt.location(), "In function ", *current_function_name,
+                           "\nExpected a return statement without an expression",
+                           "\nFound one with an expression");
             }
 
             return;
@@ -381,9 +395,9 @@ namespace visitor {
 
         if (auto val_type = get_value(*return_stmt.value, *this);
             *val_type != *current_return_type) {
-            std::cout << "Return statement with wrong type of expression found in function "
-                      << *current_function_name << std::endl;
-            assert(false);
+            printError(return_stmt.value->location(), "In function ", *current_function_name,
+                       "\nExpected a return statement with expression of type ",
+                       *current_return_type, "\nFound expression with type ", *val_type);
         }
     }
 
@@ -404,7 +418,8 @@ namespace visitor {
                 for (auto & id : imports) {
                     auto import_type = program_globals.lookup(filename, id);
                     if (import_type == nullptr) {
-                        std::cout << "File " << filename << " does not export " << id << std::endl;
+                        printError(top_level_sequence.location(), "File ", filename,
+                                   " is expected to export ", id, "\nNo such export found");
                         assert(false);
                     }
                     bind_type(import_type, id);
@@ -418,8 +433,8 @@ namespace visitor {
         }
     }
 
-    void type_checker::visit(ast::typed_identifier & /*typed_identifier*/) {
-        std::cout << "How did I get here?" << std::endl;
+    void type_checker::visit(ast::typed_identifier & typed_identifier) {
+        printError(typed_identifier.location(), "Internal compiler error: should not be here");
         assert(false);
     }
 
@@ -428,8 +443,9 @@ namespace visitor {
         switch (unary_expr.op) {
         case ast::unary_expr::operand::bool_not:
             if (type != ast::prim_type::boolean) {
-                std::cout << "`not` can only be done on booleans" << std::endl;
-                assert(false);
+                printError(unary_expr.location(), "Boolean not expects a ",
+                           *ast::prim_type::boolean, " as its argument.\nFound ", *type);
+                return store_result(ast::prim_type::boolean, unary_expr);
             }
             break;
         case ast::unary_expr::operand::deref:
@@ -439,13 +455,16 @@ namespace visitor {
                 // TODO: This branch may be removed later
                 type = ast::prim_type::character;
             } else {
-                std::cout << "Only pointers can be dereferenced" << std::endl;
+                printError(unary_expr.location(),
+                           "Dereference expects a pointer as its argument.\nFound ", *type);
                 assert(false);
             }
             break;
         case ast::unary_expr::operand::negate:
             if (type != ast::prim_type::int32 and type != ast::prim_type::float32) {
-                std::cout << "Only ints and floats can be negated" << std::endl;
+                printError(unary_expr.location(), "Negation expects either a ",
+                           *ast::prim_type::int32, " or a ", *ast::prim_type::float32,
+                           " as its argument.\nFound ", *type);
                 assert(false);
             }
             break;
@@ -462,8 +481,8 @@ namespace visitor {
         case val_type::identifier: {
             auto type = find_type_of(user_val.val);
             if (type == nullptr) {
-                std::cout << "Identifier " << user_val.val << " has not been typed yet"
-                          << std::endl;
+                printError(user_val.location(), "The identifier ", user_val.val,
+                           " has not been assigned a type yet.");
                 assert(false);
             }
             store_result(type, user_val);

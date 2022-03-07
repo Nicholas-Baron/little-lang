@@ -43,8 +43,8 @@ namespace visitor {
 
         ast::type_ptr evaluate_comparison(ast::type_ptr && lhs, ast::type_ptr && rhs);
 
-        // TODO: Actually implement this
-        void printError(const std::string & name, std::optional<Location> loc = std::nullopt);
+        template<class... arg_t>
+        void printError(std::optional<Location> loc, const arg_t &... args);
 
         // Find the type of an identifier
         [[nodiscard]] ast::type_ptr find_type_of(const std::string & id) const;

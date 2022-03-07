@@ -16,6 +16,9 @@ Namespaces should have their own folder and should be named like that folder.
 Namespaces may have a forward declaration header,
 which should contain the word "forward" in its name.
 
+## Errors
+Write what is expected first, and then what was found.
+
 ## Resources
 - [CPP Core Guidelines](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines)
 
