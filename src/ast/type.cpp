@@ -11,6 +11,13 @@ namespace ast {
         lhs << "nonnullable ptr to " << *pointed_to;
     }
 
+    const type_ptr prim_type::int32 = type_ptr{new prim_type{ast::prim_type::type::int32}};
+    const type_ptr prim_type::unit = type_ptr{new prim_type{ast::prim_type::type::unit}};
+    const type_ptr prim_type::float32 = type_ptr{new prim_type{ast::prim_type::type::float32}};
+    const type_ptr prim_type::boolean = type_ptr{new prim_type{ast::prim_type::type::boolean}};
+    const type_ptr prim_type::str = type_ptr{new prim_type{ast::prim_type::type::str}};
+    const type_ptr prim_type::character = type_ptr{new prim_type{ast::prim_type::type::character}};
+
     void prim_type::print(std::ostream & lhs) const {
         switch (prim) {
         case type::boolean:

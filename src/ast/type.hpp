@@ -100,11 +100,8 @@ namespace ast {
             unit,
         };
 
-        explicit prim_type(type t)
-            : prim{t} {}
-
         non_copyable(prim_type);
-        movable(prim_type);
+        non_movable(prim_type);
         ~prim_type() final = default;
 
         [[nodiscard]] bool is_pointer_type() const final {
@@ -112,20 +109,17 @@ namespace ast {
             return prim == type::str;
         }
 
-        static inline const type_ptr int32
-            = std::make_shared<ast::prim_type>(ast::prim_type::type::int32);
-        static inline const type_ptr unit
-            = std::make_shared<ast::prim_type>(ast::prim_type::type::unit);
-        static inline const type_ptr float32
-            = std::make_shared<ast::prim_type>(ast::prim_type::type::float32);
-        static inline const type_ptr boolean
-            = std::make_shared<ast::prim_type>(ast::prim_type::type::boolean);
-        static inline const type_ptr str
-            = std::make_shared<ast::prim_type>(ast::prim_type::type::str);
-        static inline const type_ptr character
-            = std::make_shared<ast::prim_type>(ast::prim_type::type::character);
+        static const type_ptr int32;
+        static const type_ptr unit;
+        static const type_ptr float32;
+        static const type_ptr boolean;
+        static const type_ptr str;
+        static const type_ptr character;
 
       private:
+        explicit prim_type(type t)
+            : prim{t} {}
+
         void print(std::ostream & /*output*/) const final;
 
         [[nodiscard]] bool equals(const ast::type & rhs) const final {

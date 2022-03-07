@@ -4,19 +4,13 @@
 
 type_context::type_context(llvm::LLVMContext * context)
     : active_types{
-        {std::make_shared<ast::prim_type>(ast::prim_type::type::int32),
-         llvm::Type::getInt32Ty(*context)},
-        {std::make_shared<ast::prim_type>(ast::prim_type::type::float32),
-         llvm::Type::getFloatTy(*context)},
-        {std::make_shared<ast::prim_type>(ast::prim_type::type::unit),
-         llvm::Type::getVoidTy(*context)},
-        {std::make_shared<ast::prim_type>(ast::prim_type::type::boolean),
-         llvm::Type::getInt1Ty(*context)},
-        {std::make_shared<ast::prim_type>(ast::prim_type::type::character),
-         llvm::Type::getInt8Ty(*context)},
+        {ast::prim_type::int32, llvm::Type::getInt32Ty(*context)},
+        {ast::prim_type::float32, llvm::Type::getFloatTy(*context)},
+        {ast::prim_type::unit, llvm::Type::getVoidTy(*context)},
+        {ast::prim_type::boolean, llvm::Type::getInt1Ty(*context)},
+        {ast::prim_type::character, llvm::Type::getInt8Ty(*context)},
         // TODO: Move to a Rust style 2 ptr string instead of a C style null-terminated string
-        {std::make_shared<ast::prim_type>(ast::prim_type::type::str),
-         llvm::Type::getInt8PtrTy(*context)},
+        {ast::prim_type::str, llvm::Type::getInt8PtrTy(*context)},
     } {}
 
 llvm::Type * type_context::lower_to_llvm(const ast::type & type) {

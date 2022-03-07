@@ -45,7 +45,7 @@ namespace ast {
             header(std::string && name, std::vector<typed_identifier> && parameters)
                 : name_(std::move(name))
                 , params(std::move(parameters))
-                , ret_type_{std::make_shared<ast::prim_type>(ast::prim_type::type::unit)} {}
+                , ret_type_{ast::prim_type::unit} {}
 
             void set_ret_type(ast::type_ptr && type) { ret_type_ = std::move(type); }
 
