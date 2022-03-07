@@ -19,7 +19,7 @@ done
 echo "Waiting for all files to finish"
 wait
 
-grep -Exv '[0-9]+ warnings generated.' $(fd -a 'txt$' "$temp_dir") > tidy.txt
+grep -Ehxv '[0-9]+ warnings generated.' $(fd -a 'txt$' "$temp_dir") > tidy.txt
 
 rm -r "$temp_dir"
 
