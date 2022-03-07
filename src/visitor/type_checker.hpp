@@ -5,7 +5,6 @@
 #include "ast/type.hpp"
 #include "global_map.hpp"
 #include "location.hpp"
-#include "type_context.hpp"
 #include "value_getter.hpp"
 #include "visitor_base.hpp"
 
@@ -21,7 +20,7 @@ namespace visitor {
                                public value_getter<type_checker, ast::node, ast::type_ptr> {
       public:
         type_checker(std::string filename, llvm::LLVMContext & context,
-                     global_map<std::string, ast::type_ptr> & globals, type_context & types);
+                     global_map<std::string, ast::type_ptr> & globals);
 
         non_copyable(type_checker);
 
@@ -63,7 +62,6 @@ namespace visitor {
         std::string filename;
         llvm::LLVMContext & context;
 
-        type_context & type_context;
         std::vector<std::map<std::string, ast::type_ptr>> active_typed_identifiers;
         global_map<std::string, ast::type_ptr> & program_globals;
         std::map<std::string, void (type_checker::*)(ast::func_call_data &)> instrinics;

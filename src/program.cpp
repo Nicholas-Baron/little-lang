@@ -182,8 +182,7 @@ bool program::type_check() {
         // Note: currently, the ast imports are not updated with absolute paths,
         // but the ast filenames are absolute paths.
         auto filename = std::filesystem::relative(mod.filename, project_root);
-        visitor::type_checker type_checker{std::move(filename), *context, program_globals,
-                                           typ_context};
+        visitor::type_checker type_checker{std::move(filename), *context, program_globals};
         type_checker.visit(mod);
         if (not type_checker.checked_good()) {
             std::cout << "Failed to type check" << std::endl;
