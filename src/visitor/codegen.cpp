@@ -399,15 +399,8 @@ namespace visitor {
             return (this->*iter->second)(func_call_data);
         }
 
-        auto * func_val = find_alive_value(func_name);
-
+        auto * func = llvm::dyn_cast_or_null<llvm::Function>(find_alive_value(func_name));
         // TODO: A better exit strategy
-        if (func_val == nullptr) {
-            printError("Could not find function named " + func_name);
-            assert(false);
-        }
-
-        auto * func = llvm::dyn_cast<llvm::Function>(func_val);
         if (func == nullptr) {
             printError(func_name + " is not a function");
             assert(false);
