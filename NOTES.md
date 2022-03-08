@@ -14,7 +14,7 @@ Certain abbreviations should be used in naming:
 ## Namespaces
 Namespaces should have their own folder and should be named like that folder.
 Namespaces may have a forward declaration header,
-which should contain the word "forward" in its name.
+which must contain the word "forward" in its name.
 
 ## Errors
 Write what is expected first, and then what was found.
@@ -33,7 +33,7 @@ and need to walk the tree differently.
 
 This entails a few things about the node classes:
 1. All nodes must override the `accept` member function. There is a `make_visitable;` macro to help with this.
-2. All data in a node must be public. This allows visitors to easily access whatever they may need.
+2. All data in a node should be public. This allows visitors to easily access whatever they may need.
 3. All nodes must delete their copy constructors and assignment operators. There is a `non_copyable` macro to help with this.
 
 Note: Number 2 in the previous list may not be a permanent rule.
