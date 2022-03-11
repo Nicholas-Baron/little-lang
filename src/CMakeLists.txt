@@ -26,6 +26,7 @@ set(
   program.cpp
   settings.cpp
   type_context.cpp
+  utils/execute.cpp
   utils/string_utils.cpp
   visitor/codegen.cpp
   visitor/printer.cpp

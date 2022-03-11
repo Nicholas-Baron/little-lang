@@ -5,6 +5,7 @@
 #include "emit_asm.hpp"
 #include "global_map.hpp"
 #include "jit.hpp"
+#include "utils/execute.hpp"
 #include "utils/string_utils.hpp"
 #include "visitor/codegen.hpp"
 #include "visitor/printer.hpp"
@@ -16,52 +17,6 @@
 #include <set>
 
 #include <llvm/IR/LLVMContext.h>
-#include <sys/wait.h> // waitpid
-#include <unistd.h>   // execve
-
-static bool exec_command(std::vector<std::string> && cmd, bool debug) {
-
-    if (debug) {
-        std::cout << "[CMD] ";
-        for (const auto & arg : cmd) { std::cout << arg << ' '; }
-        std::cout << std::endl;
-    }
-
-    if (auto pid = fork(); pid == 0) {
-        // in child
-
-        std::vector<char *> args;
-        args.reserve(cmd.size());
-        for (auto & arg : cmd) {
-            auto arg_length = arg.size() + 1;
-            // NOLINTNEXTLINE (cppcoreguidelines-owning-memory)
-            args.emplace_back(strncpy(new char[arg_length], arg.c_str(), arg_length));
-        }
-
-        args.push_back(nullptr);
-
-        if (execvp(args[0], args.data()) == -1) {
-            perror("execvp");
-            exit(-1);
-        } else {
-            exit(0);
-        }
-    } else if (pid == -1) {
-        perror("fork");
-        return false;
-    } else {
-
-        int wait_status = 0;
-        if (waitpid(pid, &wait_status, 0) != pid) {
-            perror("waitpid");
-            return false;
-        }
-
-        if (not WIFEXITED(wait_status)) { return false; }
-
-        return WEXITSTATUS(wait_status) == 0;
-    }
-}
 
 // TODO: test this
 static std::vector<std::string>
@@ -214,21 +169,27 @@ std::string program::emit_and_link() {
     auto main_file = std::filesystem::path(ast_modules.back().filename);
 
     auto bootstrap = main_file.parent_path() / "stdlib/start.S";
-    exec_command({"as", std::move(bootstrap), "-o", "start.o"}, debug_print_execs);
+    if (not exec_command({"as", std::move(bootstrap), "-o", "start.o"}, debug_print_execs)) {
+        std::cerr << "Error assembling start.S" << std::endl;
+        exit(0);
+    }
 
     auto program_name = std::filesystem::current_path() / main_file.stem();
-    std::vector<std::string> gcc_args{"ld", "-static",    "--gc-sections",
-                                      "-o", program_name, "start.o"};
-    if (debug_print_execs) { gcc_args.emplace_back("--print-gc-sections"); }
+    std::vector<std::string> linker_args{"ld", "-static",    "--gc-sections",
+                                         "-o", program_name, "start.o"};
+    if (debug_print_execs) { linker_args.emplace_back("--print-gc-sections"); }
 
     for (auto && mod : ir_modules) {
         auto output_name = std::filesystem::path(mod->getSourceFileName()).replace_extension("o");
-        gcc_args.emplace_back(output_name);
+        linker_args.emplace_back(output_name);
         emit_asm(std::move(mod), std::string{output_name},
                  settings->flag_is_set(cmd_flag::debug_optimized_ir));
     }
 
-    exec_command(std::move(gcc_args), debug_print_execs);
+    if (not exec_command(std::move(linker_args), debug_print_execs)) {
+        std::cerr << "Error linking " << program_name << std::endl;
+        exit(0);
+    }
     return program_name;
 }
 
