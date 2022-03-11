@@ -11,6 +11,7 @@
 #include "visitor/type_checker.hpp"
 
 #include <cstring> // strlcpy
+#include <filesystem>
 #include <iostream>
 #include <set>
 
@@ -204,7 +205,7 @@ void program::generate_ir() {
     }
 }
 
-void program::emit_and_link() {
+std::string program::emit_and_link() {
 
     const auto debug_print_execs = settings->flag_is_set(cmd_flag::debug_show_execs);
 
@@ -215,9 +216,9 @@ void program::emit_and_link() {
     auto bootstrap = main_file.parent_path() / "stdlib/start.S";
     exec_command({"as", std::move(bootstrap), "-o", "start.o"}, debug_print_execs);
 
-    auto program_name = main_file.stem();
-    std::vector<std::string> gcc_args{
-        "ld", "-static", "--gc-sections", "-o", std::move(program_name), "start.o"};
+    auto program_name = std::filesystem::current_path() / main_file.stem();
+    std::vector<std::string> gcc_args{"ld", "-static",    "--gc-sections",
+                                      "-o", program_name, "start.o"};
     if (debug_print_execs) { gcc_args.emplace_back("--print-gc-sections"); }
 
     for (auto && mod : ir_modules) {
@@ -228,6 +229,7 @@ void program::emit_and_link() {
     }
 
     exec_command(std::move(gcc_args), debug_print_execs);
+    return program_name;
 }
 
 uint64_t program::jit() { return run_module(std::move(ir_modules)); }

@@ -18,7 +18,9 @@ class program final {
 
     [[nodiscard]] bool type_check();
     void generate_ir();
-    void emit_and_link();
+
+    // Returns the absolute path to the final program
+    std::string emit_and_link();
     [[nodiscard]] uint64_t jit();
 
   private:
