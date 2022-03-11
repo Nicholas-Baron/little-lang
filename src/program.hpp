@@ -9,7 +9,6 @@
 #include <vector>
 
 #include <llvm/IR/LLVMContext.h>
-#include <llvm/IR/Type.h>
 
 class program final {
   public:
