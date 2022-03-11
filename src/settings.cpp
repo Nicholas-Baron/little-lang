@@ -13,7 +13,8 @@
     flag(debug_ast)          \
     flag(debug_ir)           \
     flag(debug_optimized_ir) \
-    flag(debug_show_execs)
+    flag(debug_show_execs)\
+    flag(run_result)
 
 // clang-format on
 
@@ -32,9 +33,10 @@ std::shared_ptr<Settings> read_settings(int arg_count, const char * const * args
     // clang-format on
 
     auto cli = lyra::help(print_help) | lyra::opt(print_version)["--version"]["-V"]
-             | lyra::opt(simulate)["--sim"]["--simulate"] | lyra::opt(debug_ast)["--ast"]
-             | lyra::opt(debug_ir)["--llvm"] | lyra::opt(debug_optimized_ir)["--opt-llvm"]
-             | lyra::opt(debug)["--debug"] | lyra::opt(debug_show_execs)["--exec"]
+             | lyra::opt(run_result)["-r"]["--run"] | lyra::opt(simulate)["--sim"]["--simulate"]
+             | lyra::opt(debug_ast)["--ast"] | lyra::opt(debug_ir)["--llvm"]
+             | lyra::opt(debug_optimized_ir)["--opt-llvm"] | lyra::opt(debug)["--debug"]
+             | lyra::opt(debug_show_execs)["--exec"]
              | lyra::arg(settings->file_to_read, "file to read");
 
     // Make a new vector with all the args from before the "--"
