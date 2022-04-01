@@ -27,14 +27,6 @@ namespace ast {
             return lhs;
         }
         virtual void print(std::ostream &) const = 0;
-
-        [[nodiscard]] friend bool operator==(const type & lhs, const type & rhs) {
-            return lhs.equals(rhs);
-        }
-        [[nodiscard]] friend bool operator!=(const type & lhs, const type & rhs) {
-            return not(lhs == rhs);
-        }
-        [[nodiscard]] virtual bool equals(const type &) const = 0;
     };
 
     using type_ptr = std::shared_ptr<type>;
@@ -64,10 +56,6 @@ namespace ast {
 
       private:
         void print(std::ostream & /*output*/) const final;
-        [[nodiscard]] bool equals(const type & rhs) const final {
-            const auto * rhs_cast = dynamic_cast<const nullable_ptr_type *>(&rhs);
-            return rhs_cast != nullptr and *pointed_to == *rhs_cast->pointed_to;
-        }
     };
 
     struct nonnullable_ptr_type final : public ptr_type {
@@ -83,11 +71,6 @@ namespace ast {
 
       private:
         void print(std::ostream & /*output*/) const final;
-
-        [[nodiscard]] bool equals(const type & rhs) const final {
-            const auto * rhs_cast = dynamic_cast<const nonnullable_ptr_type *>(&rhs);
-            return rhs_cast != nullptr and *pointed_to == *rhs_cast->pointed_to;
-        }
     };
 
     struct prim_type final : public type {
@@ -122,11 +105,6 @@ namespace ast {
 
         void print(std::ostream & /*output*/) const final;
 
-        [[nodiscard]] bool equals(const ast::type & rhs) const final {
-            const auto * rhs_cast = dynamic_cast<const prim_type *>(&rhs);
-            return rhs_cast != nullptr and prim == rhs_cast->prim;
-        }
-
         type prim;
     };
 
@@ -144,11 +122,6 @@ namespace ast {
 
       private:
         void print(std::ostream & /*output*/) const final;
-
-        [[nodiscard]] bool equals(const ast::type & rhs) const final {
-            const auto * rhs_cast = dynamic_cast<const user_type *>(&rhs);
-            return rhs_cast != nullptr and name == rhs_cast->name;
-        }
     };
 
     struct function_type final : public type {
@@ -168,8 +141,6 @@ namespace ast {
 
       private:
         void print(std::ostream & /*output*/) const final;
-
-        [[nodiscard]] bool equals(const ast::type & rhs) const final;
     };
 
 } // namespace ast
