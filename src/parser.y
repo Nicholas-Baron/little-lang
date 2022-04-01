@@ -24,6 +24,7 @@
 %left T_PLUS T_MINUS
 %left T_MOD T_DIV T_MULT
 %precedence T_NOT
+%precedence T_DOT
 
 %%
 
@@ -56,6 +57,7 @@ internal_decl_seq : internal_decl
 
 internal_decl : const_decl
               | function
+              | struct_definition
               ;
 
 const_decl : T_CONST typed_var T_ASSIGN expr
@@ -64,6 +66,22 @@ const_decl : T_CONST typed_var T_ASSIGN expr
 function : func_header stmt
          | func_header T_ASSIGN expr
          ;
+
+struct_definition : T_IDENT struct_body
+                  ;
+
+struct_body : T_LBRACE struct_fields T_RBRACE
+            ;
+
+struct_fields : struct_field
+              | struct_fields T_COMMA
+              | struct_fields T_SEMI
+              | struct_fields struct_field
+              ;
+
+struct_field : typed_var
+             | typed_var "=" expr
+             ;
 
 func_header : func_sig ret_type
             ;
@@ -120,8 +138,18 @@ conditional : T_IF expr stmt_block T_ELSE stmt
 atom : literal
      | T_IDENT
      | func_call
+     | struct_init
      | T_LPAREN expr T_RPAREN
      ;
+
+struct_init : T_IDENT T_LBRACE struct_field_init T_RBRACE
+            ;
+
+struct_field_init : T_IDENT "=" expr
+                  | struct_field_init T_COMMA
+                  | struct_field_init T_SEMI
+                  | struct_field_init T_IDENT "=" expr
+                  ;
 
 func_call : T_IDENT arg_group
           ;
@@ -139,6 +167,7 @@ expr : atom
      | T_NOT expr
      | T_MULT expr   %prec T_NOT
      | T_MINUS expr  %prec T_NOT
+     | expr T_DOT T_IDENT
      | expr T_MULT expr
      | expr T_MOD expr
      | expr T_DIV expr
