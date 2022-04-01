@@ -107,7 +107,7 @@ typed_var : type T_IDENT
 
 stmt : stmt_block
      | return_stmt T_SEMI
-     | let_stmt opt_semi
+     | let_stmt T_SEMI
      | conditional
      | func_call opt_semi
      ;
@@ -131,9 +131,13 @@ return_stmt : T_RET expr
             | T_RET
             ;
 
-conditional : T_IF expr stmt_block T_ELSE stmt
-            | T_IF expr stmt
+conditional : if_head stmt_block T_ELSE stmt
+            | if_head stmt
             ;
+
+if_head : T_IF T_LPAREN expr T_RPAREN
+        | T_IF expr T_THEN
+        ;
 
 atom : literal
      | T_IDENT
