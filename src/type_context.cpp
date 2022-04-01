@@ -13,10 +13,12 @@ type_context::type_context(llvm::LLVMContext * context)
         {ast::prim_type::str, llvm::Type::getInt8PtrTy(*context)},
     } {}
 
+// TODO: Take `type` as a pointer
 llvm::Type * type_context::lower_to_llvm(const ast::type & type) {
 
-    auto iter = std::find_if(active_types.begin(), active_types.end(),
-                             [&type](const auto & entry) -> bool { return *entry.first == type; });
+    auto iter
+        = std::find_if(active_types.begin(), active_types.end(),
+                       [&type](const auto & entry) -> bool { return entry.first.get() == &type; });
 
     if (iter == active_types.end()) {
         if (type.is_pointer_type()) {
