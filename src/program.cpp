@@ -131,8 +131,8 @@ bool program::type_check() {
     program_globals.add("env", "arg_count",
                         std::make_shared<ast::function_type>(ast::prim_type::int32));
     program_globals.add("env", "arg_at",
-                        std::make_shared<ast::function_type>(
-                            ast::function_type{ast::prim_type::str, {ast::prim_type::int32}}));
+                        std::make_shared<ast::function_type>(ast::prim_type::str,
+                                                             std::vector{ast::prim_type::int32}));
 
     for (auto & mod : ast_modules) {
         // Note: currently, the ast imports are not updated with absolute paths,

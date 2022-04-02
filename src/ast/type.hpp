@@ -13,7 +13,7 @@ namespace ast {
       public:
         // Items to mark the base class of an inheritance tree
         non_copyable(type);
-        movable(type);
+        non_movable(type);
         virtual ~type() noexcept = default;
 
         [[nodiscard]] virtual bool is_pointer_type() const = 0;
@@ -49,7 +49,7 @@ namespace ast {
             : ptr_type{std::move(inner)} {}
 
         non_copyable(nullable_ptr_type);
-        movable(nullable_ptr_type);
+        non_movable(nullable_ptr_type);
         ~nullable_ptr_type() final = default;
 
         [[nodiscard]] bool nullable() const final { return true; }
@@ -64,7 +64,7 @@ namespace ast {
             : ptr_type{std::move(inner)} {}
 
         non_copyable(nonnullable_ptr_type);
-        movable(nonnullable_ptr_type);
+        non_movable(nonnullable_ptr_type);
         ~nonnullable_ptr_type() final = default;
 
         [[nodiscard]] bool nullable() const final { return false; }
@@ -113,7 +113,7 @@ namespace ast {
             : name{std::move(name)} {}
 
         non_copyable(user_type);
-        movable(user_type);
+        non_movable(user_type);
         ~user_type() final = default;
 
         [[nodiscard]] bool is_pointer_type() const final { return false; }
@@ -131,7 +131,7 @@ namespace ast {
             , arg_types{std::move(arg_types)} {}
 
         non_copyable(function_type);
-        movable(function_type);
+        non_movable(function_type);
         ~function_type() final = default;
 
         [[nodiscard]] bool is_pointer_type() const final { return false; }
