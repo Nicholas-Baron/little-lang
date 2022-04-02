@@ -24,7 +24,7 @@ llvm::Type * type_context::lower_to_llvm(const ast::type & type) {
         if (type.is_pointer_type()) {
             // Find the pointed-to type.
             const auto & ast_ptr_type = dynamic_cast<const ast::ptr_type &>(type);
-            auto * pointed_to_type = lower_to_llvm(*ast_ptr_type.pointed_to);
+            auto * pointed_to_type = lower_to_llvm(*ast_ptr_type.pointed_to_type());
             assert(pointed_to_type != nullptr);
             return pointed_to_type->getPointerTo();
         }

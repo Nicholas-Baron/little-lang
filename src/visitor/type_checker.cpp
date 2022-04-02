@@ -145,9 +145,9 @@ namespace visitor {
             assert(lhs_ptr != nullptr);
             assert(rhs_ptr != nullptr);
 
-            if (lhs_ptr->pointed_to != rhs_ptr->pointed_to) {
+            if (lhs_ptr->pointed_to_type() != rhs_ptr->pointed_to_type()) {
                 printError(std::nullopt, "Equality can only be made within the same type\nFound ",
-                           *lhs_ptr->pointed_to, " and ", *rhs_ptr->pointed_to);
+                           *lhs_ptr->pointed_to_type(), " and ", *rhs_ptr->pointed_to_type());
             }
         }
         return ast::prim_type::boolean;
@@ -450,7 +450,7 @@ namespace visitor {
             break;
         case ast::unary_expr::operand::deref:
             if (auto * ptr_type = dynamic_cast<ast::ptr_type *>(type.get()); ptr_type != nullptr) {
-                type = ptr_type->pointed_to;
+                type = ptr_type->pointed_to_type();
             } else if (type == ast::prim_type::str) {
                 // TODO: This branch may be removed later
                 type = ast::prim_type::character;

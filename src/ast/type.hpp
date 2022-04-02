@@ -33,14 +33,17 @@ namespace ast {
 
     class ptr_type : public type {
       public:
-        type_ptr pointed_to;
-
         [[nodiscard]] virtual bool nullable() const noexcept = 0;
         [[nodiscard]] bool is_pointer_type() const final { return true; }
+
+        [[nodiscard]] type_ptr pointed_to_type() const { return pointed_to; }
 
       protected:
         ptr_type(type_ptr inner)
             : pointed_to{std::move(inner)} {}
+
+      private:
+        type_ptr pointed_to;
     };
 
     struct nullable_ptr_type final : public ptr_type {

@@ -4,11 +4,11 @@
 
 namespace ast {
     void nullable_ptr_type::print(std::ostream & lhs) const {
-        lhs << "nullable ptr to " << *pointed_to;
+        lhs << "nullable ptr to " << *pointed_to_type();
     }
 
     void nonnullable_ptr_type::print(std::ostream & lhs) const {
-        lhs << "nonnullable ptr to " << *pointed_to;
+        lhs << "nonnullable ptr to " << *pointed_to_type();
     }
 
     const type_ptr prim_type::int32 = type_ptr{new prim_type{ast::prim_type::type::int32}};
