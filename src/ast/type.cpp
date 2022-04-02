@@ -54,7 +54,7 @@ namespace ast {
             }
             lhs << *arg;
         }
-        lhs << ") -> " << *return_type;
+        lhs << ") -> " << *return_type();
     }
 
 } // namespace ast

@@ -121,16 +121,16 @@ namespace ast {
 
         [[nodiscard]] bool is_pointer_type() const final { return false; }
 
+      private:
         std::string name;
 
-      private:
         void print(std::ostream & /*output*/) const final;
     };
 
     struct function_type final : public type {
 
         explicit function_type(ast::type_ptr ret_type, std::vector<ast::type_ptr> && arg_types = {})
-            : return_type{std::move(ret_type)}
+            : ret_type{std::move(ret_type)}
             , arg_types{std::move(arg_types)} {}
 
         non_copyable(function_type);
@@ -139,10 +139,14 @@ namespace ast {
 
         [[nodiscard]] bool is_pointer_type() const final { return false; }
 
-        ast::type_ptr return_type;
-        std::vector<ast::type_ptr> arg_types;
+        [[nodiscard]] size_t arg_count() const noexcept { return arg_types.size(); }
+        [[nodiscard]] type_ptr arg(size_t i) const { return arg_types[i]; }
+        [[nodiscard]] type_ptr return_type() const { return ret_type; }
 
       private:
+        ast::type_ptr ret_type;
+        std::vector<ast::type_ptr> arg_types;
+
         void print(std::ostream & /*output*/) const final;
     };
 

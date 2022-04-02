@@ -233,15 +233,14 @@ namespace visitor {
             assert(false);
         }
 
-        if (func_type->arg_types.size() != func_call_data.args_count()) {
-            printError(std::nullopt, func_call_data.name(), " expects ",
-                       func_type->arg_types.size(), "arguments\nFound ",
-                       func_call_data.args_count());
+        if (func_type->arg_count() != func_call_data.args_count()) {
+            printError(std::nullopt, func_call_data.name(), " expects ", func_type->arg_count(),
+                       "arguments\nFound ", func_call_data.args_count());
             assert(false);
         }
 
         for (auto i = 0U; i < func_call_data.args_count(); ++i) {
-            auto expected = func_type->arg_types[i];
+            auto expected = func_type->arg(i);
             auto actual = get_value(func_call_data.arg(i), *this);
             // TODO: Wrap condition into function
             if ((actual == nullptr and not expected->is_pointer_type()) or expected != actual) {
@@ -251,7 +250,7 @@ namespace visitor {
             }
         }
 
-        value_getter::store_result(func_type->return_type);
+        return value_getter::store_result(func_type->return_type());
     }
 
     void type_checker::visit(ast::func_call_expr & func_call_expr) {
@@ -286,11 +285,14 @@ namespace visitor {
             assert(false);
         }
 
-        auto func_type = std::make_shared<ast::function_type>(func_decl.head.ret_type());
+        std::vector<ast::type_ptr> arg_types;
         for (auto i = 0U; i < func_decl.head.param_count(); ++i) {
             const auto & param = func_decl.head.arg(i);
-            func_type->arg_types.push_back(param.type());
+            arg_types.push_back(param.type());
         }
+
+        auto func_type
+            = std::make_shared<ast::function_type>(func_decl.head.ret_type(), std::move(arg_types));
 
         bind_type(func_type, func_name, func_decl.exported());
 
@@ -298,7 +300,7 @@ namespace visitor {
 
         // bind the parameter types
         for (auto i = 0U; i < func_decl.head.param_count(); ++i) {
-            bind_type(func_type->arg_types[i], func_decl.head.arg(i).name());
+            bind_type(func_type->arg(i), func_decl.head.arg(i).name());
         }
 
         func_decl.body->accept(*this);
