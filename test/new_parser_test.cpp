@@ -128,8 +128,7 @@ TEST_CASE("the parser will parse pointer types and expressions") {
     auto * let = dynamic_cast<ast::let_stmt *>(stmt.get());
     CHECK(let != nullptr);
     CHECK(let->name_and_type.name() == "x");
-    CHECK(let->name_and_type.type()
-          == std::make_shared<ast::nullable_ptr_type>(ast::prim_type::int32));
+    CHECK(let->name_and_type.type() == ast::nullable_ptr_type::create(ast::prim_type::int32));
     CHECK(let->value != nullptr);
 
     auto * value = dynamic_cast<ast::user_val *>(let->value.get());

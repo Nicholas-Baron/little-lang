@@ -405,10 +405,10 @@ ast::type_ptr parser::parse_type() {
     }
     case lexer::token_type::amp:
         lex->next_token();
-        return std::make_shared<ast::nonnullable_ptr_type>(parse_type());
+        return ast::nonnullable_ptr_type::create(parse_type());
     case lexer::token_type::question:
         lex->next_token();
-        return std::make_shared<ast::nullable_ptr_type>(parse_type());
+        return ast::nullable_ptr_type::create(parse_type());
     default:
         error = "Expected a type. Found " + lex->peek_token().text;
         return nullptr;

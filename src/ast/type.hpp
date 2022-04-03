@@ -48,8 +48,10 @@ namespace ast {
 
     struct nullable_ptr_type final : public ptr_type {
 
-        explicit nullable_ptr_type(type_ptr inner)
-            : ptr_type{std::move(inner)} {}
+        static std::shared_ptr<nullable_ptr_type> create(type_ptr pointed_to_type) {
+            return std::shared_ptr<nullable_ptr_type>{
+                new nullable_ptr_type{std::move(pointed_to_type)}};
+        }
 
         non_copyable(nullable_ptr_type);
         non_movable(nullable_ptr_type);
@@ -58,13 +60,18 @@ namespace ast {
         [[nodiscard]] bool nullable() const final { return true; }
 
       private:
+        explicit nullable_ptr_type(type_ptr inner)
+            : ptr_type{std::move(inner)} {}
+
         void print(std::ostream & /*output*/) const final;
     };
 
     struct nonnullable_ptr_type final : public ptr_type {
 
-        explicit nonnullable_ptr_type(type_ptr inner)
-            : ptr_type{std::move(inner)} {}
+        static std::shared_ptr<nonnullable_ptr_type> create(type_ptr pointed_to_type) {
+            return std::shared_ptr<nonnullable_ptr_type>{
+                new nonnullable_ptr_type{std::move(pointed_to_type)}};
+        }
 
         non_copyable(nonnullable_ptr_type);
         non_movable(nonnullable_ptr_type);
@@ -73,6 +80,9 @@ namespace ast {
         [[nodiscard]] bool nullable() const final { return false; }
 
       private:
+        explicit nonnullable_ptr_type(type_ptr inner)
+            : ptr_type{std::move(inner)} {}
+
         void print(std::ostream & /*output*/) const final;
     };
 
