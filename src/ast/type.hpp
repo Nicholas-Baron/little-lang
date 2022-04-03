@@ -116,8 +116,8 @@ namespace ast {
     };
 
     struct user_type final : public type {
-        explicit user_type(std::string && name)
-            : name{std::move(name)} {}
+
+        static std::shared_ptr<user_type> create(std::string &&);
 
         non_copyable(user_type);
         non_movable(user_type);
@@ -126,6 +126,9 @@ namespace ast {
         [[nodiscard]] bool is_pointer_type() const final { return false; }
 
       private:
+        explicit user_type(std::string name)
+            : name{std::move(name)} {}
+
         std::string name;
 
         void print(std::ostream & /*output*/) const final;

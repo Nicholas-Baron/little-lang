@@ -40,6 +40,17 @@ namespace ast {
         return new_ptr_type;
     }
 
+    std::shared_ptr<user_type> user_type::create(std::string && name) {
+        static std::map<std::string, std::shared_ptr<user_type>> made_types;
+
+        if (auto iter = made_types.find(name); iter != made_types.end()) { return iter->second; }
+
+        auto new_user_type = std::shared_ptr<user_type>{new user_type{name}};
+        made_types.emplace(std::move(name), new_user_type);
+
+        return new_user_type;
+    }
+
     // Printing types
 
     void nullable_ptr_type::print(std::ostream & lhs) const {

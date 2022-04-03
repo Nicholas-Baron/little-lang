@@ -392,7 +392,7 @@ ast::type_ptr parser::parse_type() {
     // a type can either be some primitive or a user-defined type.
     switch (lex->peek_token().type) {
     case lexer::token_type::identifier:
-        return std::make_shared<ast::user_type>(lex->next_token().text);
+        return ast::user_type::create(lex->next_token().text);
     case lexer::token_type::prim_type: {
         static const std::map<std::string, ast::type_ptr> prim_types{
             {"int", ast::prim_type::int32},      {"float", ast::prim_type::float32},
