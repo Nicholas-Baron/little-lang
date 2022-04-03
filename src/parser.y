@@ -135,8 +135,7 @@ conditional : if_head stmt_block T_ELSE stmt
             | if_head stmt
             ;
 
-if_head : T_IF T_LPAREN expr T_RPAREN
-        | T_IF expr T_THEN
+if_head : T_IF expr T_THEN
         ;
 
 atom : literal
@@ -167,7 +166,7 @@ literal : T_INT
         ;
 
 expr : atom
-     | T_IF expr T_THEN expr T_ELSE expr %prec if_expr
+     | if_head expr T_ELSE expr %prec if_expr
      | T_NOT expr
      | T_MULT expr   %prec T_NOT
      | T_MINUS expr  %prec T_NOT
