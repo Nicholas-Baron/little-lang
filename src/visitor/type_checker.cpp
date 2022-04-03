@@ -292,7 +292,7 @@ namespace visitor {
         }
 
         auto func_type
-            = std::make_shared<ast::function_type>(func_decl.head.ret_type(), std::move(arg_types));
+            = ast::function_type::create(func_decl.head.ret_type(), std::move(arg_types));
 
         bind_type(func_type, func_name, func_decl.exported());
 

@@ -135,10 +135,9 @@ namespace ast {
     };
 
     struct function_type final : public type {
-
-        explicit function_type(ast::type_ptr ret_type, std::vector<ast::type_ptr> && arg_types = {})
-            : ret_type{std::move(ret_type)}
-            , arg_types{std::move(arg_types)} {}
+        static
+			std::shared_ptr<function_type>
+			create(ast::type_ptr ret_type, std::vector<ast::type_ptr> && arg_types = {});
 
         non_copyable(function_type);
         non_movable(function_type);
@@ -151,6 +150,10 @@ namespace ast {
         [[nodiscard]] type_ptr return_type() const { return ret_type; }
 
       private:
+        explicit function_type(ast::type_ptr ret_type, std::vector<ast::type_ptr> && arg_types = {})
+            : ret_type{std::move(ret_type)}
+            , arg_types{std::move(arg_types)} {}
+
         ast::type_ptr ret_type;
         std::vector<ast::type_ptr> arg_types;
 

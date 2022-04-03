@@ -128,11 +128,10 @@ program::program(std::vector<ast::top_level_sequence> && modules,
 
 bool program::type_check() {
     global_map<std::string, ast::type_ptr> program_globals;
-    program_globals.add("env", "arg_count",
-                        std::make_shared<ast::function_type>(ast::prim_type::int32));
-    program_globals.add("env", "arg_at",
-                        std::make_shared<ast::function_type>(ast::prim_type::str,
-                                                             std::vector{ast::prim_type::int32}));
+    program_globals.add("env", "arg_count", ast::function_type::create(ast::prim_type::int32));
+    program_globals.add(
+        "env", "arg_at",
+        ast::function_type::create(ast::prim_type::str, std::vector{ast::prim_type::int32}));
 
     for (auto & mod : ast_modules) {
         // Note: currently, the ast imports are not updated with absolute paths,
