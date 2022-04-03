@@ -48,10 +48,7 @@ namespace ast {
 
     struct nullable_ptr_type final : public ptr_type {
 
-        static std::shared_ptr<nullable_ptr_type> create(type_ptr pointed_to_type) {
-            return std::shared_ptr<nullable_ptr_type>{
-                new nullable_ptr_type{std::move(pointed_to_type)}};
-        }
+        static std::shared_ptr<nullable_ptr_type> create(type_ptr pointed_to_type);
 
         non_copyable(nullable_ptr_type);
         non_movable(nullable_ptr_type);
@@ -68,10 +65,7 @@ namespace ast {
 
     struct nonnullable_ptr_type final : public ptr_type {
 
-        static std::shared_ptr<nonnullable_ptr_type> create(type_ptr pointed_to_type) {
-            return std::shared_ptr<nonnullable_ptr_type>{
-                new nonnullable_ptr_type{std::move(pointed_to_type)}};
-        }
+        static std::shared_ptr<nonnullable_ptr_type> create(type_ptr pointed_to_type);
 
         non_copyable(nonnullable_ptr_type);
         non_movable(nonnullable_ptr_type);
