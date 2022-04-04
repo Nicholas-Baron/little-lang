@@ -43,8 +43,15 @@ bool exec_command(std::vector<std::string> && cmd, bool debug) {
             return false;
         }
 
-        if (not WIFEXITED(wait_status)) { return false; }
+        if (not WIFEXITED(wait_status)) {
+            std::cerr << "Command " << cmd[0] << " exited abnormally" << std::endl;
+            return false;
+        }
 
-        return WEXITSTATUS(wait_status) == 0;
+        if (auto exit_status = WEXITSTATUS(wait_status); exit_status != 0) {
+            std::cerr << "Command " << cmd[0] << " exited with status " << exit_status << std::endl;
+        }
+
+        return true;
     }
 }
