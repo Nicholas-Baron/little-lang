@@ -63,12 +63,12 @@ namespace visitor {
         for (auto i = 0U; i < func_call_data.args_count(); ++i) {
             auto & arg = func_call_data.arg(i);
             auto arg_type = get_value(arg, *this);
-            if (not arg_type->is_pointer_type() and *arg_type != *ast::prim_type::int32) {
+            if (not arg_type->is_pointer_type() and arg_type != ast::prim_type::int32) {
                 printError(std::nullopt, "syscall can only take int or pointer arguments");
             }
 
             // The first argmuent must always be a syscall number.
-            if (i == 0 and *arg_type != *ast::prim_type::int32.get()) {
+            if (i == 0 and arg_type != ast::prim_type::int32) {
                 printError(std::nullopt, "syscall must have an integer as its first argument");
             }
         }
@@ -82,7 +82,7 @@ namespace visitor {
         // Special case: ptr + int
         if (lhs_type->is_pointer_type() or rhs_type->is_pointer_type()) {
             if (const auto other_type = lhs_type->is_pointer_type() ? rhs_type : lhs_type;
-                *other_type != *ast::prim_type::int32) {
+                other_type != ast::prim_type::int32) {
                 printError(std::nullopt, "Pointer types can only be added with integers");
             }
 
@@ -94,7 +94,7 @@ namespace visitor {
             assert(false);
         }
 
-        if (*lhs_type == *ast::prim_type::boolean or *rhs_type == *ast::prim_type::boolean) {
+        if (lhs_type == ast::prim_type::boolean or rhs_type == ast::prim_type::boolean) {
             printError(std::nullopt, "Arithmetic operations cannot be done on booleans");
             assert(false);
         }
@@ -145,9 +145,9 @@ namespace visitor {
             assert(lhs_ptr != nullptr);
             assert(rhs_ptr != nullptr);
 
-            if (*lhs_ptr->pointed_to != *rhs_ptr->pointed_to) {
+            if (lhs_ptr->pointed_to_type() != rhs_ptr->pointed_to_type()) {
                 printError(std::nullopt, "Equality can only be made within the same type\nFound ",
-                           *lhs_ptr->pointed_to, " and ", *rhs_ptr->pointed_to);
+                           *lhs_ptr->pointed_to_type(), " and ", *rhs_ptr->pointed_to_type());
             }
         }
         return ast::prim_type::boolean;
@@ -210,7 +210,7 @@ namespace visitor {
         auto actual = get_value(*const_decl.expr, *this);
         assert(actual != nullptr);
 
-        if (*expected != *actual) {
+        if (expected != actual) {
             printError(const_decl.location(), "Constant ", const_decl.name_and_type.name(),
                        " is not of type ", *expected, ".\nFound type ", *actual);
         }
@@ -233,25 +233,24 @@ namespace visitor {
             assert(false);
         }
 
-        if (func_type->arg_types.size() != func_call_data.args_count()) {
-            printError(std::nullopt, func_call_data.name(), " expects ",
-                       func_type->arg_types.size(), "arguments\nFound ",
-                       func_call_data.args_count());
+        if (func_type->arg_count() != func_call_data.args_count()) {
+            printError(std::nullopt, func_call_data.name(), " expects ", func_type->arg_count(),
+                       "arguments\nFound ", func_call_data.args_count());
             assert(false);
         }
 
         for (auto i = 0U; i < func_call_data.args_count(); ++i) {
-            auto expected = func_type->arg_types[i];
+            auto expected = func_type->arg(i);
             auto actual = get_value(func_call_data.arg(i), *this);
             // TODO: Wrap condition into function
-            if ((actual == nullptr and not expected->is_pointer_type()) or *expected != *actual) {
+            if ((actual == nullptr and not expected->is_pointer_type()) or expected != actual) {
                 printError(func_call_data.arg(i).location(), "Argument ", (i + 1), " expects type ",
                            *expected, "\nFound ", *actual);
                 assert(false);
             }
         }
 
-        value_getter::store_result(func_type->return_type);
+        return value_getter::store_result(func_type->return_type());
     }
 
     void type_checker::visit(ast::func_call_expr & func_call_expr) {
@@ -286,11 +285,14 @@ namespace visitor {
             assert(false);
         }
 
-        auto func_type = std::make_shared<ast::function_type>(func_decl.head.ret_type());
+        std::vector<ast::type_ptr> arg_types;
         for (auto i = 0U; i < func_decl.head.param_count(); ++i) {
             const auto & param = func_decl.head.arg(i);
-            func_type->arg_types.push_back(param.type());
+            arg_types.push_back(param.type());
         }
+
+        auto func_type
+            = ast::function_type::create(func_decl.head.ret_type(), std::move(arg_types));
 
         bind_type(func_type, func_name, func_decl.exported());
 
@@ -298,7 +300,7 @@ namespace visitor {
 
         // bind the parameter types
         for (auto i = 0U; i < func_decl.head.param_count(); ++i) {
-            bind_type(func_type->arg_types[i], func_decl.head.arg(i).name());
+            bind_type(func_type->arg(i), func_decl.head.arg(i).name());
         }
 
         func_decl.body->accept(*this);
@@ -382,7 +384,7 @@ namespace visitor {
         if (return_stmt.value == nullptr) {
             // we should be in a void function
 
-            if (*current_return_type != *ast::prim_type::unit) {
+            if (current_return_type != ast::prim_type::unit.get()) {
                 printError(return_stmt.location(), "In function ", *current_function_name,
                            "\nExpected a return statement without an expression",
                            "\nFound one with an expression");
@@ -394,7 +396,7 @@ namespace visitor {
         // the expression needs to be the same as the return type
 
         if (auto val_type = get_value(*return_stmt.value, *this);
-            *val_type != *current_return_type) {
+            val_type.get() != current_return_type) {
             printError(return_stmt.value->location(), "In function ", *current_function_name,
                        "\nExpected a return statement with expression of type ",
                        *current_return_type, "\nFound expression with type ", *val_type);
@@ -450,7 +452,7 @@ namespace visitor {
             break;
         case ast::unary_expr::operand::deref:
             if (auto * ptr_type = dynamic_cast<ast::ptr_type *>(type.get()); ptr_type != nullptr) {
-                type = ptr_type->pointed_to;
+                type = ptr_type->pointed_to_type();
             } else if (type == ast::prim_type::str) {
                 // TODO: This branch may be removed later
                 type = ast::prim_type::character;

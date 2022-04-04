@@ -3,13 +3,7 @@
 #include <iostream>
 
 namespace ast {
-    void nullable_ptr_type::print(std::ostream & lhs) const {
-        lhs << "nullable ptr to " << *pointed_to;
-    }
-
-    void nonnullable_ptr_type::print(std::ostream & lhs) const {
-        lhs << "nonnullable ptr to " << *pointed_to;
-    }
+    // Type creation
 
     const type_ptr prim_type::int32 = type_ptr{new prim_type{ast::prim_type::type::int32}};
     const type_ptr prim_type::unit = type_ptr{new prim_type{ast::prim_type::type::unit}};
@@ -17,6 +11,75 @@ namespace ast {
     const type_ptr prim_type::boolean = type_ptr{new prim_type{ast::prim_type::type::boolean}};
     const type_ptr prim_type::str = type_ptr{new prim_type{ast::prim_type::type::str}};
     const type_ptr prim_type::character = type_ptr{new prim_type{ast::prim_type::type::character}};
+
+    std::shared_ptr<nullable_ptr_type> nullable_ptr_type::create(type_ptr pointed_to_type) {
+        static std::map<type_ptr, std::shared_ptr<nullable_ptr_type>> made_types;
+
+        if (auto iter = made_types.find(pointed_to_type); iter != made_types.end()) {
+            return iter->second;
+        }
+
+        auto new_ptr_type
+            = std::shared_ptr<nullable_ptr_type>{new nullable_ptr_type{pointed_to_type}};
+        made_types.emplace(std::move(pointed_to_type), new_ptr_type);
+
+        return new_ptr_type;
+    }
+
+    std::shared_ptr<nonnullable_ptr_type> nonnullable_ptr_type::create(type_ptr pointed_to_type) {
+        static std::map<type_ptr, std::shared_ptr<nonnullable_ptr_type>> made_types;
+
+        if (auto iter = made_types.find(pointed_to_type); iter != made_types.end()) {
+            return iter->second;
+        }
+
+        auto new_ptr_type
+            = std::shared_ptr<nonnullable_ptr_type>{new nonnullable_ptr_type{pointed_to_type}};
+        made_types.emplace(std::move(pointed_to_type), new_ptr_type);
+
+        return new_ptr_type;
+    }
+
+    std::shared_ptr<user_type> user_type::create(std::string && name) {
+        static std::map<std::string, std::shared_ptr<user_type>> made_types;
+
+        if (auto iter = made_types.find(name); iter != made_types.end()) { return iter->second; }
+
+        auto new_user_type = std::shared_ptr<user_type>{new user_type{name}};
+        made_types.emplace(std::move(name), new_user_type);
+
+        return new_user_type;
+    }
+
+    std::shared_ptr<function_type> function_type::create(ast::type_ptr ret_type,
+                                                         std::vector<ast::type_ptr> && arg_types) {
+        static std::vector<std::shared_ptr<function_type>> made_types;
+
+        if (auto iter = std::find_if(made_types.begin(), made_types.end(),
+                                     [&ret_type, &arg_types](const auto & exisiting_type) -> bool {
+                                         return exisiting_type->ret_type == ret_type
+                                            and exisiting_type->arg_types == arg_types;
+                                     });
+            iter != made_types.end()) {
+            return *iter;
+        }
+
+        auto new_func_type = std::shared_ptr<function_type>{
+            new function_type{std::move(ret_type), std::move(arg_types)}};
+        made_types.push_back(new_func_type);
+
+        return new_func_type;
+    }
+
+    // Printing types
+
+    void nullable_ptr_type::print(std::ostream & lhs) const {
+        lhs << "nullable ptr to " << *pointed_to_type();
+    }
+
+    void nonnullable_ptr_type::print(std::ostream & lhs) const {
+        lhs << "nonnullable ptr to " << *pointed_to_type();
+    }
 
     void prim_type::print(std::ostream & lhs) const {
         switch (prim) {
@@ -54,19 +117,7 @@ namespace ast {
             }
             lhs << *arg;
         }
-        lhs << ") -> " << *return_type;
+        lhs << ") -> " << *return_type();
     }
 
-    [[nodiscard]] bool function_type::equals(const ast::type & rhs) const {
-        const auto * rhs_cast = dynamic_cast<const function_type *>(&rhs);
-        if (rhs_cast == nullptr) { return false; }
-        if (rhs_cast->arg_types.size() != arg_types.size()) { return false; }
-        for (auto i = 0U; i < arg_types.size(); ++i) {
-            auto * lhs_arg = arg_types[i].get();
-            auto * rhs_arg = rhs_cast->arg_types[i].get();
-            if (lhs_arg == rhs_arg) { continue; }
-            if (*lhs_arg != *rhs_arg) { return false; }
-        }
-        return *rhs_cast->return_type == *return_type;
-    }
 } // namespace ast
