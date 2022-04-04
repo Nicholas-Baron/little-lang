@@ -3,7 +3,7 @@ factorial(int input) -> int {
 	return input * factorial(input - 1);
 }
 
-const my_val : int = 10
+const my_val : int = 5
 
 main() -> int
 	ret factorial(my_val);
