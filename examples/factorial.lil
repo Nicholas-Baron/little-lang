@@ -1,5 +1,5 @@
 factorial(int input) -> int {
-	if input <= 2 return input;
+	if input <= 2 then return input;
 	return input * factorial(input - 1);
 }
 

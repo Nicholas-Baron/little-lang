@@ -1,6 +1,6 @@
 fib(pos is int) -> int
-	if pos <= 1 or pos equals 5 { ret pos; }
-	else if pos > 1 and pos < 5 { ret pos - 1; }
+	if pos <= 1 or pos equals 5 then { ret pos; }
+	else if pos > 1 and pos < 5 then { ret pos - 1; }
 	else { return fib(pos - 2) + fib(pos - 1); }
 
 main() -> int = fib(5)

@@ -226,7 +226,7 @@ TEST_CASE("the parser will parse if expressions") {
 }
 
 TEST_CASE("the parser will parse if statements") {
-    std::string buffer = "if x {}";
+    std::string buffer = "if x then {}";
     auto parser = parser::from_buffer(buffer);
 
     CHECK(parser != nullptr);
@@ -245,7 +245,7 @@ TEST_CASE("the parser will parse if statements") {
 }
 
 TEST_CASE("the parser will parse if-else statements") {
-    std::string buffer = "if x {} else {}";
+    std::string buffer = "if x then {} else {}";
     auto parser = parser::from_buffer(buffer);
 
     CHECK(parser != nullptr);
@@ -412,7 +412,7 @@ TEST_CASE("the parser will parse a function with an expression body") {
 TEST_CASE("the parser will parse a factorial function") {
     std::string buffer = R"(
 factorial(int input) -> int {
-	if(input <= 2){ return input; }
+	if input <= 2 then { return input; }
 	return input * factorial(input - 1);
 })";
 

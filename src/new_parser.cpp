@@ -274,6 +274,8 @@ std::unique_ptr<ast::if_stmt> parser::parse_if_statement() {
     assert(lex->next_token() == lexer::token_type::if_);
     auto condition = parse_expression();
 
+    assert(lex->next_token() == lexer::token_type::then);
+
     // an `if` can only have an `else` when it is written `if x {} else {}`,
     // that is the then block is a compund statement.
     const bool can_have_else = lex->peek_token() == lexer::token_type::lbrace;

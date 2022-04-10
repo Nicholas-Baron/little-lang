@@ -6,7 +6,7 @@ strlen(str is string) -> int
 	else 1 + strlen(str + 1)
 
 print_args(index: int) {
-	if index >= arg_count() { return; }
+	if index >= arg_count() then { return; }
 
 	let arg = arg_at(index);
 
