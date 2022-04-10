@@ -231,7 +231,6 @@ ast::stmt_ptr parser::parse_statement() {
         return parse_if_statement();
     case lexer::token_type::let: {
         auto let_stmt = parse_let_statement();
-        lex->consume_if(lexer::token_type::semi);
         return let_stmt;
     }
     case lexer::token_type::identifier: {
@@ -317,7 +316,8 @@ std::unique_ptr<ast::let_stmt> parser::parse_let_statement() {
     // A let statement is made of `let`,
     // followed by an optionally-typed identifier,
     // followed by `=`,
-    // followed by an expression.
+    // followed by an expression,
+    // followed by `;`.
 
     auto typed_id = parse_opt_typed_identifier();
 
@@ -327,6 +327,7 @@ std::unique_ptr<ast::let_stmt> parser::parse_let_statement() {
     assert(val != nullptr);
     auto let_stmt = std::make_unique<ast::let_stmt>(std::move(typed_id), std::move(val));
     let_stmt->set_location(location);
+	assert(lex->next_token() == lexer::token_type::semi);
     return let_stmt;
 }
 

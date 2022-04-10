@@ -93,8 +93,8 @@ TEST_CASE("the parser will parse let statement") {
     CHECK(value->val == "\"hello\"");
 }
 
-TEST_CASE("the parser will parse let statement without semicolons and with types") {
-    std::string buffer = "let int x = 10";
+TEST_CASE("the parser will parse let statement with types") {
+    std::string buffer = "let int x = 10;";
     auto parser = parser::from_buffer(buffer);
 
     CHECK(parser != nullptr);
@@ -138,7 +138,7 @@ TEST_CASE("the parser will parse pointer types and expressions") {
 }
 
 TEST_CASE("the parser will parse dereferences") {
-    std::string buffer = "let x = *y";
+    std::string buffer = "let x = *y;";
     auto parser = parser::from_buffer(buffer);
 
     CHECK(parser != nullptr);
