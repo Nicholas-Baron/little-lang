@@ -221,6 +221,38 @@ std::unique_ptr<ast::const_decl> parser::parse_const_decl() {
     return decl;
 }
 
+std::unique_ptr<ast::struct_decl> parser::parse_struct_decl() {
+    auto location = lex->peek_token().location;
+
+    // Parse the typename of the struct
+    auto name = lex->next_token();
+    assert(name == lexer::token_type::identifier);
+
+    // Parse the opening curly
+    assert(lex->next_token() == lexer::token_type::lbrace);
+
+    // Parse the fields
+    std::vector<ast::typed_identifier> fields;
+    while (not lex->consume_if(lexer::token_type::rbrace).has_value()) {
+        fields.emplace_back(parse_typed_identifier());
+        switch (lex->peek_token().type) {
+        case lexer::token_type::comma:
+        case lexer::token_type::semi:
+            lex->next_token();
+            [[fallthrough]];
+        case lexer::token_type::rbrace:
+        case lexer::token_type::identifier:
+            break;
+        default:
+            assert(false);
+        }
+    }
+
+    auto decl = std::make_unique<ast::struct_decl>(std::move(name.text), std::move(fields));
+    decl->set_location(location);
+    return decl;
+}
+
 ast::stmt_ptr parser::parse_statement() {
     switch (lex->peek_token().type) {
     case lexer::token_type::lbrace:

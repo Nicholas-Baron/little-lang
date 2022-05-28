@@ -331,6 +331,25 @@ TEST_CASE("the parser will parse function calls as statements") {
     CHECK(func_call->data.args_count() == 2);
 }
 
+TEST_CASE("the parser will parse a struct declaration") {
+    std::string buffer = R"(my_struct_type {
+		x : int;
+		y : string,
+		z : bool
+	})";
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    auto struct_decl = parser->parse_struct_decl();
+    CHECK(struct_decl != nullptr);
+    CHECK(parser->error_message().empty());
+
+    CHECK(struct_decl->name == "my_struct_type");
+    CHECK(struct_decl->fields.size() == 3);
+    CHECK(struct_decl->fields[0].name() == "x");
+}
+
 TEST_CASE("the parser will parse a unit function") {
     std::string buffer = "main() {}";
     auto parser = parser::from_buffer(buffer);

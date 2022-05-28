@@ -109,6 +109,27 @@ namespace ast {
       private:
         void update_export(bool /*val*/) final {}
     };
+
+    class struct_decl final : public top_level {
+      public:
+        explicit struct_decl(std::string name, std::vector<typed_identifier> && fields = {})
+            : name(std::move(name))
+            , fields{std::move(fields)} {}
+
+        non_copyable(struct_decl);
+
+        movable(struct_decl);
+
+        ~struct_decl() noexcept final = default;
+
+        make_visitable;
+
+        std::string name;
+        std::vector<typed_identifier> fields;
+
+      private:
+        void update_export(bool /*val*/) final {}
+    };
 } // namespace ast
 
 #endif

@@ -66,6 +66,7 @@ class parser final {
     std::vector<ast::top_lvl_ptr> parse_exports();
     std::unique_ptr<ast::func_decl> parse_function();
     std::unique_ptr<ast::const_decl> parse_const_decl();
+    std::unique_ptr<ast::struct_decl> parse_struct_decl();
     ast::stmt_ptr parse_statement();
     ast::stmt_ptr parse_compound_statement();
     std::unique_ptr<ast::if_stmt> parse_if_statement();
