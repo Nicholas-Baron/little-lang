@@ -648,6 +648,11 @@ ast::expr_ptr parser::parse_atom() {
         return std::make_unique<ast::func_call_expr>(parse_func_call(std::move(id)), tok.location);
     }
 
+    // struct initialization
+    if (lex->peek_token() == lexer::token_type::lbrace) {
+        return parse_struct_init(std::move(id), tok.location);
+    }
+
     // some variable
     return std::make_unique<ast::user_val>(std::move(id), val_type::identifier, tok.location);
 }
@@ -687,4 +692,38 @@ ast::func_call_data parser::parse_func_call(std::optional<std::string> func_name
     assert(lex->next_token() == lexer::token_type::rparen);
 
     return {std::move(name), std::move(args)};
+}
+
+std::unique_ptr<ast::struct_init> parser::parse_struct_init(std::string && type_name,
+                                                            Location loc) {
+
+    lex->consume_if(lexer::token_type::lbrace);
+
+    std::vector<std::pair<std::string, ast::expr_ptr>> initializers;
+    while (not lex->consume_if(lexer::token_type::rbrace).has_value()) {
+        auto id = lex->next_token();
+        assert(id == lexer::token_type::identifier);
+
+        assert(lex->next_token() == lexer::token_type::equal);
+
+        auto expr = parse_expression();
+
+        initializers.emplace_back(id.text, std::move(expr));
+
+        switch (lex->peek_token().type) {
+        case lexer::token_type::comma:
+        case lexer::token_type::semi:
+            lex->next_token();
+            [[fallthrough]];
+        case lexer::token_type::identifier:
+        case lexer::token_type::rbrace:
+            break;
+        default:
+            assert(false);
+        }
+    }
+
+    auto init = std::make_unique<ast::struct_init>(std::move(type_name), std::move(initializers));
+    init->set_location(loc);
+    return init;
 }

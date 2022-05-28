@@ -366,6 +366,27 @@ TEST_CASE("the parser will parse a unit function") {
     CHECK(func->body != nullptr);
 }
 
+TEST_CASE("the parser will parse a struct initialization") {
+    std::string buffer = "let x = my_struct_type { x = 5; y = 6, z = 10, a = 6 / 2 };";
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    auto init = parser->parse_let_statement();
+    CHECK(init != nullptr);
+    CHECK(parser->error_message().empty());
+
+    auto * struct_init = dynamic_cast<ast::struct_init *>(init->value.get());
+    CHECK(struct_init != nullptr);
+
+    CHECK(struct_init->name == "my_struct_type");
+    CHECK(struct_init->initializers.size() == 4);
+    CHECK(struct_init->initializers[0].first == "x");
+    CHECK(struct_init->initializers[1].first == "y");
+    CHECK(struct_init->initializers[2].first == "z");
+    CHECK(struct_init->initializers[3].first == "a");
+}
+
 TEST_CASE("the parser will parse a function with return type") {
     std::string buffer = "main() -> int {}";
     auto parser = parser::from_buffer(buffer);

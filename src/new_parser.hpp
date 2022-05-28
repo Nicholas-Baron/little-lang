@@ -95,6 +95,8 @@ class parser final {
     // In the expression case, we have already consumed the name, so we must pass it in.
     ast::func_call_data parse_func_call(std::optional<std::string> func_name = std::nullopt);
 
+    std::unique_ptr<ast::struct_init> parse_struct_init(std::string && type_name, Location loc);
+
 #ifdef PARSER_TEST
     [[nodiscard]] bool is_eof() const { return lex->peek_token() == lexer::token_type::eof; }
 
