@@ -135,9 +135,8 @@ namespace ast {
     };
 
     struct function_type final : public type {
-        static
-			std::shared_ptr<function_type>
-			create(ast::type_ptr ret_type, std::vector<ast::type_ptr> && arg_types = {});
+        static std::shared_ptr<function_type> create(ast::type_ptr ret_type,
+                                                     std::vector<ast::type_ptr> && arg_types = {});
 
         non_copyable(function_type);
         non_movable(function_type);
