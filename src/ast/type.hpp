@@ -115,23 +115,48 @@ namespace ast {
         type prim;
     };
 
-    struct user_type final : public type {
+    struct user_type : public type {
 
-        static std::shared_ptr<user_type> create(std::string &&);
+        static std::shared_ptr<user_type> lookup(const std::string & type_name,
+                                                 const std::string & module_name);
 
         non_copyable(user_type);
         non_movable(user_type);
-        ~user_type() final = default;
+        ~user_type() override = default;
 
         [[nodiscard]] bool is_pointer_type() const final { return false; }
 
-      private:
+      protected:
         explicit user_type(std::string name)
             : name{std::move(name)} {}
 
+      private:
         std::string name;
 
-        void print(std::ostream & /*output*/) const final;
+        void print(std::ostream & /*output*/) const override;
+    };
+
+    struct struct_type final : public user_type {
+
+        using field_type = std::pair<std::string, ast::type_ptr>;
+
+        static std::shared_ptr<struct_type> create(std::string && name,
+                                                   const std::string & module_name,
+                                                   std::vector<field_type> && fields);
+
+        non_copyable(struct_type);
+        non_movable(struct_type);
+
+        ~struct_type() final = default;
+
+      private:
+        struct_type(std::string && name, std::vector<field_type> && fields)
+            : user_type{std::move(name)}
+            , fields{std::move(fields)} {}
+
+        std::vector<field_type> fields;
+
+        void print(std::ostream & /*output*/) const override;
     };
 
     struct function_type final : public type {

@@ -1,6 +1,9 @@
 #include "type.hpp"
 
+#include "global_map.hpp"
+
 #include <iostream>
+#include <memory>
 
 namespace ast {
     // Type creation
@@ -11,6 +14,10 @@ namespace ast {
     const type_ptr prim_type::boolean = type_ptr{new prim_type{ast::prim_type::type::boolean}};
     const type_ptr prim_type::str = type_ptr{new prim_type{ast::prim_type::type::str}};
     const type_ptr prim_type::character = type_ptr{new prim_type{ast::prim_type::type::character}};
+
+    namespace {
+        global_map<std::string, std::shared_ptr<user_type>> user_made_types;
+    }
 
     std::shared_ptr<nullable_ptr_type> nullable_ptr_type::create(type_ptr pointed_to_type) {
         static std::map<type_ptr, std::shared_ptr<nullable_ptr_type>> made_types;
@@ -40,13 +47,23 @@ namespace ast {
         return new_ptr_type;
     }
 
-    std::shared_ptr<user_type> user_type::create(std::string && name) {
-        static std::map<std::string, std::shared_ptr<user_type>> made_types;
+    std::shared_ptr<user_type> user_type::lookup(const std::string & name,
+                                                 const std::string & module_name) {
+        return user_made_types.lookup(module_name, name);
+    }
 
-        if (auto iter = made_types.find(name); iter != made_types.end()) { return iter->second; }
+    std::shared_ptr<struct_type> struct_type::create(std::string && name,
+                                                     const std::string & module_name,
+                                                     std::vector<field_type> && fields) {
 
-        auto new_user_type = std::shared_ptr<user_type>{new user_type{name}};
-        made_types.emplace(std::move(name), new_user_type);
+        if (auto old_type = user_type::lookup(name, module_name); old_type != nullptr) {
+            std::cerr << "Redeclaring " << name << " in module " << module_name << std::endl;
+            assert(false);
+        }
+
+        auto new_user_type
+            = std::shared_ptr<struct_type>{new struct_type{std::move(name), std::move(fields)}};
+        user_made_types.add(module_name, name, new_user_type);
 
         return new_user_type;
     }
