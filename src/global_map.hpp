@@ -4,8 +4,6 @@
 #include <map>
 #include <string>
 
-#include <llvm/IR/GlobalObject.h>
-
 template<typename key_t, typename value_t>
 class global_map final {
   public:

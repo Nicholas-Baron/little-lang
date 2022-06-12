@@ -7,6 +7,7 @@
 #include <memory> // make_shared
 #include <sstream>
 
+#include <llvm/ADT/Twine.h>
 #include <llvm/IR/DerivedTypes.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Type.h>

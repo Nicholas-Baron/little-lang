@@ -1,5 +1,6 @@
 #include "type_context.hpp"
 
+#include <llvm/IR/GlobalObject.h>
 #include <llvm/IR/Type.h>
 
 type_context::type_context(llvm::LLVMContext * context)
