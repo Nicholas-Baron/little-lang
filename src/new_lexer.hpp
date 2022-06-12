@@ -119,6 +119,8 @@ class lexer final {
     // provided string.
     bool next_chars(const std::string & text, unsigned offset = 0);
 
+    [[nodiscard]] std::string module_name() const { return filename; }
+
   private:
     lexer(std::string filename, const char * data, size_t size);
     lexer(const char * data, size_t size);
