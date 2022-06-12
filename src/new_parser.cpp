@@ -58,8 +58,14 @@ ast::top_lvl_ptr parser::parse_top_level() {
 
     switch (lex->peek_token().type) {
     case lexer::token_type::identifier:
-        // Parse a function
-        return parse_function();
+        // Parse a function or struct
+        if (lex->peek_token(1) == lexer::token_type::lparen) {
+            return parse_function();
+        } else if (lex->peek_token(1) == lexer::token_type::lbrace) {
+            return parse_struct_decl();
+        }
+        error = "Unexpected " + lex->peek_token(1).text + " after " + lex->peek_token().text;
+        return nullptr;
     case lexer::token_type::const_:
         // Parse a constant
         return parse_const_decl();

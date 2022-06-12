@@ -1,5 +1,4 @@
 #define PARSER_TEST
-#include "ast/nodes.hpp"
 #include "new_parser.hpp"
 
 #include <catch2/catch.hpp>
@@ -341,9 +340,11 @@ TEST_CASE("the parser will parse a struct declaration") {
 
     CHECK(parser != nullptr);
 
-    auto struct_decl = parser->parse_struct_decl();
-    CHECK(struct_decl != nullptr);
+    auto top_lvl = parser->parse_top_level();
     CHECK(parser->error_message().empty());
+
+    auto * struct_decl = dynamic_cast<ast::struct_decl *>(top_lvl.get());
+    CHECK(struct_decl != nullptr);
 
     CHECK(struct_decl->name == "my_struct_type");
     CHECK(struct_decl->fields.size() == 3);
