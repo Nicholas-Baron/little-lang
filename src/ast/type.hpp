@@ -149,6 +149,9 @@ namespace ast {
 
         ~struct_type() final = default;
 
+        [[nodiscard]] size_t field_count() const noexcept { return fields.size(); }
+        [[nodiscard]] const field_type & field(size_t i) const { return fields[i]; }
+
       private:
         struct_type(std::string && name, std::vector<field_type> && fields)
             : user_type{std::move(name)}

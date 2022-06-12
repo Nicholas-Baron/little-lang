@@ -641,7 +641,9 @@ namespace visitor {
         for (auto & stmt : stmt_sequence.stmts) { stmt->accept(*this); }
     }
 
-    void codegen::visit(ast::struct_decl & /*struct_decl*/) { assert(false); }
+    void codegen::visit(ast::struct_decl & struct_decl) {
+        find_type(*struct_decl.type(ir_module->getModuleIdentifier()), struct_decl.location());
+    }
 
     void codegen::visit(ast::top_level & top_level) { top_level.accept(*this); }
 

@@ -127,6 +127,8 @@ namespace ast {
         std::string name;
         std::vector<typed_identifier> fields;
 
+        [[nodiscard]] std::shared_ptr<ast::struct_type> type(const std::string & module_name) const;
+
       private:
         void update_export(bool /*val*/) final {}
     };

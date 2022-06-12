@@ -29,6 +29,20 @@ llvm::Type * type_context::lower_to_llvm(const ast::type & type) {
             assert(pointed_to_type != nullptr);
             return pointed_to_type->getPointerTo();
         }
+
+        if (const auto * struct_type = dynamic_cast<const ast::struct_type *>(&type);
+            struct_type != nullptr) {
+
+            std::vector<llvm::Type *> fields;
+            for (auto i = 0U; i < struct_type->field_count(); ++i) {
+                const auto & [name, type] = struct_type->field(i);
+                fields.emplace_back(lower_to_llvm(*type));
+            }
+
+            auto * llvm_struct_type = llvm::StructType::create(fields, struct_type->user_name());
+            // TODO: active_types.emplace(type, llvm_struct_type);
+            return llvm_struct_type;
+        }
         return nullptr;
     }
     return iter->second;
