@@ -641,6 +641,8 @@ namespace visitor {
         for (auto & stmt : stmt_sequence.stmts) { stmt->accept(*this); }
     }
 
+    void codegen::visit(ast::struct_decl & /*struct_decl*/) { assert(false); }
+
     void codegen::visit(ast::top_level & top_level) { top_level.accept(*this); }
 
     void codegen::visit(ast::top_level_sequence & top_level_sequence) {

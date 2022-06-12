@@ -412,6 +412,8 @@ namespace visitor {
         active_typed_identifiers.pop_back();
     }
 
+    void type_checker::visit(ast::struct_decl & /*struct_decl*/) { assert(false); }
+
     void type_checker::visit(ast::top_level & top_level) { top_level.accept(*this); }
 
     void type_checker::visit(ast::top_level_sequence & top_level_sequence) {

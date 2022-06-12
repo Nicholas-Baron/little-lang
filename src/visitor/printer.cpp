@@ -89,6 +89,14 @@ namespace visitor {
         for (auto & stmt : stmt_sequence.stmts) { stmt->accept(*this); }
     }
 
+    void printer::visit(ast::struct_decl & struct_decl) {
+        std::cout << "struct " << struct_decl.name << " {\n";
+        for (auto & field : struct_decl.fields) {
+            std::cout << field.name() << " : " << field.type() << '\n';
+        }
+        std::cout << '}' << std::endl;
+    }
+
     void printer::visit(ast::top_level & top_level) { top_level.accept(*this); }
 
     void printer::visit(ast::top_level_sequence & top_level_sequence) {

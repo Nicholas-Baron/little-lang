@@ -17,6 +17,7 @@
     expand_node_macro(return_stmt)           \
     expand_node_macro(stmt)                  \
     expand_node_macro(stmt_sequence)         \
+    expand_node_macro(struct_decl)           \
     expand_node_macro(top_level)             \
     expand_node_macro(top_level_sequence)    \
     expand_node_macro(typed_identifier)      \
