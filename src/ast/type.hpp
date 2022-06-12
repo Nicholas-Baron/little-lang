@@ -126,14 +126,14 @@ namespace ast {
 
         [[nodiscard]] bool is_pointer_type() const final { return false; }
 
+        [[nodiscard]] const std::string & user_name() const { return name; }
+
       protected:
         explicit user_type(std::string name)
             : name{std::move(name)} {}
 
       private:
         std::string name;
-
-        void print(std::ostream & /*output*/) const override;
     };
 
     struct struct_type final : public user_type {

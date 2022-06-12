@@ -121,7 +121,11 @@ namespace ast {
         }
     }
 
-    void user_type::print(std::ostream & lhs) const { lhs << name; }
+    void struct_type::print(std::ostream & lhs) const {
+        lhs << user_name() << '{';
+        for (const auto & [name, type] : fields) { lhs << name << " : " << type << ", "; }
+        lhs << '}';
+    }
 
     void function_type::print(std::ostream & lhs) const {
         lhs << '(';
