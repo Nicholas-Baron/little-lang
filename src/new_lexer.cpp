@@ -286,6 +286,8 @@ lexer::token lexer::next_symbol(Location l) {
         to_ret += next_char();
         return {token_type::character, std::move(to_ret), l};
     } break;
+    case '.':
+        return {token_type::dot, ".", l};
     default:
         std::cerr << "Unknown character: " << static_cast<unsigned>(c) << " \'" << c << '\''
                   << std::endl;

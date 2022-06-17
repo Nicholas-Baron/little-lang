@@ -49,6 +49,7 @@ class lexer final {
         lbrace,
         rbrace,
         arrow,
+        dot,
         comma,
         colon,
         equal,
