@@ -88,6 +88,7 @@ class parser final {
     ast::expr_ptr parse_additive();
     ast::expr_ptr parse_multiplicative();
     ast::expr_ptr parse_unary();
+    ast::expr_ptr parse_member_access();
     ast::expr_ptr parse_atom();
 
     // A function call can either be a statement or an expression.

@@ -604,8 +604,33 @@ ast::expr_ptr parser::parse_unary() {
         return expr;
     }
     default:
-        return parse_atom();
+        return parse_member_access();
     }
+}
+
+ast::expr_ptr parser::parse_member_access() {
+    using operand = ast::binary_expr::operand;
+    using val_type = ast::user_val::value_type;
+
+    // Consider the case of `(x.y).z`.
+    // We must try to parse an atom for the parenthesis-enclosed lhs.
+    auto expr = parse_atom();
+
+    while (lex->consume_if(lexer::token_type::dot)) {
+        // the rhs could be:
+        //  - an identifier
+        //  - an integer (if tuples get implemented)
+
+        assert(lex->peek_token() == lexer::token_type::identifier);
+
+        auto tok = lex->next_token();
+        auto rhs = std::make_unique<ast::user_val>(std::move(tok.text), val_type::identifier,
+                                                   tok.location);
+        expr = std::make_unique<ast::binary_expr>(std::move(expr), operand::member_access,
+                                                  std::move(rhs));
+    }
+
+    return expr;
 }
 
 ast::expr_ptr parser::parse_atom() {

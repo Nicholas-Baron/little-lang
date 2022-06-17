@@ -388,6 +388,34 @@ TEST_CASE("the parser will parse a struct initialization") {
     CHECK(struct_init->initializers[3].first == "a");
 }
 
+TEST_CASE("the parser will parse a member access") {
+    std::string buffer = "x.y.z";
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    auto expr = parser->parse_expression();
+    CHECK(expr != nullptr);
+    CHECK(parser->error_message().empty());
+
+    auto * outer_member_access = dynamic_cast<ast::binary_expr *>(expr.get());
+    CHECK(outer_member_access != nullptr);
+    CHECK(outer_member_access->op == ast::binary_expr::operand::member_access);
+    CHECK(outer_member_access->lhs != nullptr);
+    CHECK(outer_member_access->rhs != nullptr);
+
+    auto * rhs = dynamic_cast<ast::user_val *>(outer_member_access->rhs.get());
+    CHECK(rhs != nullptr);
+    CHECK(rhs->val_type == ast::user_val::value_type::identifier);
+    CHECK(rhs->val == "z");
+
+    auto * inner_member_access = dynamic_cast<ast::binary_expr *>(outer_member_access->lhs.get());
+    CHECK(inner_member_access != nullptr);
+    CHECK(inner_member_access->op == ast::binary_expr::operand::member_access);
+    CHECK(inner_member_access->lhs != nullptr);
+    CHECK(inner_member_access->rhs != nullptr);
+}
+
 TEST_CASE("the parser will parse a function with return type") {
     std::string buffer = "main() -> int {}";
     auto parser = parser::from_buffer(buffer);
