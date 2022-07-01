@@ -67,7 +67,7 @@ namespace ast {
             ne,
             bool_and,
             bool_or,
-			member_access,
+            member_access,
         };
 
         binary_expr(expr_ptr lhs, operand op, expr_ptr rhs)
