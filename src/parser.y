@@ -143,6 +143,7 @@ atom : literal
      | func_call
      | struct_init
      | T_LPAREN expr T_RPAREN
+     | if_head expr T_ELSE expr %prec if_expr
      ;
 
 struct_init : T_IDENT T_LBRACE struct_field_init T_RBRACE
@@ -166,7 +167,6 @@ literal : T_INT
         ;
 
 expr : atom
-     | if_head expr T_ELSE expr %prec if_expr
      | T_NOT expr
      | T_MULT expr   %prec T_NOT
      | T_MINUS expr  %prec T_NOT

@@ -224,6 +224,22 @@ TEST_CASE("the parser will parse if expressions") {
     CHECK(if_expr != nullptr);
 }
 
+TEST_CASE("the parser will parse if expressions as atoms") {
+    std::string buffer = " 1 + if x then y else z + 1 ";
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    auto expr = parser->parse_expression();
+    CHECK(expr != nullptr);
+
+    auto * outer_addition = dynamic_cast<ast::binary_expr *>(expr.get());
+    CHECK(outer_addition != nullptr);
+
+    auto * if_expr = dynamic_cast<ast::if_expr *>(outer_addition->rhs.get());
+    CHECK(if_expr != nullptr);
+}
+
 TEST_CASE("the parser will parse if statements") {
     std::string buffer = "if x then {}";
     auto parser = parser::from_buffer(buffer);

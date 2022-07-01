@@ -672,6 +672,9 @@ ast::expr_ptr parser::parse_atom() {
         }
     }
 
+    // if expression
+    if (tok == lexer::token_type::if_) { return parse_if_expression(); }
+
     assert(tok == lexer::token_type::identifier);
     auto id = lex->next_token().text;
     // function call
