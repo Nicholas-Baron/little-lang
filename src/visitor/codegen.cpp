@@ -171,7 +171,7 @@ namespace visitor {
 
         auto * pointer_type = llvm::dyn_cast_or_null<llvm::PointerType>(pointer->getType());
         assert(pointer_type != nullptr);
-        auto * element_ty = pointer_type->getElementType();
+        auto * element_ty = pointer_type->getPointerElementType();
 
         using operand = ast::binary_expr::operand;
 
@@ -706,7 +706,7 @@ namespace visitor {
             assert(ptr_ty != nullptr);
 
             // TODO: Align it?
-            store_result(ir_builder->CreateLoad(ptr_ty->getElementType(), value));
+            store_result(ir_builder->CreateLoad(ptr_ty->getPointerElementType(), value));
         } break;
         case operand::negate:
             if (auto float_op = value->getType()->isFloatingPointTy(); const_val != nullptr) {
