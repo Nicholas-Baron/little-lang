@@ -73,7 +73,6 @@ namespace visitor {
         , ir_module{std::make_unique<llvm::Module>(name, context)}
         , ir_builder{std::make_unique<llvm::IRBuilder<>>(context)}
         , type_context(typ_context)
-        , active_values{{}}
         , program_globals{program_globals}
         , instrinics{{"syscall", &codegen::syscall},
                      {"arg_count", &codegen::arg_count},
@@ -85,8 +84,8 @@ namespace visitor {
 
     llvm::Value * codegen::find_alive_value(const std::string & name, bool should_error) const {
         // Walk backwards thru scopes
-        for (auto scope = active_values.rbegin(); scope != active_values.rend(); ++scope) {
-            if (auto iter = scope->find(name); iter != scope->end()) {
+        for (const auto & scope : active_values) {
+            if (auto iter = scope.find(name); iter != scope.end()) {
 
                 // Globals are always pointers to data, so we should try to use the initializer
                 auto * global = llvm::dyn_cast<llvm::GlobalVariable>(iter->second);
@@ -244,7 +243,7 @@ namespace visitor {
                 nullptr,    "argv"};
             new_raw_arg_vector->setExternallyInitialized(true);
 
-            active_values.front().emplace("argv", new_raw_arg_vector);
+            active_values.add_to_root("argv", new_raw_arg_vector);
             raw_arg_vector = new_raw_arg_vector;
         }
 
@@ -269,7 +268,7 @@ namespace visitor {
                 nullptr,    "argc"};
             new_raw_arg_count->setExternallyInitialized(true);
 
-            active_values.front().emplace("argc", new_raw_arg_count);
+            active_values.add_to_root("argc", new_raw_arg_count);
             raw_arg_count = new_raw_arg_count;
         }
         auto * long_argc = ir_builder->CreateLoad(llvm_i64_ty, raw_arg_count);
@@ -383,7 +382,7 @@ namespace visitor {
         auto * global = new llvm::GlobalVariable{
             *ir_module, value->getType(), true, linkage, value, const_decl.name_and_type.name()};
 
-        active_values.back().emplace(const_decl.name_and_type.name(), global);
+        active_values.add_to_current_scope(const_decl.name_and_type.name(), global);
         if (const_decl.exported()) {
             program_globals.add(ir_module->getModuleIdentifier(), const_decl.name_and_type.name(),
                                 global);
@@ -453,24 +452,26 @@ namespace visitor {
             = llvm::Function::Create(func_type, linkage, func_decl.head.name(), ir_module.get());
 
         // add the function to the current scope
-        active_values.back().emplace(func_decl.head.name(), func);
+        active_values.add_to_current_scope(func_decl.head.name(), func);
 
         // enter the function
-        active_values.emplace_back();
-        for (auto i = 0U; i < param_count; ++i) {
-            const auto & name = func_decl.head.arg(i).name();
-            auto * arg = func->getArg(i);
-            arg->setName(name);
-            active_values.back().emplace(name, arg);
+        {
+            auto & func_scope = active_values.add_scope();
+            for (auto i = 0U; i < param_count; ++i) {
+                const auto & name = func_decl.head.arg(i).name();
+                auto * arg = func->getArg(i);
+                arg->setName(name);
+                func_scope.emplace(name, arg);
+            }
+
+            auto * block = llvm::BasicBlock::Create(context, func->getName(), func);
+            ir_builder->SetInsertPoint(block);
+
+            func_decl.body->accept(*this);
+
+            // leave the function
+            active_values.remove_scope();
         }
-
-        auto * block = llvm::BasicBlock::Create(context, func->getName(), func);
-        ir_builder->SetInsertPoint(block);
-
-        func_decl.body->accept(*this);
-
-        // leave the function
-        active_values.pop_back();
 
         // Ensure termination for the whole function
         // TODO: Iterate every block and check for termination on each?
@@ -620,7 +621,7 @@ namespace visitor {
 
         auto * value = get_value(*let_stmt.value, *this);
         value->setName(let_stmt.name_and_type.name());
-        active_values.back().emplace(let_stmt.name_and_type.name(), value);
+        active_values.add_to_current_scope(let_stmt.name_and_type.name(), value);
     }
 
     void codegen::visit(ast::node & node) { node.accept(*this); }
@@ -665,11 +666,11 @@ namespace visitor {
                                                              llvm::GlobalValue::ExternalLinkage, id,
                                                              ir_module.get());
                         func->deleteBody();
-                        active_values.back().emplace(id, func);
+                        active_values.add_to_current_scope(id, func);
                     } else if (auto * global_var = llvm::dyn_cast<llvm::GlobalVariable>(global);
                                global_var != nullptr) {
                         // must be a global constant
-                        active_values.back().emplace(id, global_var);
+                        active_values.add_to_current_scope(id, global_var);
                     }
                 }
             }

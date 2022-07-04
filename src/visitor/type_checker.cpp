@@ -19,14 +19,13 @@ namespace visitor {
                                global_map<std::string, ast::type_ptr> & globals)
         : filename{std::move(filename)}
         , context{context}
-        , active_typed_identifiers{{}}
         , program_globals{globals} {
         instrinics.emplace("syscall", &type_checker::syscall);
     }
 
     void type_checker::bind_type(ast::type_ptr type, std::string identifier, bool should_export) {
         if (should_export) { program_globals.add(filename, identifier, type); }
-        active_typed_identifiers.back().emplace(std::move(identifier), std::move(type));
+        active_typed_identifiers.add_to_current_scope(std::move(identifier), std::move(type));
     }
 
     template<class... arg_t>
@@ -44,9 +43,8 @@ namespace visitor {
 
     [[nodiscard]] ast::type_ptr type_checker::find_type_of(const std::string & id) const {
 
-        for (auto iter = active_typed_identifiers.rbegin(); iter != active_typed_identifiers.rend();
-             ++iter) {
-            if (auto result = iter->find(id); result != iter->end()) { return result->second; }
+        for (const auto & scope : active_typed_identifiers) {
+            if (auto result = scope.find(id); result != scope.end()) { return result->second; }
         }
 
         return nullptr;
@@ -297,7 +295,7 @@ namespace visitor {
 
         bind_type(func_type, func_name, func_decl.exported());
 
-        active_typed_identifiers.emplace_back();
+        active_typed_identifiers.add_scope();
 
         // bind the parameter types
         for (auto i = 0U; i < func_decl.head.param_count(); ++i) {
@@ -306,7 +304,7 @@ namespace visitor {
 
         func_decl.body->accept(*this);
 
-        active_typed_identifiers.pop_back();
+        active_typed_identifiers.remove_scope();
     }
 
     void type_checker::visit(ast::if_expr & if_expr) {
@@ -407,9 +405,9 @@ namespace visitor {
     void type_checker::visit(ast::stmt & stmt) { stmt.accept(*this); }
 
     void type_checker::visit(ast::stmt_sequence & stmt_sequence) {
-        active_typed_identifiers.emplace_back();
+        active_typed_identifiers.add_scope();
         for (auto & stmt : stmt_sequence.stmts) { stmt->accept(*this); }
-        active_typed_identifiers.pop_back();
+        active_typed_identifiers.remove_scope();
     }
 
     void type_checker::visit(ast::struct_decl & /*struct_decl*/) { assert(false); }

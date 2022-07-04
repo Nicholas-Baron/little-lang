@@ -4,6 +4,7 @@
 #include "ast/node_utils.hpp"
 #include "ast/type.hpp"
 #include "global_map.hpp"
+#include "scoped_map.hpp"
 #include "location.hpp"
 #include "value_getter.hpp"
 #include "visitor_base.hpp"
@@ -62,7 +63,7 @@ namespace visitor {
         std::string filename;
         llvm::LLVMContext & context;
 
-        std::vector<std::map<std::string, ast::type_ptr>> active_typed_identifiers;
+        scoped_map<std::string, ast::type_ptr> active_typed_identifiers;
         global_map<std::string, ast::type_ptr> & program_globals;
         std::map<std::string, void (type_checker::*)(ast::func_call_data &)> instrinics;
 

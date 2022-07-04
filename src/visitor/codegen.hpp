@@ -2,6 +2,7 @@
 #define CODEGEN_HPP
 
 #include "location.hpp"
+#include "scoped_map.hpp"
 #include "value_getter.hpp"
 #include "visitor_base.hpp"
 
@@ -64,7 +65,7 @@ namespace visitor {
         std::unique_ptr<llvm::IRBuilder<>> ir_builder;
 
         type_context & type_context;
-        std::vector<std::map<std::string, llvm::Value *>> active_values;
+        scoped_map<std::string, llvm::Value *> active_values;
         global_map<std::string, llvm::GlobalObject *> & program_globals;
 
         std::map<std::string, void (codegen::*)(ast::func_call_data &)> instrinics;
