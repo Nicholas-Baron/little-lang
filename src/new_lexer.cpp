@@ -63,7 +63,7 @@ lexer::lexer(const char * data, size_t size)
     , length{size}
     , type{data_type::read_buffer} {}
 
-lexer::~lexer() {
+lexer::~lexer() noexcept {
     if (type == data_type::mmapped) {
         // If we mapped in a file for our input, we need to clean up that mapping.
         // Since we are being destroyed, we can mutate our member variables.

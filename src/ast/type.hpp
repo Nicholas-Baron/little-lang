@@ -54,7 +54,7 @@ namespace ast {
         non_movable(nullable_ptr_type);
         ~nullable_ptr_type() final = default;
 
-        [[nodiscard]] bool nullable() const final { return true; }
+        [[nodiscard]] bool nullable() const noexcept final { return true; }
 
       private:
         explicit nullable_ptr_type(type_ptr inner)
@@ -71,7 +71,7 @@ namespace ast {
         non_movable(nonnullable_ptr_type);
         ~nonnullable_ptr_type() final = default;
 
-        [[nodiscard]] bool nullable() const final { return false; }
+        [[nodiscard]] bool nullable() const noexcept final { return false; }
 
       private:
         explicit nonnullable_ptr_type(type_ptr inner)
