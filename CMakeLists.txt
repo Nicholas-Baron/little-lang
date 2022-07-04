@@ -8,23 +8,17 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS YES)
 cmake_policy(SET CMP0048 NEW)
 cmake_policy(SET CMP0115 NEW)
 
-project(
-	Little_Compiler
-	VERSION 0.0.1
-	)
+project(Little_Compiler VERSION 0.0.1)
 
 find_program(CONAN conan)
 if(NOT CONAN)
-	message(FATAL_ERROR "Could not find conan package manager.")
+    message(FATAL_ERROR "Could not find conan package manager.")
 endif()
 
 include(${CMAKE_SOURCE_DIR}/cmake/conan.cmake)
 
 conan_check(VERSION 1.14.4 REQUIRED)
-conan_cmake_run(CONANFILE conanfile.txt
-        BASIC_SETUP CMAKE_TARGETS
-        BUILD missing
-		)
+conan_cmake_run(CONANFILE conanfile.txt BASIC_SETUP CMAKE_TARGETS BUILD missing)
 
 enable_testing()
 
@@ -62,6 +56,5 @@ add_subdirectory(test)
 add_custom_target(
     copy-compile-commands ALL
     ${CMAKE_COMMAND} -E copy_if_different
-        ${CMAKE_BINARY_DIR}/compile_commands.json
-        ${CMAKE_CURRENT_LIST_DIR}
-    )
+    ${CMAKE_BINARY_DIR}/compile_commands.json ${CMAKE_CURRENT_LIST_DIR}
+)

@@ -2,82 +2,84 @@
 find_package(BISON)
 
 if(BISON_FOUND)
-  # the bison spec file
-  set(bison_input ${CMAKE_SOURCE_DIR}/src/parser.y)
-  add_custom_target(
-    bison
-    COMMAND ${BISON_EXECUTABLE} ${bison_input} -Wall --verbose --report-file=parser.report
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-    VERBATIM USES_TERMINAL
-  )
+    # the bison spec file
+    set(bison_input ${CMAKE_SOURCE_DIR}/src/parser.y)
+    add_custom_target(
+        bison
+        COMMAND ${BISON_EXECUTABLE} ${bison_input} -Wall --verbose
+                --report-file=parser.report
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+        VERBATIM USES_TERMINAL
+    )
 endif()
 
-configure_file(${CMAKE_SOURCE_DIR}/src/version.hpp.in ${CMAKE_BINARY_DIR}/version.hpp @ONLY)
-
-set(
-  proj_files
-  ast/nodes.cpp
-  ast/type.cpp
-  emit_asm.cpp
-  jit.cpp
-  location.cpp
-  new_lexer.cpp
-  new_parser.cpp
-  program.cpp
-  settings.cpp
-  type_context.cpp
-  utils/execute.cpp
-  utils/string_utils.cpp
-  visitor/codegen.cpp
-  visitor/printer.cpp
-  visitor/token_to_string.cpp
-  visitor/type_checker.cpp
+configure_file(
+    ${CMAKE_SOURCE_DIR}/src/version.hpp.in ${CMAKE_BINARY_DIR}/version.hpp
+    @ONLY
 )
 
-# Add reserved identifier warning here, as catch's internals seem to set it off a lot
+set(proj_files
+    ast/nodes.cpp
+    ast/type.cpp
+    emit_asm.cpp
+    jit.cpp
+    location.cpp
+    new_lexer.cpp
+    new_parser.cpp
+    program.cpp
+    settings.cpp
+    type_context.cpp
+    utils/execute.cpp
+    utils/string_utils.cpp
+    visitor/codegen.cpp
+    visitor/printer.cpp
+    visitor/token_to_string.cpp
+    visitor/type_checker.cpp
+)
+
+# Add reserved identifier warning here, as catch's internals seem to set it off
+# a lot
 if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "13")
-  add_compile_options(-Wreserved-identifier)
+    add_compile_options(-Wreserved-identifier)
 endif()
 
 # the library for testing
 add_library(littlec_lib ${proj_files})
 target_compile_options(
-  littlec_lib
-  PRIVATE -Og -fdata-sections -ffunction-sections
-  PUBLIC -Wno-unused-command-line-argument
+    littlec_lib
+    PRIVATE -Og -fdata-sections -ffunction-sections
+    PUBLIC -Wno-unused-command-line-argument
 )
 
 llvm_map_components_to_libnames(
-	LLVM_LIBS
-	all core support native executionengine asmprinter codegen passes
+    LLVM_LIBS
+    all
+    core
+    support
+    native
+    executionengine
+    asmprinter
+    codegen
+    passes
 )
 
 target_link_libraries(littlec_lib ${LLVM_LIBS} CONAN_PKG::lyra)
 target_link_options(littlec_lib PUBLIC -Wl,--gc-sections)
 target_include_directories(
-  littlec_lib
-  PUBLIC ${CMAKE_SOURCE_DIR}/src
-  PRIVATE CONAN_PKG::lyra ${CMAKE_BINARY_DIR} ${LLVM_INCLUDE_DIRS}
+    littlec_lib
+    PUBLIC ${CMAKE_SOURCE_DIR}/src
+    PRIVATE CONAN_PKG::lyra ${CMAKE_BINARY_DIR} ${LLVM_INCLUDE_DIRS}
 )
 separate_arguments(LLVM_DEF_LIST NATIVE_COMMAND ${LLVM_DEFINITIONS})
-target_compile_definitions(
-	littlec_lib
-	PRIVATE ${LLVM_DEF_LIST}
-)
-target_precompile_headers(littlec_lib
-	PUBLIC ast/nodes.hpp program.hpp
-)
-
+target_compile_definitions(littlec_lib PRIVATE ${LLVM_DEF_LIST})
+target_precompile_headers(littlec_lib PUBLIC ast/nodes.hpp program.hpp)
 
 # the actual executable
 add_executable(littlec main.cpp)
 target_compile_options(
-  littlec
-  PRIVATE -O2 -Wno-unused-command-line-argument -Wno-unused-parameter
+    littlec PRIVATE -O2 -Wno-unused-command-line-argument -Wno-unused-parameter
 )
 target_link_libraries(littlec CONAN_PKG::lyra littlec_lib)
 target_include_directories(
-  littlec
-  PRIVATE ${CMAKE_SOURCE_DIR}/src CONAN_PKG::lyra ${CMAKE_BINARY_DIR}
+    littlec PRIVATE ${CMAKE_SOURCE_DIR}/src CONAN_PKG::lyra ${CMAKE_BINARY_DIR}
 )
-
