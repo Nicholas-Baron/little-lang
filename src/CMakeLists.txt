@@ -43,17 +43,26 @@ endif()
 add_library(littlec_lib ${proj_files})
 target_compile_options(
   littlec_lib
-  PRIVATE -Og
-    -fdata-sections -ffunction-sections
-  PUBLIC ${LLVM_CONFIG}
-    -Wno-unused-command-line-argument
+  PRIVATE -Og -fdata-sections -ffunction-sections
+  PUBLIC -Wno-unused-command-line-argument
 )
-target_link_libraries(littlec_lib ${LLVM_CONFIG} CONAN_PKG::lyra)
+
+llvm_map_components_to_libnames(
+	LLVM_LIBS
+	all core support native executionengine asmprinter codegen passes
+)
+
+target_link_libraries(littlec_lib ${LLVM_LIBS} CONAN_PKG::lyra)
 target_link_options(littlec_lib PUBLIC -Wl,--gc-sections)
 target_include_directories(
   littlec_lib
   PUBLIC ${CMAKE_SOURCE_DIR}/src
-  PRIVATE CONAN_PKG::lyra ${CMAKE_BINARY_DIR}
+  PRIVATE CONAN_PKG::lyra ${CMAKE_BINARY_DIR} ${LLVM_INCLUDE_DIRS}
+)
+separate_arguments(LLVM_DEF_LIST NATIVE_COMMAND ${LLVM_DEFINITIONS})
+target_compile_definitions(
+	littlec_lib
+	PRIVATE ${LLVM_DEF_LIST}
 )
 target_precompile_headers(littlec_lib
 	PUBLIC ast/nodes.hpp program.hpp
@@ -64,10 +73,9 @@ target_precompile_headers(littlec_lib
 add_executable(littlec main.cpp)
 target_compile_options(
   littlec
-  PRIVATE -O2 ${LLVM_CONFIG}
-    -Wno-unused-command-line-argument -Wno-unused-parameter
+  PRIVATE -O2 -Wno-unused-command-line-argument -Wno-unused-parameter
 )
-target_link_libraries(littlec ${LLVM_CONFIG} CONAN_PKG::lyra littlec_lib)
+target_link_libraries(littlec CONAN_PKG::lyra littlec_lib)
 target_include_directories(
   littlec
   PRIVATE ${CMAKE_SOURCE_DIR}/src CONAN_PKG::lyra ${CMAKE_BINARY_DIR}
