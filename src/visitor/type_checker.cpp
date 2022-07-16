@@ -410,7 +410,28 @@ namespace visitor {
         active_typed_identifiers.remove_scope();
     }
 
-    void type_checker::visit(ast::struct_decl & /*struct_decl*/) { assert(false); }
+    void type_checker::visit(ast::struct_decl & struct_decl) {
+        auto type_ptr = ast::user_type::lookup(struct_decl.name, filename);
+        if (type_ptr == nullptr) {
+            std::vector<ast::struct_type::field_type> fields;
+            for (auto & typed_id : struct_decl.fields) {
+                fields.emplace_back(typed_id.name(), typed_id.type());
+            }
+            type_ptr = ast::struct_type::create(std::string{struct_decl.name}, filename,
+                                                std::move(fields));
+        }
+
+        if (visible_structs.find(struct_decl.name) != visible_structs.end()) {
+            printError(struct_decl.location(), "Struct ", struct_decl.name,
+                       " has been previously declared");
+            return;
+        }
+
+        auto struct_type_ptr = std::dynamic_pointer_cast<ast::struct_type>(type_ptr);
+        assert(struct_type_ptr != nullptr
+               and "user_type::lookup somehow returned a non-struct user declared type");
+        visible_structs.emplace(struct_decl.name, std::move(struct_type_ptr));
+    }
 
     void type_checker::visit(ast::top_level & top_level) { top_level.accept(*this); }
 

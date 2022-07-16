@@ -66,6 +66,8 @@ namespace visitor {
         scoped_map<std::string, ast::type_ptr> active_typed_identifiers;
         global_map<std::string, ast::type_ptr> & program_globals;
         std::map<std::string, void (type_checker::*)(ast::func_call_data &)> instrinics;
+        // Currently, structs can only be declared at the file level.
+        std::map<std::string, std::shared_ptr<ast::struct_type>> visible_structs;
 
         const ast::type * current_return_type{nullptr};
         const std::string * current_function_name{nullptr};
