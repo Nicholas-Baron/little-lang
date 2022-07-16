@@ -97,6 +97,18 @@ namespace visitor {
         std::cout << '}' << std::endl;
     }
 
+    void printer::visit(ast::struct_init & struct_init) {
+        std::cout << "struct " << struct_init.name << " {\n";
+
+        for (auto & [name, value] : struct_init.initializers) {
+            std::cout << name << " = ";
+            value->accept(*this);
+            std::cout << std::endl;
+        }
+
+        std::cout << '}' << std::endl;
+    }
+
     void printer::visit(ast::top_level & top_level) { top_level.accept(*this); }
 
     void printer::visit(ast::top_level_sequence & top_level_sequence) {

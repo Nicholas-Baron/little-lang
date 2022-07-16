@@ -433,6 +433,8 @@ namespace visitor {
         visible_structs.emplace(struct_decl.name, std::move(struct_type_ptr));
     }
 
+    void type_checker::visit(ast::struct_init &) { assert(false); }
+
     void type_checker::visit(ast::top_level & top_level) { top_level.accept(*this); }
 
     void type_checker::visit(ast::top_level_sequence & top_level_sequence) {
