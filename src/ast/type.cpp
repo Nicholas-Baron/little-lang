@@ -49,6 +49,8 @@ namespace ast {
 
     std::shared_ptr<user_type> user_type::lookup(const std::string & name,
                                                  const std::string & module_name) {
+        assert(not name.empty());
+
         return user_made_types.lookup(module_name, name);
     }
 
@@ -56,13 +58,17 @@ namespace ast {
                                                      const std::string & module_name,
                                                      std::vector<field_type> && fields) {
 
+        assert(not name.empty());
+        // TODO: The "" module may be useful.
+        assert(not module_name.empty());
+
         if (auto old_type = user_type::lookup(name, module_name); old_type != nullptr) {
             std::cerr << "Redeclaring " << name << " in module " << module_name << std::endl;
             assert(false);
         }
 
         auto new_user_type
-            = std::shared_ptr<struct_type>{new struct_type{std::move(name), std::move(fields)}};
+            = std::shared_ptr<struct_type>{new struct_type{std::string{name}, std::move(fields)}};
         user_made_types.add(module_name, name, new_user_type);
 
         return new_user_type;
