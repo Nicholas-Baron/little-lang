@@ -63,7 +63,13 @@ namespace ast {
         assert(not module_name.empty());
 
         if (auto old_type = user_type::lookup(name, module_name); old_type != nullptr) {
-            std::cerr << "Redeclaring " << name << " in module " << module_name << std::endl;
+            if (auto possible_struct = std::dynamic_pointer_cast<struct_type>(old_type);
+                possible_struct != nullptr) {
+                return possible_struct;
+            }
+
+            std::cout << "Type " << name << " is already registered in " << module_name
+                      << " as a non-struct type" << std::endl;
             assert(false);
         }
 
