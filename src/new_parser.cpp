@@ -6,15 +6,17 @@
 #include "utils/string_utils.hpp" // unquote
 
 #include <cassert>
+#include <filesystem>
 #include <iostream> // cerr
 #include <map>
 #include <memory> // unique_ptr
 
-std::unique_ptr<parser> parser::from_file(const std::string & filename) {
+std::unique_ptr<parser> parser::from_file(const std::string & filename,
+                                          const std::filesystem::path & project_root) {
     auto lexer = lexer::from_file(filename);
     if (lexer == nullptr) { return nullptr; }
     // NOTE: `make_unique` does not like private constructors.
-    return std::unique_ptr<parser>(new parser{std::move(lexer)});
+    return std::unique_ptr<parser>(new parser{std::move(lexer), project_root});
 }
 
 std::unique_ptr<parser> parser::from_buffer(std::string & buffer) {
@@ -262,7 +264,7 @@ std::unique_ptr<ast::struct_decl> parser::parse_struct_decl() {
         for (auto & typed_id : fields) {
             struct_fields.emplace_back(typed_id.name(), typed_id.type());
         }
-        assert(ast::struct_type::create(std::string{name.text}, lex->module_name(),
+        assert(ast::struct_type::create(std::string{name.text}, module_name(),
                                         std::move(struct_fields))
                != nullptr);
     }
@@ -446,7 +448,7 @@ ast::type_ptr parser::parse_type() {
     // a type can either be some primitive or a user-defined type.
     switch (lex->peek_token().type) {
     case lexer::token_type::identifier: {
-        auto type_ptr = ast::user_type::lookup(lex->next_token().text, lex->module_name());
+        auto type_ptr = ast::user_type::lookup(lex->next_token().text, module_name());
         assert(type_ptr != nullptr);
         return type_ptr;
     }

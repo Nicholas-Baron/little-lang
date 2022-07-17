@@ -9,6 +9,7 @@
 #include "new_lexer.hpp"
 #include "utils/move_copy.hpp"
 
+#include <filesystem>
 #include <map>
 #include <memory> // unique_ptr
 #include <optional>
@@ -27,7 +28,8 @@ class parser final {
   public:
     // `from_file` loads a file from given filename and uses that as input.
     // The file data is internally allocated and freed by the parser.
-    static std::unique_ptr<parser> from_file(const std::string & filename);
+    static std::unique_ptr<parser> from_file(const std::string & filename,
+                                             const std::filesystem::path & project_root);
 
     // `from_buffer` uses the given string as its input.
     // Note that the parser does not own the string and maintains a readonly view into it.
@@ -50,8 +52,10 @@ class parser final {
     ~parser() noexcept = default;
 
   private:
-    explicit parser(lex_ptr && lex)
-        : lex{std::move(lex)} {}
+    explicit parser(lex_ptr && lex,
+                    std::optional<std::filesystem::path> project_root = std::nullopt)
+        : project_root{std::move(project_root)}
+        , lex{std::move(lex)} {}
 
     // As stated above,
     // there are some internals which need to be tested independently of each other.
@@ -103,6 +107,16 @@ class parser final {
 
   private:
 #endif
+
+    // XXX: Separation of responsibilities issue?
+    std::optional<std::filesystem::path> project_root;
+
+    [[nodiscard]] std::string module_name() const {
+        if (project_root.has_value()) {
+            return std::filesystem::relative(lex->file_name(), *project_root);
+        }
+        return lex->file_name();
+    }
 
     lex_ptr lex;
     std::string error;
