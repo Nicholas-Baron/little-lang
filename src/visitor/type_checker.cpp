@@ -462,7 +462,40 @@ namespace visitor {
         visible_structs.emplace(struct_decl.name, std::move(struct_type_ptr));
     }
 
-    void type_checker::visit(ast::struct_init &) { assert(false); }
+    void type_checker::visit(ast::struct_init & struct_init) {
+
+        auto struct_decl = std::dynamic_pointer_cast<ast::struct_type>(
+            ast::user_type::lookup(struct_init.name, filename));
+
+        if (struct_decl == nullptr) {
+            return printError(struct_init.location(), '`', struct_init.name,
+                              "` does not name a defined struct");
+        }
+
+        // Check each field for correct type
+        for (auto i = 0U; i < struct_decl->field_count(); ++i) {
+            const auto & field = struct_decl->field(i);
+            auto name = field.first;
+
+            auto iter = std::find_if(
+                struct_init.initializers.begin(), struct_init.initializers.end(),
+                [&name](auto & initializer) -> bool { return initializer.first == name; });
+
+            if (iter == struct_init.initializers.end()) {
+                return printError(struct_init.location(), "Missing initializer for field ", name,
+                                  " of type ", struct_decl->user_name());
+            }
+
+            auto target_type = field.second;
+            auto real_type = get_value(*iter->second, *this);
+            if (target_type != real_type) {
+                return printError(iter->second->location(), "Expected an expression of type ",
+                                  *target_type, " for field ", name, "; Found one of ", *real_type);
+            }
+        }
+
+        return store_result(std::move(struct_decl), struct_init);
+    }
 
     void type_checker::visit(ast::top_level & top_level) { top_level.accept(*this); }
 
