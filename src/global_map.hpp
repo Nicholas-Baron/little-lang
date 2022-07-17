@@ -2,6 +2,7 @@
 #define GLOBAL_VALUES_HPP
 
 #include <map>
+#include <ostream>
 #include <string>
 
 template<typename key_t, typename value_t>
@@ -30,6 +31,16 @@ class global_map final {
 
   private:
     std::map<std::string, std::map<key_t, value_t>> globals;
+
+    friend std::ostream & operator<<(std::ostream & lhs, const global_map<key_t, value_t> & rhs) {
+        lhs << '{';
+        for (auto & [mod_name, contents] : rhs.globals) {
+            lhs << mod_name << " : {";
+            for (auto & [name, item] : contents) { lhs << name << " : " << item << ", "; }
+            lhs << "},";
+        }
+        return lhs << '}';
+    }
 };
 
 #endif
