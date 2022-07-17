@@ -155,6 +155,33 @@ namespace visitor {
     void type_checker::visit(ast::binary_expr & binary_expr) {
 
         auto lhs_type = get_value(*binary_expr.lhs, *this);
+
+        if (const auto * struct_type = dynamic_cast<ast::struct_type *>(lhs_type.get());
+            struct_type != nullptr) {
+
+            const auto * rhs = dynamic_cast<ast::user_val *>(binary_expr.rhs.get());
+            if (rhs != nullptr and rhs->val_type == ast::user_val::value_type::identifier) {
+
+                // `struct.id`
+
+                for (auto i = 0U; i < struct_type->field_count(); ++i) {
+                    if (const auto & field = struct_type->field(i); field.first == rhs->val) {
+                        return store_result(field.second, binary_expr);
+                    }
+                }
+
+                return printError(binary_expr.location(), "Could not find a field named ", rhs->val,
+                                  " in struct type ", struct_type->user_name());
+            }
+
+            if (rhs != nullptr) {
+                return printError(binary_expr.location(),
+                                  "Expected an identifier to the rhs of a `.`; found ", rhs->val);
+            }
+
+            assert(false);
+        }
+
         auto rhs_type = get_value(*binary_expr.rhs, *this);
 
         // If one side of a binary_expr is the `null` primitive,
@@ -287,6 +314,7 @@ namespace visitor {
         std::vector<ast::type_ptr> arg_types;
         for (auto i = 0U; i < func_decl.head.param_count(); ++i) {
             const auto & param = func_decl.head.arg(i);
+            assert(param.type() != nullptr);
             arg_types.push_back(param.type());
         }
 
@@ -299,6 +327,7 @@ namespace visitor {
 
         // bind the parameter types
         for (auto i = 0U; i < func_decl.head.param_count(); ++i) {
+            assert(func_type->arg(i) != nullptr);
             bind_type(func_type->arg(i), func_decl.head.arg(i).name());
         }
 

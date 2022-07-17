@@ -2,6 +2,7 @@
 
 #include "ast/node_utils.hpp"
 #include "ast/nodes.hpp"
+#include "ast/type.hpp"
 #include "utils/string_utils.hpp" // unquote
 
 #include <cassert>
@@ -254,6 +255,18 @@ std::unique_ptr<ast::struct_decl> parser::parse_struct_decl() {
         }
     }
 
+    {
+        // Insert the new struct type into the ast type registry
+        std::vector<ast::struct_type::field_type> struct_fields;
+        struct_fields.reserve(fields.size());
+        for (auto & typed_id : fields) {
+            struct_fields.emplace_back(typed_id.name(), typed_id.type());
+        }
+        assert(ast::struct_type::create(std::string{name.text}, lex->module_name(),
+                                        std::move(struct_fields))
+               != nullptr);
+    }
+
     auto decl = std::make_unique<ast::struct_decl>(std::move(name.text), std::move(fields));
     decl->set_location(location);
     return decl;
@@ -432,8 +445,11 @@ ast::typed_identifier parser::parse_typed_identifier() {
 ast::type_ptr parser::parse_type() {
     // a type can either be some primitive or a user-defined type.
     switch (lex->peek_token().type) {
-    case lexer::token_type::identifier:
-        return ast::user_type::lookup(lex->next_token().text, lex->module_name());
+    case lexer::token_type::identifier: {
+        auto type_ptr = ast::user_type::lookup(lex->next_token().text, lex->module_name());
+        assert(type_ptr != nullptr);
+        return type_ptr;
+    }
     case lexer::token_type::prim_type: {
         static const std::map<std::string, ast::type_ptr> prim_types{
             {"int", ast::prim_type::int32},      {"float", ast::prim_type::float32},
