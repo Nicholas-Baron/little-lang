@@ -137,6 +137,23 @@ TEST_CASE("the lexer will parse a character literal") {
     CHECK(lexer->next_token() == lexer::token_type::eof);
 }
 
+TEST_CASE("the lexer will parse boolean literals") {
+    std::string buffer = " true\n false ";
+    auto lexer = lexer::from_buffer(buffer);
+
+    CHECK(lexer != nullptr);
+
+    auto tok = lexer->next_token();
+    CHECK(tok == lexer::token_type::boolean);
+    CHECK(tok == "true");
+
+    tok = lexer->next_token();
+    CHECK(tok == lexer::token_type::boolean);
+    CHECK(tok == "false");
+
+    CHECK(lexer->next_token() == lexer::token_type::eof);
+}
+
 TEST_CASE("the lexer will parse an integer") {
     std::string buffer = "1234";
     auto lexer = lexer::from_buffer(buffer);

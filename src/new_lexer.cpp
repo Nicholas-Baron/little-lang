@@ -138,6 +138,9 @@ lexer::token lexer::next_identifier(Location l) {
         {"int", token_type::prim_type},
         {"string", token_type::prim_type},
         {"unit", token_type::prim_type},
+        // literal values
+        {"true", token_type::boolean},
+        {"false", token_type::boolean},
     };
 
     if (auto iter = reserved_words.find(to_ret); iter != reserved_words.end()) {
