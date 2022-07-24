@@ -99,7 +99,7 @@ namespace visitor {
         return nullptr;
     }
 
-    llvm::Type * codegen::find_type(const ast::type & type, std::optional<Location> loc) {
+    llvm::Type * codegen::find_type(ast::type_ptr type, std::optional<Location> loc) {
 
         auto * typ = type_context.lower_to_llvm(type);
         if (typ == nullptr) {
@@ -272,7 +272,7 @@ namespace visitor {
             raw_arg_count = new_raw_arg_count;
         }
         auto * long_argc = ir_builder->CreateLoad(llvm_i64_ty, raw_arg_count);
-        store_result(ir_builder->CreateTrunc(long_argc, find_type(*ast::prim_type::int32)));
+        store_result(ir_builder->CreateTrunc(long_argc, find_type(ast::prim_type::int32)));
     }
 
     void codegen::syscall(ast::func_call_data & func_call_data) {
@@ -292,7 +292,7 @@ namespace visitor {
         for (auto * val : args) { param_types.push_back(val->getType()); }
 
         auto * func_type
-            = llvm::FunctionType::get(find_type(*ast::prim_type::int32), param_types, false);
+            = llvm::FunctionType::get(find_type(ast::prim_type::int32), param_types, false);
 
         assert(llvm::InlineAsm::Verify(func_type, constraint));
 
@@ -320,7 +320,7 @@ namespace visitor {
             auto index = UINT64_MAX;
             for (auto i = 0U; i < lhs_type->field_count(); ++i) {
                 if (const auto & [name, type] = lhs_type->field(i); name == field_node->val) {
-                    result_type = find_type(*type);
+                    result_type = find_type(type);
                     index = i;
                     break;
                 }
@@ -467,11 +467,11 @@ namespace visitor {
         for (auto i = 0U; i < param_count; ++i) {
 
             auto param = func_decl.head.arg(i);
-            param_types.push_back(find_type(*param.type(), param.location()));
+            param_types.push_back(find_type(param.type(), param.location()));
         }
 
         auto * func_type = llvm::FunctionType::get(
-            find_type(*func_decl.head.ret_type(), func_decl.location()), param_types, false);
+            find_type(func_decl.head.ret_type(), func_decl.location()), param_types, false);
 
         // The only functions that need ExternalLinkage are "main" or exported ones
         auto linkage = (func_decl.head.name() == "main" or func_decl.exported())
@@ -673,15 +673,15 @@ namespace visitor {
     }
 
     void codegen::visit(ast::struct_decl & struct_decl) {
-        find_type(*struct_decl.type(ir_module->getModuleIdentifier()), struct_decl.location());
+        find_type(struct_decl.type(ir_module->getModuleIdentifier()), struct_decl.location());
     }
 
     void codegen::visit(ast::struct_init & struct_init) {
 
-        auto * ast_struct_type = dynamic_cast<ast::struct_type *>(struct_init.type.get());
+        auto ast_struct_type = std::dynamic_pointer_cast<ast::struct_type>(struct_init.type);
         assert(ast_struct_type != nullptr);
 
-        auto * llvm_struct_type = find_type(*ast_struct_type);
+        auto * llvm_struct_type = find_type(ast_struct_type);
         assert(llvm_struct_type != nullptr);
 
         // Allocate the struct
@@ -797,7 +797,7 @@ namespace visitor {
         case value_type::null: {
             auto & type = user_val.type;
             assert(type->is_pointer_type());
-            auto * llvm_type = type_context.lower_to_llvm(*type);
+            auto * llvm_type = type_context.lower_to_llvm(type);
             assert(llvm_type != nullptr);
             return store_result(llvm::Constant::getNullValue(llvm_type));
         }

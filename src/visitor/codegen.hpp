@@ -38,8 +38,7 @@ namespace visitor {
         void dump() const;
 
       private:
-        llvm::Type * find_type(const ast::type & ast_type,
-                               std::optional<Location> loc = std::nullopt);
+        llvm::Type * find_type(ast::type_ptr ast_type, std::optional<Location> loc = std::nullopt);
 
         [[nodiscard]] llvm::Value * find_alive_value(const std::string & name,
                                                      bool should_error = true) const;
