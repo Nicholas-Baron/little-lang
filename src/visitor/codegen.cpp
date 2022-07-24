@@ -676,7 +676,36 @@ namespace visitor {
         find_type(*struct_decl.type(ir_module->getModuleIdentifier()), struct_decl.location());
     }
 
-    void codegen::visit(ast::struct_init & /*unused*/) { assert(false); }
+    void codegen::visit(ast::struct_init & struct_init) {
+
+        auto * ast_struct_type = dynamic_cast<ast::struct_type *>(struct_init.type.get());
+        assert(ast_struct_type != nullptr);
+
+        auto * llvm_struct_type = find_type(*ast_struct_type);
+        assert(llvm_struct_type != nullptr);
+
+        // Allocate the struct
+        auto * struct_ptr = ir_builder->CreateAlloca(llvm_struct_type);
+
+        // Initialize each field
+        for (auto & [name, value] : struct_init.initializers) {
+
+            auto index = UINT64_MAX;
+            for (auto i = 0U; i < ast_struct_type->field_count(); ++i) {
+                if (ast_struct_type->field(i).first == name) {
+                    index = i;
+                    break;
+                }
+            }
+            assert(index != UINT64_MAX);
+
+            auto * llvm_value = get_value(*value, *this);
+            auto * field_ptr = ir_builder->CreateStructGEP(llvm_struct_type, struct_ptr, index);
+            ir_builder->CreateStore(llvm_value, field_ptr);
+        }
+
+        return store_result(struct_ptr);
+    }
 
     void codegen::visit(ast::top_level & top_level) { top_level.accept(*this); }
 
