@@ -308,18 +308,26 @@ namespace visitor {
         }
 
         if (binary_expr.op == ast::binary_expr::operand::member_access) {
-            assert(lhs_value->getType()->isStructTy());
 
-            auto * lhs_type = dynamic_cast<ast::struct_type *>(binary_expr.lhs->type.get());
-            assert(lhs_type != nullptr);
+            assert(lhs_value->getType()->isPointerTy());
+
+            auto ast_struct_type
+                = std::dynamic_pointer_cast<ast::struct_type>(binary_expr.lhs->type);
+            assert(ast_struct_type != nullptr);
+
+            auto * llvm_struct_type = find_type(ast_struct_type);
+            assert(llvm_struct_type != nullptr);
+            assert(llvm::dyn_cast<llvm::PointerType>(lhs_value->getType())
+                       ->isOpaqueOrPointeeTypeMatches(llvm_struct_type));
 
             auto * field_node = dynamic_cast<ast::user_val *>(binary_expr.rhs.get());
             assert(field_node != nullptr);
 
             llvm::Type * result_type = nullptr;
             auto index = UINT64_MAX;
-            for (auto i = 0U; i < lhs_type->field_count(); ++i) {
-                if (const auto & [name, type] = lhs_type->field(i); name == field_node->val) {
+            for (auto i = 0U; i < ast_struct_type->field_count(); ++i) {
+                if (const auto & [name, type] = ast_struct_type->field(i);
+                    name == field_node->val) {
                     result_type = find_type(type);
                     index = i;
                     break;
@@ -329,11 +337,7 @@ namespace visitor {
             assert(result_type != nullptr);
             assert(index != UINT64_MAX);
 
-            // HACK: Store the result struct in a allocation to get the pointer
-            auto * struct_ptr = ir_builder->CreateAlloca(lhs_value->getType());
-            ir_builder->CreateStore(lhs_value, struct_ptr);
-
-            auto * elem_ptr = ir_builder->CreateStructGEP(lhs_value->getType(), struct_ptr, index);
+            auto * elem_ptr = ir_builder->CreateStructGEP(llvm_struct_type, lhs_value, index);
             return store_result(ir_builder->CreateLoad(result_type, elem_ptr));
         }
 
@@ -467,7 +471,12 @@ namespace visitor {
         for (auto i = 0U; i < param_count; ++i) {
 
             auto param = func_decl.head.arg(i);
-            param_types.push_back(find_type(param.type(), param.location()));
+            auto * llvm_param_type = find_type(param.type(), param.location());
+            if (dynamic_cast<ast::struct_type *>(param.type().get()) != nullptr) {
+                // All structs need to be passed as pointers
+                llvm_param_type = llvm_param_type->getPointerTo();
+            }
+            param_types.push_back(llvm_param_type);
         }
 
         auto * func_type = llvm::FunctionType::get(
