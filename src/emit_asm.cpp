@@ -3,11 +3,11 @@
 #include <llvm/Analysis/AliasAnalysis.h>
 #include <llvm/Analysis/CGSCCPassManager.h>
 #include <llvm/IR/LegacyPassManager.h>
+#include <llvm/MC/TargetRegistry.h>
 #include <llvm/Passes/PassBuilder.h>
 #include <llvm/Support/CodeGen.h>
 #include <llvm/Support/FileSystem.h>
 #include <llvm/Support/Host.h>
-#include <llvm/Support/TargetRegistry.h>
 #include <llvm/Support/TargetSelect.h>
 #include <llvm/Target/TargetMachine.h>
 #include <llvm/Target/TargetOptions.h>
@@ -15,11 +15,16 @@
 using namespace llvm;
 
 std::string init_llvm_targets() {
-    InitializeAllTargetInfos();
-    InitializeAllTargets();
-    InitializeAllTargetMCs();
-    InitializeAllAsmParsers();
-    InitializeAllAsmPrinters();
+    // TODO: Support all targets
+    // InitializeAllTargetInfos();
+    // InitializeAllTargets();
+    // InitializeAllTargetMCs();
+    // InitializeAllAsmParsers();
+    // InitializeAllAsmPrinters();
+
+    InitializeNativeTarget();
+    InitializeNativeTargetAsmParser();
+    InitializeNativeTargetAsmPrinter();
 
     return sys::getDefaultTargetTriple();
 }
@@ -82,7 +87,7 @@ void emit_asm(std::unique_ptr<llvm::Module> ir_module, std::string && output_fil
         pb.registerLoopAnalyses(lam);
         pb.crossRegisterProxies(lam, fam, cgam, mam);
 
-        auto mpm = pb.buildPerModuleDefaultPipeline(PassBuilder::OptimizationLevel::O2);
+        auto mpm = pb.buildPerModuleDefaultPipeline(OptimizationLevel::O2);
 
         mpm.run(*ir_module, mam);
     }

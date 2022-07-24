@@ -54,7 +54,7 @@ namespace ast {
         non_movable(nullable_ptr_type);
         ~nullable_ptr_type() final = default;
 
-        [[nodiscard]] bool nullable() const final { return true; }
+        [[nodiscard]] bool nullable() const noexcept final { return true; }
 
       private:
         explicit nullable_ptr_type(type_ptr inner)
@@ -71,7 +71,7 @@ namespace ast {
         non_movable(nonnullable_ptr_type);
         ~nonnullable_ptr_type() final = default;
 
-        [[nodiscard]] bool nullable() const final { return false; }
+        [[nodiscard]] bool nullable() const noexcept final { return false; }
 
       private:
         explicit nonnullable_ptr_type(type_ptr inner)
@@ -115,29 +115,56 @@ namespace ast {
         type prim;
     };
 
-    struct user_type final : public type {
+    struct user_type : public type {
 
-        static std::shared_ptr<user_type> create(std::string &&);
+        static std::shared_ptr<user_type> lookup(const std::string & type_name,
+                                                 const std::string & module_name);
 
         non_copyable(user_type);
         non_movable(user_type);
-        ~user_type() final = default;
+        ~user_type() override = default;
 
         [[nodiscard]] bool is_pointer_type() const final { return false; }
 
-      private:
+        [[nodiscard]] const std::string & user_name() const { return name; }
+
+      protected:
         explicit user_type(std::string name)
             : name{std::move(name)} {}
 
+      private:
         std::string name;
+    };
 
-        void print(std::ostream & /*output*/) const final;
+    struct struct_type final : public user_type {
+
+        using field_type = std::pair<std::string, ast::type_ptr>;
+
+        static std::shared_ptr<struct_type> create(std::string && name,
+                                                   const std::string & module_name,
+                                                   std::vector<field_type> && fields);
+
+        non_copyable(struct_type);
+        non_movable(struct_type);
+
+        ~struct_type() final = default;
+
+        [[nodiscard]] size_t field_count() const noexcept { return fields.size(); }
+        [[nodiscard]] const field_type & field(size_t i) const { return fields[i]; }
+
+      private:
+        struct_type(std::string && name, std::vector<field_type> && fields)
+            : user_type{std::move(name)}
+            , fields{std::move(fields)} {}
+
+        std::vector<field_type> fields;
+
+        void print(std::ostream & /*output*/) const override;
     };
 
     struct function_type final : public type {
-        static
-			std::shared_ptr<function_type>
-			create(ast::type_ptr ret_type, std::vector<ast::type_ptr> && arg_types = {});
+        static std::shared_ptr<function_type> create(ast::type_ptr ret_type,
+                                                     std::vector<ast::type_ptr> && arg_types = {});
 
         non_copyable(function_type);
         non_movable(function_type);

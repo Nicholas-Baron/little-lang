@@ -7,6 +7,7 @@
 #include <memory> // make_shared
 #include <sstream>
 
+#include <llvm/ADT/Twine.h>
 #include <llvm/IR/DerivedTypes.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Type.h>
@@ -18,14 +19,13 @@ namespace visitor {
                                global_map<std::string, ast::type_ptr> & globals)
         : filename{std::move(filename)}
         , context{context}
-        , active_typed_identifiers{{}}
         , program_globals{globals} {
         instrinics.emplace("syscall", &type_checker::syscall);
     }
 
     void type_checker::bind_type(ast::type_ptr type, std::string identifier, bool should_export) {
         if (should_export) { program_globals.add(filename, identifier, type); }
-        active_typed_identifiers.back().emplace(std::move(identifier), std::move(type));
+        active_typed_identifiers.add_to_current_scope(std::move(identifier), std::move(type));
     }
 
     template<class... arg_t>
@@ -43,9 +43,8 @@ namespace visitor {
 
     [[nodiscard]] ast::type_ptr type_checker::find_type_of(const std::string & id) const {
 
-        for (auto iter = active_typed_identifiers.rbegin(); iter != active_typed_identifiers.rend();
-             ++iter) {
-            if (auto result = iter->find(id); result != iter->end()) { return result->second; }
+        for (const auto & scope : active_typed_identifiers) {
+            if (auto result = scope.find(id); result != scope.end()) { return result->second; }
         }
 
         return nullptr;
@@ -156,6 +155,33 @@ namespace visitor {
     void type_checker::visit(ast::binary_expr & binary_expr) {
 
         auto lhs_type = get_value(*binary_expr.lhs, *this);
+
+        if (const auto * struct_type = dynamic_cast<ast::struct_type *>(lhs_type.get());
+            struct_type != nullptr) {
+
+            const auto * rhs = dynamic_cast<ast::user_val *>(binary_expr.rhs.get());
+            if (rhs != nullptr and rhs->val_type == ast::user_val::value_type::identifier) {
+
+                // `struct.id`
+
+                for (auto i = 0U; i < struct_type->field_count(); ++i) {
+                    if (const auto & field = struct_type->field(i); field.first == rhs->val) {
+                        return store_result(field.second, binary_expr);
+                    }
+                }
+
+                return printError(binary_expr.location(), "Could not find a field named ", rhs->val,
+                                  " in struct type ", struct_type->user_name());
+            }
+
+            if (rhs != nullptr) {
+                return printError(binary_expr.location(),
+                                  "Expected an identifier to the rhs of a `.`; found ", rhs->val);
+            }
+
+            assert(false);
+        }
+
         auto rhs_type = get_value(*binary_expr.rhs, *this);
 
         // If one side of a binary_expr is the `null` primitive,
@@ -288,6 +314,7 @@ namespace visitor {
         std::vector<ast::type_ptr> arg_types;
         for (auto i = 0U; i < func_decl.head.param_count(); ++i) {
             const auto & param = func_decl.head.arg(i);
+            assert(param.type() != nullptr);
             arg_types.push_back(param.type());
         }
 
@@ -296,16 +323,17 @@ namespace visitor {
 
         bind_type(func_type, func_name, func_decl.exported());
 
-        active_typed_identifiers.emplace_back();
+        active_typed_identifiers.add_scope();
 
         // bind the parameter types
         for (auto i = 0U; i < func_decl.head.param_count(); ++i) {
+            assert(func_type->arg(i) != nullptr);
             bind_type(func_type->arg(i), func_decl.head.arg(i).name());
         }
 
         func_decl.body->accept(*this);
 
-        active_typed_identifiers.pop_back();
+        active_typed_identifiers.remove_scope();
     }
 
     void type_checker::visit(ast::if_expr & if_expr) {
@@ -406,9 +434,67 @@ namespace visitor {
     void type_checker::visit(ast::stmt & stmt) { stmt.accept(*this); }
 
     void type_checker::visit(ast::stmt_sequence & stmt_sequence) {
-        active_typed_identifiers.emplace_back();
+        active_typed_identifiers.add_scope();
         for (auto & stmt : stmt_sequence.stmts) { stmt->accept(*this); }
-        active_typed_identifiers.pop_back();
+        active_typed_identifiers.remove_scope();
+    }
+
+    void type_checker::visit(ast::struct_decl & struct_decl) {
+        auto type_ptr = ast::user_type::lookup(struct_decl.name, filename);
+        if (type_ptr == nullptr) {
+            std::vector<ast::struct_type::field_type> fields;
+            for (auto & typed_id : struct_decl.fields) {
+                fields.emplace_back(typed_id.name(), typed_id.type());
+            }
+            type_ptr = ast::struct_type::create(std::string{struct_decl.name}, filename,
+                                                std::move(fields));
+        }
+
+        if (visible_structs.find(struct_decl.name) != visible_structs.end()) {
+            printError(struct_decl.location(), "Struct ", struct_decl.name,
+                       " has been previously declared");
+            return;
+        }
+
+        auto struct_type_ptr = std::dynamic_pointer_cast<ast::struct_type>(type_ptr);
+        assert(struct_type_ptr != nullptr
+               and "user_type::lookup somehow returned a non-struct user declared type");
+        visible_structs.emplace(struct_decl.name, std::move(struct_type_ptr));
+    }
+
+    void type_checker::visit(ast::struct_init & struct_init) {
+
+        auto struct_decl = std::dynamic_pointer_cast<ast::struct_type>(
+            ast::user_type::lookup(struct_init.name, filename));
+
+        if (struct_decl == nullptr) {
+            return printError(struct_init.location(), '`', struct_init.name,
+                              "` does not name a defined struct");
+        }
+
+        // Check each field for correct type
+        for (auto i = 0U; i < struct_decl->field_count(); ++i) {
+            const auto & field = struct_decl->field(i);
+            auto name = field.first;
+
+            auto iter = std::find_if(
+                struct_init.initializers.begin(), struct_init.initializers.end(),
+                [&name](auto & initializer) -> bool { return initializer.first == name; });
+
+            if (iter == struct_init.initializers.end()) {
+                return printError(struct_init.location(), "Missing initializer for field ", name,
+                                  " of type ", struct_decl->user_name());
+            }
+
+            auto target_type = field.second;
+            auto real_type = get_value(*iter->second, *this);
+            if (target_type != real_type) {
+                return printError(iter->second->location(), "Expected an expression of type ",
+                                  *target_type, " for field ", name, "; Found one of ", *real_type);
+            }
+        }
+
+        return store_result(std::move(struct_decl), struct_init);
     }
 
     void type_checker::visit(ast::top_level & top_level) { top_level.accept(*this); }

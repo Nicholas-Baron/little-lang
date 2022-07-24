@@ -49,6 +49,7 @@ class lexer final {
         lbrace,
         rbrace,
         arrow,
+        dot,
         comma,
         colon,
         equal,
@@ -118,6 +119,8 @@ class lexer final {
     // `next_chars` checks that the characters at some offset into the stream are equal to the
     // provided string.
     bool next_chars(const std::string & text, unsigned offset = 0);
+
+    [[nodiscard]] std::string file_name() const { return filename; }
 
   private:
     lexer(std::string filename, const char * data, size_t size);

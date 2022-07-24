@@ -5,6 +5,7 @@
 #include "ast/type.hpp"
 #include "global_map.hpp"
 #include "location.hpp"
+#include "scoped_map.hpp"
 #include "value_getter.hpp"
 #include "visitor_base.hpp"
 
@@ -62,9 +63,11 @@ namespace visitor {
         std::string filename;
         llvm::LLVMContext & context;
 
-        std::vector<std::map<std::string, ast::type_ptr>> active_typed_identifiers;
+        scoped_map<std::string, ast::type_ptr> active_typed_identifiers;
         global_map<std::string, ast::type_ptr> & program_globals;
         std::map<std::string, void (type_checker::*)(ast::func_call_data &)> instrinics;
+        // Currently, structs can only be declared at the file level.
+        std::map<std::string, std::shared_ptr<ast::struct_type>> visible_structs;
 
         const ast::type * current_return_type{nullptr};
         const std::string * current_function_name{nullptr};

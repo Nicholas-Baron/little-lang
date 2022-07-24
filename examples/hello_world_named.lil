@@ -1,6 +1,6 @@
 from "stdlib/syscall_nums.lil" import write_num;
 
 main () {
-	let text = "Hello World"
+	let text = "Hello World";
 	syscall(write_num, 1, text, 11); // TODO: add strlen
 }

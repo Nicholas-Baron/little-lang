@@ -9,6 +9,7 @@
 #include "new_lexer.hpp"
 #include "utils/move_copy.hpp"
 
+#include <filesystem>
 #include <map>
 #include <memory> // unique_ptr
 #include <optional>
@@ -27,7 +28,8 @@ class parser final {
   public:
     // `from_file` loads a file from given filename and uses that as input.
     // The file data is internally allocated and freed by the parser.
-    static std::unique_ptr<parser> from_file(const std::string & filename);
+    static std::unique_ptr<parser> from_file(const std::string & filename,
+                                             const std::filesystem::path & project_root);
 
     // `from_buffer` uses the given string as its input.
     // Note that the parser does not own the string and maintains a readonly view into it.
@@ -50,8 +52,10 @@ class parser final {
     ~parser() noexcept = default;
 
   private:
-    explicit parser(lex_ptr && lex)
-        : lex{std::move(lex)} {}
+    explicit parser(lex_ptr && lex,
+                    std::optional<std::filesystem::path> project_root = std::nullopt)
+        : project_root{std::move(project_root)}
+        , lex{std::move(lex)} {}
 
     // As stated above,
     // there are some internals which need to be tested independently of each other.
@@ -66,6 +70,7 @@ class parser final {
     std::vector<ast::top_lvl_ptr> parse_exports();
     std::unique_ptr<ast::func_decl> parse_function();
     std::unique_ptr<ast::const_decl> parse_const_decl();
+    std::unique_ptr<ast::struct_decl> parse_struct_decl();
     ast::stmt_ptr parse_statement();
     ast::stmt_ptr parse_compound_statement();
     std::unique_ptr<ast::if_stmt> parse_if_statement();
@@ -87,6 +92,7 @@ class parser final {
     ast::expr_ptr parse_additive();
     ast::expr_ptr parse_multiplicative();
     ast::expr_ptr parse_unary();
+    ast::expr_ptr parse_member_access();
     ast::expr_ptr parse_atom();
 
     // A function call can either be a statement or an expression.
@@ -94,11 +100,23 @@ class parser final {
     // In the expression case, we have already consumed the name, so we must pass it in.
     ast::func_call_data parse_func_call(std::optional<std::string> func_name = std::nullopt);
 
+    std::unique_ptr<ast::struct_init> parse_struct_init(std::string && type_name, Location loc);
+
 #ifdef PARSER_TEST
     [[nodiscard]] bool is_eof() const { return lex->peek_token() == lexer::token_type::eof; }
 
   private:
 #endif
+
+    // XXX: Separation of responsibilities issue?
+    std::optional<std::filesystem::path> project_root;
+
+    [[nodiscard]] std::string module_name() const {
+        if (project_root.has_value()) {
+            return std::filesystem::relative(lex->file_name(), *project_root);
+        }
+        return lex->file_name();
+    }
 
     lex_ptr lex;
     std::string error;

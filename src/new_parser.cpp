@@ -2,18 +2,21 @@
 
 #include "ast/node_utils.hpp"
 #include "ast/nodes.hpp"
+#include "ast/type.hpp"
 #include "utils/string_utils.hpp" // unquote
 
 #include <cassert>
+#include <filesystem>
 #include <iostream> // cerr
 #include <map>
 #include <memory> // unique_ptr
 
-std::unique_ptr<parser> parser::from_file(const std::string & filename) {
+std::unique_ptr<parser> parser::from_file(const std::string & filename,
+                                          const std::filesystem::path & project_root) {
     auto lexer = lexer::from_file(filename);
     if (lexer == nullptr) { return nullptr; }
     // NOTE: `make_unique` does not like private constructors.
-    return std::unique_ptr<parser>(new parser{std::move(lexer)});
+    return std::unique_ptr<parser>(new parser{std::move(lexer), project_root});
 }
 
 std::unique_ptr<parser> parser::from_buffer(std::string & buffer) {
@@ -58,8 +61,14 @@ ast::top_lvl_ptr parser::parse_top_level() {
 
     switch (lex->peek_token().type) {
     case lexer::token_type::identifier:
-        // Parse a function
-        return parse_function();
+        // Parse a function or struct
+        if (lex->peek_token(1) == lexer::token_type::lparen) {
+            return parse_function();
+        } else if (lex->peek_token(1) == lexer::token_type::lbrace) {
+            return parse_struct_decl();
+        }
+        error = "Unexpected " + lex->peek_token(1).text + " after " + lex->peek_token().text;
+        return nullptr;
     case lexer::token_type::const_:
         // Parse a constant
         return parse_const_decl();
@@ -221,6 +230,50 @@ std::unique_ptr<ast::const_decl> parser::parse_const_decl() {
     return decl;
 }
 
+std::unique_ptr<ast::struct_decl> parser::parse_struct_decl() {
+    auto location = lex->peek_token().location;
+
+    // Parse the typename of the struct
+    auto name = lex->next_token();
+    assert(name == lexer::token_type::identifier);
+
+    // Parse the opening curly
+    assert(lex->next_token() == lexer::token_type::lbrace);
+
+    // Parse the fields
+    std::vector<ast::typed_identifier> fields;
+    while (not lex->consume_if(lexer::token_type::rbrace).has_value()) {
+        fields.emplace_back(parse_typed_identifier());
+        switch (lex->peek_token().type) {
+        case lexer::token_type::comma:
+        case lexer::token_type::semi:
+            lex->next_token();
+            [[fallthrough]];
+        case lexer::token_type::rbrace:
+        case lexer::token_type::identifier:
+            break;
+        default:
+            assert(false);
+        }
+    }
+
+    {
+        // Insert the new struct type into the ast type registry
+        std::vector<ast::struct_type::field_type> struct_fields;
+        struct_fields.reserve(fields.size());
+        for (auto & typed_id : fields) {
+            struct_fields.emplace_back(typed_id.name(), typed_id.type());
+        }
+        assert(ast::struct_type::create(std::string{name.text}, module_name(),
+                                        std::move(struct_fields))
+               != nullptr);
+    }
+
+    auto decl = std::make_unique<ast::struct_decl>(std::move(name.text), std::move(fields));
+    decl->set_location(location);
+    return decl;
+}
+
 ast::stmt_ptr parser::parse_statement() {
     switch (lex->peek_token().type) {
     case lexer::token_type::lbrace:
@@ -231,7 +284,6 @@ ast::stmt_ptr parser::parse_statement() {
         return parse_if_statement();
     case lexer::token_type::let: {
         auto let_stmt = parse_let_statement();
-        lex->consume_if(lexer::token_type::semi);
         return let_stmt;
     }
     case lexer::token_type::identifier: {
@@ -274,6 +326,8 @@ std::unique_ptr<ast::if_stmt> parser::parse_if_statement() {
     assert(lex->next_token() == lexer::token_type::if_);
     auto condition = parse_expression();
 
+    assert(lex->next_token() == lexer::token_type::then);
+
     // an `if` can only have an `else` when it is written `if x {} else {}`,
     // that is the then block is a compund statement.
     const bool can_have_else = lex->peek_token() == lexer::token_type::lbrace;
@@ -315,7 +369,8 @@ std::unique_ptr<ast::let_stmt> parser::parse_let_statement() {
     // A let statement is made of `let`,
     // followed by an optionally-typed identifier,
     // followed by `=`,
-    // followed by an expression.
+    // followed by an expression,
+    // followed by `;`.
 
     auto typed_id = parse_opt_typed_identifier();
 
@@ -325,6 +380,7 @@ std::unique_ptr<ast::let_stmt> parser::parse_let_statement() {
     assert(val != nullptr);
     auto let_stmt = std::make_unique<ast::let_stmt>(std::move(typed_id), std::move(val));
     let_stmt->set_location(location);
+    assert(lex->next_token() == lexer::token_type::semi);
     return let_stmt;
 }
 
@@ -391,8 +447,11 @@ ast::typed_identifier parser::parse_typed_identifier() {
 ast::type_ptr parser::parse_type() {
     // a type can either be some primitive or a user-defined type.
     switch (lex->peek_token().type) {
-    case lexer::token_type::identifier:
-        return ast::user_type::create(lex->next_token().text);
+    case lexer::token_type::identifier: {
+        auto type_ptr = ast::user_type::lookup(lex->next_token().text, module_name());
+        assert(type_ptr != nullptr);
+        return type_ptr;
+    }
     case lexer::token_type::prim_type: {
         static const std::map<std::string, ast::type_ptr> prim_types{
             {"int", ast::prim_type::int32},      {"float", ast::prim_type::float32},
@@ -563,8 +622,33 @@ ast::expr_ptr parser::parse_unary() {
         return expr;
     }
     default:
-        return parse_atom();
+        return parse_member_access();
     }
+}
+
+ast::expr_ptr parser::parse_member_access() {
+    using operand = ast::binary_expr::operand;
+    using val_type = ast::user_val::value_type;
+
+    // Consider the case of `(x.y).z`.
+    // We must try to parse an atom for the parenthesis-enclosed lhs.
+    auto expr = parse_atom();
+
+    while (lex->consume_if(lexer::token_type::dot)) {
+        // the rhs could be:
+        //  - an identifier
+        //  - an integer (if tuples get implemented)
+
+        assert(lex->peek_token() == lexer::token_type::identifier);
+
+        auto tok = lex->next_token();
+        auto rhs = std::make_unique<ast::user_val>(std::move(tok.text), val_type::identifier,
+                                                   tok.location);
+        expr = std::make_unique<ast::binary_expr>(std::move(expr), operand::member_access,
+                                                  std::move(rhs));
+    }
+
+    return expr;
 }
 
 ast::expr_ptr parser::parse_atom() {
@@ -606,11 +690,19 @@ ast::expr_ptr parser::parse_atom() {
         }
     }
 
+    // if expression
+    if (tok == lexer::token_type::if_) { return parse_if_expression(); }
+
     assert(tok == lexer::token_type::identifier);
     auto id = lex->next_token().text;
     // function call
     if (lex->peek_token() == lexer::token_type::lparen) {
         return std::make_unique<ast::func_call_expr>(parse_func_call(std::move(id)), tok.location);
+    }
+
+    // struct initialization
+    if (lex->peek_token() == lexer::token_type::lbrace) {
+        return parse_struct_init(std::move(id), tok.location);
     }
 
     // some variable
@@ -652,4 +744,38 @@ ast::func_call_data parser::parse_func_call(std::optional<std::string> func_name
     assert(lex->next_token() == lexer::token_type::rparen);
 
     return {std::move(name), std::move(args)};
+}
+
+std::unique_ptr<ast::struct_init> parser::parse_struct_init(std::string && type_name,
+                                                            Location loc) {
+
+    lex->consume_if(lexer::token_type::lbrace);
+
+    std::vector<std::pair<std::string, ast::expr_ptr>> initializers;
+    while (not lex->consume_if(lexer::token_type::rbrace).has_value()) {
+        auto id = lex->next_token();
+        assert(id == lexer::token_type::identifier);
+
+        assert(lex->next_token() == lexer::token_type::equal);
+
+        auto expr = parse_expression();
+
+        initializers.emplace_back(id.text, std::move(expr));
+
+        switch (lex->peek_token().type) {
+        case lexer::token_type::comma:
+        case lexer::token_type::semi:
+            lex->next_token();
+            [[fallthrough]];
+        case lexer::token_type::identifier:
+        case lexer::token_type::rbrace:
+            break;
+        default:
+            assert(false);
+        }
+    }
+
+    auto init = std::make_unique<ast::struct_init>(std::move(type_name), std::move(initializers));
+    init->set_location(loc);
+    return init;
 }

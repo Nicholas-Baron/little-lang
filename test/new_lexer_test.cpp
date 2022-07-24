@@ -137,6 +137,23 @@ TEST_CASE("the lexer will parse a character literal") {
     CHECK(lexer->next_token() == lexer::token_type::eof);
 }
 
+TEST_CASE("the lexer will parse boolean literals") {
+    std::string buffer = " true\n false ";
+    auto lexer = lexer::from_buffer(buffer);
+
+    CHECK(lexer != nullptr);
+
+    auto tok = lexer->next_token();
+    CHECK(tok == lexer::token_type::boolean);
+    CHECK(tok == "true");
+
+    tok = lexer->next_token();
+    CHECK(tok == lexer::token_type::boolean);
+    CHECK(tok == "false");
+
+    CHECK(lexer->next_token() == lexer::token_type::eof);
+}
+
 TEST_CASE("the lexer will parse an integer") {
     std::string buffer = "1234";
     auto lexer = lexer::from_buffer(buffer);
@@ -358,5 +375,21 @@ TEST_CASE("the lexer will parse pointer-related tokens") {
     CHECK(lexer->next_token() == lexer::token_type::amp);
     CHECK(lexer->next_token() == lexer::token_type::question);
     CHECK(lexer->next_token() == lexer::token_type::null);
+    CHECK(lexer->next_token() == lexer::token_type::eof);
+}
+
+TEST_CASE("the lexer will parse the '.' as a distinct token") {
+    // TODO: Disambiguate the following case
+    // let t = ((a, b), y)
+    // t.0
+    // t.1
+    // t.0.0 : t. (0.0) or (t.0).0
+
+    std::string buffer = "x.y";
+    auto lexer = lexer::from_buffer(buffer);
+    CHECK(lexer != nullptr);
+    CHECK(lexer->next_token() == "x");
+    CHECK(lexer->next_token() == lexer::token_type::dot);
+    CHECK(lexer->next_token() == "y");
     CHECK(lexer->next_token() == lexer::token_type::eof);
 }

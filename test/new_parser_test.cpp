@@ -1,5 +1,4 @@
 #define PARSER_TEST
-#include "ast/nodes.hpp"
 #include "new_parser.hpp"
 
 #include <catch2/catch.hpp>
@@ -93,8 +92,8 @@ TEST_CASE("the parser will parse let statement") {
     CHECK(value->val == "\"hello\"");
 }
 
-TEST_CASE("the parser will parse let statement without semicolons and with types") {
-    std::string buffer = "let int x = 10";
+TEST_CASE("the parser will parse let statement with types") {
+    std::string buffer = "let int x = 10;";
     auto parser = parser::from_buffer(buffer);
 
     CHECK(parser != nullptr);
@@ -138,7 +137,7 @@ TEST_CASE("the parser will parse pointer types and expressions") {
 }
 
 TEST_CASE("the parser will parse dereferences") {
-    std::string buffer = "let x = *y";
+    std::string buffer = "let x = *y;";
     auto parser = parser::from_buffer(buffer);
 
     CHECK(parser != nullptr);
@@ -225,8 +224,24 @@ TEST_CASE("the parser will parse if expressions") {
     CHECK(if_expr != nullptr);
 }
 
+TEST_CASE("the parser will parse if expressions as atoms") {
+    std::string buffer = " 1 + if x then y else z + 1 ";
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    auto expr = parser->parse_expression();
+    CHECK(expr != nullptr);
+
+    auto * outer_addition = dynamic_cast<ast::binary_expr *>(expr.get());
+    CHECK(outer_addition != nullptr);
+
+    auto * if_expr = dynamic_cast<ast::if_expr *>(outer_addition->rhs.get());
+    CHECK(if_expr != nullptr);
+}
+
 TEST_CASE("the parser will parse if statements") {
-    std::string buffer = "if x {}";
+    std::string buffer = "if x then {}";
     auto parser = parser::from_buffer(buffer);
 
     CHECK(parser != nullptr);
@@ -245,7 +260,7 @@ TEST_CASE("the parser will parse if statements") {
 }
 
 TEST_CASE("the parser will parse if-else statements") {
-    std::string buffer = "if x {} else {}";
+    std::string buffer = "if x then {} else {}";
     auto parser = parser::from_buffer(buffer);
 
     CHECK(parser != nullptr);
@@ -331,6 +346,27 @@ TEST_CASE("the parser will parse function calls as statements") {
     CHECK(func_call->data.args_count() == 2);
 }
 
+TEST_CASE("the parser will parse a struct declaration") {
+    std::string buffer = R"(my_struct_type {
+		x : int;
+		y : string,
+		z : bool
+	})";
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    auto top_lvl = parser->parse_top_level();
+    CHECK(parser->error_message().empty());
+
+    auto * struct_decl = dynamic_cast<ast::struct_decl *>(top_lvl.get());
+    CHECK(struct_decl != nullptr);
+
+    CHECK(struct_decl->name == "my_struct_type");
+    CHECK(struct_decl->fields.size() == 3);
+    CHECK(struct_decl->fields[0].name() == "x");
+}
+
 TEST_CASE("the parser will parse a unit function") {
     std::string buffer = "main() {}";
     auto parser = parser::from_buffer(buffer);
@@ -345,6 +381,55 @@ TEST_CASE("the parser will parse a unit function") {
     CHECK(func->head.param_count() == 0);
     CHECK(func->head.ret_type() == ast::prim_type::unit);
     CHECK(func->body != nullptr);
+}
+
+TEST_CASE("the parser will parse a struct initialization") {
+    std::string buffer = "let x = my_struct_type { x = 5; y = 6, z = 10, a = 6 / 2 };";
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    auto init = parser->parse_let_statement();
+    CHECK(init != nullptr);
+    CHECK(parser->error_message().empty());
+
+    auto * struct_init = dynamic_cast<ast::struct_init *>(init->value.get());
+    CHECK(struct_init != nullptr);
+
+    CHECK(struct_init->name == "my_struct_type");
+    CHECK(struct_init->initializers.size() == 4);
+    CHECK(struct_init->initializers[0].first == "x");
+    CHECK(struct_init->initializers[1].first == "y");
+    CHECK(struct_init->initializers[2].first == "z");
+    CHECK(struct_init->initializers[3].first == "a");
+}
+
+TEST_CASE("the parser will parse a member access") {
+    std::string buffer = "x.y.z";
+    auto parser = parser::from_buffer(buffer);
+
+    CHECK(parser != nullptr);
+
+    auto expr = parser->parse_expression();
+    CHECK(expr != nullptr);
+    CHECK(parser->error_message().empty());
+
+    auto * outer_member_access = dynamic_cast<ast::binary_expr *>(expr.get());
+    CHECK(outer_member_access != nullptr);
+    CHECK(outer_member_access->op == ast::binary_expr::operand::member_access);
+    CHECK(outer_member_access->lhs != nullptr);
+    CHECK(outer_member_access->rhs != nullptr);
+
+    auto * rhs = dynamic_cast<ast::user_val *>(outer_member_access->rhs.get());
+    CHECK(rhs != nullptr);
+    CHECK(rhs->val_type == ast::user_val::value_type::identifier);
+    CHECK(rhs->val == "z");
+
+    auto * inner_member_access = dynamic_cast<ast::binary_expr *>(outer_member_access->lhs.get());
+    CHECK(inner_member_access != nullptr);
+    CHECK(inner_member_access->op == ast::binary_expr::operand::member_access);
+    CHECK(inner_member_access->lhs != nullptr);
+    CHECK(inner_member_access->rhs != nullptr);
 }
 
 TEST_CASE("the parser will parse a function with return type") {
@@ -412,7 +497,7 @@ TEST_CASE("the parser will parse a function with an expression body") {
 TEST_CASE("the parser will parse a factorial function") {
     std::string buffer = R"(
 factorial(int input) -> int {
-	if(input <= 2){ return input; }
+	if input <= 2 then { return input; }
 	return input * factorial(input - 1);
 })";
 

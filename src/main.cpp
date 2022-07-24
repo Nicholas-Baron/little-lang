@@ -18,8 +18,9 @@
 #include <set>
 #include <utility>
 
-static std::unique_ptr<ast::top_level_sequence> read_module(const std::string & filename) {
-    auto p = parser::from_file(filename);
+static std::unique_ptr<ast::top_level_sequence>
+read_module(const std::string & filename, const std::filesystem::path & project_root) {
+    auto p = parser::from_file(filename, project_root);
     if (p == nullptr) { return nullptr; }
 
     auto module_ = p->parse();
@@ -48,7 +49,7 @@ static std::vector<ast::top_level_sequence> load_modules(const std::string & inp
         // do not double load files
         if (loaded.find(filename) != loaded.end()) { continue; }
 
-        auto parsed_module = read_module(filename);
+        auto parsed_module = read_module(filename, project_root);
         if (parsed_module == nullptr) {
             std::cout << "Failed to parse " << filename << std::endl;
             assert(false);

@@ -67,6 +67,7 @@ namespace ast {
             ne,
             bool_and,
             bool_or,
+            member_access,
         };
 
         binary_expr(expr_ptr lhs, operand op, expr_ptr rhs)
@@ -118,6 +119,19 @@ namespace ast {
         make_visitable;
 
         func_call_data data;
+    };
+
+    class struct_init final : public expr {
+      public:
+        struct_init(std::string name,
+                    std::vector<std::pair<std::string, ast::expr_ptr>> && initializers)
+            : name{std::move(name)}
+            , initializers{std::move(initializers)} {}
+
+        make_visitable;
+
+        std::string name;
+        std::vector<std::pair<std::string, ast::expr_ptr>> initializers;
     };
 } // namespace ast
 

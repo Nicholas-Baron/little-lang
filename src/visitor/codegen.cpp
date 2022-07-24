@@ -73,7 +73,6 @@ namespace visitor {
         , ir_module{std::make_unique<llvm::Module>(name, context)}
         , ir_builder{std::make_unique<llvm::IRBuilder<>>(context)}
         , type_context(typ_context)
-        , active_values{{}}
         , program_globals{program_globals}
         , instrinics{{"syscall", &codegen::syscall},
                      {"arg_count", &codegen::arg_count},
@@ -85,8 +84,8 @@ namespace visitor {
 
     llvm::Value * codegen::find_alive_value(const std::string & name, bool should_error) const {
         // Walk backwards thru scopes
-        for (auto scope = active_values.rbegin(); scope != active_values.rend(); ++scope) {
-            if (auto iter = scope->find(name); iter != scope->end()) {
+        for (const auto & scope : active_values) {
+            if (auto iter = scope.find(name); iter != scope.end()) {
 
                 // Globals are always pointers to data, so we should try to use the initializer
                 auto * global = llvm::dyn_cast<llvm::GlobalVariable>(iter->second);
@@ -100,7 +99,7 @@ namespace visitor {
         return nullptr;
     }
 
-    llvm::Type * codegen::find_type(const ast::type & type, std::optional<Location> loc) {
+    llvm::Type * codegen::find_type(ast::type_ptr type, std::optional<Location> loc) {
 
         auto * typ = type_context.lower_to_llvm(type);
         if (typ == nullptr) {
@@ -171,7 +170,7 @@ namespace visitor {
 
         auto * pointer_type = llvm::dyn_cast_or_null<llvm::PointerType>(pointer->getType());
         assert(pointer_type != nullptr);
-        auto * element_ty = pointer_type->getElementType();
+        auto * element_ty = pointer_type->getPointerElementType();
 
         using operand = ast::binary_expr::operand;
 
@@ -244,7 +243,7 @@ namespace visitor {
                 nullptr,    "argv"};
             new_raw_arg_vector->setExternallyInitialized(true);
 
-            active_values.front().emplace("argv", new_raw_arg_vector);
+            active_values.add_to_root("argv", new_raw_arg_vector);
             raw_arg_vector = new_raw_arg_vector;
         }
 
@@ -269,11 +268,11 @@ namespace visitor {
                 nullptr,    "argc"};
             new_raw_arg_count->setExternallyInitialized(true);
 
-            active_values.front().emplace("argc", new_raw_arg_count);
+            active_values.add_to_root("argc", new_raw_arg_count);
             raw_arg_count = new_raw_arg_count;
         }
         auto * long_argc = ir_builder->CreateLoad(llvm_i64_ty, raw_arg_count);
-        store_result(ir_builder->CreateTrunc(long_argc, find_type(*ast::prim_type::int32)));
+        store_result(ir_builder->CreateTrunc(long_argc, find_type(ast::prim_type::int32)));
     }
 
     void codegen::syscall(ast::func_call_data & func_call_data) {
@@ -293,7 +292,7 @@ namespace visitor {
         for (auto * val : args) { param_types.push_back(val->getType()); }
 
         auto * func_type
-            = llvm::FunctionType::get(find_type(*ast::prim_type::int32), param_types, false);
+            = llvm::FunctionType::get(find_type(ast::prim_type::int32), param_types, false);
 
         assert(llvm::InlineAsm::Verify(func_type, constraint));
 
@@ -306,6 +305,40 @@ namespace visitor {
         auto * lhs_value = get_value(*binary_expr.lhs, *this);
         if (binary_expr.is_shortcircuiting()) {
             return evaluate_short_circuit(binary_expr, lhs_value);
+        }
+
+        if (binary_expr.op == ast::binary_expr::operand::member_access) {
+
+            assert(lhs_value->getType()->isPointerTy());
+
+            auto ast_struct_type
+                = std::dynamic_pointer_cast<ast::struct_type>(binary_expr.lhs->type);
+            assert(ast_struct_type != nullptr);
+
+            auto * llvm_struct_type = find_type(ast_struct_type);
+            assert(llvm_struct_type != nullptr);
+            assert(llvm::dyn_cast<llvm::PointerType>(lhs_value->getType())
+                       ->isOpaqueOrPointeeTypeMatches(llvm_struct_type));
+
+            auto * field_node = dynamic_cast<ast::user_val *>(binary_expr.rhs.get());
+            assert(field_node != nullptr);
+
+            llvm::Type * result_type = nullptr;
+            auto index = UINT64_MAX;
+            for (auto i = 0U; i < ast_struct_type->field_count(); ++i) {
+                if (const auto & [name, type] = ast_struct_type->field(i);
+                    name == field_node->val) {
+                    result_type = find_type(type);
+                    index = i;
+                    break;
+                }
+            }
+
+            assert(result_type != nullptr);
+            assert(index != UINT64_MAX);
+
+            auto * elem_ptr = ir_builder->CreateStructGEP(llvm_struct_type, lhs_value, index);
+            return store_result(ir_builder->CreateLoad(result_type, elem_ptr));
         }
 
         // We will generate here, as every expression after will need the rhs
@@ -383,7 +416,7 @@ namespace visitor {
         auto * global = new llvm::GlobalVariable{
             *ir_module, value->getType(), true, linkage, value, const_decl.name_and_type.name()};
 
-        active_values.back().emplace(const_decl.name_and_type.name(), global);
+        active_values.add_to_current_scope(const_decl.name_and_type.name(), global);
         if (const_decl.exported()) {
             program_globals.add(ir_module->getModuleIdentifier(), const_decl.name_and_type.name(),
                                 global);
@@ -438,11 +471,16 @@ namespace visitor {
         for (auto i = 0U; i < param_count; ++i) {
 
             auto param = func_decl.head.arg(i);
-            param_types.push_back(find_type(*param.type(), param.location()));
+            auto * llvm_param_type = find_type(param.type(), param.location());
+            if (dynamic_cast<ast::struct_type *>(param.type().get()) != nullptr) {
+                // All structs need to be passed as pointers
+                llvm_param_type = llvm_param_type->getPointerTo();
+            }
+            param_types.push_back(llvm_param_type);
         }
 
         auto * func_type = llvm::FunctionType::get(
-            find_type(*func_decl.head.ret_type(), func_decl.location()), param_types, false);
+            find_type(func_decl.head.ret_type(), func_decl.location()), param_types, false);
 
         // The only functions that need ExternalLinkage are "main" or exported ones
         auto linkage = (func_decl.head.name() == "main" or func_decl.exported())
@@ -453,24 +491,26 @@ namespace visitor {
             = llvm::Function::Create(func_type, linkage, func_decl.head.name(), ir_module.get());
 
         // add the function to the current scope
-        active_values.back().emplace(func_decl.head.name(), func);
+        active_values.add_to_current_scope(func_decl.head.name(), func);
 
         // enter the function
-        active_values.emplace_back();
-        for (auto i = 0U; i < param_count; ++i) {
-            const auto & name = func_decl.head.arg(i).name();
-            auto * arg = func->getArg(i);
-            arg->setName(name);
-            active_values.back().emplace(name, arg);
+        {
+            auto & func_scope = active_values.add_scope();
+            for (auto i = 0U; i < param_count; ++i) {
+                const auto & name = func_decl.head.arg(i).name();
+                auto * arg = func->getArg(i);
+                arg->setName(name);
+                func_scope.emplace(name, arg);
+            }
+
+            auto * block = llvm::BasicBlock::Create(context, func->getName(), func);
+            ir_builder->SetInsertPoint(block);
+
+            func_decl.body->accept(*this);
+
+            // leave the function
+            active_values.remove_scope();
         }
-
-        auto * block = llvm::BasicBlock::Create(context, func->getName(), func);
-        ir_builder->SetInsertPoint(block);
-
-        func_decl.body->accept(*this);
-
-        // leave the function
-        active_values.pop_back();
 
         // Ensure termination for the whole function
         // TODO: Iterate every block and check for termination on each?
@@ -620,7 +660,7 @@ namespace visitor {
 
         auto * value = get_value(*let_stmt.value, *this);
         value->setName(let_stmt.name_and_type.name());
-        active_values.back().emplace(let_stmt.name_and_type.name(), value);
+        active_values.add_to_current_scope(let_stmt.name_and_type.name(), value);
     }
 
     void codegen::visit(ast::node & node) { node.accept(*this); }
@@ -639,6 +679,41 @@ namespace visitor {
 
     void codegen::visit(ast::stmt_sequence & stmt_sequence) {
         for (auto & stmt : stmt_sequence.stmts) { stmt->accept(*this); }
+    }
+
+    void codegen::visit(ast::struct_decl & struct_decl) {
+        find_type(struct_decl.type(ir_module->getModuleIdentifier()), struct_decl.location());
+    }
+
+    void codegen::visit(ast::struct_init & struct_init) {
+
+        auto ast_struct_type = std::dynamic_pointer_cast<ast::struct_type>(struct_init.type);
+        assert(ast_struct_type != nullptr);
+
+        auto * llvm_struct_type = find_type(ast_struct_type);
+        assert(llvm_struct_type != nullptr);
+
+        // Allocate the struct
+        auto * struct_ptr = ir_builder->CreateAlloca(llvm_struct_type);
+
+        // Initialize each field
+        for (auto & [name, value] : struct_init.initializers) {
+
+            auto index = UINT64_MAX;
+            for (auto i = 0U; i < ast_struct_type->field_count(); ++i) {
+                if (ast_struct_type->field(i).first == name) {
+                    index = i;
+                    break;
+                }
+            }
+            assert(index != UINT64_MAX);
+
+            auto * llvm_value = get_value(*value, *this);
+            auto * field_ptr = ir_builder->CreateStructGEP(llvm_struct_type, struct_ptr, index);
+            ir_builder->CreateStore(llvm_value, field_ptr);
+        }
+
+        return store_result(struct_ptr);
     }
 
     void codegen::visit(ast::top_level & top_level) { top_level.accept(*this); }
@@ -661,11 +736,11 @@ namespace visitor {
                                                              llvm::GlobalValue::ExternalLinkage, id,
                                                              ir_module.get());
                         func->deleteBody();
-                        active_values.back().emplace(id, func);
+                        active_values.add_to_current_scope(id, func);
                     } else if (auto * global_var = llvm::dyn_cast<llvm::GlobalVariable>(global);
                                global_var != nullptr) {
                         // must be a global constant
-                        active_values.back().emplace(id, global_var);
+                        active_values.add_to_current_scope(id, global_var);
                     }
                 }
             }
@@ -702,7 +777,7 @@ namespace visitor {
             assert(ptr_ty != nullptr);
 
             // TODO: Align it?
-            store_result(ir_builder->CreateLoad(ptr_ty->getElementType(), value));
+            store_result(ir_builder->CreateLoad(ptr_ty->getPointerElementType(), value));
         } break;
         case operand::negate:
             if (auto float_op = value->getType()->isFloatingPointTy(); const_val != nullptr) {
@@ -731,7 +806,7 @@ namespace visitor {
         case value_type::null: {
             auto & type = user_val.type;
             assert(type->is_pointer_type());
-            auto * llvm_type = type_context.lower_to_llvm(*type);
+            auto * llvm_type = type_context.lower_to_llvm(type);
             assert(llvm_type != nullptr);
             return store_result(llvm::Constant::getNullValue(llvm_type));
         }

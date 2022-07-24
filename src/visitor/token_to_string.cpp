@@ -31,6 +31,8 @@
         return "operand::bool_and";
     case operand::bool_or:
         return "operand::bool_or";
+    case operand::member_access:
+        return "operand::member_access";
     }
 }
 
