@@ -1,6 +1,6 @@
 #include "type_context.hpp"
 
-#include <llvm/IR/Type.h>
+#include <llvm/IR/DerivedTypes.h>
 
 type_context::type_context(llvm::LLVMContext * context)
     : active_types{
