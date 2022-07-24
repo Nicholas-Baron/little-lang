@@ -307,6 +307,36 @@ namespace visitor {
             return evaluate_short_circuit(binary_expr, lhs_value);
         }
 
+        if (binary_expr.op == ast::binary_expr::operand::member_access) {
+            assert(lhs_value->getType()->isStructTy());
+
+            auto * lhs_type = dynamic_cast<ast::struct_type *>(binary_expr.lhs->type.get());
+            assert(lhs_type != nullptr);
+
+            auto * field_node = dynamic_cast<ast::user_val *>(binary_expr.rhs.get());
+            assert(field_node != nullptr);
+
+            llvm::Type * result_type = nullptr;
+            auto index = UINT64_MAX;
+            for (auto i = 0U; i < lhs_type->field_count(); ++i) {
+                if (const auto & [name, type] = lhs_type->field(i); name == field_node->val) {
+                    result_type = find_type(*type);
+                    index = i;
+                    break;
+                }
+            }
+
+            assert(result_type != nullptr);
+            assert(index != UINT64_MAX);
+
+            // HACK: Store the result struct in a allocation to get the pointer
+            auto * struct_ptr = ir_builder->CreateAlloca(lhs_value->getType());
+            ir_builder->CreateStore(lhs_value, struct_ptr);
+
+            auto * elem_ptr = ir_builder->CreateStructGEP(lhs_value->getType(), struct_ptr, index);
+            return store_result(ir_builder->CreateLoad(result_type, elem_ptr));
+        }
+
         // We will generate here, as every expression after will need the rhs
         auto * rhs_value = get_value(*binary_expr.rhs, *this);
 
