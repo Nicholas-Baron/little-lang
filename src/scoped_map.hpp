@@ -1,8 +1,8 @@
 #ifndef SCOPED_MAP_HPP
 #define SCOPED_MAP_HPP
 
+#include <list>
 #include <map>
-#include <vector>
 
 template<typename key_t, typename value_t>
 class scoped_map final {
@@ -30,7 +30,8 @@ class scoped_map final {
     void remove_scope() { active_values.pop_back(); }
 
   private:
-    std::vector<std::map<key_t, value_t>> active_values;
+    // `list` is prefered to `vector`, due to the former never indirectly invalidating iterators.
+    std::list<std::map<key_t, value_t>> active_values;
 };
 
 #endif
