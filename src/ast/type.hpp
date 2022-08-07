@@ -88,6 +88,7 @@ namespace ast {
             float32,
             str,
             unit,
+            null,
         };
 
         non_copyable(prim_type);
@@ -96,7 +97,7 @@ namespace ast {
 
         [[nodiscard]] bool is_pointer_type() const final {
             // TODO: Should `str` still be a pointer type?
-            return prim == type::str;
+            return prim == type::str or prim == type::null;
         }
 
         static const type_ptr int32;
@@ -105,6 +106,7 @@ namespace ast {
         static const type_ptr boolean;
         static const type_ptr str;
         static const type_ptr character;
+        static const type_ptr null;
 
       private:
         explicit prim_type(type t)

@@ -14,6 +14,7 @@ namespace ast {
     const type_ptr prim_type::boolean = type_ptr{new prim_type{ast::prim_type::type::boolean}};
     const type_ptr prim_type::str = type_ptr{new prim_type{ast::prim_type::type::str}};
     const type_ptr prim_type::character = type_ptr{new prim_type{ast::prim_type::type::character}};
+    const type_ptr prim_type::null = type_ptr{new prim_type{ast::prim_type::type::null}};
 
     namespace {
         global_map<std::string, std::shared_ptr<user_type>> user_made_types;
@@ -129,6 +130,9 @@ namespace ast {
             break;
         case type::unit:
             lhs << "unit";
+            break;
+        case type::null:
+            lhs << "null";
             break;
         }
     }
