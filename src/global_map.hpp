@@ -7,6 +7,9 @@
 
 template<typename key_t, typename value_t>
 class global_map final {
+    static_assert(std::is_nothrow_constructible_v<value_t, std::nullptr_t>,
+                  "global_map can only use pointer-like types for its value_t");
+
   public:
     [[nodiscard]] value_t lookup(const std::string & mod, const key_t & id) const {
 
