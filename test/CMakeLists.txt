@@ -1,7 +1,9 @@
 add_library(test_runner STATIC main_tests.cpp)
 target_link_libraries(test_runner CONAN_PKG::catch2)
 
-foreach(test settings_test string_utils_test new_parser_test new_lexer_test global_map_test)
+foreach(test settings_test string_utils_test new_parser_test new_lexer_test
+             global_map_test scoped_map_test
+)
     string(CONCAT filename ${test} ".cpp")
     add_executable(${test} ${filename})
 
