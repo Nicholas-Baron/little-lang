@@ -17,6 +17,7 @@
 
 %start program
 
+%precedence lambda_decl
 %precedence if_expr
 %left T_OR
 %left T_AND
@@ -144,7 +145,12 @@ atom : literal
      | struct_init
      | T_LPAREN expr T_RPAREN
      | if_head expr T_ELSE expr %prec if_expr
+     | lambda
      ;
+
+lambda : param_group ret_type stmt_block  %prec lambda_decl
+       | param_group T_ASSIGN expr        %prec lambda_decl
+       ;
 
 struct_init : T_IDENT T_LBRACE struct_field_init T_RBRACE
             ;
