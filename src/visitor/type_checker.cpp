@@ -104,26 +104,28 @@ namespace visitor {
     ast::type_ptr type_checker::evaluate_comparison(ast::type_ptr && lhs_type,
                                                     ast::type_ptr && rhs_type) {
 
-        if (bool pointer_comp = (lhs_type == nullptr or lhs_type->is_pointer_type())
-                            and (rhs_type == nullptr or rhs_type->is_pointer_type());
+        assert(lhs_type != nullptr and rhs_type != nullptr);
+
+        if (bool pointer_comp = (lhs_type == ast::prim_type::null or lhs_type->is_pointer_type())
+                            and (rhs_type == ast::prim_type::null or rhs_type->is_pointer_type());
             not pointer_comp and lhs_type != rhs_type) {
             printError(std::nullopt, "Comparisons can only be made within the same type");
         } else if (pointer_comp) {
 
             // If both are null, fail.
-            if (lhs_type == nullptr and rhs_type == nullptr) {
+            if (lhs_type == ast::prim_type::null and rhs_type == ast::prim_type::null) {
                 printError(std::nullopt, "`null` cannot be on both sides of a binary expression");
             }
 
             // Check that the other pointer is nullable
-            if (lhs_type == nullptr) {
-                if (auto * rhs = dynamic_cast<ast::ptr_type *>(rhs_type.get());
-                    rhs == nullptr or not rhs->nullable()) {
+            if (lhs_type == ast::prim_type::null) {
+                if (auto rhs = std::dynamic_pointer_cast<ast::nullable_ptr_type>(rhs_type);
+                    rhs == nullptr) {
                     printError(std::nullopt, "Only nullable pointers can be compared with `null`");
                 }
-            } else if (rhs_type == nullptr) {
-                if (auto * lhs = dynamic_cast<ast::ptr_type *>(lhs_type.get());
-                    lhs == nullptr or not lhs->nullable()) {
+            } else if (rhs_type == ast::prim_type::null) {
+                if (auto lhs = std::dynamic_pointer_cast<ast::nullable_ptr_type>(lhs_type);
+                    lhs == nullptr) {
                     printError(std::nullopt, "Only nullable pointers can be compared with `null`");
                 }
             }
@@ -537,14 +539,15 @@ namespace visitor {
             }
             break;
         case ast::unary_expr::operand::deref:
-            if (auto * ptr_type = dynamic_cast<ast::ptr_type *>(type.get()); ptr_type != nullptr) {
+            if (auto ptr_type = std::dynamic_pointer_cast<ast::nonnullable_ptr_type>(type);
+                ptr_type != nullptr) {
                 type = ptr_type->pointed_to_type();
             } else if (type == ast::prim_type::str) {
                 // TODO: This branch may be removed later
                 type = ast::prim_type::character;
             } else {
                 printError(unary_expr.location(),
-                           "Dereference expects a pointer as its argument.\nFound ", *type);
+                           "Dereference expects a nonnull pointer as its argument.\nFound ", *type);
                 assert(false);
             }
             break;
@@ -576,7 +579,7 @@ namespace visitor {
             store_result(type, user_val);
         } break;
         case val_type::null:
-            store_result(nullptr, user_val);
+            store_result(ast::prim_type::null, user_val);
             break;
         case val_type::boolean:
             store_result(ast::prim_type::boolean, user_val);
