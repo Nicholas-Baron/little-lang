@@ -126,11 +126,17 @@ class lexer final {
     lexer(std::string filename, const char * data, size_t size);
     lexer(const char * data, size_t size);
 
+    template<class... args_t>
+    void print_error(args_t... args) const;
+
     // `next_token` has some complex, yet modular, logic for determining a token's type.
     // These 3 functions are helpers to `next_token` that handle some, but not all, tokens each.
     token next_identifier(Location l);
     token next_number(Location l);
     token next_symbol(Location l);
+
+    // Helper to handle escape sequences
+    char next_escaped();
 
     std::deque<token> peeked_tokens;
     std::string filename;

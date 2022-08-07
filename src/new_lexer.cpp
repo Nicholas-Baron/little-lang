@@ -1,8 +1,8 @@
 #include "new_lexer.hpp"
 
 #include <cassert>
-#include <cctype> // isspace
-#include <iostream>
+#include <cctype>   // isspace
+#include <iostream> // cerr
 #include <map>
 
 #include <fcntl.h>    // open
@@ -105,6 +105,13 @@ lexer::token lexer::next_token(bool increasing_lookahead) {
     return next_symbol(l);
 }
 
+template<class... args_t>
+void lexer::print_error(args_t... args) const {
+
+    std::cerr << filename << ':' << line_num << ':' << col_num << ": ";
+    (std::cerr << ... << args) << std::endl;
+}
+
 lexer::token lexer::next_identifier(Location l) {
 
     std::string to_ret;
@@ -152,8 +159,11 @@ lexer::token lexer::next_identifier(Location l) {
 lexer::token lexer::next_number(Location l) {
 
     auto c = next_char();
+    assert(isdigit(c));
+
     std::string to_ret;
     to_ret += c;
+
     if (c == '0') {
         // either we are hexadecimal or just 0
         if (tolower(peek_char()) == 'x') {
@@ -166,15 +176,20 @@ lexer::token lexer::next_number(Location l) {
         return {token_type::integer, std::move(to_ret), l};
     }
 
-    assert(isdigit(c));
+    // known: the first digit is not 0
+
     while (isdigit(peek_char()) != 0) { to_ret += next_char(); }
 
     if (peek_char() != '.') { return {token_type::integer, to_ret, l}; }
 
+    // known: the next character is a '.'
+
+    print_error("Lexing floating point numbers is currently unsupported");
     assert(false);
 }
 
-static char escaped(char c) {
+char lexer::next_escaped() {
+    auto c = next_char();
     switch (c) {
     case 'n':
         return '\n';
@@ -183,8 +198,7 @@ static char escaped(char c) {
     case '0':
         return '\0';
     }
-    std::cerr << "Unknown escaped character: " << static_cast<unsigned>(c) << " \'" << c << "\'"
-              << std::endl;
+    print_error("Unknown escaped character: ", static_cast<unsigned>(c), " \'", c, "\'");
     assert(false);
 }
 
@@ -230,6 +244,7 @@ lexer::token lexer::next_symbol(Location l) {
             next_char();
             return {token_type::double_or, "||", l};
         }
+        print_error("Single '|' is not a meaningful token");
         assert(false);
     case '-':
         if (peek_char() == '>') {
@@ -263,7 +278,7 @@ lexer::token lexer::next_symbol(Location l) {
         while (peek_char() != c) {
             if (peek_char() == '\\') {
                 next_char();
-                to_ret += escaped(next_char());
+                to_ret += next_escaped();
             } else {
                 to_ret += next_char();
             }
@@ -279,7 +294,7 @@ lexer::token lexer::next_symbol(Location l) {
 
         if (peek_char() == '\\') {
             next_char();
-            to_ret += escaped(next_char());
+            to_ret += next_escaped();
         } else {
             to_ret += next_char();
         }
@@ -292,8 +307,7 @@ lexer::token lexer::next_symbol(Location l) {
     case '.':
         return {token_type::dot, ".", l};
     default:
-        std::cerr << "Unknown character: " << static_cast<unsigned>(c) << " \'" << c << '\''
-                  << std::endl;
+        print_error("Unknown character: ", static_cast<unsigned>(c), " \'", c, '\'');
         assert(false);
     }
 }
