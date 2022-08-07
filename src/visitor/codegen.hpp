@@ -13,6 +13,7 @@
 #include <llvm/IR/Module.h>
 
 namespace visitor {
+    // This class assumes that its input has been type checked and is correct.
     class codegen final : public visitor_base,
                           public value_getter<codegen, ast::node, llvm::Value *> {
       public:
@@ -55,7 +56,10 @@ namespace visitor {
         void arg_at(ast::func_call_data & /*data*/);
         void syscall(ast::func_call_data & /*func_call_data*/);
 
-        void printError(const std::string & name, std::optional<Location> loc = std::nullopt) const;
+        // Any error here is some internal error that we should have caught earlier.
+        template<class... arg_t>
+        [[noreturn]] void printError(std::optional<Location> loc,
+                                     const arg_t &... args) const noexcept;
 
         // Keep these behind unique_ptr to allow for moving the visitor
         // context is not owned by us, but is sent to us via the constructor.

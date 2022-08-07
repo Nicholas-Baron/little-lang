@@ -95,18 +95,14 @@ namespace visitor {
                 return iter->second;
             }
         }
-        if (should_error) { printError("Could not find value " + name); }
+        if (should_error) { printError(std::nullopt, "Could not find value ", name); }
         return nullptr;
     }
 
     llvm::Type * codegen::find_type(ast::type_ptr type, std::optional<Location> loc) {
 
         auto * typ = type_context.lower_to_llvm(type);
-        if (typ == nullptr) {
-            std::stringstream ss;
-            ss << type << " is not a valid type?";
-            printError(ss.str(), loc);
-        }
+        if (typ == nullptr) { printError(loc, type, " is not a valid type"); }
         return typ;
     }
 
@@ -142,10 +138,8 @@ namespace visitor {
             p = int_or_float(predicate::ICMP_NE, predicate::FCMP_ONE);
             break;
         default:
-            printError("Comparison operator " + tok_to_string(binary_expr.op)
-                           + " is not implemented yet",
-                       binary_expr.location());
-            assert(false);
+            printError(binary_expr.location(), "Comparison operator ",
+                       tok_to_string(binary_expr.op), " is not implemented yet");
         }
         assert(p.has_value());
         if (is_constant) {
@@ -179,8 +173,8 @@ namespace visitor {
         case operand::sub:
             return store_result(ir_builder->CreateGEP(element_ty, pointer, index));
         default:
-            printError(tok_to_string(binary_expr.op) + " is not implemented for pointers",
-                       binary_expr.location());
+            printError(binary_expr.location(), tok_to_string(binary_expr.op),
+                       " is not implemented for pointers");
             assert(false);
         }
     }
@@ -221,14 +215,19 @@ namespace visitor {
 
     void codegen::verify_module() const { llvm::verifyModule(*ir_module, &llvm::errs()); }
 
-    void codegen::printError(const std::string & name, std::optional<Location> loc) const {
-        if (loc == std::nullopt) {
-            context.emitError(name);
-        } else {
-            std::stringstream to_print;
-            to_print << *loc << " : " << name;
-            context.emitError(to_print.str());
-        }
+    template<class... arg_t>
+    [[noreturn]] void codegen::printError(std::optional<Location> loc,
+                                          const arg_t &... args) const noexcept {
+        std::stringstream to_print;
+
+        if (loc.has_value()) { to_print << *loc << " : ICE :"; }
+
+        (to_print << ... << args);
+
+        context.emitError(to_print.str());
+
+        // TODO: Better recovery
+        assert(false);
     }
 
     void codegen::arg_at(ast::func_call_data & data) {
@@ -383,10 +382,8 @@ namespace visitor {
             bin_op = int_or_float(bin_ops::SDiv, bin_ops::FDiv);
             break;
         default:
-            printError("Binary operator " + tok_to_string(binary_expr.op)
-                           + " is not implemented yet",
-                       binary_expr.location());
-            assert(false);
+            printError(binary_expr.location(), "Binary operator ", tok_to_string(binary_expr.op),
+                       " is not implemented yet");
         }
 
         assert(bin_op.has_value());
@@ -404,9 +401,8 @@ namespace visitor {
         auto * value = llvm::dyn_cast<llvm::Constant>(get_value(*const_decl.expr, *this));
 
         if (value == nullptr) {
-            printError(const_decl.name_and_type.name() + " is not a constant expression",
-                       const_decl.location());
-            assert(false);
+            printError(const_decl.location(), const_decl.name_and_type.name(),
+                       " is not a constant expression");
         }
 
         const auto linkage = const_decl.exported()
@@ -433,11 +429,8 @@ namespace visitor {
         }
 
         auto * func = llvm::dyn_cast_or_null<llvm::Function>(find_alive_value(func_name));
-        // TODO: A better exit strategy
-        if (func == nullptr) {
-            printError(func_name + " is not a function");
-            assert(false);
-        }
+        // TODO: Store the location on the func_call_data somehow
+        if (func == nullptr) { printError(std::nullopt, func_name, " is not a function"); }
 
         auto * func_type = func->getFunctionType();
 
@@ -522,9 +515,8 @@ namespace visitor {
                 // Like C++, we add a `return 0` at the end.
                 ir_builder->CreateRet(llvm::ConstantInt::get(return_type, 0));
             } else {
-                printError("Function " + func_decl.head.name()
-                           + " does not return a value at the end");
-                assert(false);
+                printError(func_decl.location(), "Function ", func_decl.head.name(),
+                           " does not return a value at the end");
             }
         }
 
@@ -753,8 +745,7 @@ namespace visitor {
     }
 
     void codegen::visit(ast::typed_identifier & /*typed_identifier*/) {
-        printError("In unimplemented function for typed_identifier");
-        assert(false);
+        printError(std::nullopt, "In unimplemented function for typed_identifier");
     }
 
     void codegen::visit(ast::unary_expr & unary_expr) {
@@ -797,9 +788,7 @@ namespace visitor {
         case value_type::identifier: {
             auto * value = find_alive_value(user_val.val);
             if (value == nullptr) {
-                printError("Could not find variable " + user_val.val);
-                // TODO: Better recovery
-                assert(false);
+                printError(user_val.location(), "Could not find variable ", user_val.val);
             }
             return store_result(value);
         }
@@ -819,8 +808,7 @@ namespace visitor {
                 llvm::ConstantInt::get(llvm::Type::getInt32Ty(context), user_val.val, base));
         }
         case value_type::floating:
-            printError("Floating point IR not implemented");
-            assert(false);
+            printError(user_val.location(), "Floating point IR not implemented");
             break;
         case value_type::character:
             switch (user_val.val.size()) {
