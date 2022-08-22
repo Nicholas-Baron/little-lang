@@ -1,6 +1,7 @@
 #ifndef GLOBAL_VALUES_HPP
 #define GLOBAL_VALUES_HPP
 
+#include <cassert>
 #include <map>
 #include <ostream>
 #include <string>
