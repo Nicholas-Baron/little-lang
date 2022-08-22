@@ -1,22 +1,15 @@
-#include "ast/top_lvl_nodes.hpp"
-#include "emit_asm.hpp"
-#include "jit.hpp"
 #include "new_parser.hpp"
 #include "program.hpp"
 #include "settings.hpp"
-#include "utils/execute.hpp"
-#include "utils/string_utils.hpp"
-#include "visitor/codegen.hpp"
+#include "utils/execute.hpp"      // exec_command
+#include "utils/string_utils.hpp" // normalized_absolute_path
 #include "visitor/printer.hpp"
-#include "visitor/type_checker.hpp"
 
 #include <cassert>
-#include <filesystem>
-#include <iostream>
-#include <iterator>
+#include <iostream> // cout
 #include <queue>
 #include <set>
-#include <utility>
+#include <vector>
 
 static std::unique_ptr<ast::top_level_sequence>
 read_module(const std::string & filename, const std::filesystem::path & project_root) {
