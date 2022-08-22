@@ -1,6 +1,7 @@
 #ifndef TYPE_HPP
 #define TYPE_HPP
 
+#include "global_map.hpp"
 #include "utils/move_copy.hpp"
 
 #include <iosfwd> // ostream
@@ -134,7 +135,13 @@ namespace ast {
         explicit user_type(std::string name)
             : name{std::move(name)} {}
 
+        static void add_user_type(const std::string & module_name, const std::string & name,
+                                  std::shared_ptr<user_type> type) {
+            user_made_types.add(module_name, name, std::move(type));
+        }
+
       private:
+        inline static global_map<std::string, std::shared_ptr<user_type>> user_made_types;
         std::string name;
     };
 

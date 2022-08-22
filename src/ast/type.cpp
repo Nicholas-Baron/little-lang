@@ -16,10 +16,6 @@ namespace ast {
     const type_ptr prim_type::character = type_ptr{new prim_type{ast::prim_type::type::character}};
     const type_ptr prim_type::null = type_ptr{new prim_type{ast::prim_type::type::null}};
 
-    namespace {
-        global_map<std::string, std::shared_ptr<user_type>> user_made_types;
-    }
-
     std::shared_ptr<nullable_ptr_type> nullable_ptr_type::create(type_ptr pointed_to_type) {
         static std::map<type_ptr, std::shared_ptr<nullable_ptr_type>> made_types;
 
@@ -76,7 +72,7 @@ namespace ast {
 
         auto new_user_type
             = std::shared_ptr<struct_type>{new struct_type{std::string{name}, std::move(fields)}};
-        user_made_types.add(module_name, name, new_user_type);
+        add_user_type(module_name, name, new_user_type);
 
         return new_user_type;
     }
