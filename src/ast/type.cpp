@@ -2,8 +2,8 @@
 
 #include "global_map.hpp"
 
-#include <iostream>
-#include <memory>
+#include <algorithm> // find_if
+#include <iostream>  // cout
 
 namespace ast {
     // Type creation

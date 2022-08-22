@@ -1,6 +1,7 @@
 #include "execute.hpp"
 
-#include <iostream>
+#include <cstring>  // strncpy
+#include <iostream> // cout
 
 #include <sys/wait.h> // waitpid
 #include <unistd.h>   // execve
