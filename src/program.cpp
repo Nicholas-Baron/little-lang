@@ -1,6 +1,5 @@
 #include "program.hpp"
 
-#include "ast/node_utils.hpp"
 #include "ast/top_lvl_nodes.hpp"
 #include "emit_asm.hpp"
 #include "global_map.hpp"
@@ -8,10 +7,8 @@
 #include "utils/execute.hpp"
 #include "utils/string_utils.hpp"
 #include "visitor/codegen.hpp"
-#include "visitor/printer.hpp"
 #include "visitor/type_checker.hpp"
 
-#include <cstring> // strlcpy
 #include <filesystem>
 #include <iostream>
 #include <set>
