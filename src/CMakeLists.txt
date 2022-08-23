@@ -72,7 +72,20 @@ target_include_directories(
 )
 separate_arguments(LLVM_DEF_LIST NATIVE_COMMAND ${LLVM_DEFINITIONS})
 target_compile_definitions(littlec_lib PRIVATE ${LLVM_DEF_LIST})
-target_precompile_headers(littlec_lib PUBLIC ast/nodes.hpp program.hpp)
+target_precompile_headers(
+    littlec_lib
+    PRIVATE
+    ast/expr_nodes.hpp
+    ast/stmt_nodes.hpp
+    emit_asm.hpp
+    global_map.hpp
+    location.hpp
+    new_lexer.hpp
+    new_parser.hpp
+    program.hpp
+    visitor/codegen.hpp
+    visitor/printer.hpp
+)
 
 # the actual executable
 add_executable(littlec main.cpp)
