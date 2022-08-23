@@ -20,6 +20,12 @@ include(${CMAKE_SOURCE_DIR}/cmake/conan.cmake)
 conan_check(VERSION 1.14.4 REQUIRED)
 conan_cmake_run(CONANFILE conanfile.txt BASIC_SETUP CMAKE_TARGETS BUILD missing)
 
+find_program(CCACHE ccache)
+if(CCACHE)
+    set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
+    message("Using ccache")
+endif()
+
 enable_testing()
 
 find_package(LLVM REQUIRED CONFIG)
