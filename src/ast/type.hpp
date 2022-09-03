@@ -1,8 +1,8 @@
 #ifndef TYPE_HPP
 #define TYPE_HPP
 
-#include "utils/global_map.hpp"
-#include "utils/move_copy.hpp"
+#include "global_map.hpp"
+#include "move_copy.hpp"
 
 #include <iosfwd> // ostream
 #include <memory> // shared_ptr

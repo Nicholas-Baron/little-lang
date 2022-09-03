@@ -2,7 +2,7 @@
 #define LEXER_HPP
 
 #include "location.hpp"
-#include "utils/move_copy.hpp"
+#include "move_copy.hpp"
 
 #include <deque>
 #include <memory> // unique_ptr

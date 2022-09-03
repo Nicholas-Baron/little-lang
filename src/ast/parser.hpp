@@ -7,7 +7,6 @@
 #include "node_utils.hpp"
 #include "nodes_forward.hpp"
 #include "type.hpp"
-#include "utils/move_copy.hpp"
 
 #include <filesystem>
 #include <map>
@@ -15,6 +14,8 @@
 #include <optional>
 #include <string>
 #include <vector>
+
+#include <move_copy.hpp>
 
 // This class takes some character input and produces an abstract syntax tree (AST).
 // In a development compilation, its public interface is rather small,

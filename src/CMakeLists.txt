@@ -19,11 +19,6 @@ configure_file(
 )
 
 set(proj_files
-    ast/lexer.cpp
-    ast/location.cpp
-    ast/nodes.cpp
-    ast/parser.cpp
-    ast/type.cpp
     emit_asm.cpp
     jit.cpp
     program.cpp
@@ -41,8 +36,10 @@ if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "13")
     add_compile_options(-Wreserved-identifier)
 endif()
 
-# Get the utils library
+# Get the utils library first, as other libraries may need it
 add_subdirectory(utils)
+
+add_subdirectory(ast)
 
 # the library for testing
 add_library(littlec_lib ${proj_files})
@@ -51,7 +48,7 @@ target_compile_options(
     PRIVATE -Og -fdata-sections -ffunction-sections
     PUBLIC -Wno-unused-command-line-argument
 )
-target_link_libraries(littlec_lib utils)
+target_link_libraries(littlec_lib littlec_ast littlec_utils)
 
 llvm_map_components_to_libnames(
     LLVM_LIBS

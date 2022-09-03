@@ -1,8 +1,9 @@
 #ifndef VISITOR_BASE_HPP
 #define VISITOR_BASE_HPP
 
-#include <ast/nodes_forward.hpp>
-#include <utils/move_copy.hpp>
+#include "nodes_forward.hpp"
+
+#include <move_copy.hpp>
 
 namespace visitor {
     class visitor_base {

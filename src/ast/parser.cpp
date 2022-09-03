@@ -1,15 +1,16 @@
 #include "parser.hpp"
 
-#include "ast/node_utils.hpp"
-#include "ast/nodes.hpp"
-#include "ast/type.hpp"
-#include "utils/string_utils.hpp" // unquote
+#include "node_utils.hpp"
+#include "nodes.hpp"
+#include "type.hpp"
 
 #include <cassert>
 #include <filesystem>
 #include <iostream> // cerr
 #include <map>
 #include <memory> // unique_ptr
+
+#include <string_utils.hpp> // unquote
 
 std::unique_ptr<parser> parser::from_file(const std::string & filename,
                                           const std::filesystem::path & project_root) {

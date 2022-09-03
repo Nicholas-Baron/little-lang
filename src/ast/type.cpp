@@ -1,9 +1,9 @@
 #include "type.hpp"
 
-#include "utils/global_map.hpp"
-
 #include <algorithm> // find_if
 #include <iostream>  // cout
+
+#include <global_map.hpp>
 
 namespace ast {
     // Type creation

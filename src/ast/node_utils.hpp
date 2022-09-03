@@ -4,11 +4,12 @@
 #include "base_nodes.hpp"
 #include "location.hpp"
 #include "type.hpp"
-#include "utils/move_copy.hpp"
 
 #include <cassert>
 #include <string>
 #include <vector>
+
+#include <move_copy.hpp>
 
 // Classes that are utilities to ast nodes,
 // but not nodes themselves

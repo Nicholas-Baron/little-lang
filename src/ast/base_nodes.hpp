@@ -2,9 +2,9 @@
 #define BASE_NODES_HPP
 
 #include "location.hpp"
+#include "move_copy.hpp"
 #include "nodes_forward.hpp"
 #include "type.hpp"
-#include "utils/move_copy.hpp"
 #include "visitor_base.hpp"
 
 #include <memory> // unique_ptr
