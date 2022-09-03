@@ -1,4 +1,4 @@
-#include "new_lexer.hpp"
+#include "lexer.hpp"
 
 #include <cassert>
 #include <cctype>   // isspace

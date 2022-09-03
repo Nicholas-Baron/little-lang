@@ -1,4 +1,4 @@
-#include "new_parser.hpp"
+#include "ast/parser.hpp"
 #include "program.hpp"
 #include "settings.hpp"
 #include "utils/execute.hpp"      // exec_command

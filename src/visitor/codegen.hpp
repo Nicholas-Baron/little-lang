@@ -1,7 +1,7 @@
 #ifndef CODEGEN_HPP
 #define CODEGEN_HPP
 
-#include "location.hpp"
+#include "ast/location.hpp"
 #include "type_context.hpp"
 #include "utils/global_map.hpp"
 #include "utils/scoped_map.hpp"

@@ -19,13 +19,13 @@ configure_file(
 )
 
 set(proj_files
+    ast/lexer.cpp
+    ast/location.cpp
     ast/nodes.cpp
+    ast/parser.cpp
     ast/type.cpp
     emit_asm.cpp
     jit.cpp
-    location.cpp
-    new_lexer.cpp
-    new_parser.cpp
     program.cpp
     settings.cpp
     type_context.cpp
@@ -78,11 +78,11 @@ target_precompile_headers(
     littlec_lib
     PRIVATE
     ast/expr_nodes.hpp
+    ast/lexer.hpp
+    ast/location.hpp
+    ast/parser.hpp
     ast/stmt_nodes.hpp
     emit_asm.hpp
-    location.hpp
-    new_lexer.hpp
-    new_parser.hpp
     program.hpp
     utils/global_map.hpp
     visitor/codegen.hpp

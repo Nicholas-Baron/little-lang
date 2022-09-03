@@ -1,7 +1,7 @@
 #include "ast/nodes.hpp"
 
 #define PARSER_TEST
-#include "new_parser.hpp"
+#include "ast/parser.hpp"
 
 #include <catch2/catch.hpp>
 

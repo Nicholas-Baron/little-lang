@@ -1,12 +1,12 @@
 #ifndef PARSER_HPP
 #define PARSER_HPP
 
-#include "ast/base_nodes.hpp"
-#include "ast/node_utils.hpp"
-#include "ast/nodes_forward.hpp"
-#include "ast/type.hpp"
+#include "base_nodes.hpp"
+#include "lexer.hpp"
 #include "location.hpp"
-#include "new_lexer.hpp"
+#include "node_utils.hpp"
+#include "nodes_forward.hpp"
+#include "type.hpp"
 #include "utils/move_copy.hpp"
 
 #include <filesystem>

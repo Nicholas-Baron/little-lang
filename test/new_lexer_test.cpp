@@ -1,4 +1,4 @@
-#include "new_lexer.hpp"
+#include "ast/lexer.hpp"
 
 #include <catch2/catch.hpp>
 

@@ -1,7 +1,7 @@
 #ifndef printer_HPP
 #define printer_HPP
 
-#include "location.hpp"
+#include "ast/location.hpp"
 #include "value_getter.hpp"
 #include "visitor_base.hpp"
 
