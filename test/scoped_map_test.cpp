@@ -1,4 +1,4 @@
-#include "scoped_map.hpp"
+#include "utils/scoped_map.hpp"
 
 #include <catch2/catch.hpp>
 

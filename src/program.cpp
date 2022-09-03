@@ -2,9 +2,9 @@
 
 #include "ast/top_lvl_nodes.hpp"
 #include "emit_asm.hpp"
-#include "global_map.hpp"
 #include "jit.hpp"
 #include "utils/execute.hpp"
+#include "utils/global_map.hpp"
 #include "utils/string_utils.hpp"
 #include "visitor/codegen.hpp"
 #include "visitor/type_checker.hpp"

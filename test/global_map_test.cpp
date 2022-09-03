@@ -1,4 +1,4 @@
-#include "global_map.hpp"
+#include "utils/global_map.hpp"
 
 #include <catch2/catch.hpp>
 

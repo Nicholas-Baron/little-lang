@@ -1,10 +1,10 @@
 #ifndef CODEGEN_HPP
 #define CODEGEN_HPP
 
-#include "global_map.hpp"
 #include "location.hpp"
-#include "scoped_map.hpp"
 #include "type_context.hpp"
+#include "utils/global_map.hpp"
+#include "utils/scoped_map.hpp"
 #include "value_getter.hpp"
 #include "visitor_base.hpp"
 

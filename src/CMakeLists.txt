@@ -78,11 +78,11 @@ target_precompile_headers(
     ast/expr_nodes.hpp
     ast/stmt_nodes.hpp
     emit_asm.hpp
-    global_map.hpp
     location.hpp
     new_lexer.hpp
     new_parser.hpp
     program.hpp
+    utils/global_map.hpp
     visitor/codegen.hpp
     visitor/printer.hpp
 )

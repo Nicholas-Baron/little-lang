@@ -1,6 +1,6 @@
 #include "type.hpp"
 
-#include "global_map.hpp"
+#include "utils/global_map.hpp"
 
 #include <algorithm> // find_if
 #include <iostream>  // cout

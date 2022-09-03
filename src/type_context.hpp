@@ -2,7 +2,7 @@
 #define TYPE_CONTEXT_HPP
 
 #include "ast/node_utils.hpp"
-#include "global_map.hpp"
+#include "utils/global_map.hpp"
 
 #include <map>
 
