@@ -2,12 +2,13 @@
 #define BASE_NODES_HPP
 
 #include "location.hpp"
-#include "move_copy.hpp"
 #include "nodes_forward.hpp"
 #include "type.hpp"
 #include "visitor_base.hpp"
 
 #include <memory> // unique_ptr
+
+#include <move_copy.hpp>
 
 // This file should contain only node and any *abstract* child of it.
 

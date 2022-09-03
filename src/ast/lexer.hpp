@@ -2,12 +2,13 @@
 #define LEXER_HPP
 
 #include "location.hpp"
-#include "move_copy.hpp"
 
 #include <deque>
 #include <memory> // unique_ptr
 #include <optional>
 #include <string>
+
+#include <move_copy.hpp>
 
 class lexer final {
   public:

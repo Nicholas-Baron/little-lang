@@ -1,13 +1,13 @@
 #ifndef TYPE_HPP
 #define TYPE_HPP
 
-#include "global_map.hpp"
-#include "move_copy.hpp"
-
 #include <iosfwd> // ostream
 #include <memory> // shared_ptr
 #include <string>
 #include <vector>
+
+#include <global_map.hpp>
+#include <move_copy.hpp>
 
 namespace ast {
     class type {
