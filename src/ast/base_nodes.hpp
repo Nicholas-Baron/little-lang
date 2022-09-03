@@ -5,7 +5,7 @@
 #include "nodes_forward.hpp"
 #include "type.hpp"
 #include "utils/move_copy.hpp"
-#include "visitor/visitor_base.hpp"
+#include "visitor_base.hpp"
 
 #include <memory> // unique_ptr
 

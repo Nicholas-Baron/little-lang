@@ -4,10 +4,10 @@
 #include "ast/location.hpp"
 #include "ast/node_utils.hpp"
 #include "ast/type.hpp"
+#include "ast/visitor_base.hpp"
 #include "utils/global_map.hpp"
 #include "utils/scoped_map.hpp"
 #include "value_getter.hpp"
-#include "visitor_base.hpp"
 
 #include <map>
 #include <optional>

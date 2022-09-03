@@ -2,11 +2,11 @@
 #define CODEGEN_HPP
 
 #include "ast/location.hpp"
+#include "ast/visitor_base.hpp"
 #include "type_context.hpp"
 #include "utils/global_map.hpp"
 #include "utils/scoped_map.hpp"
 #include "value_getter.hpp"
-#include "visitor_base.hpp"
 
 #include <optional>
 

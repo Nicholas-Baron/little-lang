@@ -1,7 +1,7 @@
 #ifndef VALUE_GETTER_HPP
 #define VALUE_GETTER_HPP
 
-#include "visitor_base.hpp"
+#include "ast/visitor_base.hpp"
 
 #include <cassert>
 #include <optional>
