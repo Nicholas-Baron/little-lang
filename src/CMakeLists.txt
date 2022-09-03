@@ -29,8 +29,6 @@ set(proj_files
     program.cpp
     settings.cpp
     type_context.cpp
-    utils/execute.cpp
-    utils/string_utils.cpp
     visitor/codegen.cpp
     visitor/printer.cpp
     visitor/token_to_string.cpp
@@ -43,6 +41,9 @@ if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "13")
     add_compile_options(-Wreserved-identifier)
 endif()
 
+# Get the utils library
+add_subdirectory(utils)
+
 # the library for testing
 add_library(littlec_lib ${proj_files})
 target_compile_options(
@@ -50,6 +51,7 @@ target_compile_options(
     PRIVATE -Og -fdata-sections -ffunction-sections
     PUBLIC -Wno-unused-command-line-argument
 )
+target_link_libraries(littlec_lib utils)
 
 llvm_map_components_to_libnames(
     LLVM_LIBS
