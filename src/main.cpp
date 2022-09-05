@@ -13,11 +13,11 @@
 
 static std::unique_ptr<ast::top_level_sequence>
 read_module(const std::string & filename, const std::filesystem::path & project_root) {
-    auto p = parser::from_file(filename, project_root);
-    if (p == nullptr) { return nullptr; }
+    auto parser = parser::from_file(filename, project_root);
+    if (parser == nullptr) { return nullptr; }
 
-    auto module_ = p->parse();
-    if (module_ == nullptr) { std::cerr << p->error_message() << std::endl; }
+    auto module_ = parser->parse();
+    if (module_ == nullptr) { std::cerr << parser->error_message() << std::endl; }
     return module_;
 }
 
