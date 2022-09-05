@@ -137,9 +137,9 @@ class lexer final {
 
     // `next_token` has some complex, yet modular, logic for determining a token's type.
     // These 3 functions are helpers to `next_token` that handle some, but not all, tokens each.
-    token next_identifier(Location l);
-    token next_number(Location l);
-    token next_symbol(Location l);
+    token next_identifier(Location loc);
+    token next_number(Location loc);
+    token next_symbol(Location loc);
 
     // Helper to handle escape sequences
     char next_escaped();

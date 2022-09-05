@@ -95,14 +95,14 @@ lexer::token lexer::next_token(bool increasing_lookahead) {
         while (peek_char() != '\n' and peek_char() != '\r') { next_char(); }
     }
 
-    Location l{line_num, col_num};
+    Location loc{line_num, col_num};
 
-    if (peek_char() == EOF) { return {token_type::eof, "", l}; }
+    if (peek_char() == EOF) { return {token_type::eof, "", loc}; }
 
     // we are now at the first meaningful token
-    if (isalpha(peek_char()) != 0 or peek_char() == '_') { return next_identifier(l); }
-    if (isdigit(peek_char()) != 0) { return next_number(l); }
-    return next_symbol(l);
+    if (isalpha(peek_char()) != 0 or peek_char() == '_') { return next_identifier(loc); }
+    if (isdigit(peek_char()) != 0) { return next_number(loc); }
+    return next_symbol(loc);
 }
 
 template<class... args_t>
@@ -112,7 +112,7 @@ void lexer::print_error(args_t... args) const {
     (std::cerr << ... << args) << std::endl;
 }
 
-lexer::token lexer::next_identifier(Location l) {
+lexer::token lexer::next_identifier(Location loc) {
 
     std::string to_ret;
 
@@ -151,12 +151,12 @@ lexer::token lexer::next_identifier(Location l) {
     };
 
     if (auto iter = reserved_words.find(to_ret); iter != reserved_words.end()) {
-        return {iter->second, std::move(to_ret), l};
+        return {iter->second, std::move(to_ret), loc};
     }
-    return {token_type::identifier, std::move(to_ret), l};
+    return {token_type::identifier, std::move(to_ret), loc};
 }
 
-lexer::token lexer::next_number(Location l) {
+lexer::token lexer::next_number(Location loc) {
 
     auto c = next_char();
     assert(isdigit(c));
@@ -173,14 +173,14 @@ lexer::token lexer::next_number(Location l) {
             while (isxdigit(peek_char()) != 0) { to_ret += next_char(); }
         }
 
-        return {token_type::integer, std::move(to_ret), l};
+        return {token_type::integer, std::move(to_ret), loc};
     }
 
     // known: the first digit is not 0
 
     while (isdigit(peek_char()) != 0) { to_ret += next_char(); }
 
-    if (peek_char() != '.') { return {token_type::integer, to_ret, l}; }
+    if (peek_char() != '.') { return {token_type::integer, to_ret, loc}; }
 
     // known: the next character is a '.'
 
@@ -202,47 +202,48 @@ char lexer::next_escaped() {
     assert(false);
 }
 
-lexer::token lexer::next_symbol(Location l) {
+// NOLINTNEXTLINE
+lexer::token lexer::next_symbol(Location loc) {
 
     switch (const auto c = next_char(); c) {
     case EOF:
-        return {token_type::eof, "", l};
+        return {token_type::eof, "", loc};
     case '(':
-        return {token_type::lparen, "(", l};
+        return {token_type::lparen, "(", loc};
     case ')':
-        return {token_type::rparen, ")", l};
+        return {token_type::rparen, ")", loc};
     case '{':
-        return {token_type::lbrace, "{", l};
+        return {token_type::lbrace, "{", loc};
     case '}':
-        return {token_type::rbrace, "}", l};
+        return {token_type::rbrace, "}", loc};
     case ':':
-        return {token_type::colon, ":", l};
+        return {token_type::colon, ":", loc};
     case ',':
-        return {token_type::comma, ",", l};
+        return {token_type::comma, ",", loc};
     case ';':
-        return {token_type::semi, ";", l};
+        return {token_type::semi, ";", loc};
     case '+':
-        return {token_type::plus, "+", l};
+        return {token_type::plus, "+", loc};
     case '*':
-        return {token_type::asterik, "*", l};
+        return {token_type::asterik, "*", loc};
     case '%':
-        return {token_type::percent, "%", l};
+        return {token_type::percent, "%", loc};
     case '?':
-        return {token_type::question, "?", l};
+        return {token_type::question, "?", loc};
     case '/':
         // at this point, we know that this is not a comment
         assert(peek_char() != c);
-        return {token_type::slash, "/", l};
+        return {token_type::slash, "/", loc};
     case '&':
         if (peek_char() == c) {
             next_char();
-            return {token_type::double_and, "&&", l};
+            return {token_type::double_and, "&&", loc};
         }
-        return {token_type::amp, "&", l};
+        return {token_type::amp, "&", loc};
     case '|':
         if (peek_char() == c) {
             next_char();
-            return {token_type::double_or, "||", l};
+            return {token_type::double_or, "||", loc};
         }
         print_error("Single '|' is not a meaningful token");
         assert(false);
@@ -250,28 +251,27 @@ lexer::token lexer::next_symbol(Location l) {
         if (peek_char() == '>') {
             // found arrow
             next_char();
-            return {token_type::arrow, "->", l};
+            return {token_type::arrow, "->", loc};
         }
-        return {token_type::minus, "-", l};
+        return {token_type::minus, "-", loc};
     case '<':
         if (peek_char() == '=') {
             next_char();
-            return {token_type::le, "<=", l};
+            return {token_type::le, "<=", loc};
         }
-        return {token_type::lt, "<", l};
-        break;
+        return {token_type::lt, "<", loc};
     case '>':
         if (peek_char() == '=') {
             next_char();
-            return {token_type::ge, ">=", l};
+            return {token_type::ge, ">=", loc};
         }
-        return {token_type::gt, ">", l};
+        return {token_type::gt, ">", loc};
     case '=':
         if (peek_char() == '=') {
             next_char();
-            return {token_type::eq, "==", l};
+            return {token_type::eq, "==", loc};
         }
-        return {token_type::equal, "=", l};
+        return {token_type::equal, "=", loc};
     case '\"': {
         std::string to_ret;
         to_ret += c;
@@ -285,8 +285,8 @@ lexer::token lexer::next_symbol(Location l) {
         }
         // consume the quote
         to_ret += next_char();
-        return {token_type::string, std::move(to_ret), l};
-    } break;
+        return {token_type::string, std::move(to_ret), loc};
+    }
     case '\'': {
         std::string to_ret;
         to_ret += c;
@@ -302,10 +302,10 @@ lexer::token lexer::next_symbol(Location l) {
         // consume the quote
         assert(peek_char() == c);
         to_ret += next_char();
-        return {token_type::character, std::move(to_ret), l};
-    } break;
+        return {token_type::character, std::move(to_ret), loc};
+    }
     case '.':
-        return {token_type::dot, ".", l};
+        return {token_type::dot, ".", loc};
     default:
         print_error("Unknown character: ", static_cast<unsigned>(c), " \'", c, '\'');
         assert(false);
