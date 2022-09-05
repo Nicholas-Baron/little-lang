@@ -318,8 +318,10 @@ namespace visitor {
 
             auto * llvm_struct_type = find_type(ast_struct_type);
             assert(llvm_struct_type != nullptr);
-            assert(llvm::dyn_cast<llvm::PointerType>(lhs_value->getType())
-                       ->isOpaqueOrPointeeTypeMatches(llvm_struct_type));
+
+            auto * llvm_struct_ptr_type = llvm::dyn_cast<llvm::PointerType>(lhs_value->getType());
+            assert(llvm_struct_ptr_type != nullptr);
+            assert(llvm_struct_ptr_type->isOpaqueOrPointeeTypeMatches(llvm_struct_type));
 
             auto * field_node = dynamic_cast<ast::user_val *>(binary_expr.rhs.get());
             assert(field_node != nullptr);
