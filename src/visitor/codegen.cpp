@@ -48,7 +48,7 @@ namespace visitor {
             using namespace constraints;
             std::array<std::string, count> result;
 
-            auto i = 0U;
+            auto index = 0U;
             // NOLINTNEXTLINE (*-pointer-arithmetic)
             for (const auto * iter = strchr(first_part, ',') + 1; iter != nullptr and *iter != '\0';
                  // NOLINTNEXTLINE (*-pointer-arithmetic)
@@ -59,7 +59,7 @@ namespace visitor {
                 auto constraints = std::string{first_part, static_cast<size_t>(iter - first_part)};
 
                 // NOLINTNEXTLINE (*-pointer-arithmetic)
-                result[i++] = constraints + suffix;
+                result[index++] = constraints + suffix;
             }
 
             return result;

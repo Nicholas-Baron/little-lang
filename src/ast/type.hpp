@@ -159,7 +159,7 @@ namespace ast {
         ~struct_type() final = default;
 
         [[nodiscard]] size_t field_count() const noexcept { return fields.size(); }
-        [[nodiscard]] const field_type & field(size_t i) const { return fields[i]; }
+        [[nodiscard]] const field_type & field(size_t index) const { return fields[index]; }
 
       private:
         struct_type(std::string && name, std::vector<field_type> && fields)
@@ -182,7 +182,7 @@ namespace ast {
         [[nodiscard]] bool is_pointer_type() const final { return false; }
 
         [[nodiscard]] size_t arg_count() const noexcept { return arg_types.size(); }
-        [[nodiscard]] type_ptr arg(size_t i) const { return arg_types[i]; }
+        [[nodiscard]] type_ptr arg(size_t index) const { return arg_types[index]; }
         [[nodiscard]] type_ptr return_type() const { return ret_type; }
 
       private:

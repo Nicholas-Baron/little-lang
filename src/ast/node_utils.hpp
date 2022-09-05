@@ -51,10 +51,10 @@ namespace ast {
 
         [[nodiscard]] size_t args_count() const { return args_.size(); }
 
-        [[nodiscard]] ast::expr & arg(size_t i) const {
-            assert(i < args_.size());
-            assert(args_.at(i) != nullptr);
-            return *args_.at(i);
+        [[nodiscard]] ast::expr & arg(size_t index) const {
+            assert(index < args_.size());
+            assert(args_.at(index) != nullptr);
+            return *args_.at(index);
         }
 
       private:
