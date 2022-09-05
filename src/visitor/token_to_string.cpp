@@ -1,6 +1,7 @@
 #include "token_to_string.hpp"
 
 // TODO: Test this?
+// NOLINTNEXTLINE
 [[nodiscard]] std::string tok_to_string(ast::binary_expr::operand op) {
     using operand = ast::binary_expr::operand;
 
@@ -36,6 +37,7 @@
     }
 }
 
+// NOLINTNEXTLINE
 [[nodiscard]] std::string tok_to_string(ast::unary_expr::operand op) {
     using operand = ast::unary_expr::operand;
 

@@ -35,6 +35,7 @@ namespace ast {
       public:
         enum class operand { bool_not, negate, deref };
 
+        // NOLINTNEXTLINE
         unary_expr(operand op, expr_ptr operand)
             : op(op)
             , expr(std::move(operand)) {}
@@ -70,6 +71,7 @@ namespace ast {
             member_access,
         };
 
+        // NOLINTNEXTLINE
         binary_expr(expr_ptr lhs, operand op, expr_ptr rhs)
             : lhs(std::move(lhs))
             , rhs(std::move(rhs))
