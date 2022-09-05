@@ -110,8 +110,8 @@ namespace ast {
         static const type_ptr null;
 
       private:
-        explicit prim_type(type t)
-            : prim{t} {}
+        explicit prim_type(type prim)
+            : prim{prim} {}
 
         void print(std::ostream & /*output*/) const final;
 
