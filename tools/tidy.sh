@@ -1,4 +1,14 @@
-#!/bin/sh
+#!/bin/bash
+
+if [ -d build ]; then
+	echo "Refreshing build..."
+	pushd build > /dev/null || exit
+	ninja
+	popd > /dev/null || exit
+else
+	echo "Setup the build directory first"
+	exit
+fi
 
 flags=$(jq '.[]["command"]' compile_commands.json | sed 's:"/usr/bin/clang++ \(.*\) -o.*:\1:g' | head -n1)
 files=$(git ls-files -- 'src/*.cpp' 'src/*.hpp')
