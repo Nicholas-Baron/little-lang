@@ -51,43 +51,45 @@ void emit_asm(std::unique_ptr<llvm::Module> ir_module, std::string && output_fil
 
     ir_module->setDataLayout(target_machine->createDataLayout());
 
-    std::error_code ec;
+    std::error_code error_code;
 
     if (auto slash_pos = output_filename.find_last_of('/'); slash_pos != std::string::npos) {
-        if (ec = llvm::sys::fs::create_directories(output_filename.substr(0, slash_pos)); ec) {
+        if (error_code = llvm::sys::fs::create_directories(output_filename.substr(0, slash_pos));
+            error_code) {
             errs() << "Could not create directories for " << output_filename << " : "
-                   << ec.message() << '\n';
+                   << error_code.message() << '\n';
             errs().flush();
             return;
         }
     }
 
-    llvm::raw_fd_ostream dest{output_filename, ec, llvm::sys::fs::OF_None};
+    llvm::raw_fd_ostream dest{output_filename, error_code, llvm::sys::fs::OF_None};
 
-    if (ec) {
-        errs() << "Could not open file " << output_filename << " : " << ec.message() << '\n';
+    if (error_code) {
+        errs() << "Could not open file " << output_filename << " : " << error_code.message()
+               << '\n';
         errs().flush();
         return;
     }
 
     {
         // new pass manager
-        PassBuilder pb{target_machine};
+        PassBuilder pass_builder{target_machine};
 
         LoopAnalysisManager lam;
         FunctionAnalysisManager fam;
         CGSCCAnalysisManager cgam;
         ModuleAnalysisManager mam;
 
-        fam.registerPass([&] { return pb.buildDefaultAAPipeline(); });
+        fam.registerPass([&] { return pass_builder.buildDefaultAAPipeline(); });
 
-        pb.registerModuleAnalyses(mam);
-        pb.registerCGSCCAnalyses(cgam);
-        pb.registerFunctionAnalyses(fam);
-        pb.registerLoopAnalyses(lam);
-        pb.crossRegisterProxies(lam, fam, cgam, mam);
+        pass_builder.registerModuleAnalyses(mam);
+        pass_builder.registerCGSCCAnalyses(cgam);
+        pass_builder.registerFunctionAnalyses(fam);
+        pass_builder.registerLoopAnalyses(lam);
+        pass_builder.crossRegisterProxies(lam, fam, cgam, mam);
 
-        auto mpm = pb.buildPerModuleDefaultPipeline(OptimizationLevel::O2);
+        auto mpm = pass_builder.buildPerModuleDefaultPipeline(OptimizationLevel::O2);
 
         mpm.run(*ir_module, mam);
     }
@@ -95,15 +97,15 @@ void emit_asm(std::unique_ptr<llvm::Module> ir_module, std::string && output_fil
     if (debug_optimized_ir) { llvm::outs() << *ir_module << '\n'; }
 
     {
-        legacy::PassManager pm;
+        legacy::PassManager pass_manager;
         auto filetype = CGFT_ObjectFile;
-        if (target_machine->addPassesToEmitFile(pm, dest, nullptr, filetype)) {
+        if (target_machine->addPassesToEmitFile(pass_manager, dest, nullptr, filetype)) {
             errs() << "target machine does not emit a file of this type.\n";
             errs().flush();
             return;
         }
 
-        pm.run(*ir_module);
+        pass_manager.run(*ir_module);
     }
 
     dest.flush();
