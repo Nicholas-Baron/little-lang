@@ -12,25 +12,25 @@ class global_map final {
                   "global_map can only use pointer-like types for its value_t");
 
   public:
-    [[nodiscard]] value_t lookup(const std::string & mod, const key_t & id) const {
+    [[nodiscard]] value_t lookup(const std::string & mod, const key_t & key) const {
 
-        if constexpr (std::is_same_v<key_t, std::string>) { assert(not id.empty()); }
+        if constexpr (std::is_same_v<key_t, std::string>) { assert(not key.empty()); }
 
         auto mod_iter = globals.find(mod);
         if (mod_iter == globals.end()) { return nullptr; }
 
-        auto item_iter = mod_iter->second.find(id);
+        auto item_iter = mod_iter->second.find(key);
         return item_iter != mod_iter->second.end() ? item_iter->second : nullptr;
     }
 
-    void add(const std::string & mod, const key_t & id, value_t value) {
+    void add(const std::string & mod, const key_t & key, value_t value) {
 
-        if constexpr (std::is_same_v<key_t, std::string>) { assert(not id.empty()); }
+        if constexpr (std::is_same_v<key_t, std::string>) { assert(not key.empty()); }
 
         auto [mod_iter, _] = globals.emplace(mod, std::map<key_t, value_t>{});
         auto & module_exports = mod_iter->second;
-        assert(module_exports.find(id) == module_exports.end());
-        module_exports.emplace(id, value);
+        assert(module_exports.find(key) == module_exports.end());
+        module_exports.emplace(key, value);
     }
 
   private:

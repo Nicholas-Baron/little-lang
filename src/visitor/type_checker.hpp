@@ -48,7 +48,7 @@ namespace visitor {
         void printError(std::optional<Location> loc, const arg_t &... args);
 
         // Find the type of an identifier
-        [[nodiscard]] ast::type_ptr find_type_of(const std::string & id) const;
+        [[nodiscard]] ast::type_ptr find_type_of(const std::string & identifier) const;
 
         void bind_type(ast::type_ptr type, std::string identifier, bool should_export = false);
 

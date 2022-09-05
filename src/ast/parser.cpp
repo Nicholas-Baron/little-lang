@@ -754,14 +754,14 @@ std::unique_ptr<ast::struct_init> parser::parse_struct_init(std::string && type_
 
     std::vector<std::pair<std::string, ast::expr_ptr>> initializers;
     while (not lex->consume_if(lexer::token_type::rbrace).has_value()) {
-        auto id = lex->next_token();
-        assert(id == lexer::token_type::identifier);
+        auto field_name = lex->next_token();
+        assert(field_name == lexer::token_type::identifier);
 
         assert(lex->next_token() == lexer::token_type::equal);
 
         auto expr = parse_expression();
 
-        initializers.emplace_back(id.text, std::move(expr));
+        initializers.emplace_back(field_name.text, std::move(expr));
 
         switch (lex->peek_token().type) {
         case lexer::token_type::comma:

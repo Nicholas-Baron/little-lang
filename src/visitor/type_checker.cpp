@@ -41,10 +41,12 @@ namespace visitor {
         found_error = true;
     }
 
-    [[nodiscard]] ast::type_ptr type_checker::find_type_of(const std::string & id) const {
+    [[nodiscard]] ast::type_ptr type_checker::find_type_of(const std::string & identifier) const {
 
         for (const auto & scope : active_typed_identifiers) {
-            if (auto result = scope.find(id); result != scope.end()) { return result->second; }
+            if (auto result = scope.find(identifier); result != scope.end()) {
+                return result->second;
+            }
         }
 
         return nullptr;
