@@ -118,39 +118,39 @@ namespace visitor {
             return is_float ? float_pred : int_pred;
         };
 
-        std::optional<predicate> p;
+        std::optional<predicate> pred;
         switch (binary_expr.op) {
         case operand::le:
-            p = int_or_float(predicate::ICMP_SLE, predicate::FCMP_OLE);
+            pred = int_or_float(predicate::ICMP_SLE, predicate::FCMP_OLE);
             break;
         case operand::lt:
-            p = int_or_float(predicate::ICMP_SLT, predicate::FCMP_OLT);
+            pred = int_or_float(predicate::ICMP_SLT, predicate::FCMP_OLT);
             break;
         case operand::ge:
-            p = int_or_float(predicate::ICMP_SGE, predicate::FCMP_OGE);
+            pred = int_or_float(predicate::ICMP_SGE, predicate::FCMP_OGE);
             break;
         case operand::gt:
-            p = int_or_float(predicate::ICMP_SGT, predicate::FCMP_OGT);
+            pred = int_or_float(predicate::ICMP_SGT, predicate::FCMP_OGT);
             break;
         case operand::eq:
-            p = int_or_float(predicate::ICMP_EQ, predicate::FCMP_OEQ);
+            pred = int_or_float(predicate::ICMP_EQ, predicate::FCMP_OEQ);
             break;
         case operand::ne:
-            p = int_or_float(predicate::ICMP_NE, predicate::FCMP_ONE);
+            pred = int_or_float(predicate::ICMP_NE, predicate::FCMP_ONE);
             break;
         default:
             printError(binary_expr.location(), "Comparison operator ",
                        tok_to_string(binary_expr.op), " is not implemented yet");
         }
-        assert(p.has_value());
+        assert(pred.has_value());
         if (is_constant) {
             auto * constant_lhs = llvm::dyn_cast<llvm::Constant>(lhs_value);
             auto * constant_rhs = llvm::dyn_cast<llvm::Constant>(rhs_value);
-            store_result(llvm::ConstantExpr::getCompare(*p, constant_lhs, constant_rhs));
+            store_result(llvm::ConstantExpr::getCompare(*pred, constant_lhs, constant_rhs));
         } else if (is_float) {
-            store_result(ir_builder->CreateFCmp(*p, lhs_value, rhs_value));
+            store_result(ir_builder->CreateFCmp(*pred, lhs_value, rhs_value));
         } else {
-            store_result(ir_builder->CreateICmp(*p, lhs_value, rhs_value));
+            store_result(ir_builder->CreateICmp(*pred, lhs_value, rhs_value));
         }
     }
 
