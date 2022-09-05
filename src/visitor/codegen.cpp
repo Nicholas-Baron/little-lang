@@ -300,6 +300,7 @@ namespace visitor {
             func_type, llvm::InlineAsm::get(func_type, "syscall", constraint, true), args));
     }
 
+    // NOLINTNEXTLINE
     void codegen::visit(ast::binary_expr & binary_expr) {
 
         auto * lhs_value = get_value(*binary_expr.lhs, *this);
@@ -711,6 +712,7 @@ namespace visitor {
 
     void codegen::visit(ast::top_level & top_level) { top_level.accept(*this); }
 
+    // NOLINTNEXTLINE
     void codegen::visit(ast::top_level_sequence & top_level_sequence) {
 
         if (not top_level_sequence.imports.empty()) {

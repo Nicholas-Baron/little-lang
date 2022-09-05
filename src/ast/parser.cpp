@@ -100,6 +100,7 @@ std::vector<ast::top_lvl_ptr> parser::parse_exports() {
     return items;
 }
 
+// NOLINTNEXTLINE
 std::map<std::string, std::vector<std::string>> parser::parse_imports() {
 
     std::map<std::string, std::vector<std::string>> to_ret;

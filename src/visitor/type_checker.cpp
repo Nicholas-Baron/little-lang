@@ -103,6 +103,7 @@ namespace visitor {
         return lhs_type;
     }
 
+    // NOLINTNEXTLINE
     ast::type_ptr type_checker::evaluate_comparison(ast::type_ptr && lhs_type,
                                                     ast::type_ptr && rhs_type) {
 
@@ -156,6 +157,7 @@ namespace visitor {
         return ast::prim_type::boolean;
     }
 
+    // NOLINTNEXTLINE
     void type_checker::visit(ast::binary_expr & binary_expr) {
 
         auto lhs_type = get_value(*binary_expr.lhs, *this);
