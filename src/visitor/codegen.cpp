@@ -28,7 +28,8 @@ namespace visitor {
 
         namespace constraints {
 
-            static constexpr size_t count_in(const char * text, char c) {
+            // NOLINTNEXTLINE
+            constexpr size_t count_in(const char * text, char c) {
                 auto count = 0U;
                 while (text != nullptr and *text != '\0') {
                     count += static_cast<unsigned int>(*text == c);
@@ -38,9 +39,9 @@ namespace visitor {
                 return count;
             }
 
-            static constexpr auto * first_part = "=A,A,{di},{si},{dx},{r10},{r8},{r9},";
-            static constexpr auto count = count_in(first_part, ',') - 1;
-            static constexpr auto * suffix = ",~{r11},~{rcx},~{dirflag},~{fpsr},~{flags}";
+            constexpr auto * first_part = "=A,A,{di},{si},{dx},{r10},{r8},{r9},";
+            constexpr auto count = count_in(first_part, ',') - 1;
+            constexpr auto * suffix = ",~{r11},~{rcx},~{dirflag},~{fpsr},~{flags}";
 
         } // namespace constraints
 
