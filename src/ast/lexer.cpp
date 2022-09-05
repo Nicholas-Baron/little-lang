@@ -158,13 +158,13 @@ lexer::token lexer::next_identifier(Location loc) {
 
 lexer::token lexer::next_number(Location loc) {
 
-    auto c = next_char();
-    assert(isdigit(c));
+    auto current_char = next_char();
+    assert(isdigit(current_char));
 
     std::string to_ret;
-    to_ret += c;
+    to_ret += current_char;
 
-    if (c == '0') {
+    if (current_char == '0') {
         // either we are hexadecimal or just 0
         if (tolower(peek_char()) == 'x') {
             // remove the 'x' or 'X'
@@ -189,8 +189,8 @@ lexer::token lexer::next_number(Location loc) {
 }
 
 char lexer::next_escaped() {
-    auto c = next_char();
-    switch (c) {
+    auto current_char = next_char();
+    switch (current_char) {
     case 'n':
         return '\n';
     case 'r':
@@ -198,14 +198,15 @@ char lexer::next_escaped() {
     case '0':
         return '\0';
     }
-    print_error("Unknown escaped character: ", static_cast<unsigned>(c), " \'", c, "\'");
+    print_error("Unknown escaped character: ", static_cast<unsigned>(current_char), " \'",
+                current_char, "\'");
     assert(false);
 }
 
 // NOLINTNEXTLINE
 lexer::token lexer::next_symbol(Location loc) {
 
-    switch (const auto c = next_char(); c) {
+    switch (const auto current_char = next_char(); current_char) {
     case EOF:
         return {token_type::eof, "", loc};
     case '(':
@@ -232,16 +233,16 @@ lexer::token lexer::next_symbol(Location loc) {
         return {token_type::question, "?", loc};
     case '/':
         // at this point, we know that this is not a comment
-        assert(peek_char() != c);
+        assert(peek_char() != current_char);
         return {token_type::slash, "/", loc};
     case '&':
-        if (peek_char() == c) {
+        if (peek_char() == current_char) {
             next_char();
             return {token_type::double_and, "&&", loc};
         }
         return {token_type::amp, "&", loc};
     case '|':
-        if (peek_char() == c) {
+        if (peek_char() == current_char) {
             next_char();
             return {token_type::double_or, "||", loc};
         }
@@ -274,8 +275,8 @@ lexer::token lexer::next_symbol(Location loc) {
         return {token_type::equal, "=", loc};
     case '\"': {
         std::string to_ret;
-        to_ret += c;
-        while (peek_char() != c) {
+        to_ret += current_char;
+        while (peek_char() != current_char) {
             if (peek_char() == '\\') {
                 next_char();
                 to_ret += next_escaped();
@@ -289,8 +290,8 @@ lexer::token lexer::next_symbol(Location loc) {
     }
     case '\'': {
         std::string to_ret;
-        to_ret += c;
-        assert(peek_char() != c);
+        to_ret += current_char;
+        assert(peek_char() != current_char);
 
         if (peek_char() == '\\') {
             next_char();
@@ -300,14 +301,15 @@ lexer::token lexer::next_symbol(Location loc) {
         }
 
         // consume the quote
-        assert(peek_char() == c);
+        assert(peek_char() == current_char);
         to_ret += next_char();
         return {token_type::character, std::move(to_ret), loc};
     }
     case '.':
         return {token_type::dot, ".", loc};
     default:
-        print_error("Unknown character: ", static_cast<unsigned>(c), " \'", c, '\'');
+        print_error("Unknown character: ", static_cast<unsigned>(current_char), " \'", current_char,
+                    '\'');
         assert(false);
     }
 }
