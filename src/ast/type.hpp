@@ -141,6 +141,7 @@ namespace ast {
         }
 
       private:
+        // NOLINTNEXTLINE
         inline static global_map<std::string, std::shared_ptr<user_type>> user_made_types;
         std::string name;
     };
