@@ -16,7 +16,7 @@
 
 namespace visitor {
     // This class assumes that its input has been type checked and is correct.
-    class codegen final : public visitor_base,
+    class codegen final : public ast::visitor_base,
                           public value_getter<codegen, ast::node, llvm::Value *> {
       public:
         codegen(const std::string & name, llvm::LLVMContext & context,

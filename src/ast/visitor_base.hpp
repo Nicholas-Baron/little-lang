@@ -5,7 +5,7 @@
 
 #include <move_copy.hpp>
 
-namespace visitor {
+namespace ast {
     class visitor_base {
       public:
         non_copyable(visitor_base);

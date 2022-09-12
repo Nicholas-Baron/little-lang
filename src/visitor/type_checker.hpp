@@ -17,7 +17,7 @@
 #include <llvm/IR/Type.h>
 
 namespace visitor {
-    class type_checker final : public visitor_base,
+    class type_checker final : public ast::visitor_base,
                                public value_getter<type_checker, ast::node, ast::type_ptr> {
       public:
         type_checker(std::string filename, llvm::LLVMContext & context,

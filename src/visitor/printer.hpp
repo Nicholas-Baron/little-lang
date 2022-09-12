@@ -13,7 +13,7 @@
 #include <llvm/IR/Value.h>
 
 namespace visitor {
-    class printer final : public visitor_base,
+    class printer final : public ast::visitor_base,
                           public value_getter<printer, ast::node, llvm::Value *> {
       public:
         explicit printer(const std::string & name);

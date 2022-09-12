@@ -24,10 +24,10 @@ namespace ast {
 
         virtual ~node() = default;
 
-        virtual void accept(visitor::visitor_base &) = 0;
+        virtual void accept(visitor_base &) = 0;
 
 #define make_visitable \
-    void accept(visitor::visitor_base & visitor) override { visitor.visit(*this); }
+    void accept(visitor_base & visitor) override { visitor.visit(*this); }
 
         // TODO: Just public location
         void set_location(const Location & loc_new) { loc = loc_new; }
