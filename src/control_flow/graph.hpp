@@ -19,6 +19,13 @@ namespace control_flow {
             return ref;
         }
 
+        graph();
+
+        non_copyable(graph);
+        movable(graph);
+
+        ~graph() noexcept;
+
       private:
         std::vector<std::unique_ptr<node>> nodes{};
     };
