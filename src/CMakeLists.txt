@@ -24,6 +24,7 @@ set(proj_files
     program.cpp
     settings.cpp
     type_context.cpp
+    control_flow/graph.cpp
     visitor/codegen.cpp
     visitor/type_checker.cpp
 )
