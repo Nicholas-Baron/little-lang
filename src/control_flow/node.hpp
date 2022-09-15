@@ -3,6 +3,8 @@
 
 #include "visitor.hpp"
 
+#include <vector>
+
 #include <move_copy.hpp>
 
 namespace control_flow {
@@ -34,7 +36,7 @@ namespace control_flow {
         make_visitable;
     };
 
-    class function_call : public node {
+    class function_call final : public node {
       public:
         make_visitable;
 
@@ -45,7 +47,7 @@ namespace control_flow {
     };
 
     // Handles both if expressions and if statements
-    class branch : public node {
+    class branch final : public node {
       public:
         make_visitable;
 
@@ -57,7 +59,7 @@ namespace control_flow {
     };
 
     // Handles return statements and "fall off the end"
-    class function_end : public node {
+    class function_end final : public node {
       public:
         make_visitable;
 
