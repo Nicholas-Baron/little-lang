@@ -58,3 +58,18 @@ at some point, call `value_getter::store_result` to return the value to the pare
 
 ### Resources
  - [Visitor with Return Values](https://www.codeproject.com/Tips/1018315/Visitor-with-the-Return-Value)
+
+## `std::shared_ptr`
+
+Using `std::shared_ptr` is a possible [anti-pattern](https://ddanilov.me/shared-ptr-is-evil/).
+Additionally, reference cycles are a persistent worry surrounding their usage.
+Data structures using `std::shared_ptr` thus should ensure that they can form a directed acyclic graph (DAG).
+
+Currently, the frontend type system uses `std::shared_ptr` to enforce singleton invariants and allow composition.
+Since the only source for types is user code and all compositional types are registered after their full definition is complete,
+there is no way for a user to write a cyclic type without an infinitely long file.
+
+This safety mechanism may not last forever.
+As such, single owner systems are preferable.
+Previous work within the repo is the `control_flow::graph`,
+which is cyclic due to value and control passing between nodes.
