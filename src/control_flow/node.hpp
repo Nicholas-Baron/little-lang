@@ -3,6 +3,7 @@
 
 #include "visitor.hpp"
 
+#include <cstddef>
 #include <vector>
 
 #include <move_copy.hpp>
@@ -24,6 +25,10 @@ namespace control_flow {
     class function_start final : public node {
       public:
         make_visitable;
+
+        // Invariant: cannot be null
+        node * next;
+        size_t arg_count{0};
     };
 
     class binary_operation : public node {
@@ -43,6 +48,7 @@ namespace control_flow {
         // Invariant: none of the following `node *` may be null
         node * previous;
         node * next;
+        function_start * callee;
         std::vector<node *> arguments;
     };
 
