@@ -29,6 +29,7 @@ namespace control_flow {
         // Invariant: cannot be null
         node * next;
         size_t arg_count{0};
+        bool exported{false};
     };
 
     class binary_operation : public node {
