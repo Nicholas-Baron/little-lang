@@ -19,6 +19,7 @@ configure_file(
 )
 
 set(proj_files
+    ast_to_cfg.cpp
     emit_asm.cpp
     jit.cpp
     program.cpp
