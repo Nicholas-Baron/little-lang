@@ -3,7 +3,8 @@
 
 #include "visitor.hpp"
 
-#include <cstddef>
+#include <string>
+#include <variant>
 #include <vector>
 
 #include <move_copy.hpp>
@@ -32,14 +33,56 @@ namespace control_flow {
         bool exported{false};
     };
 
-    class binary_operation : public node {
+    class binary_operation final : public node {
       public:
+        enum class operand {
+            add,
+            sub,
+            mult,
+            div,
+            mod,
+            gt,
+            ge,
+            lt,
+            le,
+            eq,
+            ne,
+            bool_and,
+            bool_or,
+            member_access,
+        };
+
         make_visitable;
+
+        // Invariant: none of the following `node *` may be null
+        node * previous;
+        node * next;
+        node * lhs;
+        node * rhs;
     };
 
-    class unary_operation : public node {
+    class unary_operation final : public node {
       public:
+        enum class operation { bool_not, negate, deref };
+
         make_visitable;
+
+        // Invariant: none of the following `node *` may be null
+        node * previous;
+        node * next;
+        node * operand;
+    };
+
+    // Constants do not sit in the control flow path, so they do not need a `previous` or `next`.
+    // TODO: This will not be the case when mutability is added.
+    class constant final : public node {
+      public:
+        enum class value_type { null, identifier, integer, floating, character, boolean, string };
+
+        make_visitable;
+
+        std::variant<std::monostate, long, double, char, bool, std::string> value;
+        value_type val_type;
     };
 
     class function_call final : public node {
