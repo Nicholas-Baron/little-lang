@@ -10,6 +10,8 @@
 #include <move_copy.hpp>
 
 namespace control_flow {
+#undef make_visitable
+
     class node {
       public:
         non_copyable(node);
