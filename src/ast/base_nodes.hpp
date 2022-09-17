@@ -14,6 +14,8 @@
 
 // Basic node
 namespace ast {
+#undef make_visitable
+
     class node {
       public:
         node() = default;
