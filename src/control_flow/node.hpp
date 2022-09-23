@@ -20,6 +20,9 @@ namespace control_flow {
         virtual ~node() noexcept = default;
 
         virtual void accept(visitor &) = 0;
+
+      protected:
+        node() = default;
     };
 
 #define make_visitable \
@@ -27,12 +30,16 @@ namespace control_flow {
 
     class function_start final : public node {
       public:
+        function_start(size_t arg_count, bool exported)
+            : arg_count{arg_count}
+            , exported{exported} {}
+
         make_visitable;
 
         // Invariant: cannot be null
-        node * next;
-        size_t arg_count{0};
-        bool exported{false};
+        node * next{nullptr};
+        size_t arg_count;
+        bool exported;
     };
 
     class binary_operation final : public node {
