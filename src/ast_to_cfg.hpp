@@ -19,6 +19,10 @@ class ast_to_cfg final : public ast::visitor_base,
 
     ~ast_to_cfg() noexcept override = default;
 
+    [[nodiscard]] std::unique_ptr<control_flow::graph> take_cfg() && noexcept {
+        return std::move(result_cfg);
+    }
+
     // clang-format off
 #define expand_node_macro(name) virtual void visit(ast::name &) override;
     ast_nodes
