@@ -21,6 +21,9 @@ namespace control_flow {
 
         virtual void accept(visitor &) = 0;
 
+        // Makes `node` the previous of `this`.
+        virtual void flows_from(node * node) = 0;
+
       protected:
         node() = default;
     };
@@ -35,6 +38,10 @@ namespace control_flow {
             , exported{exported} {}
 
         make_visitable;
+
+        void flows_from(node * /*node*/) override {
+            assert(false and "There is no previous to a function_start");
+        }
 
         // Invariant: cannot be null
         node * next{nullptr};
@@ -63,6 +70,8 @@ namespace control_flow {
 
         make_visitable;
 
+        void flows_from(node * node) override { previous = node; }
+
         // Invariant: none of the following `node *` may be null
         node * previous;
         node * next;
@@ -75,6 +84,8 @@ namespace control_flow {
         enum class operation { bool_not, negate, deref };
 
         make_visitable;
+
+        void flows_from(node * node) override { previous = node; }
 
         // Invariant: none of the following `node *` may be null
         node * previous;
@@ -90,6 +101,10 @@ namespace control_flow {
 
         make_visitable;
 
+        void flows_from(node * /*node*/) override {
+            assert(false and "constants do not interact with control flow");
+        }
+
         std::variant<std::monostate, long, double, char, bool, std::string> value;
         value_type val_type;
     };
@@ -101,6 +116,8 @@ namespace control_flow {
             , arguments{std::move(args)} {}
 
         make_visitable;
+
+        void flows_from(node * node) override { previous = node; }
 
         // Invariant: none of the following `node *` may be null
         node * previous{nullptr};
@@ -114,6 +131,8 @@ namespace control_flow {
       public:
         make_visitable;
 
+        void flows_from(node * node) override { previous = node; }
+
         // Invariant: none of the following `node *` may be null
         node * previous;
         node * condition_value;
@@ -125,6 +144,8 @@ namespace control_flow {
     class function_end final : public node {
       public:
         make_visitable;
+
+        void flows_from(node * node) override { previous = node; }
 
         // Invariant: `previous` cannot be null
         node * previous;
