@@ -16,6 +16,7 @@ namespace control_flow {
             auto owner = std::make_unique<T>(args...);
             auto & ref = *owner;
             nodes.emplace_back(std::move(owner));
+            previously_created = &ref;
             return ref;
         }
 
@@ -25,6 +26,7 @@ namespace control_flow {
             auto & ref = *owner;
             roots.emplace_back(owner.get());
             nodes.emplace_back(std::move(owner));
+            previously_created = &ref;
             return ref;
         }
 
@@ -35,11 +37,15 @@ namespace control_flow {
 
         ~graph() noexcept;
 
+        [[nodiscard]] node * previous_node() const noexcept { return previously_created; }
+
       private:
         std::vector<std::unique_ptr<node>> nodes{};
 
         // Invariant: all pointers in roots must have an equivalent in nodes.
         std::vector<node *> roots{};
+
+        node * previously_created{nullptr};
     };
 } // namespace control_flow
 
