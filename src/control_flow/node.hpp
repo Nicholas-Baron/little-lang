@@ -96,12 +96,16 @@ namespace control_flow {
 
     class function_call final : public node {
       public:
+        explicit function_call(const function_start * callee, std::vector<node *> args = {})
+            : callee{callee}
+            , arguments{std::move(args)} {}
+
         make_visitable;
 
         // Invariant: none of the following `node *` may be null
-        node * previous;
-        node * next;
-        function_start * callee;
+        node * previous{nullptr};
+        node * next{nullptr};
+        const function_start * callee;
         std::vector<node *> arguments;
     };
 
