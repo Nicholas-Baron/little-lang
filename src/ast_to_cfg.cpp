@@ -73,3 +73,20 @@ void ast_to_cfg::visit(ast::func_decl & func_decl) {
 
     func_start.next = get_value(*func_decl.body, *this);
 }
+
+void ast_to_cfg::visit(ast::return_stmt & return_stmt) {
+
+    auto * prev_node = result_cfg->previous_node();
+
+    control_flow::node * return_value = nullptr;
+    if (return_stmt.value != nullptr) {
+        return_value = get_value(*return_stmt.value, *this);
+        return_value->flows_from(prev_node);
+        prev_node = return_value;
+    }
+
+    auto & return_node = result_cfg->create<control_flow::function_end>();
+    return_node.value = return_value;
+    return_node.flows_from(prev_node);
+    return store_result(&return_node);
+}
