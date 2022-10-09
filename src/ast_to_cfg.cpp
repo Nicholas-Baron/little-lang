@@ -90,3 +90,23 @@ void ast_to_cfg::visit(ast::return_stmt & return_stmt) {
     return_node.flows_from(prev_node);
     return store_result(&return_node);
 }
+
+void ast_to_cfg::visit(ast::stmt_sequence & stmt_sequence) {
+    auto * prev_node = result_cfg->previous_node();
+
+    for (auto & stmt : stmt_sequence.stmts) {
+        visit(*stmt);
+        result_cfg->previous_node()->flows_from(prev_node);
+        prev_node = result_cfg->previous_node();
+    }
+
+    return store_result(prev_node);
+}
+
+void ast_to_cfg::visit(ast::struct_decl & /*struct_decl*/) {
+    assert(false and "Implement struct_decl visit");
+}
+
+void ast_to_cfg::visit(ast::typed_identifier & /*typed_identifier*/) {
+    assert(false and "Implement typed_identifier visit");
+}
