@@ -1,5 +1,5 @@
-#ifndef NODE_HPP
-#define NODE_HPP
+#ifndef AST_NODES_HPP
+#define AST_NODES_HPP
 
 #include "expr_nodes.hpp"
 #include "stmt_nodes.hpp"
