@@ -74,6 +74,10 @@ void ast_to_cfg::visit(ast::func_decl & func_decl) {
     func_start.next = get_value(*func_decl.body, *this);
 }
 
+void ast_to_cfg::visit(ast::if_expr & /*unused*/) { assert(false and "TODO: Implement if_expr"); }
+void ast_to_cfg::visit(ast::if_stmt & /*unused*/) { assert(false and "TODO: Implement if_stmt"); }
+void ast_to_cfg::visit(ast::let_stmt & /*unused*/) { assert(false and "TODO: Implement let_stmt"); }
+
 void ast_to_cfg::visit(ast::return_stmt & return_stmt) {
 
     auto * prev_node = result_cfg->previous_node();
@@ -107,6 +111,16 @@ void ast_to_cfg::visit(ast::struct_decl & /*struct_decl*/) {
     assert(false and "Implement struct_decl visit");
 }
 
+void ast_to_cfg::visit(ast::struct_init & /*unused*/) {
+    assert(false and "TODO: Implement struct_init");
+}
+
 void ast_to_cfg::visit(ast::typed_identifier & /*typed_identifier*/) {
     assert(false and "Implement typed_identifier visit");
 }
+
+void ast_to_cfg::visit(ast::unary_expr & /*unused*/) {
+    assert(false and "TODO: Implement unary_expr");
+}
+
+void ast_to_cfg::visit(ast::user_val & /*unused*/) { assert(false and "TODO: Implement user_val"); }
