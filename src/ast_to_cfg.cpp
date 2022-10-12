@@ -80,8 +80,42 @@ void ast_to_cfg::visit(ast::func_decl & func_decl) {
     }
 }
 
-void ast_to_cfg::visit(ast::if_expr & /*unused*/) { assert(false and "TODO: Implement if_expr"); }
-void ast_to_cfg::visit(ast::if_stmt & /*unused*/) { assert(false and "TODO: Implement if_stmt"); }
+void ast_to_cfg::visit(ast::if_expr & if_expr) {
+    auto * previous_node = result_cfg->previous_node();
+
+    auto & branch = result_cfg->create<control_flow::branch>();
+    branch.condition_value = get_value(*if_expr.condition, *this);
+    branch.condition_value->flows_from(previous_node);
+
+    branch.flows_from(branch.condition_value);
+
+    branch.true_case = get_value(*if_expr.then_case, *this);
+    branch.true_case->flows_from(&branch);
+
+    branch.false_case = get_value(*if_expr.else_case, *this);
+    branch.false_case->flows_from(&branch);
+
+    store_result(&branch);
+}
+
+void ast_to_cfg::visit(ast::if_stmt & if_stmt) {
+    auto * previous_node = result_cfg->previous_node();
+
+    auto & branch = result_cfg->create<control_flow::branch>();
+    branch.condition_value = get_value(*if_stmt.condition, *this);
+    branch.condition_value->flows_from(previous_node);
+
+    branch.flows_from(branch.condition_value);
+
+    branch.true_case = get_value(*if_stmt.true_branch, *this);
+    branch.true_case->flows_from(&branch);
+
+    branch.false_case = get_value(*if_stmt.else_branch, *this);
+    branch.false_case->flows_from(&branch);
+
+    store_result(&branch);
+}
+
 void ast_to_cfg::visit(ast::let_stmt & /*unused*/) { assert(false and "TODO: Implement let_stmt"); }
 
 void ast_to_cfg::visit(ast::return_stmt & return_stmt) {
