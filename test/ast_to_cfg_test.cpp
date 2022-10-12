@@ -23,5 +23,9 @@ TEST_CASE("ast_to_cfg can lower an empty function") {
 
     auto cfg = std::move(lowering).take_cfg();
     CHECK(cfg != nullptr);
+
+    // The last node generated should be a function end.
     CHECK(cfg->previous_node() != nullptr);
+    auto * func_end = dynamic_cast<control_flow::function_end *>(cfg->previous_node());
+    CHECK(func_end != nullptr);
 }

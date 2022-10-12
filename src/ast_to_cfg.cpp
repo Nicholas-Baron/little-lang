@@ -72,6 +72,12 @@ void ast_to_cfg::visit(ast::func_decl & func_decl) {
     seen_functions.emplace(func_decl.head.name(), current_function);
 
     func_start.next = get_value(*func_decl.body, *this);
+
+    if (auto * previous_node = result_cfg->previous_node();
+        dynamic_cast<control_flow::function_end *>(previous_node) == nullptr) {
+        auto & func_end = result_cfg->create<control_flow::function_end>();
+        func_end.flows_from(previous_node);
+    }
 }
 
 void ast_to_cfg::visit(ast::if_expr & /*unused*/) { assert(false and "TODO: Implement if_expr"); }
