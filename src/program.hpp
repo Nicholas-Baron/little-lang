@@ -2,6 +2,7 @@
 #define PROGRAM_HPP
 
 #include "ast/top_lvl_nodes.hpp"
+#include "control_flow/graph.hpp"
 #include "move_copy.hpp"
 #include "settings.hpp"
 #include "type_context.hpp"
@@ -17,6 +18,7 @@ class program final {
                                                std::vector<ast::top_level_sequence> && modules,
                                                std::shared_ptr<Settings> settings);
 
+    void lower_to_cfg();
     [[nodiscard]] bool type_check();
     void generate_ir();
 
@@ -39,6 +41,7 @@ class program final {
     std::unique_ptr<llvm::LLVMContext> context;
     std::shared_ptr<Settings> settings;
     std::vector<ast::top_level_sequence> ast_modules;
+    std::unique_ptr<control_flow::graph> cfg;
     std::vector<std::unique_ptr<llvm::Module>> ir_modules;
     type_context typ_context;
 };

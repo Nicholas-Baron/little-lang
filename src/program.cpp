@@ -1,6 +1,7 @@
 #include "program.hpp"
 
 #include "ast/top_lvl_nodes.hpp"
+#include "ast_to_cfg.hpp"
 #include "emit_asm.hpp"
 #include "jit.hpp"
 #include "utils/execute.hpp"
@@ -126,6 +127,14 @@ program::program(std::vector<ast::top_level_sequence> && modules,
     , settings{std::move(settings)}
     , ast_modules(std::move(modules))
     , typ_context(context.get()) {}
+
+void program::lower_to_cfg() {
+    ast_to_cfg lowering;
+
+    for (auto & mod : ast_modules) { lowering.visit(mod); }
+
+    this->cfg = std::move(lowering).take_cfg();
+}
 
 bool program::type_check() {
     global_map<std::string, ast::type_ptr> program_globals;

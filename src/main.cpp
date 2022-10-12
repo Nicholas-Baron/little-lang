@@ -80,6 +80,7 @@ int main(const int arg_count, const char * const * const args) {
     if (not opt_program.has_value()) { return 1; }
 
     auto program = std::move(opt_program).value();
+    program.lower_to_cfg();
     if (not program.type_check()) { return 2; }
     program.generate_ir();
 
