@@ -94,7 +94,6 @@ namespace control_flow {
         node * operand;
     };
 
-    // Constants do not sit in the control flow path, so they do not need a `previous` or `next`.
     // TODO: This will not be the case when mutability is added.
     class constant final : public node {
       public:
@@ -102,12 +101,14 @@ namespace control_flow {
 
         make_visitable;
 
-        void flows_from(node * /*node*/) override {
-            assert(false and "constants do not interact with control flow");
-        }
+        void flows_from(node * node) override { previous = node; }
 
         std::variant<std::monostate, long, double, char, bool, std::string> value;
         value_type val_type;
+
+        // Invariant: none of the following `node *` may be null
+        node * previous{nullptr};
+        node * next{nullptr};
     };
 
     class function_call final : public node {
