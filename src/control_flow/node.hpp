@@ -3,6 +3,7 @@
 
 #include "visitor.hpp"
 
+#include <cassert>
 #include <string>
 #include <variant>
 #include <vector>

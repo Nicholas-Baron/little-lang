@@ -8,7 +8,8 @@
 
 #include "utils/value_getter.hpp"
 
-#include <memory>
+#include <map>
+#include <memory> // unique_ptr
 
 class ast_to_cfg final : public ast::visitor_base,
                          public value_getter<ast_to_cfg, ast::node, control_flow::node *> {
