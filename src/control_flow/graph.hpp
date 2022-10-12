@@ -39,6 +39,16 @@ namespace control_flow {
 
         [[nodiscard]] node * previous_node() const noexcept { return previously_created; }
 
+        template<typename Callable>
+        void for_each_root(Callable func) const noexcept {
+            for (const auto * root : roots) { func(root); }
+        }
+
+        template<typename Callable>
+        void for_each_node(Callable func) const noexcept {
+            for (const auto & node : nodes) { func(node.get()); }
+        }
+
       private:
         std::vector<std::unique_ptr<node>> nodes{};
 
