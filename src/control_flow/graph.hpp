@@ -49,6 +49,8 @@ namespace control_flow {
             for (const auto & node : nodes) { func(node.get()); }
         }
 
+        void list_all_nodes() const noexcept;
+
       private:
         std::vector<std::unique_ptr<node>> nodes{};
 
