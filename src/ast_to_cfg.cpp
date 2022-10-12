@@ -1,6 +1,7 @@
 #include "ast_to_cfg.hpp"
 
 #include "control_flow/node.hpp"
+#include "string_utils.hpp"
 
 ast_to_cfg::ast_to_cfg()
     : result_cfg{std::make_unique<control_flow::graph>()} {}
@@ -208,4 +209,42 @@ void ast_to_cfg::visit(ast::unary_expr & /*unused*/) {
     assert(false and "TODO: Implement unary_expr");
 }
 
-void ast_to_cfg::visit(ast::user_val & /*unused*/) { assert(false and "TODO: Implement user_val"); }
+void ast_to_cfg::visit(ast::user_val & user_val) {
+
+    auto * prev_node = result_cfg->previous_node();
+
+    auto & value = result_cfg->create<control_flow::constant>();
+    value.flows_from(prev_node);
+
+    switch (user_val.val_type) {
+    case ast::user_val::value_type::null:
+        value.val_type = control_flow::constant::value_type::null;
+        break;
+    case ast::user_val::value_type::identifier:
+        assert(false);
+        break;
+    case ast::user_val::value_type::integer:
+        value.val_type = control_flow::constant::value_type::integer;
+        // TODO: Define our own string to int conversion
+        value.value = std::stoi(user_val.val);
+        break;
+    case ast::user_val::value_type::floating:
+        value.val_type = control_flow::constant::value_type::floating;
+        assert(false);
+        break;
+    case ast::user_val::value_type::character:
+        value.val_type = control_flow::constant::value_type::character;
+        assert(false);
+        break;
+    case ast::user_val::value_type::boolean:
+        value.val_type = control_flow::constant::value_type::boolean;
+        assert(false);
+        break;
+    case ast::user_val::value_type::string:
+        value.val_type = control_flow::constant::value_type::string;
+        value.value = unquote(user_val.val);
+        break;
+    }
+
+    store_result(&value);
+}
