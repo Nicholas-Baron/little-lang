@@ -5,6 +5,51 @@
 ast_to_cfg::ast_to_cfg()
     : result_cfg{std::make_unique<control_flow::graph>()} {}
 
+void ast_to_cfg::check_flow() noexcept {
+    struct link {
+        control_flow::node * node;
+        control_flow::node * next;
+    };
+    std::vector<link> found_links;
+
+    // Fill the map
+    result_cfg->for_each_node([&](auto * node) {
+        if (auto * func_start = dynamic_cast<control_flow::function_start *>(node);
+            func_start != nullptr) {
+            // No previous to read
+            return;
+        }
+
+        if (auto * func_end = dynamic_cast<control_flow::function_end *>(node);
+            func_end != nullptr) {
+            found_links.push_back({func_end->previous, func_end});
+            return;
+        }
+
+        assert(false);
+    });
+
+    // Use the map to build the next chain
+    for (auto & link : found_links) {
+
+        auto & node = link.node;
+        auto & next = link.next;
+
+        if (auto * func_start = dynamic_cast<control_flow::function_start *>(node);
+            func_start != nullptr) {
+            func_start->next = next;
+            continue;
+        }
+
+        if (auto * func_end = dynamic_cast<control_flow::function_end *>(node);
+            func_end != nullptr) {
+            assert(false and "function_end should never be the previous of another node");
+        }
+
+        assert(false);
+    }
+}
+
 void ast_to_cfg::visit(ast::node & node) { node.accept(*this); }
 void ast_to_cfg::visit(ast::top_level & top_level) { top_level.accept(*this); }
 void ast_to_cfg::visit(ast::stmt & stmt) { stmt.accept(*this); }

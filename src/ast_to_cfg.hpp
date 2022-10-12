@@ -22,6 +22,7 @@ class ast_to_cfg final : public ast::visitor_base,
     ~ast_to_cfg() noexcept override = default;
 
     [[nodiscard]] std::unique_ptr<control_flow::graph> take_cfg() && noexcept {
+        check_flow();
         return std::move(result_cfg);
     }
 
@@ -30,8 +31,12 @@ class ast_to_cfg final : public ast::visitor_base,
     ast_nodes
 #undef expand_node_macro
   private:
-    std::unique_ptr<control_flow::graph> result_cfg;
+    // Link the `next` pointers up.
+    // The `previous` ones were done by `flows_from`
+    void check_flow() noexcept;
     // clang-format on
+
+    std::unique_ptr<control_flow::graph> result_cfg;
 
     std::map<std::string, const control_flow::function_start *> seen_functions;
     const control_flow::function_start * current_function{nullptr};
