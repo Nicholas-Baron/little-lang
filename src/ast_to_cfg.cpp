@@ -205,8 +205,27 @@ void ast_to_cfg::visit(ast::typed_identifier & /*typed_identifier*/) {
     assert(false and "Implement typed_identifier visit");
 }
 
-void ast_to_cfg::visit(ast::unary_expr & /*unused*/) {
-    assert(false and "TODO: Implement unary_expr");
+void ast_to_cfg::visit(ast::unary_expr & unary_expr) {
+    auto * previous_node = result_cfg->previous_node();
+
+    auto & unary_op = result_cfg->create<control_flow::unary_operation>();
+    unary_op.operand = get_value(*unary_expr.expr, *this);
+    unary_op.operand->flows_from(previous_node);
+    unary_op.flows_from(unary_op.operand);
+
+    switch (unary_expr.op) {
+    case ast::unary_expr::operand::bool_not:
+        unary_op.op = control_flow::unary_operation::operation::bool_not;
+        break;
+    case ast::unary_expr::operand::negate:
+        unary_op.op = control_flow::unary_operation::operation::negate;
+        break;
+    case ast::unary_expr::operand::deref:
+        unary_op.op = control_flow::unary_operation::operation::deref;
+        break;
+    }
+
+    return store_result(&unary_op);
 }
 
 void ast_to_cfg::visit(ast::user_val & user_val) {
