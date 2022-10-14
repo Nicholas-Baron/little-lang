@@ -92,6 +92,7 @@ namespace control_flow {
         node * previous;
         node * next;
         node * operand;
+        operation op;
     };
 
     // TODO: This will not be the case when mutability is added.
