@@ -124,13 +124,32 @@ void ast_to_cfg::visit(ast::const_decl & /*const_decl*/) {
 
 void ast_to_cfg::visit(ast::binary_expr & binary_expr) {
 
-    assert(not binary_expr.is_shortcircuiting() and "Implement short circuiting");
-
     auto * prev_node = result_cfg->previous_node();
 
     auto * cfg_lhs = get_value(*binary_expr.lhs, *this);
     cfg_lhs->flows_from(prev_node);
     prev_node = result_cfg->previous_node();
+
+    if (binary_expr.is_shortcircuiting()) {
+        auto & shorting_node = result_cfg->create<control_flow::branch>();
+        shorting_node.flows_from(prev_node);
+        shorting_node.condition_value = cfg_lhs;
+
+        auto * cfg_rhs = get_value(*binary_expr.rhs, *this);
+        cfg_rhs->flows_from(&shorting_node);
+        prev_node = result_cfg->previous_node();
+
+        assert(binary_expr.op == ast::binary_expr::operand::bool_or
+               or binary_expr.op == ast::binary_expr::operand::bool_and);
+
+        shorting_node.true_case
+            = (binary_expr.op == ast::binary_expr::operand::bool_and) ? cfg_rhs : nullptr;
+
+        shorting_node.false_case
+            = (binary_expr.op == ast::binary_expr::operand::bool_or) ? cfg_rhs : nullptr;
+
+        return store_result(&shorting_node);
+    }
 
     auto * cfg_rhs = get_value(*binary_expr.rhs, *this);
     cfg_rhs->flows_from(prev_node);
