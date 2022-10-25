@@ -1,16 +1,71 @@
 #include "ast_to_cfg.hpp"
 
+#include "ast/expr_nodes.hpp"
 #include "control_flow/node.hpp"
 #include "string_utils.hpp"
+
+#include <iostream>
 
 ast_to_cfg::ast_to_cfg()
     : result_cfg{std::make_unique<control_flow::graph>()} {}
 
+struct link {
+    control_flow::node * node;
+    control_flow::node * next;
+};
+
+static void link_nodes(const std::vector<link> & links) {
+    // Use the map to build the next chain
+    for (const auto & link : links) {
+
+        const auto & node = link.node;
+        const auto & next = link.next;
+
+        if (auto * func_start = dynamic_cast<control_flow::function_start *>(node);
+            func_start != nullptr) {
+            func_start->next = next;
+            continue;
+        }
+
+        if (auto * func_end = dynamic_cast<control_flow::function_end *>(node);
+            func_end != nullptr) {
+            assert(false and "function_end should never be the previous of another node");
+        }
+
+        if (auto * value = dynamic_cast<control_flow::constant *>(node); value != nullptr) {
+            value->next = next;
+            continue;
+        }
+
+        if (auto * branch = dynamic_cast<control_flow::branch *>(node); branch != nullptr) {
+
+            // The node we are encountering is not already a next.
+            if (branch->true_case == node or branch->false_case == node) { continue; }
+
+            // Exactly 1 of the next branches is not set.
+            assert(branch->true_case != nullptr xor branch->false_case != nullptr);
+            if (branch->true_case == nullptr) {
+                branch->true_case = node;
+            } else {
+                branch->false_case = node;
+            }
+
+            continue;
+        }
+
+        if (auto * bin_op = dynamic_cast<control_flow::binary_operation *>(node);
+            bin_op != nullptr) {
+            bin_op->next = node;
+            continue;
+        }
+
+        std::cout << "Forward linking for " << typeid(*node).name() << " has not been implemented"
+                  << std::endl;
+        assert(false);
+    }
+}
+
 void ast_to_cfg::check_flow() noexcept {
-    struct link {
-        control_flow::node * node;
-        control_flow::node * next;
-    };
     std::vector<link> found_links;
 
     // Fill the map
@@ -27,28 +82,28 @@ void ast_to_cfg::check_flow() noexcept {
             return;
         }
 
+        if (auto * value = dynamic_cast<control_flow::constant *>(node); value != nullptr) {
+            found_links.push_back({value->previous, value});
+            return;
+        }
+
+        if (auto * branch = dynamic_cast<control_flow::branch *>(node); branch != nullptr) {
+            found_links.push_back({branch->previous, branch});
+            return;
+        }
+
+        if (auto * bin_op = dynamic_cast<control_flow::binary_operation *>(node);
+            bin_op != nullptr) {
+            found_links.push_back({bin_op->previous, bin_op});
+            return;
+        }
+
+        std::cout << "Previous reading for " << typeid(*node).name() << " has not been implemented"
+                  << std::endl;
         assert(false);
     });
 
-    // Use the map to build the next chain
-    for (auto & link : found_links) {
-
-        auto & node = link.node;
-        auto & next = link.next;
-
-        if (auto * func_start = dynamic_cast<control_flow::function_start *>(node);
-            func_start != nullptr) {
-            func_start->next = next;
-            continue;
-        }
-
-        if (auto * func_end = dynamic_cast<control_flow::function_end *>(node);
-            func_end != nullptr) {
-            assert(false and "function_end should never be the previous of another node");
-        }
-
-        assert(false);
-    }
+    link_nodes(found_links);
 }
 
 void ast_to_cfg::visit(ast::node & node) { node.accept(*this); }
