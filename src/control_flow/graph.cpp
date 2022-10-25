@@ -12,6 +12,6 @@ namespace control_flow {
 
     void graph::list_all_nodes() const noexcept {
         std::cout << std::hex;
-        for (const auto & node : nodes) { std::cout << static_cast<void *>(node.get()) << '\n'; }
+        for_each_node([](auto * node) { std::cout << static_cast<void *>(node) << '\n'; });
     }
 } // namespace control_flow
