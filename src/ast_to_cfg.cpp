@@ -314,7 +314,8 @@ void ast_to_cfg::visit(ast::user_val & user_val) {
         value.val_type = control_flow::constant::value_type::null;
         break;
     case ast::user_val::value_type::identifier:
-        assert(false);
+        value.val_type = control_flow::constant::value_type::identifier;
+        value.value = user_val.val;
         break;
     case ast::user_val::value_type::integer:
         value.val_type = control_flow::constant::value_type::integer;
