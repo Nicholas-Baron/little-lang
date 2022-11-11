@@ -5,4 +5,4 @@ add_library(
 target_compile_options(
     littlec_ast PRIVATE -Og -fdata-sections -ffunction-sections
 )
-target_link_libraries(littlec_ast littlec_utils)
+target_link_libraries(littlec_ast littlec_utils CONAN_PKG::nlohmann_json)
