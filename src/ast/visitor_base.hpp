@@ -23,6 +23,6 @@ namespace ast {
         visitor_base() = default;
         // clang-format on
     };
-} // namespace visitor
+} // namespace ast
 
 #endif

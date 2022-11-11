@@ -11,7 +11,7 @@ else
 fi
 
 flags=$(jq '.[]["command"]' compile_commands.json | sed 's:"/usr/bin/clang++ \(.*\) -o.*:\1:g' | head -n1)
-files=$(git ls-files -- 'src/*.cpp' 'src/*.hpp')
+files=$(find src -type f -name '*.[ch]pp')
 
 temp_dir=$(mktemp -d)
 
