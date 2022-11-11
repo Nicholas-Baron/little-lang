@@ -1,5 +1,6 @@
 add_library(
-    littlec_ast STATIC lexer.cpp location.cpp nodes.cpp parser.cpp type.cpp
+    littlec_ast STATIC lexer.cpp location.cpp nodes.cpp parser.cpp
+                       serializer.cpp type.cpp
 )
 
 target_compile_options(
