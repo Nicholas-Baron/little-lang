@@ -1,9 +1,9 @@
 #include "codegen.hpp"
 
 #include "ast/nodes.hpp"
+#include "ast/token_to_string.hpp"
 #include "ast/type.hpp"
 #include "emit_asm.hpp"
-#include "token_to_string.hpp"
 #include "type_context.hpp"
 
 #include <sstream>
