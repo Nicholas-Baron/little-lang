@@ -1,8 +1,8 @@
 #include "type_checker.hpp"
 
 #include "ast/nodes.hpp"
+#include "ast/token_to_string.hpp"
 #include "ast/type.hpp"
-#include "token_to_string.hpp"
 
 #include <memory> // make_shared
 #include <sstream>

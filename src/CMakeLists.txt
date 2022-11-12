@@ -26,7 +26,6 @@ set(proj_files
     type_context.cpp
     visitor/codegen.cpp
     visitor/printer.cpp
-    visitor/token_to_string.cpp
     visitor/type_checker.cpp
 )
 

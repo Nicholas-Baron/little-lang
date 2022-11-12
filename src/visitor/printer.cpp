@@ -1,7 +1,7 @@
 #include "printer.hpp"
 
 #include "ast/nodes.hpp"
-#include "token_to_string.hpp"
+#include "ast/token_to_string.hpp"
 
 #include <iostream>
 
