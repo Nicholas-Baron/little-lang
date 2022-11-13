@@ -48,4 +48,18 @@ namespace ast {
                                                   {"type", std::move(type)},
                                                   {"value", std::move(value)}});
     }
+
+    void serializer::visit(func_call_data & func_call_data) {
+
+        std::vector<nlohmann::json> args(func_call_data.args_count());
+        for (auto i = 0U; i < func_call_data.args_count(); ++i) {
+            args[i] = get_value(func_call_data.arg(i), *this);
+        }
+
+        return store_result(std::map<std::string, nlohmann::json>{{"name", func_call_data.name()},
+                                                                  {"args", std::move(args)}});
+    }
+
+    void serializer::visit(func_call_expr & func_call_expr) { visit(func_call_expr.data); }
+    void serializer::visit(func_call_stmt & func_call_stmt) { visit(func_call_stmt.data); }
 } // namespace ast
