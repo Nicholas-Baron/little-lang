@@ -30,4 +30,12 @@ namespace ast {
 
         return store_result(std::move(sequence));
     }
+
+    // These four should not be called under any circumstance.
+    // TODO: Remove from the trick macro.
+    void serializer::visit(node & /*node*/) { assert(false and "Should not get here"); }
+    void serializer::visit(expr & /*expr*/) { assert(false and "Should not get here"); }
+    void serializer::visit(stmt & /*stmt*/) { assert(false and "Should not get here"); }
+    void serializer::visit(top_level & /*top_level*/) { assert(false and "Should not get here"); }
+
 } // namespace ast
