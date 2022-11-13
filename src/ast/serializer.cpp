@@ -38,4 +38,14 @@ namespace ast {
     void serializer::visit(stmt & /*stmt*/) { assert(false and "Should not get here"); }
     void serializer::visit(top_level & /*top_level*/) { assert(false and "Should not get here"); }
 
+    void serializer::visit(const_decl & const_decl) {
+        auto value = get_value(*const_decl.expr, *this);
+
+        auto type = (std::stringstream{} << const_decl.name_and_type.type()).str();
+
+        return store_result(
+            std::map<std::string, nlohmann::json>{{"name", const_decl.name_and_type.name()},
+                                                  {"type", std::move(type)},
+                                                  {"value", std::move(value)}});
+    }
 } // namespace ast
