@@ -4,6 +4,7 @@
 #include "token_to_string.hpp"
 
 #include <ostream>
+#include <sstream>
 
 namespace ast {
     serializer::serializer(const std::string & filename) { mod.emplace("filename", filename); }
@@ -62,4 +63,21 @@ namespace ast {
 
     void serializer::visit(func_call_expr & func_call_expr) { visit(func_call_expr.data); }
     void serializer::visit(func_call_stmt & func_call_stmt) { visit(func_call_stmt.data); }
+
+    void serializer::visit(func_decl & func_decl) {
+        auto body = get_value(*func_decl.body, *this);
+
+        std::vector<nlohmann::json> params(func_decl.head.param_count());
+        for (auto i = 0U; i < func_decl.head.param_count(); ++i) {
+            auto type = (std::stringstream{} << func_decl.head.arg(i).type()).str();
+            params[i] = std::map<std::string, nlohmann::json>{
+                {"name", func_decl.head.arg(i).name()}, {"type", std::move(type)}};
+        }
+
+        return store_result(std::map<std::string, nlohmann::json>{
+            {"body", std::move(body)},
+            {"name", func_decl.head.name()},
+            {"paramaters", std::move(params)},
+            {"return type", (std::stringstream{} << func_decl.head.ret_type()).str()}});
+    }
 } // namespace ast
