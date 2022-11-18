@@ -13,21 +13,33 @@ namespace ast {
     class serializer : public visitor_base,
                        public value_getter<serializer, ast::node, nlohmann::json> {
       public:
-        explicit serializer(const std::string & filename);
+        static nlohmann::json to_json(std::string filename, ast::top_level_sequence & mod) {
+            ast::serializer serializer;
+            serializer.visit(mod);
+            return {{"filename", std::move(filename)}, {"contents", serializer.get_result()}};
+        }
+
+        static void into_stream(std::ostream & stream, std::string filename,
+                                ast::top_level_sequence & mod, bool human_readable) {
+            ast::serializer serializer;
+            serializer.visit(mod);
+
+            stream << nlohmann::json{{"filename", std::move(filename)},
+                                     {"contents", serializer.get_result()}}
+                          .dump(human_readable ? 4 : -1);
+        }
+
         non_copyable(serializer);
         movable(serializer);
         ~serializer() noexcept override = default;
 
-        void dump(std::ostream &, bool human_readable) const;
-
+      private:
+        serializer() = default;
 // clang-format off
 #define expand_node_macro(name) void visit(name &) override;
         ast_nodes
 #undef expand_node_macro
-	  private:
-            // clang-format on
-
-            nlohmann::json mod;
+        // clang-format on
     };
 } // namespace ast
 
