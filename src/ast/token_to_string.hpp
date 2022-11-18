@@ -5,8 +5,10 @@
 
 #include <string>
 
-[[nodiscard]] std::string tok_to_string(ast::binary_expr::operand /*op*/);
-[[nodiscard]] std::string tok_to_string(ast::unary_expr::operand /*op*/);
-[[nodiscard]] std::string tok_to_string(ast::user_val::value_type /*op*/);
+namespace ast {
+    [[nodiscard]] std::string tok_to_string(binary_expr::operand /*op*/);
+    [[nodiscard]] std::string tok_to_string(unary_expr::operand /*op*/);
+    [[nodiscard]] std::string tok_to_string(user_val::value_type /*op*/);
+} // namespace ast
 
 #endif
