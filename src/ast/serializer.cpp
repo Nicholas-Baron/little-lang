@@ -161,4 +161,14 @@ namespace ast {
 
     // TODO: Allow `get_value` to visit `typed_identifier`
     void serializer::visit(ast::typed_identifier & /*typed_identifier*/) { assert(false); }
+
+    void serializer::visit(ast::unary_expr & unary_expr) {
+        return store_result(
+            {{"operator", unary_expr.op}, {"operand", get_value(*unary_expr.expr, *this)}});
+    }
+
+    void serializer::visit(ast::user_val & user_val) {
+        return store_result(
+            {{"value_type", tok_to_string(user_val.val_type)}, {"value", user_val.val}});
+    }
 } // namespace ast
