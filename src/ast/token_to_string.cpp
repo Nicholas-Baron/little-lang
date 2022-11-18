@@ -50,3 +50,25 @@
         return "operand::deref";
     }
 }
+
+// NOLINTNEXTLINE
+[[nodiscard]] std::string tok_to_string(ast::user_val::value_type typ) {
+    using type = ast::user_val::value_type;
+
+    switch (typ) {
+    case type::null:
+        return "null";
+    case type::identifier:
+        return "identifier";
+    case type::integer:
+        return "int";
+    case type::floating:
+        return "float";
+    case type::character:
+        return "character";
+    case type::boolean:
+        return "boolean";
+    case type::string:
+        return "string";
+    }
+}

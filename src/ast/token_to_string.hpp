@@ -7,5 +7,6 @@
 
 [[nodiscard]] std::string tok_to_string(ast::binary_expr::operand /*op*/);
 [[nodiscard]] std::string tok_to_string(ast::unary_expr::operand /*op*/);
+[[nodiscard]] std::string tok_to_string(ast::user_val::value_type /*op*/);
 
 #endif
