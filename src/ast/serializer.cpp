@@ -145,4 +145,17 @@ namespace ast {
         return store_result(
             nlohmann::json::object_t{{"name", struct_decl.name}, {"fields", std::move(fields)}});
     }
+
+    void serializer::visit(ast::struct_init & struct_init) {
+
+        std::vector<nlohmann::json> fields;
+
+        for (auto & [name, value] : struct_init.initializers) {
+            fields.emplace_back(
+                nlohmann::json::object_t{{"name", name}, {"value", get_value(*value, *this)}});
+        }
+
+        // TODO: Change `struct_init::name` to something better
+        return store_result({{"type", struct_init.name}, {"initializers", std::move(fields)}});
+    }
 } // namespace ast
