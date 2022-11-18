@@ -122,4 +122,13 @@ namespace ast {
             {"value",
              return_stmt.value != nullptr ? get_value(*return_stmt.value, *this) : nullptr}});
     }
+
+    void serializer::visit(ast::stmt_sequence & stmt_sequence) {
+        std::vector<nlohmann::json> stmts;
+
+        for (auto & stmt : stmt_sequence.stmts) { stmts.push_back(get_value(*stmt, *this)); }
+
+        return store_result(
+            std::map<std::string, nlohmann::json>{{"stmts", nlohmann::json{std::move(stmts)}}});
+    }
 } // namespace ast
