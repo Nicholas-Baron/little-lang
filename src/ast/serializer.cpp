@@ -116,4 +116,10 @@ namespace ast {
                                                   {"name", let_stmt.name_and_type.name()},
                                                   {"value", std::move(value)}});
     }
+
+    void serializer::visit(ast::return_stmt & return_stmt) {
+        return store_result(std::map<std::string, nlohmann::json>{
+            {"value",
+             return_stmt.value != nullptr ? get_value(*return_stmt.value, *this) : nullptr}});
+    }
 } // namespace ast
