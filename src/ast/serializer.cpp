@@ -80,4 +80,28 @@ namespace ast {
             {"paramaters", std::move(params)},
             {"return type", (std::stringstream{} << func_decl.head.ret_type()).str()}});
     }
+
+    void serializer::visit(ast::if_expr & if_expr) {
+        auto condition = get_value(*if_expr.condition, *this);
+        auto then_value = get_value(*if_expr.then_case, *this);
+        auto else_value = get_value(*if_expr.else_case, *this);
+
+        return store_result(
+            std::map<std::string, nlohmann::json>{{"condition", std::move(condition)},
+                                                  {"then_value", std::move(then_value)},
+                                                  {"else_value", std::move(else_value)}});
+    }
+
+    void serializer::visit(ast::if_stmt & if_stmt) {
+
+        auto condition = get_value(*if_stmt.condition, *this);
+        auto then_value = get_value(*if_stmt.true_branch, *this);
+        auto else_value = if_stmt.else_branch != nullptr ? get_value(*if_stmt.else_branch, *this)
+                                                         : nlohmann::json{};
+
+        return store_result(
+            std::map<std::string, nlohmann::json>{{"condition", std::move(condition)},
+                                                  {"then_value", std::move(then_value)},
+                                                  {"else_value", std::move(else_value)}});
+    }
 } // namespace ast
