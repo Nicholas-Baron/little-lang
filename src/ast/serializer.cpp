@@ -131,4 +131,18 @@ namespace ast {
         return store_result(
             std::map<std::string, nlohmann::json>{{"stmts", nlohmann::json{std::move(stmts)}}});
     }
+
+    void serializer::visit(ast::struct_decl & struct_decl) {
+
+        std::vector<nlohmann::json> fields;
+
+        for (auto & field : struct_decl.fields) {
+            auto type = (std::stringstream{} << field.type()).str();
+            fields.push_back(
+                nlohmann::json::object_t{{"name", field.name()}, {"type", std::move(type)}});
+        }
+
+        return store_result(
+            nlohmann::json::object_t{{"name", struct_decl.name}, {"fields", std::move(fields)}});
+    }
 } // namespace ast
