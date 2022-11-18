@@ -75,6 +75,10 @@ toposort(const std::string & root, const std::map<std::string, std::set<std::str
     return to_ret;
 }
 
+program::program(program &&) noexcept = default;
+program & program::operator=(program &&) noexcept = default;
+program::~program() noexcept = default;
+
 std::optional<program> program::from_modules(const std::string & root_file,
                                              std::vector<ast::top_level_sequence> && modules,
                                              std::shared_ptr<Settings> settings) {

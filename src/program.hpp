@@ -2,6 +2,7 @@
 #define PROGRAM_HPP
 
 #include "ast/top_lvl_nodes.hpp"
+#include "move_copy.hpp"
 #include "settings.hpp"
 #include "type_context.hpp"
 
@@ -22,6 +23,13 @@ class program final {
     // Returns the absolute path to the final program
     std::string emit_and_link();
     [[nodiscard]] uint64_t jit();
+
+    non_copyable(program);
+
+    // These need to be out of line for LLVM types
+    program(program &&) noexcept;
+    program & operator=(program &&) noexcept;
+    ~program() noexcept;
 
   private:
     program(std::vector<ast::top_level_sequence> && modules, std::shared_ptr<Settings> settings,
