@@ -104,4 +104,16 @@ namespace ast {
                                                   {"then_value", std::move(then_value)},
                                                   {"else_value", std::move(else_value)}});
     }
+
+    void serializer::visit(ast::let_stmt & let_stmt) {
+        auto value = get_value(*let_stmt.value, *this);
+
+        // TODO: Allow `typed_identifier` to be visited
+        auto type = (std::stringstream{} << let_stmt.name_and_type.type()).str();
+
+        return store_result(
+            std::map<std::string, nlohmann::json>{{"type", std::move(type)},
+                                                  {"name", let_stmt.name_and_type.name()},
+                                                  {"value", std::move(value)}});
+    }
 } // namespace ast
