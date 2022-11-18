@@ -158,4 +158,7 @@ namespace ast {
         // TODO: Change `struct_init::name` to something better
         return store_result({{"type", struct_init.name}, {"initializers", std::move(fields)}});
     }
+
+    // TODO: Allow `get_value` to visit `typed_identifier`
+    void serializer::visit(ast::typed_identifier & /*typed_identifier*/) { assert(false); }
 } // namespace ast
