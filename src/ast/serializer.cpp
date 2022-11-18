@@ -7,11 +7,6 @@
 #include <sstream>
 
 namespace ast {
-    serializer::serializer(const std::string & filename) { mod.emplace("filename", filename); }
-
-    void serializer::dump(std::ostream & stream, bool human_readable) const {
-        stream << mod.dump(human_readable ? 4 : -1);
-    }
 
     void serializer::visit(binary_expr & binary_expr) {
         auto lhs = get_value(*binary_expr.lhs, *this);
