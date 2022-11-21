@@ -1,9 +1,9 @@
 #include "ast/parser.hpp"
+#include "ast/serializer.hpp"
 #include "program.hpp"
 #include "settings.hpp"
 #include "utils/execute.hpp"      // exec_command
 #include "utils/string_utils.hpp" // normalized_absolute_path
-#include "visitor/printer.hpp"
 
 #include <cassert>
 #include <iostream> // cout
@@ -50,10 +50,7 @@ static std::vector<ast::top_level_sequence> load_modules(const std::string & inp
 
         parsed_module->filename = unquote(filename);
 
-        if (debug_ast) {
-            visitor::printer printer_visitor{filename};
-            printer_visitor.visit(*parsed_module);
-        }
+        if (debug_ast) { ast::serializer::into_stream(std::cout, filename, *parsed_module, true); }
 
         for (const auto & iter : parsed_module->imports) {
             // certain modules are "pseudo" (only containing intrinsics)
