@@ -467,7 +467,7 @@ namespace visitor {
 
         for (auto i = 0U; i < param_count; ++i) {
 
-            auto param = func_decl.head.arg(i);
+            const auto & param = func_decl.head.arg(i);
             auto * llvm_param_type = find_type(param.type(), param.location());
             if (dynamic_cast<ast::struct_type *>(param.type().get()) != nullptr) {
                 // All structs need to be passed as pointers
