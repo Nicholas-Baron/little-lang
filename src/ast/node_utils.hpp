@@ -16,7 +16,7 @@
 
 namespace ast {
 
-    class typed_identifier final {
+    class typed_identifier final : public node {
       public:
         typed_identifier(std::string && name, ast::type_ptr type, Location loc)
             : type_{std::move(type)}
@@ -26,6 +26,8 @@ namespace ast {
         [[nodiscard]] const auto & name() const { return name_; }
         [[nodiscard]] ast::type_ptr type() const { return type_; }
         [[nodiscard]] const auto & location() const noexcept { return loc; }
+
+        make_visitable;
 
       private:
         ast::type_ptr type_;
