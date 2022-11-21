@@ -37,12 +37,8 @@ namespace ast {
     void serializer::visit(const_decl & const_decl) {
         auto value = get_value(*const_decl.expr, *this);
 
-        auto type = (std::stringstream{} << const_decl.name_and_type.type()).str();
-
-        return store_result(
-            std::map<std::string, nlohmann::json>{{"name", const_decl.name_and_type.name()},
-                                                  {"type", std::move(type)},
-                                                  {"value", std::move(value)}});
+        return store_result(nlohmann::json::object_t{
+            {"variable", get_value(const_decl.name_and_type, *this)}, {"value", std::move(value)}});
     }
 
     void serializer::visit(func_call_data & func_call_data) {
@@ -63,6 +59,7 @@ namespace ast {
         auto body = get_value(*func_decl.body, *this);
 
         std::vector<nlohmann::json> params(func_decl.head.param_count());
+        // TODO: Remove `const`
         for (auto i = 0U; i < func_decl.head.param_count(); ++i) {
             auto type = (std::stringstream{} << func_decl.head.arg(i).type()).str();
             params[i] = std::map<std::string, nlohmann::json>{
@@ -103,13 +100,8 @@ namespace ast {
     void serializer::visit(ast::let_stmt & let_stmt) {
         auto value = get_value(*let_stmt.value, *this);
 
-        // TODO: Allow `typed_identifier` to be visited
-        auto type = (std::stringstream{} << let_stmt.name_and_type.type()).str();
-
-        return store_result(
-            std::map<std::string, nlohmann::json>{{"type", std::move(type)},
-                                                  {"name", let_stmt.name_and_type.name()},
-                                                  {"value", std::move(value)}});
+        return store_result(nlohmann::json::object_t{
+            {"variable", get_value(let_stmt.name_and_type, *this)}, {"value", std::move(value)}});
     }
 
     void serializer::visit(ast::return_stmt & return_stmt) {
@@ -131,11 +123,7 @@ namespace ast {
 
         std::vector<nlohmann::json> fields;
 
-        for (auto & field : struct_decl.fields) {
-            auto type = (std::stringstream{} << field.type()).str();
-            fields.push_back(
-                nlohmann::json::object_t{{"name", field.name()}, {"type", std::move(type)}});
-        }
+        for (auto & field : struct_decl.fields) { fields.push_back(get_value(field, *this)); }
 
         return store_result(
             nlohmann::json::object_t{{"name", struct_decl.name}, {"fields", std::move(fields)}});
@@ -154,8 +142,12 @@ namespace ast {
         return store_result({{"type", struct_init.name}, {"initializers", std::move(fields)}});
     }
 
-    // TODO: Allow `get_value` to visit `typed_identifier`
-    void serializer::visit(ast::typed_identifier & /*typed_identifier*/) { assert(false); }
+    void serializer::visit(ast::typed_identifier & typed_identifier) {
+
+        return store_result(nlohmann::json::object_t{
+            {"name", typed_identifier.name()},
+            {"type", (std::stringstream{} << typed_identifier.type()).str()}});
+    }
 
     void serializer::visit(ast::unary_expr & unary_expr) {
         return store_result(
