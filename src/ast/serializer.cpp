@@ -144,9 +144,12 @@ namespace ast {
 
     void serializer::visit(ast::typed_identifier & typed_identifier) {
 
-        return store_result(nlohmann::json::object_t{
-            {"name", typed_identifier.name()},
-            {"type", (std::stringstream{} << typed_identifier.type()).str()}});
+        auto type = typed_identifier.type() != nullptr
+                      ? nlohmann::json{(std::stringstream{} << typed_identifier.type()).str()}
+                      : nlohmann::json{};
+
+        return store_result(
+            nlohmann::json::object_t{{"name", typed_identifier.name()}, {"type", std::move(type)}});
     }
 
     void serializer::visit(ast::unary_expr & unary_expr) {
