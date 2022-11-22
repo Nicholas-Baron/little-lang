@@ -66,11 +66,13 @@ namespace ast {
                 {"name", func_decl.head.arg(i).name()}, {"type", std::move(type)}};
         }
 
-        return store_result(std::map<std::string, nlohmann::json>{
-            {"body", std::move(body)},
-            {"name", func_decl.head.name()},
-            {"paramaters", std::move(params)},
-            {"return type", (std::stringstream{} << func_decl.head.ret_type()).str()}});
+        assert(func_decl.head.ret_type() != nullptr);
+        auto return_type = (std::stringstream{} << *func_decl.head.ret_type()).str();
+
+        return store_result(nlohmann::json::object_t{{"body", std::move(body)},
+                                                     {"name", func_decl.head.name()},
+                                                     {"paramaters", std::move(params)},
+                                                     {"return type", std::move(return_type)}});
     }
 
     void serializer::visit(ast::if_expr & if_expr) {
