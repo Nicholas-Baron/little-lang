@@ -58,13 +58,10 @@ namespace ast {
     void serializer::visit(func_decl & func_decl) {
         auto body = get_value(*func_decl.body, *this);
 
-        std::vector<nlohmann::json> params(func_decl.head.param_count());
-        // TODO: Remove `const`
-        for (auto i = 0U; i < func_decl.head.param_count(); ++i) {
-            auto type = (std::stringstream{} << func_decl.head.arg(i).type()).str();
-            params[i] = std::map<std::string, nlohmann::json>{
-                {"name", func_decl.head.arg(i).name()}, {"type", std::move(type)}};
-        }
+        std::vector<nlohmann::json> params;
+        params.reserve(func_decl.head.param_count());
+
+        for (auto & param : func_decl.head.params) { params.push_back(get_value(param, *this)); }
 
         assert(func_decl.head.ret_type() != nullptr);
         auto return_type = (std::stringstream{} << *func_decl.head.ret_type()).str();

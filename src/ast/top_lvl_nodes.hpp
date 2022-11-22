@@ -40,13 +40,14 @@ namespace ast {
 
     class func_decl final : public top_level {
       public:
-        class header final {
+        class header final : public node {
           public:
             header(std::string && name, std::vector<typed_identifier> && parameters)
                 : name_(std::move(name))
                 , params(std::move(parameters))
                 , ret_type_{ast::prim_type::unit} {}
 
+            // TODO: Remove all the getters and setters across the codebase
             void set_ret_type(ast::type_ptr && type) { ret_type_ = std::move(type); }
 
             [[nodiscard]] ast::type_ptr ret_type() const { return ret_type_; }
@@ -59,15 +60,11 @@ namespace ast {
 
             [[nodiscard]] const std::string & name() const & { return name_; }
 
-            void set_location(const Location & loc_new) { loc = loc_new; }
+            make_visitable;
 
-            [[nodiscard]] const auto & location() const noexcept { return loc; }
-
-          private:
             std::string name_;
             std::vector<typed_identifier> params;
             ast::type_ptr ret_type_;
-            Location loc{};
         };
 
         func_decl(header && head, stmt_ptr body)
