@@ -117,8 +117,7 @@ namespace ast {
 
         for (auto & stmt : stmt_sequence.stmts) { stmts.push_back(get_value(*stmt, *this)); }
 
-        return store_result(
-            std::map<std::string, nlohmann::json>{{"stmts", nlohmann::json{std::move(stmts)}}});
+        return store_result(std::move(stmts));
     }
 
     void serializer::visit(ast::struct_decl & struct_decl) {
