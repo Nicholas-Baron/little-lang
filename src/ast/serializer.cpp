@@ -37,8 +37,10 @@ namespace ast {
     void serializer::visit(const_decl & const_decl) {
         auto value = get_value(*const_decl.expr, *this);
 
-        return store_result(nlohmann::json::object_t{
-            {"variable", get_value(const_decl.name_and_type, *this)}, {"value", std::move(value)}});
+        return store_result(
+            nlohmann::json::object_t{{"decl_type", "const"},
+                                     {"variable", get_value(const_decl.name_and_type, *this)},
+                                     {"value", std::move(value)}});
     }
 
     void serializer::visit(func_call_data & func_call_data) {
@@ -99,8 +101,10 @@ namespace ast {
     void serializer::visit(ast::let_stmt & let_stmt) {
         auto value = get_value(*let_stmt.value, *this);
 
-        return store_result(nlohmann::json::object_t{
-            {"variable", get_value(let_stmt.name_and_type, *this)}, {"value", std::move(value)}});
+        return store_result(
+            nlohmann::json::object_t{{"decl_type", "let"},
+                                     {"variable", get_value(let_stmt.name_and_type, *this)},
+                                     {"value", std::move(value)}});
     }
 
     void serializer::visit(ast::return_stmt & return_stmt) {
