@@ -1,11 +1,13 @@
+#include "ast/nodes.hpp"
 #include "ast/parser.hpp"
-#include "ast/top_lvl_nodes.hpp"
 #include "ast/serializer.hpp"
 
 #include <iostream>
 #include <sstream>
 
 #include <catch2/catch.hpp>
+
+using namespace nlohmann::json_literals;
 
 TEST_CASE("serializer handles hello world") {
     std::string buffer = R"(
@@ -25,5 +27,36 @@ TEST_CASE("serializer handles hello world") {
 
     CHECK(serialized.is_object());
     CHECK(serialized.size() == 2);
-	std::cout << serialized;
+    CHECK(serialized == R"({
+  "contents": [
+    {
+      "body": [
+        {
+		  "decl_type" : "let",
+          "value": {
+            "value": "\"hello world\"",
+            "value_type": "string"
+          },
+          "variable": {
+            "name": "output",
+            "type": null
+          }
+        },
+        {
+          "args": [
+            {
+              "value": "output",
+              "value_type": "identifier"
+            }
+          ],
+          "name": "print"
+        }
+      ],
+      "name": "main",
+      "paramaters": [],
+      "return type": "unit"
+    }
+  ],
+  "filename": ""
+})"_json);
 }
