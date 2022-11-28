@@ -98,7 +98,7 @@ namespace visitor {
     }
 
     void printer::visit(ast::struct_init & struct_init) {
-        std::cout << "struct " << struct_init.name << " {\n";
+        std::cout << "struct " << struct_init.type_name << " {\n";
 
         for (auto & [name, value] : struct_init.initializers) {
             std::cout << name << " = ";

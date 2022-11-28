@@ -398,7 +398,7 @@ TEST_CASE("the parser will parse a struct initialization") {
     auto * struct_init = dynamic_cast<ast::struct_init *>(init->value.get());
     CHECK(struct_init != nullptr);
 
-    CHECK(struct_init->name == "my_struct_type");
+    CHECK(struct_init->type_name == "my_struct_type");
     CHECK(struct_init->initializers.size() == 4);
     CHECK(struct_init->initializers[0].first == "x");
     CHECK(struct_init->initializers[1].first == "y");
