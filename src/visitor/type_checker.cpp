@@ -471,10 +471,10 @@ namespace visitor {
     void type_checker::visit(ast::struct_init & struct_init) {
 
         auto struct_decl = std::dynamic_pointer_cast<ast::struct_type>(
-            ast::user_type::lookup(struct_init.name, filename));
+            ast::user_type::lookup(struct_init.type_name, filename));
 
         if (struct_decl == nullptr) {
-            return printError(struct_init.location(), '`', struct_init.name,
+            return printError(struct_init.location(), '`', struct_init.type_name,
                               "` does not name a defined struct");
         }
 

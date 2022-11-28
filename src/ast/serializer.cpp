@@ -140,8 +140,7 @@ namespace ast {
                 nlohmann::json::object_t{{"name", name}, {"value", get_value(*value, *this)}});
         }
 
-        // TODO: Change `struct_init::name` to something better
-        return store_result({{"type", struct_init.name}, {"initializers", std::move(fields)}});
+        return store_result({{"type", struct_init.type_name}, {"initializers", std::move(fields)}});
     }
 
     void serializer::visit(ast::typed_identifier & typed_identifier) {

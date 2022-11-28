@@ -127,12 +127,12 @@ namespace ast {
       public:
         struct_init(std::string name,
                     std::vector<std::pair<std::string, ast::expr_ptr>> && initializers)
-            : name{std::move(name)}
+            : type_name{std::move(name)}
             , initializers{std::move(initializers)} {}
 
         make_visitable;
 
-        std::string name;
+        std::string type_name;
         std::vector<std::pair<std::string, ast::expr_ptr>> initializers;
     };
 } // namespace ast
