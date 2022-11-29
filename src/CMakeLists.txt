@@ -25,7 +25,6 @@ set(proj_files
     settings.cpp
     type_context.cpp
     visitor/codegen.cpp
-    visitor/printer.cpp
     visitor/type_checker.cpp
 )
 
@@ -82,7 +81,6 @@ target_precompile_headers(
     program.hpp
     utils/global_map.hpp
     visitor/codegen.hpp
-    visitor/printer.hpp
 )
 
 # the actual executable
