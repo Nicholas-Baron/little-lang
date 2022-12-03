@@ -163,20 +163,21 @@ void ast_to_cfg::visit(ast::binary_expr & binary_expr) {
 }
 
 void ast_to_cfg::visit(ast::func_call_data & func_call_data) {
+    auto * prev_node = result_cfg->previous_node();
+
     std::vector<control_flow::node *> args;
     for (size_t i = 0; i < func_call_data.args_count(); ++i) {
         auto * arg = get_value(func_call_data.arg(i), *this);
-        arg->flows_from(args.back());
+        arg->flows_from(prev_node);
         args.push_back(arg);
+        prev_node = arg;
     }
 
     auto iter = seen_functions.find(func_call_data.name());
     if (iter == seen_functions.end()) { assert(false and "TODO: Make acutal error printout"); }
 
-    auto * prev = args.back();
-
     auto & func_call = result_cfg->create<control_flow::function_call>(iter->second, args);
-    func_call.flows_from(prev);
+    func_call.flows_from(prev_node);
     return store_result(&func_call);
 }
 
