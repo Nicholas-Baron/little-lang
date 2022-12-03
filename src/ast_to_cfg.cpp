@@ -118,8 +118,17 @@ void ast_to_cfg::visit(ast::top_level_sequence & top_level_sequence) {
     for (auto & item : top_level_sequence.items) { visit(*item); }
 }
 
-void ast_to_cfg::visit(ast::const_decl & /*const_decl*/) {
-    assert(false and "Implement constant declarations");
+void ast_to_cfg::visit(ast::const_decl & const_decl) {
+
+    auto name = const_decl.name_and_type.name();
+
+    if (constants.find(name) != constants.end()) {
+        std::cout << "Found two constants named " << name << "\nSecond declaraction @ "
+                  << const_decl.location() << std::endl;
+        assert(false);
+    }
+
+    constants.emplace(name, const_decl.expr.get());
 }
 
 void ast_to_cfg::visit(ast::binary_expr & binary_expr) {
