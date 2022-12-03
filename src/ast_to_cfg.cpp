@@ -63,7 +63,12 @@ static void link_nodes(const std::vector<link> & links) {
         if (auto * func_call = dynamic_cast<control_flow::function_call *>(node);
             func_call != nullptr) {
             func_call->next = next;
-			continue;
+            continue;
+        }
+
+        if (auto * phi = dynamic_cast<control_flow::phi *>(node); phi != nullptr) {
+            phi->next = next;
+            continue;
         }
 
         std::cout << "Forward linking for " << typeid(*node).name() << " has not been implemented"
@@ -108,6 +113,11 @@ void ast_to_cfg::check_flow() noexcept {
         if (auto * func_call = dynamic_cast<control_flow::function_call *>(node);
             func_call != nullptr) {
             found_links.push_back({func_call->previous, func_call});
+            return;
+        }
+
+        if (auto * phi = dynamic_cast<control_flow::phi *>(node); phi != nullptr) {
+            for (auto * prev : phi->previous) { found_links.push_back({prev, phi}); }
             return;
         }
 
@@ -170,7 +180,11 @@ void ast_to_cfg::visit(ast::binary_expr & binary_expr) {
         shorting_node.false_case
             = (binary_expr.op == ast::binary_expr::operand::bool_or) ? cfg_rhs : nullptr;
 
-        return store_result(&shorting_node);
+        auto & join_node = result_cfg->create<control_flow::phi>();
+        join_node.flows_from(shorting_node.true_case);
+        join_node.flows_from(shorting_node.false_case);
+
+        return store_result(&join_node);
     }
 
     auto * cfg_rhs = get_value(*binary_expr.rhs, *this);
@@ -238,7 +252,11 @@ void ast_to_cfg::visit(ast::if_expr & if_expr) {
     branch.false_case = get_value(*if_expr.else_case, *this);
     branch.false_case->flows_from(&branch);
 
-    store_result(&branch);
+    auto & join_node = result_cfg->create<control_flow::phi>();
+    join_node.flows_from(branch.true_case);
+    join_node.flows_from(branch.false_case);
+
+    store_result(&join_node);
 }
 
 void ast_to_cfg::visit(ast::if_stmt & if_stmt) {
@@ -253,12 +271,18 @@ void ast_to_cfg::visit(ast::if_stmt & if_stmt) {
     branch.true_case = get_value(*if_stmt.true_branch, *this);
     branch.true_case->flows_from(&branch);
 
+    auto & join_node = result_cfg->create<control_flow::phi>();
+    join_node.flows_from(branch.true_case);
+
     if (if_stmt.else_branch != nullptr) {
         branch.false_case = get_value(*if_stmt.else_branch, *this);
         branch.false_case->flows_from(&branch);
+        join_node.flows_from(branch.false_case);
+    } else {
+        join_node.flows_from(&branch);
     }
 
-    store_result(&branch);
+    store_result(&join_node);
 }
 
 void ast_to_cfg::visit(ast::let_stmt & /*unused*/) { assert(false and "TODO: Implement let_stmt"); }
