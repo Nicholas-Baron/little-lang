@@ -59,6 +59,12 @@ static void link_nodes(const std::vector<link> & links) {
             continue;
         }
 
+        if (auto * func_call = dynamic_cast<control_flow::function_call *>(node);
+            func_call != nullptr) {
+            func_call->next = next;
+			continue;
+        }
+
         std::cout << "Forward linking for " << typeid(*node).name() << " has not been implemented"
                   << std::endl;
         assert(false);
@@ -95,6 +101,12 @@ void ast_to_cfg::check_flow() noexcept {
         if (auto * bin_op = dynamic_cast<control_flow::binary_operation *>(node);
             bin_op != nullptr) {
             found_links.push_back({bin_op->previous, bin_op});
+            return;
+        }
+
+        if (auto * func_call = dynamic_cast<control_flow::function_call *>(node);
+            func_call != nullptr) {
+            found_links.push_back({func_call->previous, func_call});
             return;
         }
 
