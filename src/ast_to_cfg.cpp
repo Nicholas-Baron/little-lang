@@ -55,7 +55,7 @@ static void link_nodes(const std::vector<link> & links) {
 
         if (auto * bin_op = dynamic_cast<control_flow::binary_operation *>(node);
             bin_op != nullptr) {
-            bin_op->next = node;
+            bin_op->next = next;
             continue;
         }
 
