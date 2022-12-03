@@ -156,6 +156,22 @@ namespace control_flow {
         node * value;
     };
 
+    // Handles joining control paths
+    class phi final : public node {
+      public:
+        make_visitable;
+
+        void flows_from(node * node) override {
+            if (dynamic_cast<control_flow::function_end *>(node) == nullptr) {
+                previous.push_back(node);
+            }
+        }
+
+        // Invariant: none of the following `node *` may be null
+        std::vector<node *> previous;
+        node * next;
+    };
+
 #undef make_visitable
 
 } // namespace control_flow
