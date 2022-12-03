@@ -230,8 +230,10 @@ void ast_to_cfg::visit(ast::if_stmt & if_stmt) {
     branch.true_case = get_value(*if_stmt.true_branch, *this);
     branch.true_case->flows_from(&branch);
 
-    branch.false_case = get_value(*if_stmt.else_branch, *this);
-    branch.false_case->flows_from(&branch);
+    if (if_stmt.else_branch != nullptr) {
+        branch.false_case = get_value(*if_stmt.else_branch, *this);
+        branch.false_case->flows_from(&branch);
+    }
 
     store_result(&branch);
 }
