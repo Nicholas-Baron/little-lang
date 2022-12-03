@@ -29,6 +29,7 @@ static void link_nodes(const std::vector<link> & links) {
 
         if (auto * func_end = dynamic_cast<control_flow::function_end *>(node);
             func_end != nullptr) {
+            std::cout << "next=" << typeid(*next).name() << std::endl;
             assert(false and "function_end should never be the previous of another node");
         }
 
