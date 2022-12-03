@@ -261,9 +261,9 @@ void ast_to_cfg::visit(ast::stmt_sequence & stmt_sequence) {
     auto * prev_node = result_cfg->previous_node();
 
     for (auto & stmt : stmt_sequence.stmts) {
-        visit(*stmt);
-        result_cfg->previous_node()->flows_from(prev_node);
-        prev_node = result_cfg->previous_node();
+        auto * stmt_node = get_value(*stmt, *this);
+        stmt_node->flows_from(prev_node);
+        prev_node = stmt_node;
     }
 
     return store_result(prev_node);
