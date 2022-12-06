@@ -1,8 +1,8 @@
 #include "graph.hpp"
 
+#include "control_flow/serializer.hpp"
 #include "node.hpp"
 
-#include <iomanip>  // hex
 #include <iostream> // cout
 
 namespace control_flow {
@@ -10,8 +10,5 @@ namespace control_flow {
 
     graph::~graph() noexcept = default;
 
-    void graph::list_all_nodes() const noexcept {
-        std::cout << std::hex;
-        for_each_node([](auto * node) { std::cout << static_cast<void *>(node) << '\n'; });
-    }
+    void graph::list_all_nodes() const noexcept { serializer::into_stream(std::cout, roots, true); }
 } // namespace control_flow
