@@ -134,6 +134,7 @@ void program::lower_to_cfg() {
     for (auto & mod : ast_modules) { lowering.visit(mod); }
 
     this->cfg = std::move(lowering).take_cfg();
+    cfg->list_all_nodes();
 }
 
 bool program::type_check() {
