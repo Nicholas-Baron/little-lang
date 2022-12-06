@@ -78,6 +78,7 @@ namespace control_flow {
         node * next;
         node * lhs;
         node * rhs;
+        operand op;
     };
 
     class unary_operation final : public node {
