@@ -17,12 +17,12 @@ namespace control_flow {
         non_copyable(serializer);
         movable(serializer);
 
+      private:
         // clang-format off
 #define expand_node_macro(x) virtual void visit(x &) override;
         all_cfg_nodes
 #undef expand_node_macro
 
-      private:
         serializer() = default;
         // clang-format on
     };
