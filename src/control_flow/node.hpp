@@ -162,6 +162,7 @@ namespace control_flow {
         make_visitable;
 
         void flows_from(node * node) override {
+            assert(node != nullptr);
             if (dynamic_cast<control_flow::function_end *>(node) == nullptr) {
                 previous.push_back(node);
             }

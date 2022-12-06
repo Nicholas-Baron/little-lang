@@ -18,8 +18,13 @@ static void link_nodes(const std::vector<link> & links) {
     // Use the map to build the next chain
     for (const auto & link : links) {
 
-        const auto & node = link.node;
-        const auto & next = link.next;
+        auto * node = link.node;
+        auto * next = link.next;
+
+        if (node == nullptr) {
+            std::cout << "Found null node for the next of " << typeid(*next).name() << std::endl;
+            assert(false);
+        }
 
         if (auto * func_start = dynamic_cast<control_flow::function_start *>(node);
             func_start != nullptr) {
@@ -181,8 +186,8 @@ void ast_to_cfg::visit(ast::binary_expr & binary_expr) {
             = (binary_expr.op == ast::binary_expr::operand::bool_or) ? cfg_rhs : nullptr;
 
         auto & join_node = result_cfg->create<control_flow::phi>();
-        join_node.flows_from(shorting_node.true_case);
-        join_node.flows_from(shorting_node.false_case);
+        if (shorting_node.true_case != nullptr) { join_node.flows_from(shorting_node.true_case); }
+        if (shorting_node.false_case != nullptr) { join_node.flows_from(shorting_node.false_case); }
 
         return store_result(&join_node);
     }
