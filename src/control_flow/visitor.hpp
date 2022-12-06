@@ -15,9 +15,14 @@ namespace control_flow {
         non_copyable(visitor);
         movable(visitor);
 
+        // clang-format off
 #define expand_node_macro(x) virtual void visit(x &) = 0;
         all_cfg_nodes
 #undef expand_node_macro
+
+      protected:
+        visitor() = default;
+        // clang-format on
     };
 
 } // namespace control_flow
