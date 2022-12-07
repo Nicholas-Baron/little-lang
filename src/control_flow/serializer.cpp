@@ -51,4 +51,15 @@ namespace control_flow {
             {"type", (int)constant.val_type},
             {"next", get_value(*constant.next, *this)}});
     }
+
+    void serializer::visit(function_call & function_call) {
+        nlohmann::json::array_t args;
+        // TODO: This is an infinite loop
+        for (auto * arg : function_call.arguments) { args.push_back(get_value(*arg, *this)); }
+
+        return store_result(
+            nlohmann::json::object_t{{"next", get_value(*function_call.next, *this)},
+                                     {"arguments", std::move(args)},
+                                     {"callee", function_call.callee->name}});
+    }
 } // namespace control_flow
