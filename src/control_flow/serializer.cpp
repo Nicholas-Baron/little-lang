@@ -99,4 +99,12 @@ namespace control_flow {
             },
             &phi);
     }
+
+    void serializer::visit(unary_operation & unary_operation) {
+
+        return store_result({{"next", get_value(*unary_operation.next, *this)},
+                             {"op", (int)unary_operation.op},
+                             {"operand", get_value(*unary_operation.operand, *this)}},
+                            &unary_operation);
+    }
 } // namespace control_flow
