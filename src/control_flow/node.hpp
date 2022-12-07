@@ -34,8 +34,9 @@ namespace control_flow {
 
     class function_start final : public node {
       public:
-        function_start(size_t arg_count, bool exported)
-            : arg_count{arg_count}
+        function_start(std::string name, size_t arg_count, bool exported)
+            : name{std::move(name)}
+            , arg_count{arg_count}
             , exported{exported} {}
 
         make_visitable;
@@ -46,6 +47,7 @@ namespace control_flow {
 
         // Invariant: cannot be null
         node * next{nullptr};
+        std::string name;
         size_t arg_count;
         bool exported;
     };
