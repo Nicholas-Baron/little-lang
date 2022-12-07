@@ -33,4 +33,22 @@ namespace control_flow {
                                      {"op", binary_operation.op}});
     }
 
+    void serializer::visit(constant & constant) {
+        // TODO: Print the name of the val_type
+        return store_result(nlohmann::json::object_t{
+            {"value", std::visit(
+                          [](auto arg) -> nlohmann::json {
+                              using T = std::decay_t<decltype(arg)>;
+                              if constexpr (std::is_same_v<T, std::monostate>) {
+                                  return "nullptr";
+                              } else if constexpr (std::is_same_v<T, std::string>) {
+                                  return arg;
+                              } else {
+                                  return std::to_string(arg);
+                              }
+                          },
+                          constant.value)},
+            {"type", (int)constant.val_type},
+            {"next", get_value(*constant.next, *this)}});
+    }
 } // namespace control_flow
