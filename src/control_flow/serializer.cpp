@@ -87,4 +87,16 @@ namespace control_flow {
                              {"callee", function_call.callee->name}},
                             &function_call);
     }
+
+    void serializer::visit(phi & phi) {
+        nlohmann::json::array_t args;
+        for (auto * arg : phi.previous) { args.push_back(get_value(*arg, *this)); }
+
+        return store_result(
+            {
+                {"next", get_value(*phi.next, *this)},
+                {"arguments", std::move(args)},
+            },
+            &phi);
+    }
 } // namespace control_flow
