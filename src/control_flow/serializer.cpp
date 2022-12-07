@@ -48,6 +48,16 @@ namespace control_flow {
                             &binary_operation);
     }
 
+    void serializer::visit(branch & branch) {
+        return store_result(
+            {
+                {"condition", get_value(*branch.condition_value, *this)},
+                {"true case", get_value(*branch.true_case, *this)},
+                {"false case", get_value(*branch.false_case, *this)},
+            },
+            &branch);
+    }
+
     void serializer::visit(constant & constant) {
         // TODO: Print the name of the val_type
         return store_result(
