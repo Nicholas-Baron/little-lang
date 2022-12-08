@@ -91,13 +91,66 @@ static void link_nodes(const std::vector<link> & links) {
     }
 }
 
+#ifdef DEBUG
+static std::string print_constant(const control_flow::constant * value) {
+    return std::visit(
+        [](auto & arg) -> std::string {
+            if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, std::monostate>) {
+                return "null";
+            } else if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, std::string>) {
+                return arg;
+            } else {
+                return std::to_string(arg);
+            }
+        },
+        value->value);
+}
+
+static void print_graphviz(const std::vector<link> & links) {
+
+    std::cout << "digraph {\n";
+    std::set<std::string> seen;
+    auto label_if_needed = [&seen](const auto & value, auto * node) {
+        if (seen.find(value) == seen.end()) {
+            auto label = std::stringstream{} << typeid(*node).name();
+
+            if (auto * constant = dynamic_cast<control_flow::constant *>(node);
+                constant != nullptr) {
+                label << ' ' << print_constant(constant);
+            }
+
+            std::cout << value << " [label=\"" << label.str() << "\"]\n";
+        }
+
+        seen.emplace(value);
+    };
+
+    for (const auto & link : links) {
+        auto start = (std::stringstream{} << '\"' << std::hex << std::setw(sizeof(void *) * 2)
+                                          << std::setfill('0')
+                                          << reinterpret_cast<std::uintptr_t>(link.node) << '\"')
+                         .str();
+
+        auto end = (std::stringstream{} << '\"' << std::hex << std::setw(sizeof(void *) * 2)
+                                        << std::setfill('0')
+                                        << reinterpret_cast<std::uintptr_t>(link.next) << '\"')
+                       .str();
+
+        label_if_needed(start, link.node);
+        label_if_needed(end, link.next);
+        std::cout << start << " -> " << end << "[label=next];\n";
+    }
+    std::cout << '}' << std::endl;
+}
+#endif
+
 void ast_to_cfg::check_flow() noexcept {
     std::vector<link> found_links;
 
     // Fill the map
     result_cfg->for_each_node([&](auto * node) {
 #ifdef DEBUG
-        std::cout << "Node " << reinterpret_cast<std::uintptr_t>(node) << ' '
+        std::cout << "Node " << std::hex << reinterpret_cast<std::uintptr_t>(node) << ' '
                   << typeid(*node).name() << std::endl;
 #endif
         if (auto * func_start = dynamic_cast<control_flow::function_start *>(node);
@@ -115,21 +168,8 @@ void ast_to_cfg::check_flow() noexcept {
         if (auto * value = dynamic_cast<control_flow::constant *>(node); value != nullptr) {
             found_links.push_back({value->previous, value});
 #ifdef DEBUG
-            std::cout << "value = "
-                      << std::visit(
-                             [](auto arg) -> std::string {
-                                 if constexpr (std::is_same_v<std::decay_t<decltype(arg)>,
-                                                              std::monostate>) {
-                                     return "null";
-                                 } else if constexpr (std::is_same_v<std::decay_t<decltype(arg)>,
-                                                                     std::string>) {
-                                     return arg;
-                                 } else {
-                                     return std::to_string(arg);
-                                 }
-                             },
-                             value->value)
-                      << ' ' << std::hex << reinterpret_cast<std::uintptr_t>(value) << std::endl;
+            std::cout << "value = " << print_constant(value) << ' ' << std::hex
+                      << reinterpret_cast<std::uintptr_t>(value) << std::endl;
 #endif
             return;
         }
@@ -166,6 +206,10 @@ void ast_to_cfg::check_flow() noexcept {
                   << std::endl;
         assert(false);
     });
+
+#ifdef DEBUG
+    print_graphviz(found_links);
+#endif
 
     link_nodes(found_links);
 }
