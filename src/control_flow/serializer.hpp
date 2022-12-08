@@ -27,9 +27,11 @@ namespace control_flow {
         serializer();
         // clang-format on
 
-        void store_result(nlohmann::json &&, node *);
+        void store_result(nlohmann::json *);
 
-        std::vector<nlohmann::json> graph_array;
+        std::pair<nlohmann::json *, size_t> add_node(node *);
+
+        std::vector<std::unique_ptr<nlohmann::json>> graph_array;
         std::map<node *, size_t> visited;
     };
 } // namespace control_flow
