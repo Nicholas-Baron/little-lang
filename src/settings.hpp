@@ -13,6 +13,7 @@ enum class cmd_flag : unsigned {
     debug_optimized_ir = 1 << 3,
     debug_show_execs = 1 << 4,
     run_result = 1 << 5,
+    no_output = 1 << 6,
 };
 
 struct Settings {

@@ -84,6 +84,8 @@ int main(const int arg_count, const char * const * const args) {
     if (not program.type_check()) { return 2; }
     program.generate_ir();
 
+    if (command_line->flag_is_set(cmd_flag::no_output)) { return 0; }
+
     if (command_line->flag_is_set(cmd_flag::simulate)) {
         std::cout << "Return value: " << program.jit() << std::endl;
         return 0;
