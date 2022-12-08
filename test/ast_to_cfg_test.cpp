@@ -13,7 +13,6 @@ TEST_CASE("ast_to_cfg is initially empty") {
     auto cfg = std::move(lowering).take_cfg();
 
     CHECK(cfg != nullptr);
-    CHECK(cfg->previous_node() == nullptr);
 }
 
 TEST_CASE("ast_to_cfg can lower an empty function") {
@@ -115,6 +114,10 @@ TEST_CASE("ast_to_cfg can lower a shortcircuiting expression") {
                    value != nullptr) {
             CHECK(value->next != nullptr);
             frontier.push(value->next);
+        } else if (const auto * phi = dynamic_cast<const control_flow::phi *>(visiting);
+                   phi != nullptr) {
+            CHECK(phi->next != nullptr);
+            frontier.push(phi->next);
         } else {
             std::cout << typeid(*visiting).name() << std::endl;
             assert(false);
