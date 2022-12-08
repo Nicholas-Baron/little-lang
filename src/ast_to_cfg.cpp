@@ -198,6 +198,7 @@ void ast_to_cfg::visit(ast::const_decl & const_decl) {
 void ast_to_cfg::visit(ast::binary_expr & binary_expr) {
 
     auto * prev_node = result_cfg->previous_node();
+    assert(prev_node != nullptr);
 
     auto * cfg_lhs = get_value(*binary_expr.lhs, *this);
     cfg_lhs->flows_from(prev_node);
@@ -209,7 +210,6 @@ void ast_to_cfg::visit(ast::binary_expr & binary_expr) {
         shorting_node.condition_value = cfg_lhs;
 
         auto * cfg_rhs = get_value(*binary_expr.rhs, *this);
-        cfg_rhs->flows_from(&shorting_node);
         prev_node = result_cfg->previous_node();
 
         assert(binary_expr.op == ast::binary_expr::operand::bool_or
@@ -222,8 +222,8 @@ void ast_to_cfg::visit(ast::binary_expr & binary_expr) {
             = (binary_expr.op == ast::binary_expr::operand::bool_or) ? cfg_rhs : nullptr;
 
         auto & join_node = result_cfg->create<control_flow::phi>();
-        if (shorting_node.true_case != nullptr) { join_node.flows_from(shorting_node.true_case); }
-        if (shorting_node.false_case != nullptr) { join_node.flows_from(shorting_node.false_case); }
+        join_node.flows_from(&shorting_node);
+        join_node.flows_from(prev_node);
 
         return store_result(&join_node);
     }
