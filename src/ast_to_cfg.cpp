@@ -335,9 +335,9 @@ void ast_to_cfg::visit(ast::return_stmt & return_stmt) {
     control_flow::node * return_value = nullptr;
     if (return_stmt.value != nullptr) {
         return_value = get_value(*return_stmt.value, *this);
-        return_value->flows_from(prev_node);
         prev_node = return_value;
     }
+    assert(prev_node != nullptr);
 
     auto & return_node = result_cfg->create<control_flow::function_end>();
     return_node.value = return_value;
