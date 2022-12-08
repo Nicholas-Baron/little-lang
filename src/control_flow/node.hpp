@@ -4,6 +4,9 @@
 #include "visitor.hpp"
 
 #include <cassert>
+#ifdef DEBUG
+#include <iostream>
+#endif
 #include <string>
 #include <variant>
 #include <vector>
@@ -73,7 +76,14 @@ namespace control_flow {
 
         make_visitable;
 
-        void flows_from(node * node) override { previous = node; }
+        void flows_from(node * node) override {
+#ifdef DEBUG
+            std::cout << std::hex << '[' << reinterpret_cast<std::uintptr_t>(this) << "] Replacing "
+                      << reinterpret_cast<std::uintptr_t>(previous) << " with "
+                      << reinterpret_cast<std::uintptr_t>(node) << std::endl;
+#endif
+            previous = node;
+        }
 
         // Invariant: none of the following `node *` may be null
         node * previous;
@@ -105,7 +115,14 @@ namespace control_flow {
 
         make_visitable;
 
-        void flows_from(node * node) override { previous = node; }
+        void flows_from(node * node) override {
+#ifdef DEBUG
+            std::cout << std::hex << '[' << reinterpret_cast<std::uintptr_t>(this) << "] Replacing "
+                      << reinterpret_cast<std::uintptr_t>(previous) << " with "
+                      << reinterpret_cast<std::uintptr_t>(node) << std::endl;
+#endif
+            previous = node;
+        }
 
         std::variant<std::monostate, long, double, char, bool, std::string> value;
         value_type val_type;
