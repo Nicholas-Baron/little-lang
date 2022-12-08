@@ -37,7 +37,10 @@ namespace control_flow {
 
         ~graph() noexcept;
 
-        [[nodiscard]] node * previous_node() const noexcept { return previously_created; }
+        [[nodiscard]] node * previous_node() const noexcept {
+            assert(previously_created != nullptr);
+            return previously_created;
+        }
 
         template<typename Callable>
         void for_each_root(Callable func) const noexcept {
