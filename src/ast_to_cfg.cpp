@@ -24,6 +24,9 @@ static void link_nodes(const std::vector<link> & links) {
         if (node == nullptr) {
             std::cout << "Found null node for the next of " << typeid(*next).name() << std::endl;
             assert(false);
+        } else if (next == nullptr) {
+            std::cout << "Found null next for node " << typeid(*node).name() << std::endl;
+            assert(false);
         }
 
         if (auto * func_start = dynamic_cast<control_flow::function_start *>(node);
