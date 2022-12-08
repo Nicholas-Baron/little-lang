@@ -49,14 +49,20 @@ static void link_nodes(const std::vector<link> & links) {
         if (auto * branch = dynamic_cast<control_flow::branch *>(node); branch != nullptr) {
 
             // The node we are encountering is not already a next.
-            if (branch->true_case == node or branch->false_case == node) { continue; }
+            if (branch->true_case == next or branch->false_case == next) { continue; }
 
             // Exactly 1 of the next branches is not set.
-            assert(branch->true_case != nullptr xor branch->false_case != nullptr);
+            if (branch->true_case == nullptr and branch->false_case == nullptr) {
+                std::cout << "true_case = " << reinterpret_cast<std::uintptr_t>(branch->true_case)
+                          << " false_case = "
+                          << reinterpret_cast<std::uintptr_t>(branch->false_case) << std::endl;
+                assert(false);
+            }
+
             if (branch->true_case == nullptr) {
-                branch->true_case = node;
+                branch->true_case = next;
             } else {
-                branch->false_case = node;
+                branch->false_case = next;
             }
 
             continue;
