@@ -96,6 +96,10 @@ void ast_to_cfg::check_flow() noexcept {
 
     // Fill the map
     result_cfg->for_each_node([&](auto * node) {
+#ifdef DEBUG
+        std::cout << "Node " << reinterpret_cast<std::uintptr_t>(node) << ' '
+                  << typeid(*node).name() << std::endl;
+#endif
         if (auto * func_start = dynamic_cast<control_flow::function_start *>(node);
             func_start != nullptr) {
             // No previous to read
@@ -110,6 +114,23 @@ void ast_to_cfg::check_flow() noexcept {
 
         if (auto * value = dynamic_cast<control_flow::constant *>(node); value != nullptr) {
             found_links.push_back({value->previous, value});
+#ifdef DEBUG
+            std::cout << "value = "
+                      << std::visit(
+                             [](auto arg) -> std::string {
+                                 if constexpr (std::is_same_v<std::decay_t<decltype(arg)>,
+                                                              std::monostate>) {
+                                     return "null";
+                                 } else if constexpr (std::is_same_v<std::decay_t<decltype(arg)>,
+                                                                     std::string>) {
+                                     return arg;
+                                 } else {
+                                     return std::to_string(arg);
+                                 }
+                             },
+                             value->value)
+                      << ' ' << std::hex << reinterpret_cast<std::uintptr_t>(value) << std::endl;
+#endif
             return;
         }
 
@@ -120,6 +141,12 @@ void ast_to_cfg::check_flow() noexcept {
 
         if (auto * bin_op = dynamic_cast<control_flow::binary_operation *>(node);
             bin_op != nullptr) {
+#ifdef DEBUG
+            std::cout << "previous to binary_operation: " << std::hex
+                      << reinterpret_cast<std::uintptr_t>(bin_op->previous)
+                      << "\nrhs to binary_operation: "
+                      << reinterpret_cast<std::uintptr_t>(bin_op->rhs) << std::endl;
+#endif
             found_links.push_back({bin_op->previous, bin_op});
             return;
         }
