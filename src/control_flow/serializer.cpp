@@ -51,9 +51,10 @@ namespace control_flow {
         auto [result, index] = add_node(&function_end);
         if (result == nullptr) { return value_getter::store_result(index); }
 
-        *result = {{"value", (function_end.value != nullptr)
-                                 ? nlohmann::json{get_value(*function_end.value, *this)}
-                                 : nullptr}};
+        auto value = nlohmann::json{};
+        if (function_end.value != nullptr) { value = get_value(*function_end.value, *this); }
+
+        *result = {{"value", std::move(value)}};
         return store_result(result);
     }
 
