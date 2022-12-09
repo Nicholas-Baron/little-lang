@@ -15,6 +15,50 @@ TEST_CASE("ast_to_cfg is initially empty") {
     CHECK(cfg != nullptr);
 }
 
+static void scan_graph(const control_flow::function_start * start,
+                       const control_flow::function_end * func_end) {
+
+    std::queue<const control_flow::node *> frontier;
+    frontier.push(start->next);
+    auto found_end = false;
+
+    while (not frontier.empty()) {
+        const auto * visiting = frontier.front();
+        CHECK(visiting != nullptr);
+
+        std::cout << "Visiting " << typeid(*visiting).name() << " @ "
+                  << static_cast<const void *>(visiting) << std::endl;
+
+        if (visiting == func_end) {
+            found_end = true;
+        } else if (const auto * bin_op
+                   = dynamic_cast<const control_flow::binary_operation *>(visiting);
+                   bin_op != nullptr) {
+            CHECK(bin_op->next != nullptr);
+            frontier.push(bin_op->next);
+        } else if (const auto * branch = dynamic_cast<const control_flow::branch *>(visiting);
+                   branch != nullptr) {
+            frontier.push(branch->true_case);
+            frontier.push(branch->false_case);
+        } else if (const auto * value = dynamic_cast<const control_flow::constant *>(visiting);
+                   value != nullptr) {
+            CHECK(value->next != nullptr);
+            frontier.push(value->next);
+        } else if (const auto * phi = dynamic_cast<const control_flow::phi *>(visiting);
+                   phi != nullptr) {
+            CHECK(phi->next != nullptr);
+            frontier.push(phi->next);
+        } else {
+            std::cout << typeid(*visiting).name() << std::endl;
+            assert(false);
+        }
+
+        frontier.pop();
+    }
+
+    CHECK(found_end);
+}
+
 TEST_CASE("ast_to_cfg can lower an empty function") {
     std::string buffer = "main() {}";
     auto parser = parser::from_buffer(buffer);
@@ -56,6 +100,7 @@ TEST_CASE("ast_to_cfg can lower an empty function") {
 
 TEST_CASE("ast_to_cfg can lower a shortcircuiting expression") {
     std::string buffer = "positive_even(x : int) = x > 0 and x % 2 == 0";
+    std::cout << "Testing " << buffer << std::endl;
     auto parser = parser::from_buffer(buffer);
     auto mod = parser->parse();
 
@@ -88,43 +133,5 @@ TEST_CASE("ast_to_cfg can lower a shortcircuiting expression") {
     auto * func_end = dynamic_cast<control_flow::function_end *>(cfg->previous_node());
     CHECK(func_end != nullptr);
 
-    std::queue<const control_flow::node *> frontier;
-    frontier.push(start->next);
-    auto found_end = false;
-
-    while (not frontier.empty()) {
-        const auto * visiting = frontier.front();
-        CHECK(visiting != nullptr);
-
-        std::cout << "Visiting " << typeid(*visiting).name() << " @ "
-                  << static_cast<const void *>(visiting) << std::endl;
-
-        if (visiting == func_end) {
-            found_end = true;
-        } else if (const auto * bin_op
-                   = dynamic_cast<const control_flow::binary_operation *>(visiting);
-                   bin_op != nullptr) {
-            CHECK(bin_op->next != nullptr);
-            frontier.push(bin_op->next);
-        } else if (const auto * branch = dynamic_cast<const control_flow::branch *>(visiting);
-                   branch != nullptr) {
-            frontier.push(branch->true_case);
-            frontier.push(branch->false_case);
-        } else if (const auto * value = dynamic_cast<const control_flow::constant *>(visiting);
-                   value != nullptr) {
-            CHECK(value->next != nullptr);
-            frontier.push(value->next);
-        } else if (const auto * phi = dynamic_cast<const control_flow::phi *>(visiting);
-                   phi != nullptr) {
-            CHECK(phi->next != nullptr);
-            frontier.push(phi->next);
-        } else {
-            std::cout << typeid(*visiting).name() << std::endl;
-            assert(false);
-        }
-
-        frontier.pop();
-    }
-
-    CHECK(found_end);
+    scan_graph(start, func_end);
 }
