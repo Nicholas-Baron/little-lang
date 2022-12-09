@@ -31,6 +31,7 @@ static void link_nodes(const std::vector<link> & links) {
 
         if (auto * func_start = dynamic_cast<control_flow::function_start *>(node);
             func_start != nullptr) {
+            assert(func_start->next == nullptr);
             func_start->next = next;
             continue;
         }
@@ -241,12 +242,9 @@ void ast_to_cfg::visit(ast::const_decl & const_decl) {
 
 void ast_to_cfg::visit(ast::binary_expr & binary_expr) {
 
+    auto * cfg_lhs = get_value(*binary_expr.lhs, *this);
     auto * prev_node = result_cfg->previous_node();
     assert(prev_node != nullptr);
-
-    auto * cfg_lhs = get_value(*binary_expr.lhs, *this);
-    cfg_lhs->flows_from(prev_node);
-    prev_node = result_cfg->previous_node();
 
     if (binary_expr.is_shortcircuiting()) {
         auto & shorting_node = result_cfg->create<control_flow::branch>();
@@ -313,7 +311,7 @@ void ast_to_cfg::visit(ast::func_decl & func_decl) {
     assert(seen_functions.find(func_decl.head.name()) == seen_functions.end());
     seen_functions.emplace(func_decl.head.name(), current_function);
 
-    func_start.next = get_value(*func_decl.body, *this);
+    (void)get_value(*func_decl.body, *this);
 
     if (auto * previous_node = result_cfg->previous_node();
         dynamic_cast<control_flow::function_end *>(previous_node) == nullptr) {
