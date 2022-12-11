@@ -10,8 +10,14 @@
 #include <map>
 #include <memory> // unique_ptr
 
+/// This struct enforces that each statement has one beginning and endpoint.
+struct basic_block {
+    control_flow::node * beginning;
+    control_flow::node * end;
+};
+
 class ast_to_cfg final : public ast::visitor_base,
-                         public value_getter<ast_to_cfg, ast::node, control_flow::node *> {
+                         public value_getter<ast_to_cfg, ast::node, basic_block> {
   public:
     ast_to_cfg();
 

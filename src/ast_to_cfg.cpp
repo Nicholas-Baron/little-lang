@@ -242,54 +242,52 @@ void ast_to_cfg::visit(ast::const_decl & const_decl) {
 
 void ast_to_cfg::visit(ast::binary_expr & binary_expr) {
 
-    auto * cfg_lhs = get_value(*binary_expr.lhs, *this);
-    auto * prev_node = result_cfg->previous_node();
-    assert(prev_node != nullptr);
+    auto cfg_lhs = get_value(*binary_expr.lhs, *this);
 
     if (binary_expr.is_shortcircuiting()) {
         auto & shorting_node = result_cfg->create<control_flow::branch>();
-        shorting_node.flows_from(prev_node);
-        shorting_node.condition_value = cfg_lhs;
+        shorting_node.flows_from(cfg_lhs.end);
+        shorting_node.condition_value = cfg_lhs.end;
 
-        auto * cfg_rhs = get_value(*binary_expr.rhs, *this);
-        prev_node = result_cfg->previous_node();
+        auto cfg_rhs = get_value(*binary_expr.rhs, *this);
 
         assert(binary_expr.op == ast::binary_expr::operand::bool_or
                or binary_expr.op == ast::binary_expr::operand::bool_and);
 
         shorting_node.true_case
-            = (binary_expr.op == ast::binary_expr::operand::bool_and) ? cfg_rhs : nullptr;
+            = (binary_expr.op == ast::binary_expr::operand::bool_and) ? cfg_rhs.beginning : nullptr;
 
         shorting_node.false_case
-            = (binary_expr.op == ast::binary_expr::operand::bool_or) ? cfg_rhs : nullptr;
+            = (binary_expr.op == ast::binary_expr::operand::bool_or) ? cfg_rhs.beginning : nullptr;
 
         auto & join_node = result_cfg->create<control_flow::phi>();
         join_node.flows_from(&shorting_node);
-        join_node.flows_from(prev_node);
+        join_node.flows_from(cfg_rhs.end);
 
-        return store_result(&join_node);
+        return store_result({cfg_lhs.beginning, &join_node});
     }
 
-    auto * cfg_rhs = get_value(*binary_expr.rhs, *this);
-    cfg_rhs->flows_from(prev_node);
-    prev_node = result_cfg->previous_node();
+    auto cfg_rhs = get_value(*binary_expr.rhs, *this);
+    cfg_rhs.beginning->flows_from(cfg_lhs.end);
 
     auto & cfg_expr = result_cfg->create<control_flow::binary_operation>();
-    cfg_expr.lhs = cfg_lhs;
-    cfg_expr.rhs = cfg_rhs;
-    cfg_expr.flows_from(prev_node);
-    store_result(&cfg_expr);
+    cfg_expr.lhs = cfg_lhs.end;
+    cfg_expr.rhs = cfg_rhs.end;
+    cfg_expr.flows_from(cfg_expr.rhs);
+    return store_result({cfg_lhs.beginning, &cfg_expr});
 }
 
 void ast_to_cfg::visit(ast::func_call_data & func_call_data) {
     auto * prev_node = result_cfg->previous_node();
+    control_flow::node * first_arg = nullptr;
 
     std::vector<control_flow::node *> args;
     for (size_t i = 0; i < func_call_data.args_count(); ++i) {
-        auto * arg = get_value(func_call_data.arg(i), *this);
-        arg->flows_from(prev_node);
-        args.push_back(arg);
-        prev_node = arg;
+        auto arg = get_value(func_call_data.arg(i), *this);
+        if (first_arg == nullptr) { first_arg = arg.beginning; }
+        arg.beginning->flows_from(prev_node);
+        args.push_back(arg.end);
+        prev_node = arg.end;
     }
 
     auto iter = seen_functions.find(func_call_data.name());
@@ -297,7 +295,7 @@ void ast_to_cfg::visit(ast::func_call_data & func_call_data) {
 
     auto & func_call = result_cfg->create<control_flow::function_call>(iter->second, args);
     func_call.flows_from(prev_node);
-    return store_result(&func_call);
+    return store_result({first_arg, &func_call});
 }
 
 void ast_to_cfg::visit(ast::func_call_expr & func_call_expr) { return visit(func_call_expr.data); }
@@ -311,9 +309,10 @@ void ast_to_cfg::visit(ast::func_decl & func_decl) {
     assert(seen_functions.find(func_decl.head.name()) == seen_functions.end());
     seen_functions.emplace(func_decl.head.name(), current_function);
 
-    (void)get_value(*func_decl.body, *this);
+    auto body = get_value(*func_decl.body, *this);
+    body.beginning->flows_from(&func_start);
 
-    if (auto * previous_node = result_cfg->previous_node();
+    if (auto * previous_node = body.end;
         dynamic_cast<control_flow::function_end *>(previous_node) == nullptr) {
         auto & func_end = result_cfg->create<control_flow::function_end>();
         func_end.flows_from(previous_node);
@@ -324,79 +323,101 @@ void ast_to_cfg::visit(ast::if_expr & if_expr) {
     auto * previous_node = result_cfg->previous_node();
 
     auto & branch = result_cfg->create<control_flow::branch>();
-    branch.condition_value = get_value(*if_expr.condition, *this);
-    branch.condition_value->flows_from(previous_node);
+    auto condition = get_value(*if_expr.condition, *this);
+    branch.condition_value = condition.end;
+    condition.beginning->flows_from(previous_node);
 
-    branch.flows_from(branch.condition_value);
+    branch.flows_from(condition.end);
 
-    branch.true_case = get_value(*if_expr.then_case, *this);
+    auto true_case = get_value(*if_expr.then_case, *this);
+    branch.true_case = true_case.beginning;
     branch.true_case->flows_from(&branch);
 
-    branch.false_case = get_value(*if_expr.else_case, *this);
+    auto false_case = get_value(*if_expr.else_case, *this);
+    branch.false_case = false_case.beginning;
     branch.false_case->flows_from(&branch);
 
     auto & join_node = result_cfg->create<control_flow::phi>();
-    join_node.flows_from(branch.true_case);
-    join_node.flows_from(branch.false_case);
+    join_node.flows_from(true_case.end);
+    join_node.flows_from(false_case.end);
 
-    store_result(&join_node);
+    return store_result({condition.beginning, &join_node});
 }
 
 void ast_to_cfg::visit(ast::if_stmt & if_stmt) {
     auto * previous_node = result_cfg->previous_node();
 
     auto & branch = result_cfg->create<control_flow::branch>();
-    branch.condition_value = get_value(*if_stmt.condition, *this);
-    branch.condition_value->flows_from(previous_node);
+    auto condition_value = get_value(*if_stmt.condition, *this);
+    condition_value.beginning->flows_from(previous_node);
+    branch.condition_value = condition_value.end;
 
-    branch.flows_from(branch.condition_value);
+    branch.flows_from(condition_value.end);
 
-    branch.true_case = get_value(*if_stmt.true_branch, *this);
+    auto true_case = get_value(*if_stmt.true_branch, *this);
+    branch.true_case = true_case.beginning;
     branch.true_case->flows_from(&branch);
 
+    basic_block result{condition_value.beginning, &branch};
+
+    // Check if a phi node is needed
+    if (dynamic_cast<control_flow::function_end *>(true_case.end) != nullptr) {
+        if (if_stmt.else_branch != nullptr) {
+            auto false_case = get_value(*if_stmt.else_branch, *this);
+            branch.false_case = false_case.beginning;
+            branch.false_case->flows_from(&branch);
+            result.end = false_case.end;
+        }
+        return store_result(result);
+    }
+
     auto & join_node = result_cfg->create<control_flow::phi>();
-    join_node.flows_from(branch.true_case);
+    join_node.flows_from(true_case.end);
+    result.end = &join_node;
 
     if (if_stmt.else_branch != nullptr) {
-        branch.false_case = get_value(*if_stmt.else_branch, *this);
+        auto false_case = get_value(*if_stmt.else_branch, *this);
+        branch.false_case = false_case.beginning;
         branch.false_case->flows_from(&branch);
-        join_node.flows_from(branch.false_case);
+        join_node.flows_from(false_case.end);
     } else {
         join_node.flows_from(&branch);
     }
 
-    store_result(&join_node);
+    assert(join_node.previous.size() >= 2);
+
+    return store_result(result);
 }
 
 void ast_to_cfg::visit(ast::let_stmt & /*unused*/) { assert(false and "TODO: Implement let_stmt"); }
 
 void ast_to_cfg::visit(ast::return_stmt & return_stmt) {
 
-    auto * prev_node = result_cfg->previous_node();
-
-    control_flow::node * return_value = nullptr;
-    if (return_stmt.value != nullptr) {
-        return_value = get_value(*return_stmt.value, *this);
-        prev_node = return_value;
-    }
-    assert(prev_node != nullptr);
+    std::optional<basic_block> return_value;
+    if (return_stmt.value != nullptr) { return_value = get_value(*return_stmt.value, *this); }
 
     auto & return_node = result_cfg->create<control_flow::function_end>();
-    return_node.value = return_value;
-    return_node.flows_from(prev_node);
-    return store_result(&return_node);
+    if (return_value.has_value()) {
+        return_node.flows_from(return_value->end);
+        return_node.value = return_value->end;
+        return store_result({return_value->beginning, &return_node});
+    }
+    return store_result({&return_node, &return_node});
 }
 
 void ast_to_cfg::visit(ast::stmt_sequence & stmt_sequence) {
-    auto * prev_node = result_cfg->previous_node();
+
+    basic_block result{nullptr, result_cfg->previous_node()};
 
     for (auto & stmt : stmt_sequence.stmts) {
-        auto * stmt_node = get_value(*stmt, *this);
-        stmt_node->flows_from(prev_node);
-        prev_node = stmt_node;
+        auto stmt_node = get_value(*stmt, *this);
+        stmt_node.beginning->flows_from(result.end);
+        result.end = stmt_node.end;
+
+        if (result.beginning == nullptr) { result.beginning = stmt_node.beginning; }
     }
 
-    return store_result(prev_node);
+    return store_result(result);
 }
 
 void ast_to_cfg::visit(ast::struct_decl & /*struct_decl*/) {
@@ -414,9 +435,11 @@ void ast_to_cfg::visit(ast::typed_identifier & /*typed_identifier*/) {
 void ast_to_cfg::visit(ast::unary_expr & unary_expr) {
     auto * previous_node = result_cfg->previous_node();
 
+    auto operand = get_value(*unary_expr.expr, *this);
+    operand.beginning->flows_from(previous_node);
+
     auto & unary_op = result_cfg->create<control_flow::unary_operation>();
-    unary_op.operand = get_value(*unary_expr.expr, *this);
-    unary_op.operand->flows_from(previous_node);
+    unary_op.operand = operand.end;
     unary_op.flows_from(unary_op.operand);
 
     switch (unary_expr.op) {
@@ -431,7 +454,7 @@ void ast_to_cfg::visit(ast::unary_expr & unary_expr) {
         break;
     }
 
-    return store_result(&unary_op);
+    return store_result({operand.beginning, &unary_op});
 }
 
 void ast_to_cfg::visit(ast::user_val & user_val) {
@@ -472,5 +495,5 @@ void ast_to_cfg::visit(ast::user_val & user_val) {
         break;
     }
 
-    store_result(&value);
+    return store_result({&value, &value});
 }
