@@ -14,7 +14,10 @@ namespace control_flow {
     void serializer::into_stream(std::ostream & stream, const std::vector<node *> & roots,
                                  bool human_readable) {
         serializer visitor{};
-        for (auto * node : roots) { node->accept(visitor); }
+        for (auto * node : roots) {
+            node->accept(visitor);
+            visitor.drop_result();
+        }
 
         nlohmann::json result;
         for (auto & item : visitor.graph_array) { result.push_back(*item); }
