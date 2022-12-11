@@ -132,6 +132,23 @@ namespace control_flow {
         node * next{nullptr};
     };
 
+    class intrinsic_call final : public node {
+      public:
+        explicit intrinsic_call(std::string name, std::vector<node *> args = {})
+            : name{std::move(name)}
+            , arguments{std::move(args)} {}
+
+        make_visitable;
+
+        void flows_from(node * node) override { previous = node; }
+
+        // Invariant: none of the following `node *` may be null
+        node * previous{nullptr};
+        node * next{nullptr};
+        std::string name;
+        std::vector<node *> arguments;
+    };
+
     class function_call final : public node {
       public:
         explicit function_call(const function_start * callee, std::vector<node *> args = {})
