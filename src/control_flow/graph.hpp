@@ -9,6 +9,7 @@
 namespace control_flow {
     class node;
 
+    // Invariant: No function can call out of the graph.
     class graph final {
       public:
         template<typename T, typename... Args>

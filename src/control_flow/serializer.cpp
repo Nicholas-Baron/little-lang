@@ -119,6 +119,19 @@ namespace control_flow {
         return store_result(result);
     }
 
+    void serializer::visit(intrinsic_call & intrinsic_call) {
+        auto [result, index] = add_node(&intrinsic_call);
+        if (result == nullptr) { return value_getter::store_result(index); }
+
+        nlohmann::json::array_t args;
+        for (auto * arg : intrinsic_call.arguments) { args.push_back(get_value(*arg, *this)); }
+
+        *result = {{"next", get_value(*intrinsic_call.next, *this)},
+                   {"arguments", std::move(args)},
+                   {"callee", intrinsic_call.name}};
+        return store_result(result);
+    }
+
     void serializer::visit(phi & phi) {
 #ifdef DEBUG
         // DEBUG: Print the visited set

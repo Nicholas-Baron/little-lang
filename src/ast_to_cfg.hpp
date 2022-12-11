@@ -5,6 +5,7 @@
 #include "control_flow/graph.hpp"
 #include "control_flow/node.hpp"
 #include "move_copy.hpp"
+#include "utils/scoped_map.hpp"
 #include "utils/value_getter.hpp"
 
 #include <map>
@@ -45,6 +46,7 @@ class ast_to_cfg final : public ast::visitor_base,
 
     std::map<std::string, const control_flow::function_start *> seen_functions;
     std::map<std::string, ast::expr *> constants;
+    scoped_map<std::string, control_flow::node *> lets;
     const control_flow::function_start * current_function{nullptr};
 };
 

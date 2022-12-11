@@ -81,6 +81,11 @@ static void link_nodes(const std::vector<link> & links) {
             continue;
         }
 
+        if (auto * call = dynamic_cast<control_flow::intrinsic_call *>(node); call != nullptr) {
+            call->next = next;
+            continue;
+        }
+
         if (auto * phi = dynamic_cast<control_flow::phi *>(node); phi != nullptr) {
             phi->next = next;
             continue;
@@ -198,6 +203,11 @@ void ast_to_cfg::check_flow() noexcept {
             return;
         }
 
+        if (auto * call = dynamic_cast<control_flow::intrinsic_call *>(node); call != nullptr) {
+            found_links.push_back({call->previous, call});
+            return;
+        }
+
         if (auto * phi = dynamic_cast<control_flow::phi *>(node); phi != nullptr) {
             for (auto * prev : phi->previous) { found_links.push_back({prev, phi}); }
             return;
@@ -284,14 +294,25 @@ void ast_to_cfg::visit(ast::func_call_data & func_call_data) {
     std::vector<control_flow::node *> args;
     for (size_t i = 0; i < func_call_data.args_count(); ++i) {
         auto arg = get_value(func_call_data.arg(i), *this);
-        if (first_arg == nullptr) { first_arg = arg.beginning; }
-        arg.beginning->flows_from(prev_node);
+        if (arg.beginning != nullptr) {
+            arg.beginning->flows_from(prev_node);
+            prev_node = arg.end;
+            if (first_arg == nullptr) { first_arg = arg.beginning; }
+        }
         args.push_back(arg.end);
-        prev_node = arg.end;
     }
 
     auto iter = seen_functions.find(func_call_data.name());
-    if (iter == seen_functions.end()) { assert(false and "TODO: Make acutal error printout"); }
+    if (iter == seen_functions.end()) {
+        // TODO: Make central instrinics 'database'
+        if (func_call_data.name() == "syscall") {
+            auto & intrinsic_call
+                = result_cfg->create<control_flow::intrinsic_call>("syscall", args);
+            intrinsic_call.flows_from(prev_node);
+            return store_result({first_arg, &intrinsic_call});
+        }
+        assert(false and "TODO: Make acutal error printout");
+    }
 
     auto & func_call = result_cfg->create<control_flow::function_call>(iter->second, args);
     func_call.flows_from(prev_node);
@@ -389,7 +410,12 @@ void ast_to_cfg::visit(ast::if_stmt & if_stmt) {
     return store_result(result);
 }
 
-void ast_to_cfg::visit(ast::let_stmt & /*unused*/) { assert(false and "TODO: Implement let_stmt"); }
+void ast_to_cfg::visit(ast::let_stmt & let_stmt) {
+    auto value = get_value(*let_stmt.value, *this);
+    lets.add_to_current_scope(let_stmt.name_and_type.name(), value.end);
+
+    return store_result(value);
+}
 
 void ast_to_cfg::visit(ast::return_stmt & return_stmt) {
 
@@ -407,6 +433,7 @@ void ast_to_cfg::visit(ast::return_stmt & return_stmt) {
 
 void ast_to_cfg::visit(ast::stmt_sequence & stmt_sequence) {
 
+    lets.add_scope();
     basic_block result{nullptr, result_cfg->previous_node()};
 
     for (auto & stmt : stmt_sequence.stmts) {
@@ -417,6 +444,7 @@ void ast_to_cfg::visit(ast::stmt_sequence & stmt_sequence) {
         if (result.beginning == nullptr) { result.beginning = stmt_node.beginning; }
     }
 
+    lets.remove_scope();
     return store_result(result);
 }
 
@@ -459,8 +487,15 @@ void ast_to_cfg::visit(ast::unary_expr & unary_expr) {
 
 void ast_to_cfg::visit(ast::user_val & user_val) {
 
-    auto * prev_node = result_cfg->previous_node();
+    if (user_val.val_type == ast::user_val::value_type::identifier) {
+        for (auto scope : lets) {
+            if (auto iter = scope.find(user_val.val); iter != scope.end()) {
+                return store_result({nullptr, iter->second});
+            }
+        }
+    }
 
+    auto * prev_node = result_cfg->previous_node();
     auto & value = result_cfg->create<control_flow::constant>();
     value.flows_from(prev_node);
 
