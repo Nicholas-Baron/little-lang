@@ -9,9 +9,9 @@
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Type.h>
 
-class type_context final {
+class llvm_type_lowering final {
   public:
-    explicit type_context(llvm::LLVMContext * context);
+    explicit llvm_type_lowering(llvm::LLVMContext * context);
 
     [[nodiscard]] llvm::Type * lower_to_llvm(ast::type_ptr type);
 

@@ -4,7 +4,7 @@
 #include "ast/token_to_string.hpp"
 #include "ast/type.hpp"
 #include "emit_asm.hpp"
-#include "type_context.hpp"
+#include "llvm_type_lowering.hpp"
 
 #include <sstream>
 
@@ -69,7 +69,7 @@ namespace visitor {
 
     codegen::codegen(const std::string & name, llvm::LLVMContext & context,
                      global_map<std::string, llvm::GlobalObject *> & program_globals,
-                     class type_context & typ_context)
+                     class llvm_type_lowering & typ_context)
         : context{context}
         , ir_module{std::make_unique<llvm::Module>(name, context)}
         , ir_builder{std::make_unique<llvm::IRBuilder<>>(context)}
