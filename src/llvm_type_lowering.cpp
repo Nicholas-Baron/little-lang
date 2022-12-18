@@ -1,8 +1,8 @@
-#include "type_context.hpp"
+#include "llvm_type_lowering.hpp"
 
 #include <llvm/IR/DerivedTypes.h>
 
-type_context::type_context(llvm::LLVMContext * context)
+llvm_type_lowering::llvm_type_lowering(llvm::LLVMContext * context)
     : active_types{
         {ast::prim_type::int32, llvm::Type::getInt32Ty(*context)},
         {ast::prim_type::float32, llvm::Type::getFloatTy(*context)},
@@ -13,7 +13,7 @@ type_context::type_context(llvm::LLVMContext * context)
         {ast::prim_type::str, llvm::Type::getInt8PtrTy(*context)},
     } {}
 
-llvm::Type * type_context::lower_to_llvm(ast::type_ptr type) {
+llvm::Type * llvm_type_lowering::lower_to_llvm(ast::type_ptr type) {
 
     auto iter = std::find_if(active_types.begin(), active_types.end(),
                              [&type](const auto & entry) -> bool { return entry.first == type; });

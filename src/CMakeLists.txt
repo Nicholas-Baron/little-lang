@@ -22,9 +22,9 @@ set(proj_files
     ast_to_cfg.cpp
     emit_asm.cpp
     jit.cpp
+    llvm_type_lowering.cpp
     program.cpp
     settings.cpp
-    type_context.cpp
     control_flow/graph.cpp
     control_flow/serializer.cpp
     visitor/codegen.cpp

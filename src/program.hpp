@@ -3,9 +3,9 @@
 
 #include "ast/top_lvl_nodes.hpp"
 #include "control_flow/graph.hpp"
+#include "llvm_type_lowering.hpp"
 #include "move_copy.hpp"
 #include "settings.hpp"
-#include "type_context.hpp"
 
 #include <optional>
 #include <vector>
@@ -43,7 +43,7 @@ class program final {
     std::vector<ast::top_level_sequence> ast_modules;
     std::unique_ptr<control_flow::graph> cfg;
     std::vector<std::unique_ptr<llvm::Module>> ir_modules;
-    type_context typ_context;
+    llvm_type_lowering typ_context;
 };
 
 #endif

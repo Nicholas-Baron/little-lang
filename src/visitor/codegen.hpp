@@ -3,7 +3,6 @@
 
 #include "ast/location.hpp"
 #include "ast/visitor_base.hpp"
-#include "type_context.hpp"
 #include "utils/global_map.hpp"
 #include "utils/scoped_map.hpp"
 #include "value_getter.hpp"
@@ -21,7 +20,7 @@ namespace visitor {
       public:
         codegen(const std::string & name, llvm::LLVMContext & context,
                 global_map<std::string, llvm::GlobalObject *> & globals,
-                type_context & typ_context);
+                class llvm_type_lowering & typ_context);
 
         non_copyable(codegen);
 
@@ -70,7 +69,7 @@ namespace visitor {
         std::unique_ptr<llvm::Module> ir_module;
         std::unique_ptr<llvm::IRBuilder<>> ir_builder;
 
-        type_context & type_context;
+        llvm_type_lowering & type_context;
         scoped_map<std::string, llvm::Value *> active_values;
         global_map<std::string, llvm::GlobalObject *> & program_globals;
 
