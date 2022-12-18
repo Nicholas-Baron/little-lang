@@ -42,12 +42,20 @@ class ast_to_cfg final : public ast::visitor_base,
     void check_flow() noexcept;
     // clang-format on
 
+    void export_if_needed(const ast::top_level &, control_flow::function_start *);
+    void import_item(const std::string & id, const std::string & mod);
+
     std::unique_ptr<control_flow::graph> result_cfg;
 
     std::map<std::string, const control_flow::function_start *> seen_functions;
-    std::map<std::string, ast::expr *> constants;
+    std::map<std::string, const ast::expr *> constants;
     scoped_map<std::string, control_flow::node *> lets;
     const control_flow::function_start * current_function{nullptr};
+
+    global_map<std::string,
+               std::variant<std::monostate, const ast::expr *, control_flow::function_start *>>
+        globals;
+    std::string current_module;
 };
 
 #endif

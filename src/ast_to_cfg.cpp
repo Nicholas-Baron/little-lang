@@ -1,6 +1,5 @@
 #include "ast_to_cfg.hpp"
 
-#include "ast/expr_nodes.hpp"
 #include "control_flow/node.hpp"
 #include "string_utils.hpp"
 
@@ -225,16 +224,56 @@ void ast_to_cfg::check_flow() noexcept {
     link_nodes(found_links);
 }
 
+void ast_to_cfg::export_if_needed(const ast::top_level & ast_node,
+                                  control_flow::function_start * func_start) {
+    if (not ast_node.exported()) { return; }
+
+    if (const auto * const_decl = dynamic_cast<const ast::const_decl *>(&ast_node);
+        const_decl != nullptr) {
+        std::cout << "Exporting " << const_decl->name_and_type.name() << std::endl;
+        assert(func_start == nullptr);
+        globals.add(current_module, const_decl->name_and_type.name(), const_decl->expr.get());
+    } else if (const auto * func_decl = dynamic_cast<const ast::func_decl *>(&ast_node);
+               func_decl != nullptr) {
+        assert(func_start != nullptr);
+        globals.add(current_module, func_start->name, func_start);
+    } else {
+        assert(false);
+    }
+}
+
 void ast_to_cfg::visit(ast::node & node) { node.accept(*this); }
 void ast_to_cfg::visit(ast::top_level & top_level) { top_level.accept(*this); }
 void ast_to_cfg::visit(ast::stmt & stmt) { stmt.accept(*this); }
 void ast_to_cfg::visit(ast::expr & expr) { expr.accept(*this); }
 
-void ast_to_cfg::visit(ast::top_level_sequence & top_level_sequence) {
-    // TODO: Load the imports
-    assert(top_level_sequence.imports.empty());
+void ast_to_cfg::import_item(const std::string & id, const std::string & mod) {
+    if (auto value = globals.lookup(mod, id); value != decltype(globals)::empty_value()) {
+        if (auto * const * const_expr = std::get_if<const ast::expr *>(&value);
+            const_expr != nullptr) {
+            constants.emplace(id, *const_expr);
+        } else if (auto * const * func_start = std::get_if<control_flow::function_start *>(&value);
+                   func_start != nullptr) {
+            seen_functions.emplace(id, *func_start);
+        } else {
+            assert(false);
+        }
+    } else {
+        std::cout << "Could not find " << id << " in module " << mod << "\nIt may not be exported."
+                  << std::endl;
+        assert(false);
+    }
+}
 
+void ast_to_cfg::visit(ast::top_level_sequence & top_level_sequence) {
+    for (auto & [mod, ids] : top_level_sequence.imports) {
+        for (auto & id : ids) { import_item(id, mod); }
+    }
+
+    current_module = top_level_sequence.filename;
     for (auto & item : top_level_sequence.items) { visit(*item); }
+    seen_functions.clear();
+    constants.clear();
 }
 
 void ast_to_cfg::visit(ast::const_decl & const_decl) {
@@ -248,6 +287,7 @@ void ast_to_cfg::visit(ast::const_decl & const_decl) {
     }
 
     constants.emplace(name, const_decl.expr.get());
+    export_if_needed(const_decl, nullptr);
 }
 
 void ast_to_cfg::visit(ast::binary_expr & binary_expr) {
