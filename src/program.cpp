@@ -131,7 +131,12 @@ program::program(std::vector<ast::top_level_sequence> && modules,
 void program::lower_to_cfg() {
     ast_to_cfg lowering;
 
-    for (auto & mod : ast_modules) { lowering.visit(mod); }
+    for (auto & mod : ast_modules) {
+        // TODO: Preserve both the absolute and project-relative filepaths
+        auto filename = std::filesystem::relative(mod.filename, project_root);
+        mod.filename = std::move(filename);
+        lowering.visit(mod);
+    }
 
     this->cfg = std::move(lowering).take_cfg();
     cfg->list_all_nodes();
