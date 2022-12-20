@@ -696,7 +696,7 @@ ast::expr_ptr parser::parse_atom() {
     if (tok == lexer::token_type::if_) { return parse_if_expression(); }
 
     assert(tok == lexer::token_type::identifier);
-    auto id = lex->next_token().text;
+    auto id = lex->next_token();
     // function call
     if (lex->peek_token() == lexer::token_type::lparen) {
         return std::make_unique<ast::func_call_expr>(parse_func_call(std::move(id)), tok.location);
@@ -704,14 +704,14 @@ ast::expr_ptr parser::parse_atom() {
 
     // struct initialization
     if (lex->peek_token() == lexer::token_type::lbrace) {
-        return parse_struct_init(std::move(id), tok.location);
+        return parse_struct_init(std::move(id.text), tok.location);
     }
 
     // some variable
-    return std::make_unique<ast::user_val>(std::move(id), val_type::identifier, tok.location);
+    return std::make_unique<ast::user_val>(std::move(id.text), val_type::identifier, tok.location);
 }
 
-ast::func_call_data parser::parse_func_call(std::optional<std::string> func_name) {
+ast::func_call_data parser::parse_func_call(std::optional<lexer::token> func_name) {
     auto name = [&] {
         if (func_name.has_value()) {
             // we have already taken the function name
@@ -721,7 +721,7 @@ ast::func_call_data parser::parse_func_call(std::optional<std::string> func_name
 
         // we need to take the function name
         assert(lex->peek_token() == lexer::token_type::identifier);
-        auto name = lex->next_token().text;
+        auto name = lex->next_token();
         assert(lex->next_token() == lexer::token_type::lparen);
         return name;
     }();
@@ -745,7 +745,7 @@ ast::func_call_data parser::parse_func_call(std::optional<std::string> func_name
 
     assert(lex->next_token() == lexer::token_type::rparen);
 
-    return {std::move(name), std::move(args)};
+    return {std::move(name.text), std::move(args), name.location};
 }
 
 std::unique_ptr<ast::struct_init> parser::parse_struct_init(std::string && type_name,

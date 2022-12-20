@@ -99,7 +99,7 @@ class parser final {
     // A function call can either be a statement or an expression.
     // To reduce code duplication, `parse_func_call` handles both.
     // In the expression case, we have already consumed the name, so we must pass it in.
-    ast::func_call_data parse_func_call(std::optional<std::string> func_name = std::nullopt);
+    ast::func_call_data parse_func_call(std::optional<lexer::token> func_name = std::nullopt);
 
     std::unique_ptr<ast::struct_init> parse_struct_init(std::string && type_name, Location loc);
 

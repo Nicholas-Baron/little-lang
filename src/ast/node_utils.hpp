@@ -37,17 +37,19 @@ namespace ast {
 
     // Stores the function call data.
     // is facaded by func_call_expr and func_call_stmt
-    class func_call_data final {
+    class func_call_data final : public node {
       public:
-        func_call_data(std::string && name, std::vector<expr_ptr> && args)
+        func_call_data(std::string && name, std::vector<expr_ptr> && args, const Location & loc)
             : name_(std::move(name))
-            , args_{std::move(args)} {}
+            , args_{std::move(args)} {
+            set_location(loc);
+        }
 
         non_copyable(func_call_data);
 
         movable(func_call_data);
 
-        ~func_call_data() noexcept = default;
+        ~func_call_data() noexcept override = default;
 
         [[nodiscard]] const auto & name() const { return name_; }
 
@@ -58,6 +60,8 @@ namespace ast {
             assert(args_.at(index) != nullptr);
             return *args_.at(index);
         }
+
+        make_visitable;
 
       private:
         std::string name_;
