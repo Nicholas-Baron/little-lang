@@ -433,8 +433,7 @@ namespace visitor {
         }
 
         auto * func = llvm::dyn_cast_or_null<llvm::Function>(find_alive_value(func_name));
-        // TODO: Store the location on the func_call_data somehow
-        if (func == nullptr) { printError(std::nullopt, func_name, " is not a function"); }
+        if (func == nullptr) { printError(func_call_data.location(), func_name, " is not a function"); }
 
         auto * func_type = func->getFunctionType();
 
