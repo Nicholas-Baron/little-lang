@@ -1,6 +1,7 @@
 #include "nodes.hpp"
 
 #include "operations.hpp"
+#include "top_lvl_nodes.hpp"
 
 namespace ast {
 
@@ -22,4 +23,11 @@ namespace ast {
         return ast::struct_type::create(std::string{name}, module_name, std::move(fields));
     }
 
+    std::shared_ptr<ast::function_type> func_decl::header::func_type() const {
+
+        std::vector<ast::type_ptr> param_types;
+        for (auto & param : params) { param_types.push_back(param.type()); }
+
+        return ast::function_type::create(ret_type_, std::move(param_types));
+    }
 } // namespace ast

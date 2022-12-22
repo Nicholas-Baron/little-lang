@@ -3,6 +3,7 @@
 
 #include "base_nodes.hpp"
 #include "node_utils.hpp"
+#include "type.hpp"
 
 #include <map>
 
@@ -59,6 +60,8 @@ namespace ast {
             [[nodiscard]] size_t param_count() const { return params.size(); }
 
             [[nodiscard]] const std::string & name() const & { return name_; }
+
+            [[nodiscard]] std::shared_ptr<ast::function_type> func_type() const;
 
             make_visitable;
 
