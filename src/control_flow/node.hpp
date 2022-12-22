@@ -6,6 +6,7 @@
 #include "visitor.hpp"
 
 #include <cassert>
+#include <memory>
 #ifdef DEBUG
 #include <iostream>
 #endif
@@ -39,8 +40,10 @@ namespace control_flow {
 
     class function_start final : public node {
       public:
-        function_start(std::string name, size_t arg_count, bool exported)
-            : name{std::move(name)}
+        function_start(std::string name, size_t arg_count, bool exported,
+                       std::shared_ptr<ast::function_type> type)
+            : type{std::move(type)}
+            , name{std::move(name)}
             , arg_count{arg_count}
             , exported{exported} {}
 
@@ -52,6 +55,7 @@ namespace control_flow {
 
         // Invariant: cannot be null
         node * next{nullptr};
+        std::shared_ptr<ast::function_type> type;
         std::string name;
         size_t arg_count;
         bool exported;
