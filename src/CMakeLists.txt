@@ -37,9 +37,9 @@ if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL "13")
     add_compile_options(-Wreserved-identifier)
 endif()
 
-# Get the utils library first, as other libraries may need it
+# Get utils and common first, as other libraries may need them
+add_subdirectory(common)
 add_subdirectory(utils)
-
 add_subdirectory(ast)
 
 # the library for testing

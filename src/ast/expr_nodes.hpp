@@ -5,15 +5,16 @@
 #include "location.hpp"
 #include "node_utils.hpp"
 
+#include <literal_type.hpp>
+#include <operations.hpp>
+
 // expr node classes
 
 namespace ast {
     // TODO: Mark some AST nodes as constants
     class user_val final : public expr {
       public:
-        enum class value_type { null, identifier, integer, floating, character, boolean, string };
-
-        user_val(std::string && value, value_type type, Location loc = {})
+        user_val(std::string && value, literal_type type, Location loc = {})
             : val(std::move(value))
             , val_type{type} {
             set_location(loc);
@@ -28,15 +29,13 @@ namespace ast {
         make_visitable;
 
         std::string val;
-        value_type val_type;
+        literal_type val_type;
     };
 
     class unary_expr final : public expr {
       public:
-        enum class operand { bool_not, negate, deref };
-
         // NOLINTNEXTLINE
-        unary_expr(operand op, expr_ptr operand)
+        unary_expr(operation::unary op, expr_ptr operand)
             : op(op)
             , expr(std::move(operand)) {}
 
@@ -48,31 +47,14 @@ namespace ast {
 
         make_visitable;
 
-        operand op;
+        operation::unary op;
         expr_ptr expr;
     };
 
     class binary_expr final : public expr {
       public:
-        enum class operand {
-            add,
-            sub,
-            mult,
-            div,
-            mod,
-            gt,
-            ge,
-            lt,
-            le,
-            eq,
-            ne,
-            bool_and,
-            bool_or,
-            member_access,
-        };
-
         // NOLINTNEXTLINE
-        binary_expr(expr_ptr lhs, operand op, expr_ptr rhs)
+        binary_expr(expr_ptr lhs, operation::binary op, expr_ptr rhs)
             : lhs(std::move(lhs))
             , rhs(std::move(rhs))
             , op(op) {}
@@ -90,7 +72,7 @@ namespace ast {
         [[nodiscard]] bool is_shortcircuiting() const noexcept;
 
         expr_ptr lhs, rhs;
-        operand op;
+        operation::binary op;
     };
 
     class if_expr final : public expr {

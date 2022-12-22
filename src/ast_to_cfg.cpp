@@ -301,14 +301,14 @@ void ast_to_cfg::visit(ast::binary_expr & binary_expr) {
 
         auto cfg_rhs = get_value(*binary_expr.rhs, *this);
 
-        assert(binary_expr.op == ast::binary_expr::operand::bool_or
-               or binary_expr.op == ast::binary_expr::operand::bool_and);
+        assert(binary_expr.op == operation::binary::bool_or
+               or binary_expr.op == operation::binary::bool_and);
 
         shorting_node.true_case
-            = (binary_expr.op == ast::binary_expr::operand::bool_and) ? cfg_rhs.beginning : nullptr;
+            = (binary_expr.op == operation::binary::bool_and) ? cfg_rhs.beginning : nullptr;
 
         shorting_node.false_case
-            = (binary_expr.op == ast::binary_expr::operand::bool_or) ? cfg_rhs.beginning : nullptr;
+            = (binary_expr.op == operation::binary::bool_or) ? cfg_rhs.beginning : nullptr;
 
         auto & join_node = result_cfg->create<control_flow::phi>();
         join_node.flows_from(&shorting_node);
@@ -509,25 +509,14 @@ void ast_to_cfg::visit(ast::unary_expr & unary_expr) {
     auto & unary_op = result_cfg->create<control_flow::unary_operation>();
     unary_op.operand = operand.end;
     unary_op.flows_from(unary_op.operand);
-
-    switch (unary_expr.op) {
-    case ast::unary_expr::operand::bool_not:
-        unary_op.op = control_flow::unary_operation::operation::bool_not;
-        break;
-    case ast::unary_expr::operand::negate:
-        unary_op.op = control_flow::unary_operation::operation::negate;
-        break;
-    case ast::unary_expr::operand::deref:
-        unary_op.op = control_flow::unary_operation::operation::deref;
-        break;
-    }
+    unary_op.op = unary_expr.op;
 
     return store_result({operand.beginning, &unary_op});
 }
 
 void ast_to_cfg::visit(ast::user_val & user_val) {
 
-    if (user_val.val_type == ast::user_val::value_type::identifier) {
+    if (user_val.val_type == literal_type::identifier) {
         for (auto scope : lets) {
             if (auto iter = scope.find(user_val.val); iter != scope.end()) {
                 return store_result({nullptr, iter->second});
@@ -538,34 +527,28 @@ void ast_to_cfg::visit(ast::user_val & user_val) {
     auto * prev_node = result_cfg->previous_node();
     auto & value = result_cfg->create<control_flow::constant>();
     value.flows_from(prev_node);
+    value.val_type = user_val.val_type;
 
     switch (user_val.val_type) {
-    case ast::user_val::value_type::null:
-        value.val_type = control_flow::constant::value_type::null;
+    case literal_type::null:
         break;
-    case ast::user_val::value_type::identifier:
-        value.val_type = control_flow::constant::value_type::identifier;
+    case literal_type::identifier:
         value.value = user_val.val;
         break;
-    case ast::user_val::value_type::integer:
-        value.val_type = control_flow::constant::value_type::integer;
+    case literal_type::integer:
         // TODO: Define our own string to int conversion
         value.value = std::stoi(user_val.val);
         break;
-    case ast::user_val::value_type::floating:
-        value.val_type = control_flow::constant::value_type::floating;
+    case literal_type::floating:
         assert(false);
         break;
-    case ast::user_val::value_type::character:
-        value.val_type = control_flow::constant::value_type::character;
+    case literal_type::character:
         assert(false);
         break;
-    case ast::user_val::value_type::boolean:
-        value.val_type = control_flow::constant::value_type::boolean;
+    case literal_type::boolean:
         assert(false);
         break;
-    case ast::user_val::value_type::string:
-        value.val_type = control_flow::constant::value_type::string;
+    case literal_type::string:
         value.value = unquote(user_val.val);
         break;
     }

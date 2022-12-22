@@ -1,8 +1,8 @@
 #include "type_checker.hpp"
 
 #include "ast/nodes.hpp"
-#include "ast/token_to_string.hpp"
 #include "ast/type.hpp"
+#include "common/token_to_string.hpp"
 
 #include <memory> // make_shared
 #include <sstream>
@@ -166,7 +166,7 @@ namespace visitor {
             struct_type != nullptr) {
 
             const auto * rhs = dynamic_cast<ast::user_val *>(binary_expr.rhs.get());
-            if (rhs != nullptr and rhs->val_type == ast::user_val::value_type::identifier) {
+            if (rhs != nullptr and rhs->val_type == literal_type::identifier) {
 
                 // `struct.id`
 
@@ -220,7 +220,7 @@ namespace visitor {
         }
 
         printError(binary_expr.location(), "Unimplemented binary_expr type check for ",
-                   tok_to_string(binary_expr.op));
+                   token_to_string(binary_expr.op));
         assert(false);
     }
 
@@ -535,14 +535,14 @@ namespace visitor {
     void type_checker::visit(ast::unary_expr & unary_expr) {
         auto type = get_value(*unary_expr.expr, *this);
         switch (unary_expr.op) {
-        case ast::unary_expr::operand::bool_not:
+        case operation::unary::bool_not:
             if (type != ast::prim_type::boolean) {
                 printError(unary_expr.location(), "Boolean not expects a ",
                            *ast::prim_type::boolean, " as its argument.\nFound ", *type);
                 return store_result(ast::prim_type::boolean, unary_expr);
             }
             break;
-        case ast::unary_expr::operand::deref:
+        case operation::unary::deref:
             if (auto ptr_type = std::dynamic_pointer_cast<ast::nonnullable_ptr_type>(type);
                 ptr_type != nullptr) {
                 type = ptr_type->pointed_to_type();
@@ -555,7 +555,7 @@ namespace visitor {
                 assert(false);
             }
             break;
-        case ast::unary_expr::operand::negate:
+        case operation::unary::negate:
             if (type != ast::prim_type::int32 and type != ast::prim_type::float32) {
                 printError(unary_expr.location(), "Negation expects either a ",
                            *ast::prim_type::int32, " or a ", *ast::prim_type::float32,
@@ -570,7 +570,7 @@ namespace visitor {
 
     void type_checker::visit(ast::user_val & user_val) {
 
-        using val_type = ast::user_val::value_type;
+        using val_type = literal_type;
 
         switch (user_val.val_type) {
         case val_type::identifier: {

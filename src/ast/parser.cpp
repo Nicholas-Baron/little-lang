@@ -2,6 +2,7 @@
 
 #include "node_utils.hpp"
 #include "nodes.hpp"
+#include "operations.hpp"
 #include "type.hpp"
 
 #include <cassert>
@@ -508,7 +509,7 @@ ast::expr_ptr parser::parse_boolean_expression() {
         auto rhs = parse_comparison();
         assert(rhs != nullptr);
 
-        using operand = ast::binary_expr::operand;
+        using operand = operation::binary;
         expr = std::make_unique<ast::binary_expr>(
             std::move(expr),
             tok == lexer::token_type::double_or ? operand::bool_or : operand::bool_and,
@@ -524,7 +525,7 @@ ast::expr_ptr parser::parse_comparison() {
         or tok_type == lexer::token_type::gt or tok_type == lexer::token_type::ge
         or tok_type == lexer::token_type::eq or tok_type == lexer::token_type::ne) {
         auto tok = lex->next_token();
-        using operand = ast::binary_expr::operand;
+        using operand = operation::binary;
         auto rhs = parse_additive();
         switch (tok.type) {
         case lexer::token_type::le:
@@ -552,7 +553,7 @@ ast::expr_ptr parser::parse_additive() {
         tok_type == lexer::token_type::plus or tok_type == lexer::token_type::minus) {
         auto tok = lex->next_token();
         auto rhs = parse_multiplicative();
-        using operand = ast::binary_expr::operand;
+        using operand = operation::binary;
         switch (tok.type) {
         case lexer::token_type::plus:
             return std::make_unique<ast::binary_expr>(std::move(expr), operand::add,
@@ -573,7 +574,7 @@ ast::expr_ptr parser::parse_multiplicative() {
                                            or tok_type == lexer::token_type::asterik
                                            or tok_type == lexer::token_type::slash) {
         auto tok = lex->next_token();
-        using operand = ast::binary_expr::operand;
+        using operand = operation::binary;
         auto rhs = parse_unary();
         switch (tok.type) {
         case lexer::token_type::percent:
@@ -594,7 +595,7 @@ ast::expr_ptr parser::parse_multiplicative() {
 
 ast::expr_ptr parser::parse_unary() {
 
-    using operand = ast::unary_expr::operand;
+    using operand = operation::unary;
     switch (lex->peek_token().type) {
     case lexer::token_type::minus: {
         // - expr
@@ -629,8 +630,6 @@ ast::expr_ptr parser::parse_unary() {
 }
 
 ast::expr_ptr parser::parse_member_access() {
-    using operand = ast::binary_expr::operand;
-    using val_type = ast::user_val::value_type;
 
     // Consider the case of `(x.y).z`.
     // We must try to parse an atom for the parenthesis-enclosed lhs.
@@ -644,9 +643,9 @@ ast::expr_ptr parser::parse_member_access() {
         assert(lex->peek_token() == lexer::token_type::identifier);
 
         auto tok = lex->next_token();
-        auto rhs = std::make_unique<ast::user_val>(std::move(tok.text), val_type::identifier,
+        auto rhs = std::make_unique<ast::user_val>(std::move(tok.text), literal_type::identifier,
                                                    tok.location);
-        expr = std::make_unique<ast::binary_expr>(std::move(expr), operand::member_access,
+        expr = std::make_unique<ast::binary_expr>(std::move(expr), operation::binary::member_access,
                                                   std::move(rhs));
     }
 
@@ -664,7 +663,7 @@ ast::expr_ptr parser::parse_atom() {
     }
 
     // literals
-    using val_type = ast::user_val::value_type;
+    using val_type = literal_type;
     if (tok == lexer::token_type::integer or tok == lexer::token_type::floating
         or tok == lexer::token_type::string or tok == lexer::token_type::boolean
         or tok == lexer::token_type::character or tok == lexer::token_type::null) {

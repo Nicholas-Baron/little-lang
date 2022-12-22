@@ -90,7 +90,7 @@ TEST_CASE("the parser will parse let statement") {
 
     auto * value = dynamic_cast<ast::user_val *>(let->value.get());
     CHECK(value != nullptr);
-    CHECK(value->val_type == ast::user_val::value_type::string);
+    CHECK(value->val_type == literal_type::string);
     CHECK(value->val == "\"hello\"");
 }
 
@@ -112,7 +112,7 @@ TEST_CASE("the parser will parse let statement with types") {
 
     auto * value = dynamic_cast<ast::user_val *>(let->value.get());
     CHECK(value != nullptr);
-    CHECK(value->val_type == ast::user_val::value_type::integer);
+    CHECK(value->val_type == literal_type::integer);
     CHECK(value->val == "10");
 }
 
@@ -134,7 +134,7 @@ TEST_CASE("the parser will parse pointer types and expressions") {
 
     auto * value = dynamic_cast<ast::user_val *>(let->value.get());
     CHECK(value != nullptr);
-    CHECK(value->val_type == ast::user_val::value_type::null);
+    CHECK(value->val_type == literal_type::null);
     CHECK(value->val == "null");
 }
 
@@ -155,7 +155,7 @@ TEST_CASE("the parser will parse dereferences") {
 
     auto * value = dynamic_cast<ast::unary_expr *>(let->value.get());
     CHECK(value != nullptr);
-    CHECK(value->op == ast::unary_expr::operand::deref);
+    CHECK(value->op == operation::unary::deref);
     CHECK(value->expr != nullptr);
 }
 
@@ -172,11 +172,11 @@ TEST_CASE("the parser will parse unary minus") {
     auto * unary_expr = dynamic_cast<ast::unary_expr *>(expr.get());
     CHECK(unary_expr != nullptr);
     CHECK(unary_expr->expr != nullptr);
-    CHECK(unary_expr->op == ast::unary_expr::operand::negate);
+    CHECK(unary_expr->op == operation::unary::negate);
 
     auto * val = dynamic_cast<ast::user_val *>(unary_expr->expr.get());
     CHECK(val != nullptr);
-    CHECK(val->val_type == ast::user_val::value_type::integer);
+    CHECK(val->val_type == literal_type::integer);
     CHECK(val->val == "3");
 }
 
@@ -198,7 +198,7 @@ TEST_CASE("the parser will parse const declaration") {
 
     auto * value = dynamic_cast<ast::binary_expr *>(const_decl->expr.get());
     CHECK(value != nullptr);
-    CHECK(value->op == ast::binary_expr::operand::mult);
+    CHECK(value->op == operation::binary::mult);
     CHECK(value->lhs != nullptr);
     CHECK(value->rhs != nullptr);
 }
@@ -257,7 +257,7 @@ TEST_CASE("the parser will parse if statements") {
 
     auto * cond = dynamic_cast<ast::user_val *>(if_stmt->condition.get());
     CHECK(cond != nullptr);
-    CHECK(cond->val_type == ast::user_val::value_type::identifier);
+    CHECK(cond->val_type == literal_type::identifier);
     CHECK(cond->val == "x");
 }
 
@@ -276,7 +276,7 @@ TEST_CASE("the parser will parse if-else statements") {
 
     auto * cond = dynamic_cast<ast::user_val *>(if_stmt->condition.get());
     CHECK(cond != nullptr);
-    CHECK(cond->val_type == ast::user_val::value_type::identifier);
+    CHECK(cond->val_type == literal_type::identifier);
     CHECK(cond->val == "x");
 }
 
@@ -307,7 +307,7 @@ TEST_CASE("the parser will parse return statements with values") {
 
     auto * value = dynamic_cast<ast::binary_expr *>(ret_stmt->value.get());
     CHECK(value != nullptr);
-    CHECK(value->op == ast::binary_expr::operand::mult);
+    CHECK(value->op == operation::binary::mult);
     CHECK(value->lhs != nullptr);
     CHECK(value->rhs != nullptr);
 }
@@ -418,18 +418,18 @@ TEST_CASE("the parser will parse a member access") {
 
     auto * outer_member_access = dynamic_cast<ast::binary_expr *>(expr.get());
     CHECK(outer_member_access != nullptr);
-    CHECK(outer_member_access->op == ast::binary_expr::operand::member_access);
+    CHECK(outer_member_access->op == operation::binary::member_access);
     CHECK(outer_member_access->lhs != nullptr);
     CHECK(outer_member_access->rhs != nullptr);
 
     auto * rhs = dynamic_cast<ast::user_val *>(outer_member_access->rhs.get());
     CHECK(rhs != nullptr);
-    CHECK(rhs->val_type == ast::user_val::value_type::identifier);
+    CHECK(rhs->val_type == literal_type::identifier);
     CHECK(rhs->val == "z");
 
     auto * inner_member_access = dynamic_cast<ast::binary_expr *>(outer_member_access->lhs.get());
     CHECK(inner_member_access != nullptr);
-    CHECK(inner_member_access->op == ast::binary_expr::operand::member_access);
+    CHECK(inner_member_access->op == operation::binary::member_access);
     CHECK(inner_member_access->lhs != nullptr);
     CHECK(inner_member_access->rhs != nullptr);
 }
@@ -493,7 +493,7 @@ TEST_CASE("the parser will parse a function with an expression body") {
     CHECK(value != nullptr);
     CHECK(value->lhs != nullptr);
     CHECK(value->rhs != nullptr);
-    CHECK(value->op == ast::binary_expr::operand::div);
+    CHECK(value->op == operation::binary::div);
 }
 
 TEST_CASE("the parser will parse a factorial function") {

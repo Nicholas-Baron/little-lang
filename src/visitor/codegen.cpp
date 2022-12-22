@@ -1,8 +1,8 @@
 #include "codegen.hpp"
 
 #include "ast/nodes.hpp"
-#include "ast/token_to_string.hpp"
 #include "ast/type.hpp"
+#include "common/token_to_string.hpp"
 #include "emit_asm.hpp"
 #include "llvm_type_lowering.hpp"
 
@@ -111,7 +111,7 @@ namespace visitor {
                                       llvm::Value * rhs_value, bool is_float, bool is_constant) {
 
         assert(lhs_value != nullptr and rhs_value != nullptr);
-        using operand = ast::binary_expr::operand;
+        using operand = operation::binary;
 
         using predicate = llvm::CmpInst::Predicate;
         auto int_or_float = [&is_float](predicate int_pred, predicate float_pred) {
@@ -140,7 +140,7 @@ namespace visitor {
             break;
         default:
             printError(binary_expr.location(), "Comparison operator ",
-                       tok_to_string(binary_expr.op), " is not implemented yet");
+                       token_to_string(binary_expr.op), " is not implemented yet");
         }
         assert(pred.has_value());
         if (is_constant) {
@@ -167,14 +167,14 @@ namespace visitor {
         assert(pointer_type != nullptr);
         auto * element_ty = pointer_type->getPointerElementType();
 
-        using operand = ast::binary_expr::operand;
+        using operand = operation::binary;
 
         switch (binary_expr.op) {
         case operand::add:
         case operand::sub:
             return store_result(ir_builder->CreateGEP(element_ty, pointer, index));
         default:
-            printError(binary_expr.location(), tok_to_string(binary_expr.op),
+            printError(binary_expr.location(), token_to_string(binary_expr.op),
                        " is not implemented for pointers");
             assert(false);
         }
@@ -190,7 +190,7 @@ namespace visitor {
 
         // Check that this is an acutal short circuit
         // short on false if and-ing, short on true if or-ing
-        using operand = ast::binary_expr::operand;
+        using operand = operation::binary;
         assert(binary_expr.op == operand::bool_and or binary_expr.op == operand::bool_or);
 
         // if (true && rhs) -> should eval rhs
@@ -308,7 +308,7 @@ namespace visitor {
             return evaluate_short_circuit(binary_expr, lhs_value);
         }
 
-        if (binary_expr.op == ast::binary_expr::operand::member_access) {
+        if (binary_expr.op == operation::binary::member_access) {
 
             assert(lhs_value->getType()->isPointerTy());
 
@@ -364,7 +364,7 @@ namespace visitor {
 
         // all other binary expressions
 
-        using operand = ast::binary_expr::operand;
+        using operand = operation::binary;
         using bin_ops = llvm::Instruction::BinaryOps;
         std::optional<bin_ops> bin_op;
 
@@ -386,7 +386,7 @@ namespace visitor {
             bin_op = int_or_float(bin_ops::SDiv, bin_ops::FDiv);
             break;
         default:
-            printError(binary_expr.location(), "Binary operator ", tok_to_string(binary_expr.op),
+            printError(binary_expr.location(), "Binary operator ", token_to_string(binary_expr.op),
                        " is not implemented yet");
         }
 
@@ -433,7 +433,9 @@ namespace visitor {
         }
 
         auto * func = llvm::dyn_cast_or_null<llvm::Function>(find_alive_value(func_name));
-        if (func == nullptr) { printError(func_call_data.location(), func_name, " is not a function"); }
+        if (func == nullptr) {
+            printError(func_call_data.location(), func_name, " is not a function");
+        }
 
         auto * func_type = func->getFunctionType();
 
@@ -756,7 +758,7 @@ namespace visitor {
         auto * value = get_value(*unary_expr.expr, *this);
         auto * const_val = llvm::dyn_cast<llvm::Constant>(value);
 
-        using operand = ast::unary_expr::operand;
+        using operand = operation::unary;
         switch (unary_expr.op) {
         case operand::bool_not:
             if (const_val != nullptr) {
@@ -787,23 +789,22 @@ namespace visitor {
     }
 
     void codegen::visit(ast::user_val & user_val) {
-        using value_type = ast::user_val::value_type;
         switch (user_val.val_type) {
-        case value_type::identifier: {
+        case literal_type::identifier: {
             auto * value = find_alive_value(user_val.val);
             if (value == nullptr) {
                 printError(user_val.location(), "Could not find variable ", user_val.val);
             }
             return store_result(value);
         }
-        case value_type::null: {
+        case literal_type::null: {
             auto & type = user_val.type;
             assert(type->is_pointer_type());
             auto * llvm_type = type_context.lower_to_llvm(type);
             assert(llvm_type != nullptr);
             return store_result(llvm::Constant::getNullValue(llvm_type));
         }
-        case value_type::integer: {
+        case literal_type::integer: {
             static constexpr auto hex_base = 16;
             static constexpr auto dec_base = 10;
             auto base = user_val.val.find_first_of('x') != std::string::npos ? hex_base : dec_base;
@@ -811,10 +812,10 @@ namespace visitor {
             return store_result(
                 llvm::ConstantInt::get(llvm::Type::getInt32Ty(context), user_val.val, base));
         }
-        case value_type::floating:
+        case literal_type::floating:
             printError(user_val.location(), "Floating point IR not implemented");
             break;
-        case value_type::character:
+        case literal_type::character:
             switch (user_val.val.size()) {
             case 3:
                 return store_result(
@@ -834,12 +835,12 @@ namespace visitor {
                 llvm::outs() << user_val.val << " cannot be interpreted as a character.\n";
                 assert(false);
             }
-        case value_type::boolean: {
+        case literal_type::boolean: {
             auto iter = valid_bools.find(user_val.val);
             assert(iter != valid_bools.end());
             return store_result(llvm::ConstantInt::getBool(context, iter->second));
         }
-        case value_type::string: {
+        case literal_type::string: {
             assert(user_val.val.size() > 2);
             auto value = user_val.val.substr(1, user_val.val.size() - 2);
             return store_result(ir_builder->CreateGlobalStringPtr(value));
