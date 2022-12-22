@@ -1,6 +1,8 @@
 #ifndef NODE_HPP
 #define NODE_HPP
 
+#include "common/operations.hpp"
+#include "literal_type.hpp"
 #include "visitor.hpp"
 
 #include <cassert>
@@ -57,23 +59,6 @@ namespace control_flow {
 
     class binary_operation final : public node {
       public:
-        enum class operand {
-            add,
-            sub,
-            mult,
-            div,
-            mod,
-            gt,
-            ge,
-            lt,
-            le,
-            eq,
-            ne,
-            bool_and,
-            bool_or,
-            member_access,
-        };
-
         make_visitable;
 
         void flows_from(node * node) override {
@@ -90,13 +75,11 @@ namespace control_flow {
         node * next;
         node * lhs;
         node * rhs;
-        operand op;
+        operation::binary op;
     };
 
     class unary_operation final : public node {
       public:
-        enum class operation { bool_not, negate, deref };
-
         make_visitable;
 
         void flows_from(node * node) override { previous = node; }
@@ -105,14 +88,12 @@ namespace control_flow {
         node * previous;
         node * next;
         node * operand;
-        operation op;
+        operation::unary op;
     };
 
     // TODO: This will not be the case when mutability is added.
     class constant final : public node {
       public:
-        enum class value_type { null, identifier, integer, floating, character, boolean, string };
-
         make_visitable;
 
         void flows_from(node * node) override {
@@ -125,7 +106,7 @@ namespace control_flow {
         }
 
         std::variant<std::monostate, long, double, char, bool, std::string> value;
-        value_type val_type;
+        literal_type val_type;
 
         // Invariant: none of the following `node *` may be null
         node * previous{nullptr};

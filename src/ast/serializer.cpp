@@ -13,7 +13,7 @@ namespace ast {
         auto rhs = get_value(*binary_expr.rhs, *this);
 
         return store_result(std::map<std::string, nlohmann::json>{
-            {"operator", nlohmann::json{tok_to_string(binary_expr.op)}},
+            {"operator", nlohmann::json{token_to_string(binary_expr.op)}},
             {"lhs", lhs},
             {"rhs", rhs}});
     }
@@ -160,6 +160,6 @@ namespace ast {
 
     void serializer::visit(ast::user_val & user_val) {
         return store_result(
-            {{"value_type", tok_to_string(user_val.val_type)}, {"value", user_val.val}});
+            {{"value_type", token_to_string(user_val.val_type)}, {"value", user_val.val}});
     }
 } // namespace ast
