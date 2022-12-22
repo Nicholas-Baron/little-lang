@@ -369,6 +369,11 @@ void ast_to_cfg::visit(ast::func_decl & func_decl) {
         func_decl.head.func_type());
     current_function = &func_start;
 
+    func_start.parameter_names.reserve(func_start.arg_count);
+    for (auto i = 0UL; i < func_start.arg_count; ++i) {
+        func_start.parameter_names.emplace_back(func_decl.head.arg(i).name());
+    }
+
     assert(seen_functions.find(func_decl.head.name()) == seen_functions.end());
     seen_functions.emplace(func_decl.head.name(), current_function);
 
