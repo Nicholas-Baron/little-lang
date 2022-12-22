@@ -56,6 +56,7 @@ namespace control_flow {
         // Invariant: cannot be null
         node * next{nullptr};
         std::shared_ptr<ast::function_type> type;
+        std::vector<std::string> parameter_names;
         std::string name;
         size_t arg_count;
         bool exported;
