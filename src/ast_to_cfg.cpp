@@ -249,8 +249,7 @@ void ast_to_cfg::visit(ast::expr & expr) { expr.accept(*this); }
 
 void ast_to_cfg::import_item(const std::string & id, const std::string & mod) {
     if (auto value = globals.lookup(mod, id); value != decltype(globals)::empty_value()) {
-        if (auto * const * const_expr = std::get_if<const ast::expr *>(&value);
-            const_expr != nullptr) {
+        if (auto * const * const_expr = std::get_if<ast::expr *>(&value); const_expr != nullptr) {
             constants.emplace(id, *const_expr);
         } else if (auto * const * func_start = std::get_if<control_flow::function_start *>(&value);
                    func_start != nullptr) {
@@ -528,6 +527,10 @@ void ast_to_cfg::visit(ast::user_val & user_val) {
             if (auto iter = scope.find(user_val.val); iter != scope.end()) {
                 return store_result({nullptr, iter->second});
             }
+        }
+
+        if (auto iter = constants.find(user_val.val); iter != constants.end()) {
+            return visit(*iter->second);
         }
     }
 
