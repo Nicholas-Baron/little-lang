@@ -20,9 +20,11 @@ namespace control_flow {
         all_cfg_nodes
 #undef expand_node_macro
 
+        void visit(control_flow::node &);
+        // clang-format on
+
       protected:
         visitor() = default;
-        // clang-format on
     };
 
 } // namespace control_flow
