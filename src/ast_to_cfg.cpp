@@ -303,14 +303,19 @@ void ast_to_cfg::visit(ast::binary_expr & binary_expr) {
         assert(binary_expr.op == operation::binary::bool_or
                or binary_expr.op == operation::binary::bool_and);
 
+        auto & lhs_constant = result_cfg->create<control_flow::constant>();
+        lhs_constant.flows_from(&shorting_node);
+        lhs_constant.val_type = literal_type::boolean;
+        lhs_constant.value = binary_expr.op == operation::binary::bool_or;
+
         shorting_node.true_case
-            = (binary_expr.op == operation::binary::bool_and) ? cfg_rhs.beginning : nullptr;
+            = (binary_expr.op == operation::binary::bool_and) ? cfg_rhs.beginning : &lhs_constant;
 
         shorting_node.false_case
-            = (binary_expr.op == operation::binary::bool_or) ? cfg_rhs.beginning : nullptr;
+            = (binary_expr.op == operation::binary::bool_or) ? cfg_rhs.beginning : &lhs_constant;
 
         auto & join_node = result_cfg->create<control_flow::phi>();
-        join_node.flows_from(&shorting_node);
+        join_node.flows_from(&lhs_constant);
         join_node.flows_from(cfg_rhs.end);
 
         return store_result({cfg_lhs.beginning, &join_node});
