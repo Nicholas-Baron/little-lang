@@ -214,6 +214,23 @@ namespace control_flow {
         }
 
         if (should_continue) {
+
+            // HACK: Sometimes, phi nodes are values and need a type.
+            //       This will happen if all previous nodes have the same type.
+
+            std::optional<ast::type *> phi_type;
+            for (auto * prev : phi.previous) {
+                if (auto * prev_type = find_type_of(prev); not phi_type.has_value()) {
+                    phi_type = prev_type;
+                } else if (phi_type != prev_type) {
+                    phi_type = nullptr;
+                }
+            }
+
+            assert(phi_type.has_value());
+
+            if (phi_type != nullptr) { bind_type(&phi, *phi_type); }
+
             visited.emplace(&phi);
             phi.next->accept(*this);
         }
