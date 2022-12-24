@@ -323,6 +323,7 @@ void ast_to_cfg::visit(ast::binary_expr & binary_expr) {
     auto & cfg_expr = result_cfg->create<control_flow::binary_operation>();
     cfg_expr.lhs = cfg_lhs.end;
     cfg_expr.rhs = cfg_rhs.end;
+    cfg_expr.op = binary_expr.op;
     cfg_expr.flows_from(cfg_expr.rhs);
     return store_result({cfg_lhs.beginning, &cfg_expr});
 }
