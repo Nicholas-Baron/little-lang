@@ -2,6 +2,7 @@
 
 #include "control_flow/node.hpp"
 #include "nlohmann/json.hpp"
+#include "token_to_string.hpp"
 
 #include <iostream>
 
@@ -68,7 +69,7 @@ namespace control_flow {
         *result = {{"next", get_value(*binary_operation.next, *this)},
                    {"left", get_value(*binary_operation.lhs, *this)},
                    {"right", get_value(*binary_operation.rhs, *this)},
-                   {"op", binary_operation.op}};
+                   {"op", token_to_string(binary_operation.op)}};
         return store_result(result);
     }
 
@@ -99,9 +100,8 @@ namespace control_flow {
             },
             constant.value);
 
-        // TODO: Print the name of the val_type
         *result = {{"value", std::move(value)},
-                   {"type", (int)constant.val_type},
+                   {"type", token_to_string(constant.val_type)},
                    {"next", get_value(*constant.next, *this)}};
         return store_result(result);
     }
@@ -171,7 +171,7 @@ namespace control_flow {
         if (result == nullptr) { return value_getter::store_result(index); }
 
         *result = {{"next", get_value(*unary_operation.next, *this)},
-                   {"op", (int)unary_operation.op},
+                   {"op", token_to_string(unary_operation.op)},
                    {"operand", get_value(*unary_operation.operand, *this)}};
         return store_result(result);
     }
