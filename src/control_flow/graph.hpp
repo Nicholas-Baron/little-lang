@@ -49,8 +49,18 @@ namespace control_flow {
         }
 
         template<typename Callable>
+        void for_each_root(Callable func) noexcept {
+            for (auto * root : roots) { func(root); }
+        }
+
+        template<typename Callable>
         void for_each_node(Callable func) const noexcept {
             for (const auto & node : nodes) { func(node.get()); }
+        }
+
+        template<typename Callable>
+        void for_each_node(Callable func) noexcept {
+            for (auto & node : nodes) { func(node.get()); }
         }
 
         void list_all_nodes() const noexcept;
