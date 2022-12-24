@@ -27,6 +27,7 @@ set(proj_files
     settings.cpp
     control_flow/graph.cpp
     control_flow/serializer.cpp
+    control_flow/type_checker.cpp
     control_flow/visitor.cpp
     visitor/codegen.cpp
     visitor/type_checker.cpp
