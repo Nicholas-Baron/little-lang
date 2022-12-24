@@ -48,12 +48,12 @@ class ast_to_cfg final : public ast::visitor_base,
     std::unique_ptr<control_flow::graph> result_cfg;
 
     std::map<std::string, const control_flow::function_start *> seen_functions;
-    std::map<std::string, const ast::expr *> constants;
+    std::map<std::string, ast::expr *> constants;
     scoped_map<std::string, control_flow::node *> lets;
     const control_flow::function_start * current_function{nullptr};
 
     global_map<std::string,
-               std::variant<std::monostate, const ast::expr *, control_flow::function_start *>>
+               std::variant<std::monostate, ast::expr *, control_flow::function_start *>>
         globals;
     std::string current_module;
 };
