@@ -201,7 +201,24 @@ namespace control_flow {
     }
 
     void type_checker::visit(intrinsic_call &) { assert(false and "TODO intrinsic_call"); }
-    void type_checker::visit(phi &) { assert(false and "TODO phi"); }
+
+    void type_checker::visit(phi & phi) {
+        // Only go to the next node if all previous nodes have been checked
+
+        auto should_continue = true;
+        for (auto * prev : phi.previous) {
+            if (visited.find(prev) == visited.end()) {
+                should_continue = false;
+                break;
+            }
+        }
+
+        if (should_continue) {
+            visited.emplace(&phi);
+            phi.next->accept(*this);
+        }
+    }
+
     void type_checker::visit(unary_operation &) { assert(false and "TODO unary"); }
 
 } // namespace control_flow
