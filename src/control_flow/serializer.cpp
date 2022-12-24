@@ -23,6 +23,20 @@ namespace control_flow {
         nlohmann::json result;
         for (auto & item : visitor.graph_array) { result.push_back(*item); }
         stream << result.dump(human_readable ? 4 : -1);
+
+#ifdef DEBUG
+        stream << "digraph {\n";
+        for (auto i = 0UL; i < result.size(); ++i) {
+            auto & node = result[i];
+            if (node.contains("next")) {
+                stream << i << " -> " << node["next"] << ";\n";
+            } else if (node.contains("condition")) {
+                stream << i << " -> " << node["true case"] << ";\n";
+                stream << i << " -> " << node["false case"] << ";\n";
+            }
+        }
+        stream << "}\n";
+#endif
     }
 
     std::pair<nlohmann::json *, size_t> serializer::add_node(node * node) {
