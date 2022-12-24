@@ -7,6 +7,8 @@
 #include <iostream>
 
 namespace control_flow {
+    type_checker::type_checker() { intrinsics.emplace("syscall", &type_checker::syscall); }
+
     template<class... arg_t>
     void type_checker::printError(const arg_t &... args) {
         std::stringstream to_print;
@@ -28,6 +30,35 @@ namespace control_flow {
     ast::type * type_checker::find_type_of(control_flow::node * value) const {
         auto iter = node_type.find(value);
         return (iter != node_type.end()) ? iter->second : nullptr;
+    }
+
+    void type_checker::syscall(intrinsic_call & call) {
+        // Syscalls can only take between 1 and 7 arguments.
+        static constexpr auto max_syscall_args = 7U;
+        if (const auto arg_count = call.arguments.size();
+            arg_count == 0 or arg_count > max_syscall_args) {
+            printError("syscalls can only take 1 to 7 arguments\nFound one with ", arg_count);
+        }
+
+        bool first = true;
+        for (auto * arg : call.arguments) {
+            auto * arg_type = find_type_of(arg);
+            if (not arg_type->is_pointer_type() and arg_type != ast::prim_type::int32.get()) {
+                printError("syscall can only take int or pointer arguments; found ", *arg_type);
+            }
+
+            // The first argmuent must always be a syscall number.
+            if (first) {
+                first = false;
+                if (arg_type != ast::prim_type::int32.get()) {
+                    printError("syscall must have an integer as its first argument; found ",
+                               *arg_type);
+                }
+            }
+        }
+
+        // TODO: syscalls can return pointers and 64 bit numbers
+        bind_type(&call, ast::prim_type::int32.get());
     }
 
     void type_checker::visit(function_start & func_start) {
@@ -200,7 +231,13 @@ namespace control_flow {
         visited.emplace(&func_end);
     }
 
-    void type_checker::visit(intrinsic_call &) { assert(false and "TODO intrinsic_call"); }
+    void type_checker::visit(intrinsic_call & intrinsic_call) {
+        if (auto iter = intrinsics.find(intrinsic_call.name); iter != intrinsics.end()) {
+            (this->*iter->second)(intrinsic_call);
+        } else {
+            printError("Could not type check intrinsic named ", intrinsic_call.name);
+        }
+    }
 
     void type_checker::visit(phi & phi) {
         // Only go to the next node if all previous nodes have been checked
