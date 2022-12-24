@@ -37,6 +37,7 @@ namespace control_flow {
             bind_identifier(func_start.parameter_names[i], func_start.type->arg(i).get());
         }
         bind_identifier(func_start.name, func_start.type.get());
+        visited.emplace(&func_start);
 
         func_start.next->accept(*this);
 
@@ -81,6 +82,7 @@ namespace control_flow {
             assert(false);
         }
 
+        visited.emplace(&binary_operation);
         binary_operation.next->accept(*this);
     }
 
@@ -93,6 +95,7 @@ namespace control_flow {
                        *cond_type);
         }
 
+        visited.emplace(&branch);
         branch.true_case->accept(*this);
         branch.false_case->accept(*this);
     }
@@ -128,6 +131,7 @@ namespace control_flow {
             break;
         }
 
+        visited.emplace(&constant);
         bind_type(&constant, const_type);
 
         constant.next->accept(*this);
@@ -178,6 +182,7 @@ namespace control_flow {
         }
 
         bind_type(&func_call, expected_func_type->return_type().get());
+        visited.emplace(&func_call);
         func_call.next->accept(*this);
     }
 
@@ -191,6 +196,8 @@ namespace control_flow {
             printError("Expected a return expression with type ", *current_return_type,
                        "; found one with ", *actual_type);
         }
+
+        visited.emplace(&func_end);
     }
 
     void type_checker::visit(intrinsic_call &) { assert(false and "TODO intrinsic_call"); }

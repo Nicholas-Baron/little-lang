@@ -3,6 +3,8 @@
 
 #include "control_flow/visitor.hpp"
 
+#include <unordered_set>
+
 namespace control_flow {
     class type_checker final : public visitor {
 
@@ -32,6 +34,7 @@ namespace control_flow {
 
         std::map<std::string, ast::type *> bound_identifiers;
         std::map<control_flow::node *, ast::type *> node_type;
+        std::unordered_set<control_flow::node *> visited;
         const ast::type * current_return_type{nullptr};
         bool has_seen_error{false};
     };
