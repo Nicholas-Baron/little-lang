@@ -530,7 +530,7 @@ void ast_to_cfg::visit(ast::user_val & user_val) {
     if (user_val.val_type == literal_type::identifier) {
         for (auto scope : lets) {
             if (auto iter = scope.find(user_val.val); iter != scope.end()) {
-                return store_result({nullptr, iter->second});
+                return store_result({iter->second, iter->second});
             }
         }
 
