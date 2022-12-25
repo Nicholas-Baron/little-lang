@@ -2,6 +2,7 @@
 
 #include "ast/top_lvl_nodes.hpp"
 #include "ast_to_cfg.hpp"
+#include "control_flow/type_checker.hpp"
 #include "emit_asm.hpp"
 #include "jit.hpp"
 #include "utils/execute.hpp"
@@ -143,24 +144,15 @@ void program::lower_to_cfg() {
 }
 
 bool program::type_check() {
-    global_map<std::string, ast::type_ptr> program_globals;
-    program_globals.add("env", "arg_count", ast::function_type::create(ast::prim_type::int32));
-    program_globals.add(
-        "env", "arg_at",
-        ast::function_type::create(ast::prim_type::str, std::vector{ast::prim_type::int32}));
+    // TODO: Add the program globals from the env pseudo-module
+    control_flow::type_checker checker;
 
-    for (auto & mod : ast_modules) {
-        // Note: currently, the ast imports are not updated with absolute paths,
-        // but the ast filenames are absolute paths.
-        auto filename = std::filesystem::relative(mod.filename, project_root);
-        visitor::type_checker type_checker{std::move(filename), *context, program_globals};
-        type_checker.visit(mod);
-        if (not type_checker.checked_good()) {
-            std::cout << "Failed to type check" << std::endl;
-            return false;
-        }
-    }
-    return true;
+    cfg->for_each_root([&checker](auto * root) {
+        assert(root != nullptr);
+        // TODO: Do not require the name lookup for visit
+        checker.control_flow::visitor::visit(*root);
+    });
+    return checker.checked_good();
 }
 
 void program::generate_ir() {
