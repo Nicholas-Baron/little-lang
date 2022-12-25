@@ -558,7 +558,27 @@ void ast_to_cfg::visit(ast::user_val & user_val) {
         assert(false);
         break;
     case literal_type::character:
-        assert(false);
+        switch (user_val.val.size()) {
+        case 3:
+            value.value = user_val.val.at(1);
+            assert(std::holds_alternative<char>(value.value));
+            break;
+        case 4:
+            assert(user_val.val.at(1) == '\\');
+            switch (user_val.val.at(2)) {
+            case '0':
+                value.value = '\0';
+                break;
+            case 'n':
+                value.value = '\n';
+                break;
+            }
+            if (std::holds_alternative<char>(value.value)) { break; }
+            [[fallthrough]];
+        default:
+            std::cout << "Cannot interpret " << user_val.val << " as a character" << std::endl;
+            assert(false);
+        }
         break;
     case literal_type::boolean:
         assert(false);
