@@ -361,6 +361,7 @@ void ast_to_cfg::visit(ast::func_call_data & func_call_data) {
 
     auto & func_call = result_cfg->create<control_flow::function_call>(iter->second, args);
     func_call.flows_from(prev_node);
+    assert(first_arg != nullptr);
     return store_result({first_arg, &func_call});
 }
 
