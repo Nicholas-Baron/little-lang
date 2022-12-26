@@ -103,12 +103,29 @@ namespace control_flow {
 
             bind_type(&binary_operation, ast::prim_type::boolean.get());
         } else if (operation::is_arithmetic(binary_operation.op)) {
-            if (lhs_type != rhs_type) {
+            auto * result_type = lhs_type;
+
+            if (binary_operation.op == operation::binary::add
+                and (lhs_type->is_pointer_type() or rhs_type->is_pointer_type())) {
+                if (lhs_type->is_pointer_type() == rhs_type->is_pointer_type()) {
+                    printError("Cannot add two pointers together");
+                } else {
+                    auto * non_ptr_type = lhs_type->is_pointer_type() ? rhs_type : lhs_type;
+                    auto * ptr_type = lhs_type->is_pointer_type() ? lhs_type : rhs_type;
+
+                    if (non_ptr_type != ast::prim_type::int32.get()) {
+                        printError("Expected ", *ast::prim_type::int32, " to add with ", *ptr_type,
+                                   "; found ", *non_ptr_type);
+                    }
+
+                    result_type = ptr_type;
+                }
+            } else if (lhs_type != rhs_type) {
                 printError("Expected arithmetic operands to be of same type; found ", *lhs_type,
                            " and ", *rhs_type);
             }
 
-            bind_type(&binary_operation, lhs_type);
+            bind_type(&binary_operation, result_type);
         } else {
             assert(false);
         }
@@ -299,7 +316,7 @@ namespace control_flow {
             } else if (operand_type == ast::prim_type::str.get()) {
                 result_type = ast::prim_type::character.get();
             } else {
-				// TODO: Enforce nonnullable_ptr_type
+                // TODO: Enforce nonnullable_ptr_type
                 auto * ptr_type = dynamic_cast<ast::ptr_type *>(operand_type);
                 assert(ptr_type != nullptr);
                 result_type = ptr_type->pointed_to_type().get();
