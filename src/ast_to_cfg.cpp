@@ -68,6 +68,11 @@ static void link_nodes(const std::vector<link> & links) {
             continue;
         }
 
+        if (auto * un_op = dynamic_cast<control_flow::unary_operation *>(node); un_op != nullptr) {
+            un_op->next = next;
+            continue;
+        }
+
         if (auto * bin_op = dynamic_cast<control_flow::binary_operation *>(node);
             bin_op != nullptr) {
             bin_op->next = next;
@@ -181,6 +186,11 @@ void ast_to_cfg::check_flow() noexcept {
 
         if (auto * branch = dynamic_cast<control_flow::branch *>(node); branch != nullptr) {
             found_links.push_back({branch->previous, branch});
+            return;
+        }
+
+        if (auto * un_op = dynamic_cast<control_flow::unary_operation *>(node); un_op != nullptr) {
+            found_links.push_back({un_op->previous, un_op});
             return;
         }
 
