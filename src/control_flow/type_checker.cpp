@@ -273,6 +273,43 @@ namespace control_flow {
         }
     }
 
-    void type_checker::visit(unary_operation &) { assert(false and "TODO unary"); }
+    void type_checker::visit(unary_operation & unary_operation) {
+        auto * operand_type = find_type_of(unary_operation.operand);
+        assert(operand_type != nullptr);
+
+        auto * result_type = operand_type;
+
+        switch (unary_operation.op) {
+        case operation::unary::bool_not:
+            if (operand_type != ast::prim_type::boolean.get()) {
+                printError("Expected boolean for `!`; found", *operand_type);
+            }
+            break;
+        case operation::unary::negate:
+            if (operand_type != ast::prim_type::int32.get()
+                and operand_type != ast::prim_type::float32.get()) {
+                printError("Expected float or int for `-`; found", *operand_type);
+            }
+            break;
+        case operation::unary::deref:
+            if (not operand_type->is_pointer_type()) {
+                printError("Expected a pointer for `*`; found", *operand_type);
+            } else if (operand_type == ast::prim_type::null.get()) {
+                printError("Cannot deref a null literal");
+            } else if (operand_type == ast::prim_type::str.get()) {
+                result_type = ast::prim_type::character.get();
+            } else {
+				// TODO: Enforce nonnullable_ptr_type
+                auto * ptr_type = dynamic_cast<ast::ptr_type *>(operand_type);
+                assert(ptr_type != nullptr);
+                result_type = ptr_type->pointed_to_type().get();
+            }
+            break;
+        }
+
+        bind_type(&unary_operation, result_type);
+        visited.emplace(&unary_operation);
+        unary_operation.next->accept(*this);
+    }
 
 } // namespace control_flow
