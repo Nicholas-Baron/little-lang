@@ -15,6 +15,7 @@
 struct basic_block {
     control_flow::node * beginning;
     control_flow::node * end;
+    bool from_id_lookup{false};
 };
 
 class ast_to_cfg final : public ast::visitor_base,

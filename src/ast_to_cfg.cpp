@@ -339,7 +339,7 @@ void ast_to_cfg::visit(ast::func_call_data & func_call_data) {
     std::vector<control_flow::node *> args;
     for (size_t i = 0; i < func_call_data.args_count(); ++i) {
         auto arg = get_value(func_call_data.arg(i), *this);
-        if (arg.beginning != nullptr) {
+        if (arg.beginning != nullptr and not arg.from_id_lookup) {
             arg.beginning->flows_from(prev_node);
             prev_node = arg.end;
             if (first_arg == nullptr) { first_arg = arg.beginning; }
@@ -361,8 +361,7 @@ void ast_to_cfg::visit(ast::func_call_data & func_call_data) {
 
     auto & func_call = result_cfg->create<control_flow::function_call>(iter->second, args);
     func_call.flows_from(prev_node);
-    assert(first_arg != nullptr);
-    return store_result({first_arg, &func_call});
+    return store_result({first_arg != nullptr ? first_arg : &func_call, &func_call});
 }
 
 void ast_to_cfg::visit(ast::func_call_expr & func_call_expr) { return visit(func_call_expr.data); }
@@ -531,7 +530,7 @@ void ast_to_cfg::visit(ast::user_val & user_val) {
     if (user_val.val_type == literal_type::identifier) {
         for (auto scope : lets) {
             if (auto iter = scope.find(user_val.val); iter != scope.end()) {
-                return store_result({iter->second, iter->second});
+                return store_result({iter->second, iter->second, true});
             }
         }
 
