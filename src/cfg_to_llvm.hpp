@@ -9,12 +9,11 @@
 
 #include <unordered_set>
 
-#include <llvm/IR/IRBuilder.h>
-
 // Forward declare LLVM stuff
 namespace llvm {
     class GlobalObject;
     class LLVMContext;
+    class IRBuilderBase;
     class Module;
     class Value;
 } // namespace llvm
@@ -46,9 +45,7 @@ class cfg_to_llvm final : public control_flow::visitor {
         llvm::Value * value;
         llvm::BasicBlock * parent_block;
 
-        node_data(llvm::IRBuilder<> & builder, llvm::Value * val)
-            : value{val}
-            , parent_block{builder.GetInsertBlock()} {}
+        node_data(llvm::IRBuilderBase & builder, llvm::Value * val);
     };
     void bind_value(const control_flow::node &, llvm::Value *);
     [[nodiscard]] const node_data * find_value_of(const control_flow::node *) const;
@@ -59,7 +56,7 @@ class cfg_to_llvm final : public control_flow::visitor {
     // context is not owned by us, but is sent to us via the constructor.
     llvm::LLVMContext & context;
     std::unique_ptr<llvm::Module> ir_module;
-    std::unique_ptr<llvm::IRBuilder<>> ir_builder;
+    std::unique_ptr<llvm::IRBuilderBase> ir_builder;
 
     global_map<std::string, llvm::GlobalObject *> globals;
     llvm_type_lowering & type_context;

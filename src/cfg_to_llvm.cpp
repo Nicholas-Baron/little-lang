@@ -6,6 +6,7 @@
 
 #include <cassert>
 
+#include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/InlineAsm.h>
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/Verifier.h> // verifyModule
@@ -70,6 +71,10 @@ cfg_to_llvm::cfg_to_llvm(const std::string & name, llvm::LLVMContext & context,
     , intrinsics{{"syscall", &cfg_to_llvm::syscall}} {
     ir_module->setTargetTriple(init_llvm_targets());
 }
+
+cfg_to_llvm::node_data::node_data(llvm::IRBuilderBase & builder, llvm::Value * val)
+    : value{val}
+    , parent_block{builder.GetInsertBlock()} {}
 
 void cfg_to_llvm::verify_module() const { llvm::verifyModule(*ir_module, &llvm::errs()); }
 
