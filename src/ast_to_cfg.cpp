@@ -3,7 +3,7 @@
 #include "control_flow/node.hpp"
 #include "string_utils.hpp"
 
-#include <iostream>
+#include <iostream> // cout
 
 ast_to_cfg::ast_to_cfg()
     : result_cfg{std::make_unique<control_flow::graph>()} {}
