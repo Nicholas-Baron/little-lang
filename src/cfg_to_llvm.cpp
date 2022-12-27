@@ -91,6 +91,20 @@ const cfg_to_llvm::node_data * cfg_to_llvm::find_value_of(const control_flow::no
     return (iter != values.end()) ? &iter->second : nullptr;
 }
 
+template<typename OurOp, typename LLVMOp>
+struct float_int_op_pair {
+    OurOp our_op;
+    LLVMOp int_op;
+    LLVMOp float_op;
+};
+
+template<typename Result, size_t size, typename Pred>
+[[nodiscard]] static constexpr std::optional<Result> find_in(const std::array<Result, size> & arr,
+                                                             Pred predicate) {
+    const auto iter = std::find_if(arr.begin(), arr.end(), predicate);
+    return (iter != arr.end()) ? std::optional{*iter} : std::nullopt;
+}
+
 // TODO: Use lookup table(s)
 void cfg_to_llvm::visit(control_flow::binary_operation & binary_operation) {
     const auto * lhs_value = find_value_of(binary_operation.lhs);
@@ -109,47 +123,36 @@ void cfg_to_llvm::visit(control_flow::binary_operation & binary_operation) {
     if (operation::is_shortcircuiting(binary_operation.op)) {
         assert(false);
     } else if (operation::is_comparison(binary_operation.op)) {
-        auto int_or_float = [&is_float](predicate int_pred, predicate float_pred) {
-            return is_float ? float_pred : int_pred;
-        };
+        static constexpr std::array<float_int_op_pair<operand, predicate>, 6> comparison_ops{{
+            {operand::le, predicate::ICMP_SGE, predicate::FCMP_OLE},
+            {operand::lt, predicate::ICMP_SLT, predicate::FCMP_OLT},
+            {operand::ge, predicate::ICMP_SGE, predicate::FCMP_OGE},
+            {operand::gt, predicate::ICMP_SGT, predicate::FCMP_OGT},
+            {operand::eq, predicate::ICMP_EQ, predicate::FCMP_OEQ},
+            {operand::ne, predicate::ICMP_NE, predicate::FCMP_ONE},
+        }};
 
-        std::optional<predicate> pred;
-        switch (binary_operation.op) {
-        case operand::le:
-            pred = int_or_float(predicate::ICMP_SLE, predicate::FCMP_OLE);
-            break;
-        case operand::lt:
-            pred = int_or_float(predicate::ICMP_SLT, predicate::FCMP_OLT);
-            break;
-        case operand::ge:
-            pred = int_or_float(predicate::ICMP_SGE, predicate::FCMP_OGE);
-            break;
-        case operand::gt:
-            pred = int_or_float(predicate::ICMP_SGT, predicate::FCMP_OGT);
-            break;
-        case operand::eq:
-            pred = int_or_float(predicate::ICMP_EQ, predicate::FCMP_OEQ);
-            break;
-        case operand::ne:
-            pred = int_or_float(predicate::ICMP_NE, predicate::FCMP_ONE);
-            break;
-        default:
-            assert(false and "Unimplemented comparison operation");
-        }
+        auto selected_op
+            = find_in(comparison_ops, [op = binary_operation.op](auto & entry) -> bool {
+                  return entry.our_op == op;
+              });
 
-        assert(pred.has_value());
+        assert(selected_op.has_value());
 
         if (is_constant) {
+            auto pred = is_float ? selected_op->float_op : selected_op->int_op;
             auto * constant_lhs = llvm::dyn_cast<llvm::Constant>(lhs_value->value);
             auto * constant_rhs = llvm::dyn_cast<llvm::Constant>(rhs_value->value);
             bind_value(binary_operation,
-                       llvm::ConstantExpr::getCompare(*pred, constant_lhs, constant_rhs));
+                       llvm::ConstantExpr::getCompare(pred, constant_lhs, constant_rhs));
         } else if (is_float) {
-            bind_value(binary_operation,
-                       ir_builder->CreateFCmp(*pred, lhs_value->value, rhs_value->value));
+            bind_value(
+                binary_operation,
+                ir_builder->CreateFCmp(selected_op->float_op, lhs_value->value, rhs_value->value));
         } else {
-            bind_value(binary_operation,
-                       ir_builder->CreateICmp(*pred, lhs_value->value, rhs_value->value));
+            bind_value(
+                binary_operation,
+                ir_builder->CreateICmp(selected_op->int_op, lhs_value->value, rhs_value->value));
         }
     } else if (operation::is_arithmetic(binary_operation.op)) {
 
@@ -172,37 +175,28 @@ void cfg_to_llvm::visit(control_flow::binary_operation & binary_operation) {
 
         using operand = operation::binary;
         using bin_ops = llvm::Instruction::BinaryOps;
-        std::optional<bin_ops> bin_op;
 
-        auto int_or_float = [&is_float](bin_ops int_pred, bin_ops float_pred) {
-            return is_float ? float_pred : int_pred;
-        };
+        static constexpr std::array<float_int_op_pair<operand, bin_ops>, 4> arithmetic_ops{{
+            {operand::add, bin_ops::Add, bin_ops::FAdd},
+            {operand::sub, bin_ops::Sub, bin_ops::FSub},
+            {operand::mult, bin_ops::Mul, bin_ops::FMul},
+            {operand::div, bin_ops::SDiv, bin_ops::FDiv},
+        }};
 
-        switch (binary_operation.op) {
-        case operand::add:
-            bin_op = int_or_float(bin_ops::Add, bin_ops::FAdd);
-            break;
-        case operand::sub:
-            bin_op = int_or_float(bin_ops::Sub, bin_ops::FSub);
-            break;
-        case operand::mult:
-            bin_op = int_or_float(bin_ops::Mul, bin_ops::FMul);
-            break;
-        case operand::div:
-            bin_op = int_or_float(bin_ops::SDiv, bin_ops::FDiv);
-            break;
-        default:
-            assert(false and "Unimplemented arithmetic operation");
-        }
+        auto selected_op
+            = find_in(arithmetic_ops, [op = binary_operation.op](auto & entry) -> bool {
+                  return entry.our_op == op;
+              });
 
         if (result == nullptr) {
-            assert(bin_op.has_value());
+            assert(selected_op.has_value());
+            auto bin_op = is_float ? selected_op->float_op : selected_op->int_op;
             if (is_constant) {
                 auto * constant_lhs = llvm::dyn_cast<llvm::Constant>(lhs_value->value);
                 auto * constant_rhs = llvm::dyn_cast<llvm::Constant>(rhs_value->value);
-                result = llvm::ConstantExpr::get(*bin_op, constant_lhs, constant_rhs);
+                result = llvm::ConstantExpr::get(bin_op, constant_lhs, constant_rhs);
             } else {
-                result = ir_builder->CreateBinOp(*bin_op, lhs_value->value, rhs_value->value);
+                result = ir_builder->CreateBinOp(bin_op, lhs_value->value, rhs_value->value);
             }
         }
 
