@@ -2,6 +2,7 @@
 
 #include "ast/top_lvl_nodes.hpp"
 #include "ast_to_cfg.hpp"
+#include "cfg_to_llvm.hpp"
 #include "control_flow/type_checker.hpp"
 #include "emit_asm.hpp"
 #include "jit.hpp"
@@ -157,14 +158,12 @@ bool program::type_check() {
 
 void program::generate_ir() {
     global_map<std::string, llvm::GlobalObject *> globals;
-    for (auto & mod : ast_modules) {
-        auto filename = std::filesystem::relative(mod.filename, project_root);
-        visitor::codegen codegen{filename, *context, globals, typ_context};
-        codegen.visit(mod);
-        if (settings->flag_is_set(cmd_flag::debug_ir)) { codegen.dump(); }
-        codegen.verify_module();
-        ir_modules.push_back(std::move(codegen).take_ir_module());
-    }
+    cfg_to_llvm code_generator{"a.out", *context, globals, typ_context};
+    cfg->for_each_root(
+        [&code_generator](auto * root) { code_generator.control_flow::visitor::visit(*root); });
+
+    if (settings->flag_is_set(cmd_flag::debug_ir)) { code_generator.dump(); }
+    code_generator.verify_module();
 }
 
 std::string program::emit_and_link() {

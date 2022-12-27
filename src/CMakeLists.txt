@@ -20,6 +20,7 @@ configure_file(
 
 set(proj_files
     ast_to_cfg.cpp
+    cfg_to_llvm.cpp
     emit_asm.cpp
     jit.cpp
     llvm_type_lowering.cpp
