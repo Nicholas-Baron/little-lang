@@ -379,9 +379,9 @@ TEST_CASE("the parser will parse a unit function") {
     CHECK(func != nullptr);
     CHECK(parser->error_message().empty());
 
-    CHECK(func->head.name() == "main");
-    CHECK(func->head.param_count() == 0);
-    CHECK(func->head.ret_type() == ast::prim_type::unit);
+    CHECK(func->name == "main");
+    CHECK(func->param_count() == 0);
+    CHECK(func->ret_type == ast::prim_type::unit);
     CHECK(func->body != nullptr);
 }
 
@@ -444,9 +444,9 @@ TEST_CASE("the parser will parse a function with return type") {
     CHECK(func != nullptr);
     CHECK(parser->error_message().empty());
 
-    CHECK(func->head.name() == "main");
-    CHECK(func->head.param_count() == 0);
-    CHECK(func->head.ret_type() == ast::prim_type::int32);
+    CHECK(func->name == "main");
+    CHECK(func->param_count() == 0);
+    CHECK(func->ret_type == ast::prim_type::int32);
     CHECK(func->body != nullptr);
 }
 
@@ -460,13 +460,13 @@ TEST_CASE("the parser will parse a function with parameters") {
     CHECK(func != nullptr);
     CHECK(parser->error_message().empty());
 
-    CHECK(func->head.name() == "foo");
-    CHECK(func->head.param_count() == 2);
-    CHECK(func->head.arg(0).name() == "x");
-    CHECK(func->head.arg(0).type() == ast::prim_type::int32);
-    CHECK(func->head.arg(1).name() == "y");
-    CHECK(func->head.arg(1).type() == ast::prim_type::boolean);
-    CHECK(func->head.ret_type() == ast::prim_type::int32);
+    CHECK(func->name == "foo");
+    CHECK(func->param_count() == 2);
+    CHECK(func->params[0].name() == "x");
+    CHECK(func->params[0].type() == ast::prim_type::int32);
+    CHECK(func->params[1].name() == "y");
+    CHECK(func->params[1].type() == ast::prim_type::boolean);
+    CHECK(func->ret_type == ast::prim_type::int32);
     CHECK(func->body != nullptr);
 }
 
@@ -480,9 +480,9 @@ TEST_CASE("the parser will parse a function with an expression body") {
     CHECK(func != nullptr);
     CHECK(parser->error_message().empty());
 
-    CHECK(func->head.name() == "foo");
-    CHECK(func->head.param_count() == 2);
-    CHECK(func->head.ret_type() == ast::prim_type::int32);
+    CHECK(func->name == "foo");
+    CHECK(func->param_count() == 2);
+    CHECK(func->ret_type == ast::prim_type::int32);
     CHECK(func->body != nullptr);
 
     auto * ret_stmt = dynamic_cast<ast::return_stmt *>(func->body.get());
@@ -511,11 +511,11 @@ factorial(int input) -> int {
     CHECK(func != nullptr);
     CHECK(parser->error_message().empty());
 
-    CHECK(func->head.name() == "factorial");
-    CHECK(func->head.param_count() == 1);
-    CHECK(func->head.arg(0).name() == "input");
-    CHECK(func->head.arg(0).type() == ast::prim_type::int32);
-    CHECK(func->head.ret_type() == ast::prim_type::int32);
+    CHECK(func->name == "factorial");
+    CHECK(func->param_count() == 1);
+    CHECK(func->params[0].name() == "input");
+    CHECK(func->params[0].type() == ast::prim_type::int32);
+    CHECK(func->ret_type == ast::prim_type::int32);
     CHECK(func->body != nullptr);
 
     auto * body = dynamic_cast<ast::stmt_sequence *>(func->body.get());
@@ -615,7 +615,7 @@ TEST_CASE("the parser will parse a module with a single export") {
 
     auto * func = dynamic_cast<ast::func_decl *>(mod->items[0].get());
     CHECK(func != nullptr);
-    CHECK(func->head.name() == "foo");
+    CHECK(func->name == "foo");
 }
 
 TEST_CASE("the parser will parse a module with multiple exports") {
@@ -638,7 +638,7 @@ TEST_CASE("the parser will parse a module with multiple exports") {
 
     auto * func = dynamic_cast<ast::func_decl *>(mod->items[0].get());
     CHECK(func != nullptr);
-    CHECK(func->head.name() == "foo");
+    CHECK(func->name == "foo");
 
     auto * decl = dynamic_cast<ast::const_decl *>(mod->items[1].get());
     CHECK(decl != nullptr);

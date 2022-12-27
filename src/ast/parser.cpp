@@ -186,32 +186,32 @@ std::unique_ptr<ast::func_decl> parser::parse_function() {
     tok = lex->next_token();
     assert(tok == lexer::token_type::rparen);
 
-    ast::func_decl::header func_header{std::move(func_name_tok.text), std::move(args)};
-    func_header.set_location(func_name_tok.location);
-
+    auto return_type = ast::prim_type::unit;
     // Parse the optional return type.
-    if (lex->consume_if(lexer::token_type::arrow).has_value()) {
-        func_header.set_ret_type(parse_type());
-    }
+    if (lex->consume_if(lexer::token_type::arrow).has_value()) { return_type = parse_type(); }
 
     // The body of a function may either be an `=` followed by an expression,
     // or just a statement.
+    ast::stmt_ptr body;
     if (lex->consume_if(lexer::token_type::equal).has_value()) {
-        auto body = parse_expression();
         // We need to inject the implied return for the expression,
         // as a function's body is just a statement
-        return std::make_unique<ast::func_decl>(
-            std::move(func_header), std::make_unique<ast::return_stmt>(std::move(body)));
+        body = std::make_unique<ast::return_stmt>(parse_expression());
+    } else {
+        body = parse_statement();
     }
 
-    // Parse the statement that is the function body
-    auto body = parse_statement();
     if (body == nullptr) {
-        error = "Could not find body for " + func_header.name();
+        error = "Could not find body for " + func_name_tok.text;
         return nullptr;
     }
 
-    return std::make_unique<ast::func_decl>(std::move(func_header), std::move(body));
+    auto func_decl
+        = std::make_unique<ast::func_decl>(std::move(func_name_tok.text), std::move(body));
+    func_decl->set_location(func_name_tok.location);
+    func_decl->ret_type = return_type;
+    func_decl->params = std::move(args);
+    return func_decl;
 }
 
 std::unique_ptr<ast::const_decl> parser::parse_const_decl() {

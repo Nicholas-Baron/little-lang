@@ -41,37 +41,8 @@ namespace ast {
 
     class func_decl final : public top_level {
       public:
-        class header final : public node {
-          public:
-            header(std::string && name, std::vector<typed_identifier> && parameters)
-                : name_(std::move(name))
-                , params(std::move(parameters))
-                , ret_type_{ast::prim_type::unit} {}
-
-            // TODO: Remove all the getters and setters across the codebase
-            void set_ret_type(ast::type_ptr && type) { ret_type_ = std::move(type); }
-
-            [[nodiscard]] ast::type_ptr ret_type() const { return ret_type_; }
-
-            [[nodiscard]] const typed_identifier & arg(unsigned index) const {
-                return params.at(index);
-            }
-
-            [[nodiscard]] size_t param_count() const { return params.size(); }
-
-            [[nodiscard]] const std::string & name() const & { return name_; }
-
-            [[nodiscard]] std::shared_ptr<ast::function_type> func_type() const;
-
-            make_visitable;
-
-            std::string name_;
-            std::vector<typed_identifier> params;
-            ast::type_ptr ret_type_;
-        };
-
-        func_decl(header && head, stmt_ptr body)
-            : head(std::move(head))
+        func_decl(std::string name, stmt_ptr body)
+            : name{std::move(name)}
             , body(std::move(body)) {}
 
         non_copyable(func_decl);
@@ -80,9 +51,14 @@ namespace ast {
 
         ~func_decl() noexcept final = default;
 
+        [[nodiscard]] size_t param_count() const { return params.size(); }
+        [[nodiscard]] std::shared_ptr<ast::function_type> func_type() const;
+
         make_visitable;
 
-        header head;
+        std::string name;
+        std::vector<typed_identifier> params;
+        ast::type_ptr ret_type;
         stmt_ptr body;
 
       private:

@@ -379,17 +379,16 @@ void ast_to_cfg::visit(ast::func_call_stmt & func_call_stmt) { return visit(func
 
 void ast_to_cfg::visit(ast::func_decl & func_decl) {
     auto & func_start = result_cfg->create_root<control_flow::function_start>(
-        func_decl.head.name(), func_decl.head.param_count(), func_decl.exported(),
-        func_decl.head.func_type());
+        func_decl.name, func_decl.param_count(), func_decl.exported(), func_decl.func_type());
     current_function = &func_start;
 
     func_start.parameter_names.reserve(func_start.arg_count);
     for (auto i = 0UL; i < func_start.arg_count; ++i) {
-        func_start.parameter_names.emplace_back(func_decl.head.arg(i).name());
+        func_start.parameter_names.emplace_back(func_decl.params[i].name());
     }
 
-    assert(seen_functions.find(func_decl.head.name()) == seen_functions.end());
-    seen_functions.emplace(func_decl.head.name(), current_function);
+    assert(seen_functions.find(func_decl.name) == seen_functions.end());
+    seen_functions.emplace(func_decl.name, current_function);
 
     auto body = get_value(*func_decl.body, *this);
     body.beginning->flows_from(&func_start);
