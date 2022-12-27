@@ -9,8 +9,6 @@
 #include "utils/execute.hpp"
 #include "utils/global_map.hpp"
 #include "utils/string_utils.hpp"
-#include "visitor/codegen.hpp"
-#include "visitor/type_checker.hpp"
 
 #include <filesystem>
 #include <iostream>

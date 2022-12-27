@@ -30,8 +30,6 @@ set(proj_files
     control_flow/serializer.cpp
     control_flow/type_checker.cpp
     control_flow/visitor.cpp
-    visitor/codegen.cpp
-    visitor/type_checker.cpp
 )
 
 # Add reserved identifier warning here, as catch's internals seem to set it off
@@ -86,7 +84,6 @@ target_precompile_headers(
     emit_asm.hpp
     program.hpp
     utils/global_map.hpp
-    visitor/codegen.hpp
 )
 
 # the actual executable
