@@ -447,7 +447,8 @@ void cfg_to_llvm::visit(control_flow::phi & phi) {
             phi_type = nullptr;
         }
 
-        llvm::BranchInst::Create(phi_block, prev_value->parent_block);
+        ir_builder->SetInsertPoint(prev_value->parent_block);
+        ir_builder->CreateBr(phi_block);
     }
 
     ir_builder->SetInsertPoint(phi_block);
