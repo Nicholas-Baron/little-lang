@@ -99,13 +99,12 @@ struct float_int_op_pair {
 };
 
 template<typename Result, size_t size, typename Pred>
-[[nodiscard]] static constexpr std::optional<Result> find_in(const std::array<Result, size> & arr,
-                                                             Pred predicate) {
-    const auto iter = std::find_if(arr.begin(), arr.end(), predicate);
-    return (iter != arr.end()) ? std::optional{*iter} : std::nullopt;
+[[nodiscard]] static constexpr const Result * find_in(const std::array<Result, size> & arr,
+                                                      Pred predicate) {
+    const auto * const iter = std::find_if(arr.begin(), arr.end(), predicate);
+    return (iter != arr.end()) ? iter : nullptr;
 }
 
-// TODO: Use lookup table(s)
 void cfg_to_llvm::visit(control_flow::binary_operation & binary_operation) {
     const auto * lhs_value = find_value_of(binary_operation.lhs);
     assert(lhs_value != nullptr);
@@ -132,12 +131,12 @@ void cfg_to_llvm::visit(control_flow::binary_operation & binary_operation) {
             {operand::ne, predicate::ICMP_NE, predicate::FCMP_ONE},
         }};
 
-        auto selected_op
+        const auto * selected_op
             = find_in(comparison_ops, [op = binary_operation.op](auto & entry) -> bool {
                   return entry.our_op == op;
               });
 
-        assert(selected_op.has_value());
+        assert(selected_op != nullptr);
 
         if (is_constant) {
             auto pred = is_float ? selected_op->float_op : selected_op->int_op;
@@ -183,13 +182,13 @@ void cfg_to_llvm::visit(control_flow::binary_operation & binary_operation) {
             {operand::div, bin_ops::SDiv, bin_ops::FDiv},
         }};
 
-        auto selected_op
+        const auto * selected_op
             = find_in(arithmetic_ops, [op = binary_operation.op](auto & entry) -> bool {
                   return entry.our_op == op;
               });
 
         if (result == nullptr) {
-            assert(selected_op.has_value());
+            assert(selected_op != nullptr);
             auto bin_op = is_float ? selected_op->float_op : selected_op->int_op;
             if (is_constant) {
                 auto * constant_lhs = llvm::dyn_cast<llvm::Constant>(lhs_value->value);
