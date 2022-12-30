@@ -13,6 +13,46 @@ struct link {
     control_flow::node * next;
 };
 
+static void link_branch(control_flow::branch & branch, control_flow::node * next) {
+
+    // The node we are encountering is not already a next.
+    if (branch.true_case == next or branch.false_case == next) { return; }
+
+    // Exactly 1 of the next branches is not set.
+    if (branch.true_case == nullptr and branch.false_case == nullptr) {
+        std::cout << "true_case = " << reinterpret_cast<std::uintptr_t>(branch.true_case)
+                  << " false_case = " << reinterpret_cast<std::uintptr_t>(branch.false_case)
+                  << std::endl;
+        assert(false);
+    }
+
+    if (branch.true_case == nullptr) {
+        branch.true_case = next;
+    } else {
+        branch.false_case = next;
+    }
+}
+
+static bool is_link_valid(control_flow::node * node, control_flow::node * next) {
+
+    if (node == nullptr and next == nullptr) {
+        std::cout << "Link of null to null found. Ignoring for now\n";
+        return false;
+    }
+
+    if (node == nullptr) {
+        std::cout << "Found null node for the next of " << typeid(*next).name() << std::endl;
+        return false;
+    }
+
+    if (next == nullptr) {
+        std::cout << "Found null next for node " << typeid(*node).name() << std::endl;
+        return false;
+    }
+
+    return true;
+}
+
 static void link_nodes(const std::vector<link> & links) {
     // Use the map to build the next chain
     for (const auto & link : links) {
@@ -20,17 +60,10 @@ static void link_nodes(const std::vector<link> & links) {
         auto * node = link.node;
         auto * next = link.next;
 
-        if (node == nullptr) {
-            std::cout << "Found null node for the next of " << typeid(*next).name() << std::endl;
-            assert(false);
-        } else if (next == nullptr) {
-            std::cout << "Found null next for node " << typeid(*node).name() << std::endl;
-            assert(false);
-        }
+        if (not is_link_valid(node, next)) { continue; }
 
         if (auto * func_start = dynamic_cast<control_flow::function_start *>(node);
             func_start != nullptr) {
-            assert(func_start->next == nullptr);
             func_start->next = next;
             continue;
         }
@@ -47,24 +80,7 @@ static void link_nodes(const std::vector<link> & links) {
         }
 
         if (auto * branch = dynamic_cast<control_flow::branch *>(node); branch != nullptr) {
-
-            // The node we are encountering is not already a next.
-            if (branch->true_case == next or branch->false_case == next) { continue; }
-
-            // Exactly 1 of the next branches is not set.
-            if (branch->true_case == nullptr and branch->false_case == nullptr) {
-                std::cout << "true_case = " << reinterpret_cast<std::uintptr_t>(branch->true_case)
-                          << " false_case = "
-                          << reinterpret_cast<std::uintptr_t>(branch->false_case) << std::endl;
-                assert(false);
-            }
-
-            if (branch->true_case == nullptr) {
-                branch->true_case = next;
-            } else {
-                branch->false_case = next;
-            }
-
+            link_branch(*branch, next);
             continue;
         }
 
