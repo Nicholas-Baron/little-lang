@@ -43,7 +43,8 @@ class ast_to_cfg final : public ast::visitor_base,
     void check_flow() noexcept;
     // clang-format on
 
-    void export_if_needed(const ast::top_level &, control_flow::function_start *);
+    void export_if_needed(const ast::top_level & ast_node,
+                          control_flow::function_start * func_start);
     void import_item(const std::string & id, const std::string & mod);
 
     std::unique_ptr<control_flow::graph> result_cfg;

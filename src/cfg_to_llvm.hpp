@@ -47,8 +47,8 @@ class cfg_to_llvm final : public control_flow::visitor {
 
         node_data(llvm::IRBuilderBase & builder, llvm::Value * val);
     };
-    void bind_value(const control_flow::node &, llvm::Value *);
-    [[nodiscard]] const node_data * find_value_of(const control_flow::node *) const;
+    void bind_value(const control_flow::node & node, llvm::Value * value);
+    [[nodiscard]] const node_data * find_value_of(const control_flow::node * node) const;
 
     void syscall(control_flow::intrinsic_call &);
 

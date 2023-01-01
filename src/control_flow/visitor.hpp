@@ -20,7 +20,7 @@ namespace control_flow {
         all_cfg_nodes
 #undef expand_node_macro
 
-        void visit(control_flow::node &);
+        void visit(control_flow::node & node);
         // clang-format on
 
       protected:

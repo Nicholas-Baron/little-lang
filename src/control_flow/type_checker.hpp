@@ -28,11 +28,11 @@ namespace control_flow {
         void printError(const arg_t &... args);
         // clang-format on
 
-        void syscall(control_flow::intrinsic_call &);
+        void syscall(control_flow::intrinsic_call & call);
 
-        void bind_identifier(std::string, ast::type *);
-        void bind_type(control_flow::node *, ast::type *);
-        ast::type * find_type_of(control_flow::node *) const;
+        void bind_identifier(std::string name, ast::type * type);
+        void bind_type(control_flow::node * value, ast::type * type);
+        ast::type * find_type_of(control_flow::node * value) const;
 
         using instrinic_checker = void (type_checker::*)(intrinsic_call &);
         std::map<std::string, instrinic_checker> intrinsics;
