@@ -133,6 +133,8 @@ CheckOptions:
   - key:             readability-identifier-naming.IgnoreFailedSplit
     value:           '0'
   - key:             readability-identifier-length.IgnoredVariableNames
+    value:           'id|op'
+  - key:             readability-identifier-length.IgnoredParameterNames
     value:           'id'
   - key:             readability-implicit-bool-conversion.AllowIntegerConditions
     value:           '0'
