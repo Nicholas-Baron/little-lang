@@ -13,14 +13,14 @@
 /// ```
 
 // Invariant 1: `value_getter` will *never* implicitly drop a result.
-// NOTE: visitor_impl cannot be tested, as it is incomplete at the time of instantiation.
-template<typename visitor_impl, typename visitable, typename result_t>
+// NOTE: visitor_t cannot be tested, as it is incomplete at the time of instantiation.
+template<typename visitor_t, typename visitable_t, typename result_t>
 class value_getter {
   public:
-    static_assert(std::is_class_v<visitable>, "we must visit classes");
-    [[nodiscard]] static result_t get_value(visitable & n, visitor_impl & context) {
+    static_assert(std::is_class_v<visitable_t>, "we must visit classes");
+    [[nodiscard]] static result_t get_value(visitable_t & node, visitor_t & context) {
         assert(not context.result.has_value());
-        n.accept(context);
+        node.accept(context);
         return context.get_result();
     }
 
