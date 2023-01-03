@@ -128,7 +128,7 @@ program::program(std::vector<ast::top_level_sequence> && modules, ast::type_cont
     , settings{std::move(settings)}
     , ast_modules(std::move(modules))
     , ty_context(&ty_context)
-    , typ_context{ty_context, context.get()} {}
+    , llvm_lowering{ty_context, context.get()} {}
 
 void program::lower_to_cfg() {
     ast_to_cfg lowering;
@@ -158,7 +158,7 @@ bool program::type_check() {
 
 void program::generate_ir() {
     global_map<std::string, llvm::GlobalObject *> globals;
-    cfg_to_llvm code_generator{"a.out", *context, globals, typ_context};
+    cfg_to_llvm code_generator{"a.out", *context, globals, llvm_lowering};
     cfg->for_each_root(
         [&code_generator](auto * root) { code_generator.control_flow::visitor::visit(*root); });
 
