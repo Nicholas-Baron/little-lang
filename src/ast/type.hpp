@@ -6,7 +6,6 @@
 #include <string>
 #include <vector>
 
-#include <global_map.hpp>
 #include <move_copy.hpp>
 
 namespace ast {
@@ -126,9 +125,6 @@ namespace ast {
 
     struct user_type : public type {
 
-        static std::shared_ptr<user_type> lookup(const std::string & type_name,
-                                                 const std::string & module_name);
-
         non_copyable(user_type);
         non_movable(user_type);
         ~user_type() override = default;
@@ -143,14 +139,7 @@ namespace ast {
             : name{std::move(name)}
             , module_name{std::move(module_name)} {}
 
-        static void add_user_type(const std::string & module_name, const std::string & name,
-                                  std::shared_ptr<user_type> type) {
-            user_made_types.add(module_name, name, std::move(type));
-        }
-
       private:
-        // NOLINTNEXTLINE
-        inline static global_map<std::string, std::shared_ptr<user_type>> user_made_types;
         std::string name;
         std::string module_name;
     };
@@ -158,10 +147,6 @@ namespace ast {
     struct struct_type final : public user_type {
 
         using field_type = std::pair<std::string, ast::type_ptr>;
-
-        static std::shared_ptr<struct_type> create(std::string && name,
-                                                   const std::string & module_name,
-                                                   std::vector<field_type> && fields);
 
         non_copyable(struct_type);
         non_movable(struct_type);
@@ -172,6 +157,10 @@ namespace ast {
         [[nodiscard]] const field_type & field(size_t index) const { return fields[index]; }
 
       private:
+        static std::shared_ptr<struct_type> create(std::string && name,
+                                                   const std::string & module_name,
+                                                   std::vector<field_type> && fields);
+
         struct_type(std::string && name, std::string module_name, std::vector<field_type> && fields)
             : user_type{std::move(name), std::move(module_name)}
             , fields{std::move(fields)} {}
@@ -179,6 +168,8 @@ namespace ast {
         std::vector<field_type> fields;
 
         void print(std::ostream & /*output*/) const override;
+
+        friend class type_context;
     };
 
     struct function_type final : public type {
