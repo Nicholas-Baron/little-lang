@@ -107,6 +107,8 @@ namespace ast {
         [[nodiscard]] type inner() const noexcept { return prim; }
 
       private:
+        static std::unique_ptr<prim_type> create(type type);
+
         explicit prim_type(type prim)
             : prim{prim} {}
 
@@ -114,7 +116,7 @@ namespace ast {
 
         type prim;
 
-        // TODO: This class has no need to be friends with type_context
+        friend class type_context;
     };
 
     struct user_type : public type {
