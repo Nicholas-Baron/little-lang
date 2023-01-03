@@ -2,9 +2,15 @@
 
 #include "type.hpp"
 
-#include <cassert>
-
 namespace ast {
+
+    template<typename type_t, typename... args_t>
+    type_t * type_context::emplace_type(args_t... args) {
+        auto own_ptr = type_t::create(std::forward<args_t>(args)...);
+        auto * to_return = own_ptr.get();
+        types.emplace_back(std::move(own_ptr));
+        return to_return;
+    }
 
     type_ptr type_context::find_prim_type(ast::prim_type::type type) {
         // We should always find a prim_type
@@ -15,8 +21,7 @@ namespace ast {
             }
         }
 
-        types.emplace_back(ast::prim_type::create(type));
-        return types.back().get();
+        return emplace_type<prim_type>(type);
     }
 
     type_ptr type_context::find_ptr_type(bool is_nullable, type_ptr pointed_to) {
@@ -28,10 +33,9 @@ namespace ast {
             }
         }
 
-        types.emplace_back(is_nullable ? static_cast<std::unique_ptr<ast::ptr_type>>(
-                               nullable_ptr_type::create(pointed_to))
-                                       : nonnullable_ptr_type::create(pointed_to));
-        return types.back().get();
+        return is_nullable
+                 ? static_cast<ptr_type *>(emplace_type<nullable_ptr_type>(pointed_to))
+                 : static_cast<ptr_type *>(emplace_type<nonnullable_ptr_type>(pointed_to));
     }
 
     function_type * type_context::find_function_type(type_ptr return_type,
@@ -50,10 +54,7 @@ namespace ast {
             }
         }
 
-        auto own_ptr = function_type::create(return_type, std::move(arg_types));
-        auto * to_return = own_ptr.get();
-        types.emplace_back(std::move(own_ptr));
-        return to_return;
+        return emplace_type<function_type>(return_type, std::move(arg_types));
     }
 
     ast::struct_type *
@@ -74,10 +75,7 @@ namespace ast {
             }
         }
 
-        auto own_ptr = struct_type::create(std::move(name), module_name, std::move(fields));
-        auto * to_return = own_ptr.get();
-        types.emplace_back(std::move(own_ptr));
-        return to_return;
+        return emplace_type<struct_type>(std::move(name), module_name, std::move(fields));
     }
 
     type_ptr type_context::lookup_user_type(const std::string & name,

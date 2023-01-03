@@ -51,6 +51,9 @@ namespace ast {
         find_struct_type(std::string && name, const std::string & module_name,
                          std::vector<struct_type::field_type> && fields);
 
+        template<typename type_t, typename... args_t>
+        [[nodiscard]] type_t * emplace_type(args_t... args);
+
         std::vector<std::unique_ptr<ast::type>> types;
     };
 } // namespace ast
