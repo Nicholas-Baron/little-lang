@@ -127,6 +127,7 @@ program::program(std::vector<ast::top_level_sequence> && modules, ast::type_cont
     , context{std::make_unique<llvm::LLVMContext>()}
     , settings{std::move(settings)}
     , ast_modules(std::move(modules))
+    , ty_context(&ty_context)
     , typ_context{ty_context, context.get()} {}
 
 void program::lower_to_cfg() {
@@ -145,7 +146,7 @@ void program::lower_to_cfg() {
 
 bool program::type_check() {
     // TODO: Add the program globals from the env pseudo-module
-    control_flow::type_checker checker;
+    control_flow::type_checker checker{*ty_context};
 
     cfg->for_each_root([&checker](auto * root) {
         assert(root != nullptr);
