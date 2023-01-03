@@ -14,7 +14,7 @@ namespace ast {
         ~type_context() noexcept = default;
 
         template<typename type_t, typename... arg_t>
-        [[nodiscard]] type_ptr create_type(arg_t... args) {
+        [[nodiscard]] auto create_type(arg_t... args) {
             // Delagate to functions that will enforce each types uniqueness rules.
             if constexpr (std::is_same_v<type_t, ast::prim_type>) {
                 // All primitive types should have been made by the constructor.
@@ -46,9 +46,9 @@ namespace ast {
         [[nodiscard]] type_ptr find_ptr_type(bool is_nullable, type_ptr pointed_to);
         [[nodiscard]] type_ptr find_function_type(type_ptr return_type,
                                                   std::vector<type_ptr> && arg_types = {});
-        [[nodiscard]] type_ptr find_struct_type(std::string && name,
-                                                const std::string & module_name,
-                                                std::vector<struct_type::field_type> && fields);
+        [[nodiscard]] std::shared_ptr<ast::struct_type>
+        find_struct_type(std::string && name, const std::string & module_name,
+                         std::vector<struct_type::field_type> && fields);
 
         std::vector<type_ptr> types;
     };

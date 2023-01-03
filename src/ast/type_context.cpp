@@ -62,8 +62,9 @@ namespace ast {
         return function_type::create(std::move(return_type), std::move(arg_types));
     }
 
-    type_ptr type_context::find_struct_type(std::string && name, const std::string & module_name,
-                                            std::vector<struct_type::field_type> && fields) {
+    std::shared_ptr<ast::struct_type>
+    type_context::find_struct_type(std::string && name, const std::string & module_name,
+                                   std::vector<struct_type::field_type> && fields) {
 
         for (auto & type_ptr : types) {
             if (auto ptr = std::dynamic_pointer_cast<ast::struct_type>(type_ptr); ptr != nullptr) {
