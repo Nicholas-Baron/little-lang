@@ -59,7 +59,7 @@ class cfg_to_llvm final : public control_flow::visitor {
     std::unique_ptr<llvm::IRBuilderBase> ir_builder;
 
     global_map<std::string, llvm::GlobalObject *> globals;
-    llvm_type_lowering & type_context;
+    llvm_type_lowering & type_lowering;
 
     std::map<const control_flow::node *, node_data> values;
     std::map<std::string, void (cfg_to_llvm::*)(control_flow::intrinsic_call &)> intrinsics;
