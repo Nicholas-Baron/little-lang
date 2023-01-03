@@ -42,8 +42,8 @@ namespace ast {
                            : nonnullable_ptr_type::create(std::move(pointed_to));
     }
 
-    type_ptr type_context::find_function_type(type_ptr return_type,
-                                              std::vector<type_ptr> && arg_types) {
+    std::shared_ptr<function_type>
+    type_context::find_function_type(type_ptr return_type, std::vector<type_ptr> && arg_types) {
 
         for (auto & type_ptr : types) {
             if (auto ptr = std::dynamic_pointer_cast<ast::function_type>(type_ptr);
