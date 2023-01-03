@@ -41,8 +41,9 @@ namespace ast {
 
     class func_decl final : public top_level {
       public:
-        func_decl(std::string name, stmt_ptr body)
+        func_decl(std::string name, ast::function_type * func_type, stmt_ptr body)
             : name{std::move(name)}
+            , func_type{func_type}
             , body(std::move(body)) {}
 
         non_copyable(func_decl);
@@ -57,7 +58,7 @@ namespace ast {
 
         std::string name;
         std::vector<typed_identifier> params;
-        std::shared_ptr<ast::function_type> func_type;
+        ast::function_type * func_type;
         stmt_ptr body;
 
       private:
@@ -87,9 +88,11 @@ namespace ast {
 
     class struct_decl final : public top_level {
       public:
-        explicit struct_decl(std::string name, std::vector<typed_identifier> && fields = {})
+        explicit struct_decl(std::string name, ast::struct_type * type,
+                             std::vector<typed_identifier> && fields = {})
             : name(std::move(name))
-            , fields{std::move(fields)} {}
+            , fields{std::move(fields)}
+            , type{type} {}
 
         non_copyable(struct_decl);
 
@@ -101,7 +104,7 @@ namespace ast {
 
         std::string name;
         std::vector<typed_identifier> fields;
-        std::shared_ptr<ast::struct_type> type;
+        ast::struct_type * type;
 
       private:
         void update_export(bool /*val*/) final {}

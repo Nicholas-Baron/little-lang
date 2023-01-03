@@ -19,7 +19,7 @@ namespace ast {
         // We should always find a prim_type
 
         for (auto & type_ptr : types) {
-            if (auto ptr = std::dynamic_pointer_cast<ast::prim_type>(type_ptr); ptr != nullptr) {
+            if (auto * ptr = dynamic_cast<ast::prim_type *>(type_ptr.get()); ptr != nullptr) {
                 if (ptr->inner() == type) { return ptr; }
             }
         }
@@ -30,24 +30,24 @@ namespace ast {
 
     type_ptr type_context::find_ptr_type(bool is_nullable, type_ptr pointed_to) {
         for (auto & type_ptr : types) {
-            if (auto ptr = std::dynamic_pointer_cast<ast::ptr_type>(type_ptr); ptr != nullptr) {
+            if (auto * ptr = dynamic_cast<ast::ptr_type *>(type_ptr.get()); ptr != nullptr) {
                 if (ptr->nullable() == is_nullable and ptr->pointed_to_type() == pointed_to) {
                     return ptr;
                 }
             }
         }
 
-        return is_nullable ? static_cast<std::shared_ptr<ast::ptr_type>>(
-                   nullable_ptr_type::create(std::move(pointed_to)))
-                           : nonnullable_ptr_type::create(std::move(pointed_to));
+        types.emplace_back(is_nullable ? static_cast<std::unique_ptr<ast::ptr_type>>(
+                               nullable_ptr_type::create(pointed_to))
+                                       : nonnullable_ptr_type::create(pointed_to));
+        return types.back().get();
     }
 
-    std::shared_ptr<function_type>
-    type_context::find_function_type(type_ptr return_type, std::vector<type_ptr> && arg_types) {
+    function_type * type_context::find_function_type(type_ptr return_type,
+                                                     std::vector<type_ptr> && arg_types) {
 
         for (auto & type_ptr : types) {
-            if (auto ptr = std::dynamic_pointer_cast<ast::function_type>(type_ptr);
-                ptr != nullptr) {
+            if (auto * ptr = dynamic_cast<ast::function_type *>(type_ptr.get()); ptr != nullptr) {
                 if (ptr->return_type() != return_type) { continue; }
                 if (ptr->arg_count() != arg_types.size()) { continue; }
 
@@ -59,15 +59,18 @@ namespace ast {
             }
         }
 
-        return function_type::create(std::move(return_type), std::move(arg_types));
+        auto own_ptr = function_type::create(return_type, std::move(arg_types));
+        auto * to_return = own_ptr.get();
+        types.emplace_back(std::move(own_ptr));
+        return to_return;
     }
 
-    std::shared_ptr<ast::struct_type>
+    ast::struct_type *
     type_context::find_struct_type(std::string && name, const std::string & module_name,
                                    std::vector<struct_type::field_type> && fields) {
 
         for (auto & type_ptr : types) {
-            if (auto ptr = std::dynamic_pointer_cast<ast::struct_type>(type_ptr); ptr != nullptr) {
+            if (auto * ptr = dynamic_cast<ast::struct_type *>(type_ptr.get()); ptr != nullptr) {
                 if (ptr->containing_module_name() != module_name) { continue; }
                 if (ptr->user_name() != name) { continue; }
                 if (ptr->field_count() != fields.size()) { continue; }
@@ -80,13 +83,16 @@ namespace ast {
             }
         }
 
-        return struct_type::create(std::move(name), module_name, std::move(fields));
+        auto own_ptr = struct_type::create(std::move(name), module_name, std::move(fields));
+        auto * to_return = own_ptr.get();
+        types.emplace_back(std::move(own_ptr));
+        return to_return;
     }
 
     type_ptr type_context::lookup_user_type(const std::string & name,
                                             const std::string & module_name) {
         for (auto & type_ptr : types) {
-            if (auto ptr = std::dynamic_pointer_cast<ast::user_type>(type_ptr); ptr != nullptr) {
+            if (auto * ptr = dynamic_cast<ast::user_type *>(type_ptr.get()); ptr != nullptr) {
                 if (ptr->containing_module_name() == module_name and ptr->user_name() == name) {
                     return ptr;
                 }

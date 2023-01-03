@@ -8,17 +8,15 @@
 namespace ast {
     // Type creation
 
-    std::shared_ptr<nullable_ptr_type> nullable_ptr_type::create(type_ptr pointed_to_type) {
-        return std::shared_ptr<nullable_ptr_type>{
-            new nullable_ptr_type{std::move(pointed_to_type)}};
+    std::unique_ptr<nullable_ptr_type> nullable_ptr_type::create(type_ptr pointed_to_type) {
+        return std::unique_ptr<nullable_ptr_type>{new nullable_ptr_type{pointed_to_type}};
     }
 
-    std::shared_ptr<nonnullable_ptr_type> nonnullable_ptr_type::create(type_ptr pointed_to_type) {
-        return std::shared_ptr<nonnullable_ptr_type>{
-            new nonnullable_ptr_type{std::move(pointed_to_type)}};
+    std::unique_ptr<nonnullable_ptr_type> nonnullable_ptr_type::create(type_ptr pointed_to_type) {
+        return std::unique_ptr<nonnullable_ptr_type>{new nonnullable_ptr_type{pointed_to_type}};
     }
 
-    std::shared_ptr<struct_type> struct_type::create(std::string && name,
+    std::unique_ptr<struct_type> struct_type::create(std::string && name,
                                                      const std::string & module_name,
                                                      std::vector<field_type> && fields) {
 
@@ -26,14 +24,13 @@ namespace ast {
         // TODO: The "" module may be useful.
         assert(not module_name.empty());
 
-        return std::shared_ptr<struct_type>{
+        return std::unique_ptr<struct_type>{
             new struct_type{std::move(name), module_name, std::move(fields)}};
     }
 
-    std::shared_ptr<function_type> function_type::create(ast::type_ptr ret_type,
+    std::unique_ptr<function_type> function_type::create(ast::type_ptr ret_type,
                                                          std::vector<ast::type_ptr> && arg_types) {
-        return std::shared_ptr<function_type>{
-            new function_type{std::move(ret_type), std::move(arg_types)}};
+        return std::unique_ptr<function_type>{new function_type{ret_type, std::move(arg_types)}};
     }
 
     // Printing types

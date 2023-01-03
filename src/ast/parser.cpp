@@ -187,7 +187,10 @@ std::unique_ptr<ast::func_decl> parser::parse_function() {
     tok = lex->next_token();
     assert(tok == lexer::token_type::rparen);
 
-    auto return_type = ty_context.create_type<ast::prim_type>(ast::prim_type::type::unit);
+    std::vector<ast::type_ptr> arg_types;
+    for (auto & arg : args) { arg_types.push_back(arg.type()); }
+
+    auto * return_type = ty_context.create_type<ast::prim_type>(ast::prim_type::type::unit);
     // Parse the optional return type.
     if (lex->consume_if(lexer::token_type::arrow).has_value()) { return_type = parse_type(); }
 
@@ -207,13 +210,12 @@ std::unique_ptr<ast::func_decl> parser::parse_function() {
         return nullptr;
     }
 
-    auto func_decl
-        = std::make_unique<ast::func_decl>(std::move(func_name_tok.text), std::move(body));
+    auto * func_type
+        = ty_context.create_type<ast::function_type>(return_type, std::move(arg_types));
+
+    auto func_decl = std::make_unique<ast::func_decl>(std::move(func_name_tok.text), func_type,
+                                                      std::move(body));
     func_decl->set_location(func_name_tok.location);
-    std::vector<ast::type_ptr> arg_types;
-    for (auto & arg : args) { arg_types.push_back(arg.type()); }
-    func_decl->func_type
-        = ty_context.create_type<ast::function_type>(std::move(return_type), std::move(arg_types));
     func_decl->params = std::move(args);
     return func_decl;
 }
@@ -276,8 +278,8 @@ std::unique_ptr<ast::struct_decl> parser::parse_struct_decl() {
     }();
     assert(struct_type != nullptr);
 
-    auto decl = std::make_unique<ast::struct_decl>(std::move(name.text), std::move(fields));
-    decl->type = std::move(struct_type);
+    auto decl
+        = std::make_unique<ast::struct_decl>(std::move(name.text), struct_type, std::move(fields));
     decl->set_location(location);
     return decl;
 }

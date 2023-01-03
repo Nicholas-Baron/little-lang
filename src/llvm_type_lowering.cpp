@@ -35,7 +35,7 @@ llvm::Type * llvm_type_lowering::lower_to_llvm(ast::type_ptr type) {
             return pointed_to_type->getPointerTo();
         }
 
-        if (const auto * struct_type = dynamic_cast<const ast::struct_type *>(type.get());
+        if (const auto * struct_type = dynamic_cast<const ast::struct_type *>(type);
             struct_type != nullptr) {
 
             std::vector<llvm::Type *> fields;
