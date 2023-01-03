@@ -173,9 +173,6 @@ namespace ast {
     };
 
     struct function_type final : public type {
-        static std::shared_ptr<function_type> create(ast::type_ptr ret_type,
-                                                     std::vector<ast::type_ptr> && arg_types = {});
-
         non_copyable(function_type);
         non_movable(function_type);
         ~function_type() final = default;
@@ -187,6 +184,9 @@ namespace ast {
         [[nodiscard]] type_ptr return_type() const { return ret_type; }
 
       private:
+        static std::shared_ptr<function_type> create(ast::type_ptr ret_type,
+                                                     std::vector<ast::type_ptr> && arg_types = {});
+
         explicit function_type(ast::type_ptr ret_type, std::vector<ast::type_ptr> && arg_types = {})
             : ret_type{std::move(ret_type)}
             , arg_types{std::move(arg_types)} {}
@@ -195,6 +195,8 @@ namespace ast {
         std::vector<ast::type_ptr> arg_types;
 
         void print(std::ostream & /*output*/) const final;
+
+        friend class type_context;
     };
 
 } // namespace ast

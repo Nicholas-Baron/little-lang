@@ -1,9 +1,9 @@
 #include "type.hpp"
 
 #include <algorithm> // find_if
-#include <iostream>  // cout
-
-#include <global_map.hpp>
+#include <cassert>
+#include <iostream> // cout
+#include <utility>
 
 namespace ast {
     // Type creation
@@ -40,22 +40,8 @@ namespace ast {
 
     std::shared_ptr<function_type> function_type::create(ast::type_ptr ret_type,
                                                          std::vector<ast::type_ptr> && arg_types) {
-        static std::vector<std::shared_ptr<function_type>> made_types;
-
-        if (auto iter = std::find_if(made_types.begin(), made_types.end(),
-                                     [&ret_type, &arg_types](const auto & exisiting_type) -> bool {
-                                         return exisiting_type->ret_type == ret_type
-                                            and exisiting_type->arg_types == arg_types;
-                                     });
-            iter != made_types.end()) {
-            return *iter;
-        }
-
-        auto new_func_type = std::shared_ptr<function_type>{
+        return std::shared_ptr<function_type>{
             new function_type{std::move(ret_type), std::move(arg_types)}};
-        made_types.push_back(new_func_type);
-
-        return new_func_type;
     }
 
     // Printing types
