@@ -313,21 +313,9 @@ void cfg_to_llvm::visit(control_flow::function_end & func_end) {
 
 void cfg_to_llvm::visit(control_flow::function_start & func_start) {
 
-    std::vector<llvm::Type *> param_types;
-    param_types.reserve(func_start.arg_count);
-
-    for (auto i = 0U; i < func_start.arg_count; ++i) {
-        auto * ast_type = func_start.type->arg(i);
-        auto * llvm_param_type = type_lowering.lower_to_llvm(ast_type);
-        if (dynamic_cast<ast::struct_type *>(ast_type) != nullptr) {
-            // All structs need to be passed as pointers
-            llvm_param_type = llvm_param_type->getPointerTo();
-        }
-        param_types.push_back(llvm_param_type);
-    }
-
-    auto * func_type = llvm::FunctionType::get(
-        type_lowering.lower_to_llvm(func_start.type->return_type()), param_types, false);
+    auto * func_type
+        = llvm::cast_or_null<llvm::FunctionType>(type_lowering.lower_to_llvm(func_start.type));
+    assert(func_type != nullptr);
 
     // The only functions that need ExternalLinkage are "main" or exported ones
     auto linkage = (func_start.name == "main" or func_start.exported)
