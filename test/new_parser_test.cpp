@@ -405,7 +405,7 @@ TEST_CASE("the parser will parse a unit function") {
 
     CHECK(func->name == "main");
     CHECK(func->param_count() == 0);
-    CHECK(func->ret_type == ast::prim_type::unit);
+    CHECK(func->func_type->return_type() == ast::prim_type::unit);
     CHECK(func->body != nullptr);
 }
 
@@ -473,7 +473,7 @@ TEST_CASE("the parser will parse a function with return type") {
 
     CHECK(func->name == "main");
     CHECK(func->param_count() == 0);
-    CHECK(func->ret_type == ast::prim_type::int32);
+    CHECK(func->func_type->return_type() == ast::prim_type::int32);
     CHECK(func->body != nullptr);
 }
 
@@ -494,7 +494,7 @@ TEST_CASE("the parser will parse a function with parameters") {
     CHECK(func->params[0].type() == ast::prim_type::int32);
     CHECK(func->params[1].name() == "y");
     CHECK(func->params[1].type() == ast::prim_type::boolean);
-    CHECK(func->ret_type == ast::prim_type::int32);
+    CHECK(func->func_type->return_type() == ast::prim_type::int32);
     CHECK(func->body != nullptr);
 }
 
@@ -511,7 +511,7 @@ TEST_CASE("the parser will parse a function with an expression body") {
 
     CHECK(func->name == "foo");
     CHECK(func->param_count() == 2);
-    CHECK(func->ret_type == ast::prim_type::int32);
+    CHECK(func->func_type->return_type() == ast::prim_type::int32);
     CHECK(func->body != nullptr);
 
     auto * ret_stmt = dynamic_cast<ast::return_stmt *>(func->body.get());
@@ -545,7 +545,7 @@ factorial(int input) -> int {
     CHECK(func->param_count() == 1);
     CHECK(func->params[0].name() == "input");
     CHECK(func->params[0].type() == ast::prim_type::int32);
-    CHECK(func->ret_type == ast::prim_type::int32);
+    CHECK(func->func_type->return_type() == ast::prim_type::int32);
     CHECK(func->body != nullptr);
 
     auto * body = dynamic_cast<ast::stmt_sequence *>(func->body.get());

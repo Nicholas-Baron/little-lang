@@ -65,8 +65,8 @@ namespace ast {
 
         for (auto & param : func_decl.params) { params.push_back(get_value(param, *this)); }
 
-        assert(func_decl.ret_type != nullptr);
-        auto return_type = (std::stringstream{} << *func_decl.ret_type).str();
+        assert(func_decl.func_type != nullptr);
+        auto return_type = (std::stringstream{} << *func_decl.func_type->return_type()).str();
 
         return store_result(nlohmann::json::object_t{{"body", std::move(body)},
                                                      {"name", func_decl.name},

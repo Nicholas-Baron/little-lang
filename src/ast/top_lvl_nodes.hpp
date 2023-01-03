@@ -52,13 +52,12 @@ namespace ast {
         ~func_decl() noexcept final = default;
 
         [[nodiscard]] size_t param_count() const { return params.size(); }
-        [[nodiscard]] std::shared_ptr<ast::function_type> func_type() const;
 
         make_visitable;
 
         std::string name;
         std::vector<typed_identifier> params;
-        ast::type_ptr ret_type;
+        std::shared_ptr<ast::function_type> func_type;
         stmt_ptr body;
 
       private:

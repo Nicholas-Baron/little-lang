@@ -15,11 +15,4 @@ namespace ast {
         return operation::is_arithmetic(op);
     }
 
-    std::shared_ptr<ast::function_type> func_decl::func_type() const {
-
-        std::vector<ast::type_ptr> param_types;
-        for (const auto & param : params) { param_types.push_back(param.type()); }
-
-        return ast::function_type::create(ret_type, std::move(param_types));
-    }
 } // namespace ast
