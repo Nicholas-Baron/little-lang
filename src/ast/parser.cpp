@@ -210,7 +210,10 @@ std::unique_ptr<ast::func_decl> parser::parse_function() {
     auto func_decl
         = std::make_unique<ast::func_decl>(std::move(func_name_tok.text), std::move(body));
     func_decl->set_location(func_name_tok.location);
-    func_decl->ret_type = return_type;
+    std::vector<ast::type_ptr> arg_types;
+    for (auto & arg : args) { arg_types.push_back(arg.type()); }
+    func_decl->func_type
+        = ty_context.create_type<ast::function_type>(std::move(return_type), std::move(arg_types));
     func_decl->params = std::move(args);
     return func_decl;
 }

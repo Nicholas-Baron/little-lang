@@ -395,7 +395,7 @@ void ast_to_cfg::visit(ast::func_call_stmt & func_call_stmt) { return visit(func
 
 void ast_to_cfg::visit(ast::func_decl & func_decl) {
     auto & func_start = result_cfg->create_root<control_flow::function_start>(
-        func_decl.name, func_decl.param_count(), func_decl.exported(), func_decl.func_type());
+        func_decl.name, func_decl.param_count(), func_decl.exported(), func_decl.func_type);
     current_function = &func_start;
 
     func_start.parameter_names.reserve(func_start.arg_count);
