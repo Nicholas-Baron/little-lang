@@ -187,7 +187,7 @@ std::unique_ptr<ast::func_decl> parser::parse_function() {
     tok = lex->next_token();
     assert(tok == lexer::token_type::rparen);
 
-    auto return_type = ast::prim_type::unit;
+    auto return_type = ty_context.create_type<ast::prim_type>(ast::prim_type::type::unit);
     // Parse the optional return type.
     if (lex->consume_if(lexer::token_type::arrow).has_value()) { return_type = parse_type(); }
 
@@ -462,9 +462,12 @@ ast::type_ptr parser::parse_type() {
     }
     case lexer::token_type::prim_type: {
         static const std::map<std::string, ast::type_ptr> prim_types{
-            {"int", ast::prim_type::int32},      {"float", ast::prim_type::float32},
-            {"char", ast::prim_type::character}, {"unit", ast::prim_type::unit},
-            {"bool", ast::prim_type::boolean},   {"string", ast::prim_type::str},
+            {"int", ty_context.create_type<ast::prim_type>(ast::prim_type::type::int32)},
+            {"float", ty_context.create_type<ast::prim_type>(ast::prim_type::type::float32)},
+            {"char", ty_context.create_type<ast::prim_type>(ast::prim_type::type::character)},
+            {"unit", ty_context.create_type<ast::prim_type>(ast::prim_type::type::unit)},
+            {"bool", ty_context.create_type<ast::prim_type>(ast::prim_type::type::boolean)},
+            {"string", ty_context.create_type<ast::prim_type>(ast::prim_type::type::str)},
         };
         auto iter = prim_types.find(lex->next_token().text);
         assert(iter != prim_types.end());
