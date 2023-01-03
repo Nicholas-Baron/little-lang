@@ -468,10 +468,10 @@ ast::type_ptr parser::parse_type() {
     }
     case lexer::token_type::amp:
         lex->next_token();
-        return ast::nonnullable_ptr_type::create(parse_type());
+        return ty_context.create_type<ast::nonnullable_ptr_type>(parse_type());
     case lexer::token_type::question:
         lex->next_token();
-        return ast::nullable_ptr_type::create(parse_type());
+        return ty_context.create_type<ast::nullable_ptr_type>(parse_type());
     default:
         error = "Expected a type. Found " + lex->peek_token().text;
         return nullptr;
