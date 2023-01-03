@@ -106,14 +106,6 @@ namespace ast {
 
         [[nodiscard]] type inner() const noexcept { return prim; }
 
-        static const type_ptr int32;
-        static const type_ptr unit;
-        static const type_ptr float32;
-        static const type_ptr boolean;
-        static const type_ptr str;
-        static const type_ptr character;
-        static const type_ptr null;
-
       private:
         explicit prim_type(type prim)
             : prim{prim} {}
@@ -121,6 +113,8 @@ namespace ast {
         void print(std::ostream & /*output*/) const final;
 
         type prim;
+
+        // TODO: This class has no need to be friends with type_context
     };
 
     struct user_type : public type {

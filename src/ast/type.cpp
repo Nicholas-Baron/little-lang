@@ -8,14 +8,6 @@
 namespace ast {
     // Type creation
 
-    const type_ptr prim_type::int32 = type_ptr{new prim_type{ast::prim_type::type::int32}};
-    const type_ptr prim_type::unit = type_ptr{new prim_type{ast::prim_type::type::unit}};
-    const type_ptr prim_type::float32 = type_ptr{new prim_type{ast::prim_type::type::float32}};
-    const type_ptr prim_type::boolean = type_ptr{new prim_type{ast::prim_type::type::boolean}};
-    const type_ptr prim_type::str = type_ptr{new prim_type{ast::prim_type::type::str}};
-    const type_ptr prim_type::character = type_ptr{new prim_type{ast::prim_type::type::character}};
-    const type_ptr prim_type::null = type_ptr{new prim_type{ast::prim_type::type::null}};
-
     std::shared_ptr<nullable_ptr_type> nullable_ptr_type::create(type_ptr pointed_to_type) {
         return std::shared_ptr<nullable_ptr_type>{
             new nullable_ptr_type{std::move(pointed_to_type)}};
