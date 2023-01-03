@@ -392,7 +392,8 @@ void cfg_to_llvm::syscall(control_flow::intrinsic_call & intrinsic_call) {
     param_types.reserve(args.size());
     for (auto * val : args) { param_types.push_back(val->getType()); }
 
-    auto * func_type = llvm::FunctionType::get(type_context.lower_to_llvm(ast::prim_type::int32),
+    assert(intrinsic_call.type != nullptr);
+    auto * func_type = llvm::FunctionType::get(type_context.lower_to_llvm(intrinsic_call.type),
                                                param_types, false);
 
     assert(llvm::InlineAsm::Verify(func_type, constraint));
