@@ -46,6 +46,7 @@ namespace control_flow {
         auto int_type = type_context.create_type<ast::prim_type>(ast::prim_type::type::int32);
 
         bool first = true;
+        std::vector<ast::type_ptr> arg_types;
         for (auto * arg : call.arguments) {
             auto arg_type = find_type_of(arg);
             if (not arg_type->is_pointer_type() and arg_type != int_type) {
@@ -60,7 +61,11 @@ namespace control_flow {
                                *arg_type);
                 }
             }
+
+            arg_types.push_back(std::move(arg_type));
         }
+
+        call.type = type_context.create_type<ast::function_type>(int_type, std::move(arg_types));
 
         // TODO: syscalls can return pointers and 64 bit numbers
         bind_type(&call, int_type);

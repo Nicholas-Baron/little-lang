@@ -132,6 +132,7 @@ namespace control_flow {
         node * previous{nullptr};
         node * next{nullptr};
         std::string name;
+        std::shared_ptr<ast::function_type> type;
         std::vector<node *> arguments;
     };
 
