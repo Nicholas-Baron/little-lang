@@ -1,4 +1,4 @@
-add_library(littlec_type STATIC type.cpp)
+add_library(littlec_type STATIC type.cpp type_context.cpp)
 
 target_compile_options(
     littlec_type PRIVATE -Og -fdata-sections -ffunction-sections
