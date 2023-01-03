@@ -30,8 +30,7 @@ namespace ast {
             } else if constexpr (std::is_same_v<type_t, ast::function_type>) {
                 static_assert(sizeof...(args) > 0);
                 static_assert(sizeof...(args) <= 2);
-                // TODO: use std::forward
-                return find_function_type(args...);
+                return find_function_type(std::forward<arg_t>(args)...);
             } else if constexpr (std::is_same_v<type_t, ast::struct_type>) {
                 static_assert(sizeof...(args) == 3);
                 return find_struct_type(std::forward<arg_t>(args)...);
@@ -44,8 +43,9 @@ namespace ast {
       private:
         [[nodiscard]] type_ptr find_prim_type(prim_type::type type);
         [[nodiscard]] type_ptr find_ptr_type(bool is_nullable, type_ptr pointed_to);
-        [[nodiscard]] type_ptr find_function_type(type_ptr return_type,
-                                                  std::vector<type_ptr> && arg_types = {});
+        [[nodiscard]] std::shared_ptr<ast::function_type>
+        find_function_type(type_ptr return_type, std::vector<type_ptr> && arg_types = {});
+
         [[nodiscard]] std::shared_ptr<ast::struct_type>
         find_struct_type(std::string && name, const std::string & module_name,
                          std::vector<struct_type::field_type> && fields);
