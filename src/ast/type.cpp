@@ -34,22 +34,8 @@ namespace ast {
         // TODO: The "" module may be useful.
         assert(not module_name.empty());
 
-        if (auto old_type = user_type::lookup(name, module_name); old_type != nullptr) {
-            if (auto possible_struct = std::dynamic_pointer_cast<struct_type>(old_type);
-                possible_struct != nullptr) {
-                return possible_struct;
-            }
-
-            std::cout << "Type " << name << " is already registered in " << module_name
-                      << " as a non-struct type" << std::endl;
-            assert(false);
-        }
-
-        auto new_user_type = std::shared_ptr<struct_type>{
-            new struct_type{std::string{name}, module_name, std::move(fields)}};
-        add_user_type(module_name, name, new_user_type);
-
-        return new_user_type;
+        return std::shared_ptr<struct_type>{
+            new struct_type{std::move(name), module_name, std::move(fields)}};
     }
 
     std::shared_ptr<function_type> function_type::create(ast::type_ptr ret_type,
