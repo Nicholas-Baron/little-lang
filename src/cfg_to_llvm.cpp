@@ -317,9 +317,9 @@ void cfg_to_llvm::visit(control_flow::function_start & func_start) {
     param_types.reserve(func_start.arg_count);
 
     for (auto i = 0U; i < func_start.arg_count; ++i) {
-        auto ast_type = func_start.type->arg(i);
+        auto * ast_type = func_start.type->arg(i);
         auto * llvm_param_type = type_context.lower_to_llvm(ast_type);
-        if (dynamic_cast<ast::struct_type *>(ast_type.get()) != nullptr) {
+        if (dynamic_cast<ast::struct_type *>(ast_type) != nullptr) {
             // All structs need to be passed as pointers
             llvm_param_type = llvm_param_type->getPointerTo();
         }

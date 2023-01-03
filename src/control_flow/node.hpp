@@ -40,9 +40,8 @@ namespace control_flow {
 
     class function_start final : public node {
       public:
-        function_start(std::string name, size_t arg_count, bool exported,
-                       std::shared_ptr<ast::function_type> type)
-            : type{std::move(type)}
+        function_start(std::string name, size_t arg_count, bool exported, ast::function_type * type)
+            : type{type}
             , name{std::move(name)}
             , arg_count{arg_count}
             , exported{exported} {}
@@ -55,7 +54,7 @@ namespace control_flow {
 
         // Invariant: cannot be null
         node * next{nullptr};
-        std::shared_ptr<ast::function_type> type;
+        ast::function_type * type;
         std::vector<std::string> parameter_names;
         std::string name;
         size_t arg_count;
@@ -132,7 +131,7 @@ namespace control_flow {
         node * previous{nullptr};
         node * next{nullptr};
         std::string name;
-        std::shared_ptr<ast::function_type> type;
+        ast::function_type * type{nullptr};
         std::vector<node *> arguments;
     };
 

@@ -2,7 +2,7 @@
 #define TYPE_HPP
 
 #include <iosfwd> // ostream
-#include <memory> // shared_ptr
+#include <memory> // unique_ptr
 #include <string>
 #include <vector>
 
@@ -29,7 +29,7 @@ namespace ast {
         virtual void print(std::ostream &) const = 0;
     };
 
-    using type_ptr = std::shared_ptr<type>;
+    using type_ptr = type *;
 
     class ptr_type : public type {
       public:
@@ -40,7 +40,7 @@ namespace ast {
 
       protected:
         ptr_type(type_ptr inner)
-            : pointed_to{std::move(inner)} {}
+            : pointed_to{inner} {}
 
       private:
         type_ptr pointed_to;
@@ -55,10 +55,10 @@ namespace ast {
         [[nodiscard]] bool nullable() const noexcept final { return true; }
 
       private:
-        static std::shared_ptr<nullable_ptr_type> create(type_ptr pointed_to_type);
+        static std::unique_ptr<nullable_ptr_type> create(type_ptr pointed_to_type);
 
         explicit nullable_ptr_type(type_ptr inner)
-            : ptr_type{std::move(inner)} {}
+            : ptr_type{inner} {}
 
         void print(std::ostream & /*output*/) const final;
 
@@ -74,10 +74,10 @@ namespace ast {
         [[nodiscard]] bool nullable() const noexcept final { return false; }
 
       private:
-        static std::shared_ptr<nonnullable_ptr_type> create(type_ptr pointed_to_type);
+        static std::unique_ptr<nonnullable_ptr_type> create(type_ptr pointed_to_type);
 
         explicit nonnullable_ptr_type(type_ptr inner)
-            : ptr_type{std::move(inner)} {}
+            : ptr_type{inner} {}
 
         void print(std::ostream & /*output*/) const final;
 
@@ -151,7 +151,7 @@ namespace ast {
         [[nodiscard]] const field_type & field(size_t index) const { return fields[index]; }
 
       private:
-        static std::shared_ptr<struct_type> create(std::string && name,
+        static std::unique_ptr<struct_type> create(std::string && name,
                                                    const std::string & module_name,
                                                    std::vector<field_type> && fields);
 
@@ -178,11 +178,11 @@ namespace ast {
         [[nodiscard]] type_ptr return_type() const { return ret_type; }
 
       private:
-        static std::shared_ptr<function_type> create(ast::type_ptr ret_type,
+        static std::unique_ptr<function_type> create(ast::type_ptr ret_type,
                                                      std::vector<ast::type_ptr> && arg_types = {});
 
         explicit function_type(ast::type_ptr ret_type, std::vector<ast::type_ptr> && arg_types = {})
-            : ret_type{std::move(ret_type)}
+            : ret_type{ret_type}
             , arg_types{std::move(arg_types)} {}
 
         ast::type_ptr ret_type;
