@@ -452,7 +452,7 @@ ast::type_ptr parser::parse_type() {
     // a type can either be some primitive or a user-defined type.
     switch (lex->peek_token().type) {
     case lexer::token_type::identifier: {
-        auto type_ptr = ast::user_type::lookup(lex->next_token().text, module_name());
+        auto type_ptr = ty_context.lookup_user_type(lex->next_token().text, module_name());
         assert(type_ptr != nullptr);
         return type_ptr;
     }
