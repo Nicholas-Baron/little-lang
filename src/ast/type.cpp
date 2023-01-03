@@ -70,8 +70,8 @@ namespace ast {
             assert(false);
         }
 
-        auto new_user_type
-            = std::shared_ptr<struct_type>{new struct_type{std::string{name}, std::move(fields)}};
+        auto new_user_type = std::shared_ptr<struct_type>{
+            new struct_type{std::string{name}, module_name, std::move(fields)}};
         add_user_type(module_name, name, new_user_type);
 
         return new_user_type;
