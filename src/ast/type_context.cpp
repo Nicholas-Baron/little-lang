@@ -2,6 +2,8 @@
 
 #include "type.hpp"
 
+#include <cassert>
+
 namespace ast {
     type_context::type_context() {
         (void)create_type<ast::prim_type>(ast::prim_type::type::boolean);
@@ -80,4 +82,16 @@ namespace ast {
         return struct_type::create(std::move(name), module_name, std::move(fields));
     }
 
+    type_ptr type_context::lookup_user_type(const std::string & name,
+                                            const std::string & module_name) {
+        for (auto & type_ptr : types) {
+            if (auto ptr = std::dynamic_pointer_cast<ast::user_type>(type_ptr); ptr != nullptr) {
+                if (ptr->containing_module_name() == module_name and ptr->user_name() == name) {
+                    return ptr;
+                }
+            }
+        }
+
+        return nullptr;
+    }
 } // namespace ast
