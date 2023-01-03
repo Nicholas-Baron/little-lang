@@ -6,7 +6,7 @@
 namespace ast {
     class type_context final {
       public:
-        type_context();
+        type_context() = default;
 
         non_copyable(type_context);
         non_movable(type_context);

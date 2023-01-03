@@ -5,15 +5,6 @@
 #include <cassert>
 
 namespace ast {
-    type_context::type_context() {
-        (void)create_type<ast::prim_type>(ast::prim_type::type::boolean);
-        (void)create_type<ast::prim_type>(ast::prim_type::type::character);
-        (void)create_type<ast::prim_type>(ast::prim_type::type::float32);
-        (void)create_type<ast::prim_type>(ast::prim_type::type::int32);
-        (void)create_type<ast::prim_type>(ast::prim_type::type::null);
-        (void)create_type<ast::prim_type>(ast::prim_type::type::str);
-        (void)create_type<ast::prim_type>(ast::prim_type::type::unit);
-    }
 
     type_ptr type_context::find_prim_type(ast::prim_type::type type) {
         // We should always find a prim_type
