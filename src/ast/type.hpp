@@ -49,8 +49,6 @@ namespace ast {
 
     struct nullable_ptr_type final : public ptr_type {
 
-        static std::shared_ptr<nullable_ptr_type> create(type_ptr pointed_to_type);
-
         non_copyable(nullable_ptr_type);
         non_movable(nullable_ptr_type);
         ~nullable_ptr_type() final = default;
@@ -58,15 +56,17 @@ namespace ast {
         [[nodiscard]] bool nullable() const noexcept final { return true; }
 
       private:
+        static std::shared_ptr<nullable_ptr_type> create(type_ptr pointed_to_type);
+
         explicit nullable_ptr_type(type_ptr inner)
             : ptr_type{std::move(inner)} {}
 
         void print(std::ostream & /*output*/) const final;
+
+        friend class type_context;
     };
 
     struct nonnullable_ptr_type final : public ptr_type {
-
-        static std::shared_ptr<nonnullable_ptr_type> create(type_ptr pointed_to_type);
 
         non_copyable(nonnullable_ptr_type);
         non_movable(nonnullable_ptr_type);
@@ -75,10 +75,14 @@ namespace ast {
         [[nodiscard]] bool nullable() const noexcept final { return false; }
 
       private:
+        static std::shared_ptr<nonnullable_ptr_type> create(type_ptr pointed_to_type);
+
         explicit nonnullable_ptr_type(type_ptr inner)
             : ptr_type{std::move(inner)} {}
 
         void print(std::ostream & /*output*/) const final;
+
+        friend class type_context;
     };
 
     struct prim_type final : public type {

@@ -17,38 +17,13 @@ namespace ast {
     const type_ptr prim_type::null = type_ptr{new prim_type{ast::prim_type::type::null}};
 
     std::shared_ptr<nullable_ptr_type> nullable_ptr_type::create(type_ptr pointed_to_type) {
-        static std::map<type_ptr, std::shared_ptr<nullable_ptr_type>> made_types;
-
-        if (auto iter = made_types.find(pointed_to_type); iter != made_types.end()) {
-            return iter->second;
-        }
-
-        auto new_ptr_type
-            = std::shared_ptr<nullable_ptr_type>{new nullable_ptr_type{pointed_to_type}};
-        made_types.emplace(std::move(pointed_to_type), new_ptr_type);
-
-        return new_ptr_type;
+        return std::shared_ptr<nullable_ptr_type>{
+            new nullable_ptr_type{std::move(pointed_to_type)}};
     }
 
     std::shared_ptr<nonnullable_ptr_type> nonnullable_ptr_type::create(type_ptr pointed_to_type) {
-        static std::map<type_ptr, std::shared_ptr<nonnullable_ptr_type>> made_types;
-
-        if (auto iter = made_types.find(pointed_to_type); iter != made_types.end()) {
-            return iter->second;
-        }
-
-        auto new_ptr_type
-            = std::shared_ptr<nonnullable_ptr_type>{new nonnullable_ptr_type{pointed_to_type}};
-        made_types.emplace(std::move(pointed_to_type), new_ptr_type);
-
-        return new_ptr_type;
-    }
-
-    std::shared_ptr<user_type> user_type::lookup(const std::string & name,
-                                                 const std::string & module_name) {
-        assert(not name.empty());
-
-        return user_made_types.lookup(module_name, name);
+        return std::shared_ptr<nonnullable_ptr_type>{
+            new nonnullable_ptr_type{std::move(pointed_to_type)}};
     }
 
     std::shared_ptr<struct_type> struct_type::create(std::string && name,
