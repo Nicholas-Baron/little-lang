@@ -4,6 +4,7 @@
 #include "ast/visitor_base.hpp"
 #include "control_flow/graph.hpp"
 #include "control_flow/node.hpp"
+#include "global_map.hpp"
 #include "move_copy.hpp"
 #include "utils/scoped_map.hpp"
 #include "utils/value_getter.hpp"
