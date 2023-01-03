@@ -38,6 +38,9 @@ namespace ast {
             }
         }
 
+        [[nodiscard]] type_ptr lookup_user_type(const std::string & name,
+                                                const std::string & module_name);
+
       private:
         [[nodiscard]] type_ptr find_prim_type(prim_type::type type);
         [[nodiscard]] type_ptr find_ptr_type(bool is_nullable, type_ptr pointed_to);
