@@ -67,7 +67,7 @@ cfg_to_llvm::cfg_to_llvm(const std::string & name, llvm::LLVMContext & context,
     , ir_module{std::make_unique<llvm::Module>(name, context)}
     , ir_builder{std::make_unique<llvm::IRBuilder<>>(context)}
     , globals{globals}
-    , type_context{typ_context}
+    , type_lowering{typ_context}
     , intrinsics{{"syscall", &cfg_to_llvm::syscall}} {
     ir_module->setTargetTriple(init_llvm_targets());
 }
@@ -318,7 +318,7 @@ void cfg_to_llvm::visit(control_flow::function_start & func_start) {
 
     for (auto i = 0U; i < func_start.arg_count; ++i) {
         auto * ast_type = func_start.type->arg(i);
-        auto * llvm_param_type = type_context.lower_to_llvm(ast_type);
+        auto * llvm_param_type = type_lowering.lower_to_llvm(ast_type);
         if (dynamic_cast<ast::struct_type *>(ast_type) != nullptr) {
             // All structs need to be passed as pointers
             llvm_param_type = llvm_param_type->getPointerTo();
@@ -327,7 +327,7 @@ void cfg_to_llvm::visit(control_flow::function_start & func_start) {
     }
 
     auto * func_type = llvm::FunctionType::get(
-        type_context.lower_to_llvm(func_start.type->return_type()), param_types, false);
+        type_lowering.lower_to_llvm(func_start.type->return_type()), param_types, false);
 
     // The only functions that need ExternalLinkage are "main" or exported ones
     auto linkage = (func_start.name == "main" or func_start.exported)
@@ -395,7 +395,7 @@ void cfg_to_llvm::syscall(control_flow::intrinsic_call & intrinsic_call) {
     assert(intrinsic_call.type != nullptr);
 
     auto * func_type
-        = llvm::cast_or_null<llvm::FunctionType>(type_context.lower_to_llvm(intrinsic_call.type));
+        = llvm::cast_or_null<llvm::FunctionType>(type_lowering.lower_to_llvm(intrinsic_call.type));
     assert(func_type != nullptr);
 
     assert(llvm::InlineAsm::Verify(func_type, constraint));
