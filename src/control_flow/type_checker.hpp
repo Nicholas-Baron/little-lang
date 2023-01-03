@@ -32,16 +32,16 @@ namespace control_flow {
         void syscall(control_flow::intrinsic_call & call);
 
         void bind_identifier(std::string name, ast::type * type);
-        void bind_type(control_flow::node * value, ast::type * type);
-        ast::type * find_type_of(control_flow::node * value) const;
+        void bind_type(control_flow::node * value, ast::type_ptr type);
+        ast::type_ptr find_type_of(control_flow::node * value) const;
 
         ast::type_context & type_context;
 
         using instrinic_checker = void (type_checker::*)(intrinsic_call &);
         std::map<std::string, instrinic_checker> intrinsics;
 
-        std::map<std::string, ast::type *> bound_identifiers;
-        std::map<control_flow::node *, ast::type *> node_type;
+        std::map<std::string, ast::type_ptr> bound_identifiers;
+        std::map<control_flow::node *, ast::type_ptr> node_type;
         std::unordered_set<control_flow::node *> visited;
         const ast::type * current_return_type{nullptr};
         bool has_seen_error{false};
