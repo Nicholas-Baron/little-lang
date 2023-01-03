@@ -12,8 +12,9 @@
 #include <vector>
 
 static std::unique_ptr<ast::top_level_sequence>
-read_module(const std::string & filename, const std::filesystem::path & project_root) {
-    auto parser = parser::from_file(filename, project_root);
+read_module(const std::string & filename, const std::filesystem::path & project_root,
+            ast::type_context & type_context) {
+    auto parser = parser::from_file(filename, project_root, type_context);
     if (parser == nullptr) { return nullptr; }
 
     auto module_ = parser->parse();
@@ -21,8 +22,8 @@ read_module(const std::string & filename, const std::filesystem::path & project_
     return module_;
 }
 
-static std::vector<ast::top_level_sequence> load_modules(const std::string & input,
-                                                         bool debug_ast) {
+static std::vector<ast::top_level_sequence>
+load_modules(const std::string & input, ast::type_context & type_context, bool debug_ast) {
 
     std::vector<ast::top_level_sequence> modules;
 
@@ -42,7 +43,7 @@ static std::vector<ast::top_level_sequence> load_modules(const std::string & inp
         // do not double load files
         if (loaded.find(filename) != loaded.end()) { continue; }
 
-        auto parsed_module = read_module(filename, project_root);
+        auto parsed_module = read_module(filename, project_root, type_context);
         if (parsed_module == nullptr) {
             std::cout << "Failed to parse " << filename << std::endl;
             assert(false);
@@ -73,7 +74,10 @@ int main(const int arg_count, const char * const * const args) {
 
     const auto & filename = command_line->file_to_read;
 
-    auto modules = load_modules(filename, command_line->flag_is_set(cmd_flag::debug_ast));
+    // TODO: Main should not be making a type_context
+    ast::type_context type_context;
+    auto modules
+        = load_modules(filename, type_context, command_line->flag_is_set(cmd_flag::debug_ast));
 
     assert(not modules.empty());
     auto opt_program = program::from_modules(filename, std::move(modules), command_line);

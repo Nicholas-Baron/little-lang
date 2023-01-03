@@ -7,6 +7,7 @@
 #include "node_utils.hpp"
 #include "nodes_forward.hpp"
 #include "type.hpp"
+#include "type_context.hpp"
 
 #include <filesystem>
 #include <map>
@@ -30,13 +31,15 @@ class parser final {
     // `from_file` loads a file from given filename and uses that as input.
     // The file data is internally allocated and freed by the parser.
     static std::unique_ptr<parser> from_file(const std::string & filename,
-                                             const std::filesystem::path & project_root);
+                                             const std::filesystem::path & project_root,
+                                             ast::type_context & ty_context);
 
     // `from_buffer` uses the given string as its input.
     // Note that the parser does not own the string and maintains a readonly view into it.
     // The caller must store the string *and* ensure that it is not modified while the parser is
     // alive.
-    static std::unique_ptr<parser> from_buffer(std::string & buffer);
+    static std::unique_ptr<parser> from_buffer(std::string & buffer,
+                                               ast::type_context & ty_context);
 
     // `parse` parses a single module (one file).
     // Any failure in parsing results in a `nullptr`.
@@ -53,10 +56,11 @@ class parser final {
     ~parser() noexcept = default;
 
   private:
-    explicit parser(lex_ptr && lex,
+    explicit parser(lex_ptr && lex, ast::type_context & ty_context,
                     std::optional<std::filesystem::path> project_root = std::nullopt)
         : project_root{std::move(project_root)}
-        , lex{std::move(lex)} {}
+        , lex{std::move(lex)}
+        , ty_context{ty_context} {}
 
     // As stated above,
     // there are some internals which need to be tested independently of each other.
@@ -120,6 +124,7 @@ class parser final {
     }
 
     lex_ptr lex;
+    ast::type_context & ty_context;
     std::string error;
 };
 
