@@ -15,16 +15,17 @@ namespace ast {
 
         template<typename type_t, typename... arg_t>
         [[nodiscard]] auto * create_type(arg_t... args) {
+            static_assert(std::is_class_v<type_t>);
+            static_assert(std::is_convertible_v<type_t *, type *>);
             // Delagate to functions that will enforce each types uniqueness rules.
             if constexpr (std::is_same_v<type_t, ast::prim_type>) {
                 // All primitive types should have been made by the constructor.
                 static_assert(sizeof...(args) == 1);
                 return find_prim_type(args...);
-                // TODO: Fix formatting
-            } else if constexpr (
-                std::is_same_v<
-                    type_t,
-                    ast::nonnullable_ptr_type> or std::is_same_v<type_t, ast::nullable_ptr_type>) {
+            } else if constexpr (std::is_convertible_v<type_t *, ptr_type *>) {
+                // NOTE: The preceding check is broader than necessary,
+                // as `ptr_type` could have more children in the future.
+                // This could lead to some issues at that time.
                 static_assert(sizeof...(args) == 1);
                 return find_ptr_type(std::is_same_v<type_t, ast::nullable_ptr_type>, args...);
             } else if constexpr (std::is_same_v<type_t, ast::function_type>) {
