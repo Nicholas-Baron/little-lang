@@ -2,6 +2,7 @@
 #define PROGRAM_HPP
 
 #include "ast/top_lvl_nodes.hpp"
+#include "ast/type_context.hpp"
 #include "control_flow/graph.hpp"
 #include "llvm_type_lowering.hpp"
 #include "move_copy.hpp"
@@ -16,6 +17,7 @@ class program final {
   public:
     static std::optional<program> from_modules(const std::string & root_file,
                                                std::vector<ast::top_level_sequence> && modules,
+                                               ast::type_context & ty_context,
                                                std::shared_ptr<Settings> settings);
 
     void lower_to_cfg();
@@ -34,8 +36,8 @@ class program final {
     ~program() noexcept;
 
   private:
-    program(std::vector<ast::top_level_sequence> && modules, std::shared_ptr<Settings> settings,
-            std::string && project_root);
+    program(std::vector<ast::top_level_sequence> && modules, ast::type_context & ty_context,
+            std::shared_ptr<Settings> settings, std::string && project_root);
 
     std::string project_root;
     std::unique_ptr<llvm::LLVMContext> context;

@@ -80,7 +80,8 @@ int main(const int arg_count, const char * const * const args) {
         = load_modules(filename, type_context, command_line->flag_is_set(cmd_flag::debug_ast));
 
     assert(not modules.empty());
-    auto opt_program = program::from_modules(filename, std::move(modules), command_line);
+    auto opt_program
+        = program::from_modules(filename, std::move(modules), type_context, command_line);
     if (not opt_program.has_value()) { return 1; }
 
     auto program = std::move(opt_program).value();

@@ -2,6 +2,7 @@
 #define TYPE_CONTEXT_HPP
 
 #include "ast/node_utils.hpp"
+#include "ast/type_context.hpp"
 #include "utils/global_map.hpp"
 
 #include <map>
@@ -11,7 +12,7 @@
 
 class llvm_type_lowering final {
   public:
-    explicit llvm_type_lowering(llvm::LLVMContext * context);
+    llvm_type_lowering(ast::type_context & type_context, llvm::LLVMContext * context);
 
     [[nodiscard]] llvm::Type * lower_to_llvm(ast::type_ptr type);
 
