@@ -261,19 +261,20 @@ std::unique_ptr<ast::struct_decl> parser::parse_struct_decl() {
         }
     }
 
-    {
+    auto struct_type = [&] {
         // Insert the new struct type into the ast type registry
         std::vector<ast::struct_type::field_type> struct_fields;
         struct_fields.reserve(fields.size());
         for (auto & typed_id : fields) {
             struct_fields.emplace_back(typed_id.name(), typed_id.type());
         }
-        assert(ast::struct_type::create(std::string{name.text}, module_name(),
-                                        std::move(struct_fields))
-               != nullptr);
-    }
+        return ty_context.create_type<ast::struct_type>(std::string{name.text}, module_name(),
+                                                        std::move(struct_fields));
+    }();
+    assert(struct_type != nullptr);
 
     auto decl = std::make_unique<ast::struct_decl>(std::move(name.text), std::move(fields));
+    decl->type = std::move(struct_type);
     decl->set_location(location);
     return decl;
 }
