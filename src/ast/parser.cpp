@@ -14,18 +14,19 @@
 #include <string_utils.hpp> // unquote
 
 std::unique_ptr<parser> parser::from_file(const std::string & filename,
-                                          const std::filesystem::path & project_root) {
+                                          const std::filesystem::path & project_root,
+                                          ast::type_context & ty_context) {
     auto lexer = lexer::from_file(filename);
     if (lexer == nullptr) { return nullptr; }
     // NOTE: `make_unique` does not like private constructors.
-    return std::unique_ptr<parser>(new parser{std::move(lexer), project_root});
+    return std::unique_ptr<parser>(new parser{std::move(lexer), ty_context, project_root});
 }
 
-std::unique_ptr<parser> parser::from_buffer(std::string & buffer) {
+std::unique_ptr<parser> parser::from_buffer(std::string & buffer, ast::type_context & ty_context) {
     auto lexer = lexer::from_buffer(buffer);
     if (lexer == nullptr) { return nullptr; }
     // NOTE: `make_unique` does not like private constructors.
-    return std::unique_ptr<parser>(new parser{std::move(lexer)});
+    return std::unique_ptr<parser>(new parser{std::move(lexer), ty_context});
 }
 
 std::unique_ptr<ast::top_level_sequence> parser::parse() {

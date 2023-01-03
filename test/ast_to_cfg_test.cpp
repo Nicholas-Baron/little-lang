@@ -61,7 +61,8 @@ static void scan_graph(const control_flow::function_start * start,
 
 TEST_CASE("ast_to_cfg can lower an empty function") {
     std::string buffer = "main() {}";
-    auto parser = parser::from_buffer(buffer);
+    ast::type_context ty_context;
+    auto parser = parser::from_buffer(buffer, ty_context);
     auto mod = parser->parse();
 
     auto lowering = ast_to_cfg{};
@@ -101,7 +102,9 @@ TEST_CASE("ast_to_cfg can lower an empty function") {
 TEST_CASE("ast_to_cfg can lower a shortcircuiting expression") {
     std::string buffer = "positive_even(x : int) = x > 0 and x % 2 == 0";
     std::cout << "Testing " << buffer << std::endl;
-    auto parser = parser::from_buffer(buffer);
+
+    ast::type_context ty_context;
+    auto parser = parser::from_buffer(buffer, ty_context);
     auto mod = parser->parse();
 
     auto lowering = ast_to_cfg{};

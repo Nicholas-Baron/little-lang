@@ -7,7 +7,8 @@
 
 TEST_CASE("the parser will parse braces as a compound statement") {
     std::string buffer = "{}";
-    auto parser = parser::from_buffer(buffer);
+    ast::type_context ty_context;
+    auto parser = parser::from_buffer(buffer, ty_context);
 
     CHECK(parser != nullptr);
 
@@ -19,7 +20,8 @@ TEST_CASE("the parser will parse typed identifiers in both new style and C-style
 
     ast::typed_identifier typed_id_1 = [] {
         std::string buffer = "int x";
-        auto parser = parser::from_buffer(buffer);
+        ast::type_context ty_context;
+        auto parser = parser::from_buffer(buffer, ty_context);
 
         CHECK(parser != nullptr);
 
@@ -28,7 +30,8 @@ TEST_CASE("the parser will parse typed identifiers in both new style and C-style
 
     ast::typed_identifier typed_id_2 = [] {
         std::string buffer = "x : int";
-        auto parser = parser::from_buffer(buffer);
+        ast::type_context ty_context;
+        auto parser = parser::from_buffer(buffer, ty_context);
 
         CHECK(parser != nullptr);
 
@@ -43,7 +46,8 @@ TEST_CASE("the parser will parse optionally typed identifiers") {
 
     ast::typed_identifier typed_id_1 = [] {
         std::string buffer = "x";
-        auto parser = parser::from_buffer(buffer);
+        ast::type_context ty_context;
+        auto parser = parser::from_buffer(buffer, ty_context);
 
         CHECK(parser != nullptr);
 
@@ -52,7 +56,8 @@ TEST_CASE("the parser will parse optionally typed identifiers") {
 
     ast::typed_identifier typed_id_2 = [] {
         std::string buffer = "x : int";
-        auto parser = parser::from_buffer(buffer);
+        ast::type_context ty_context;
+        auto parser = parser::from_buffer(buffer, ty_context);
 
         CHECK(parser != nullptr);
 
@@ -61,7 +66,8 @@ TEST_CASE("the parser will parse optionally typed identifiers") {
 
     ast::typed_identifier typed_id_3 = [] {
         std::string buffer = "int x";
-        auto parser = parser::from_buffer(buffer);
+        ast::type_context ty_context;
+        auto parser = parser::from_buffer(buffer, ty_context);
 
         CHECK(parser != nullptr);
 
@@ -74,7 +80,8 @@ TEST_CASE("the parser will parse optionally typed identifiers") {
 
 TEST_CASE("the parser will parse let statement") {
     std::string buffer = "let x = \"hello\";";
-    auto parser = parser::from_buffer(buffer);
+    ast::type_context ty_context;
+    auto parser = parser::from_buffer(buffer, ty_context);
 
     CHECK(parser != nullptr);
 
@@ -96,7 +103,8 @@ TEST_CASE("the parser will parse let statement") {
 
 TEST_CASE("the parser will parse let statement with types") {
     std::string buffer = "let int x = 10;";
-    auto parser = parser::from_buffer(buffer);
+    ast::type_context ty_context;
+    auto parser = parser::from_buffer(buffer, ty_context);
 
     CHECK(parser != nullptr);
 
@@ -118,7 +126,8 @@ TEST_CASE("the parser will parse let statement with types") {
 
 TEST_CASE("the parser will parse pointer types and expressions") {
     std::string buffer = "let ? int x = null;";
-    auto parser = parser::from_buffer(buffer);
+    ast::type_context ty_context;
+    auto parser = parser::from_buffer(buffer, ty_context);
 
     CHECK(parser != nullptr);
 
@@ -129,7 +138,8 @@ TEST_CASE("the parser will parse pointer types and expressions") {
     auto * let = dynamic_cast<ast::let_stmt *>(stmt.get());
     CHECK(let != nullptr);
     CHECK(let->name_and_type.name() == "x");
-    CHECK(let->name_and_type.type() == ast::nullable_ptr_type::create(ast::prim_type::int32));
+    CHECK(let->name_and_type.type()
+          == ty_context.create_type<ast::prim_type>(ast::prim_type::type::int32));
     CHECK(let->value != nullptr);
 
     auto * value = dynamic_cast<ast::user_val *>(let->value.get());
@@ -140,7 +150,8 @@ TEST_CASE("the parser will parse pointer types and expressions") {
 
 TEST_CASE("the parser will parse dereferences") {
     std::string buffer = "let x = *y;";
-    auto parser = parser::from_buffer(buffer);
+    ast::type_context ty_context;
+    auto parser = parser::from_buffer(buffer, ty_context);
 
     CHECK(parser != nullptr);
 
@@ -161,7 +172,8 @@ TEST_CASE("the parser will parse dereferences") {
 
 TEST_CASE("the parser will parse unary minus") {
     std::string buffer = "-3";
-    auto parser = parser::from_buffer(buffer);
+    ast::type_context ty_context;
+    auto parser = parser::from_buffer(buffer, ty_context);
 
     CHECK(parser != nullptr);
 
@@ -182,7 +194,8 @@ TEST_CASE("the parser will parse unary minus") {
 
 TEST_CASE("the parser will parse const declaration") {
     std::string buffer = "const x : int = 5 * -3;";
-    auto parser = parser::from_buffer(buffer);
+    ast::type_context ty_context;
+    auto parser = parser::from_buffer(buffer, ty_context);
 
     CHECK(parser != nullptr);
 
@@ -205,7 +218,8 @@ TEST_CASE("the parser will parse const declaration") {
 
 TEST_CASE("the parser will parse binary expressions") {
     std::string buffer = " 5 + 10 ";
-    auto parser = parser::from_buffer(buffer);
+    ast::type_context ty_context;
+    auto parser = parser::from_buffer(buffer, ty_context);
 
     CHECK(parser != nullptr);
 
@@ -215,7 +229,8 @@ TEST_CASE("the parser will parse binary expressions") {
 
 TEST_CASE("the parser will parse if expressions") {
     std::string buffer = " if x then y else z + 1 ";
-    auto parser = parser::from_buffer(buffer);
+    ast::type_context ty_context;
+    auto parser = parser::from_buffer(buffer, ty_context);
 
     CHECK(parser != nullptr);
 
@@ -228,7 +243,8 @@ TEST_CASE("the parser will parse if expressions") {
 
 TEST_CASE("the parser will parse if expressions as atoms") {
     std::string buffer = " 1 + if x then y else z + 1 ";
-    auto parser = parser::from_buffer(buffer);
+    ast::type_context ty_context;
+    auto parser = parser::from_buffer(buffer, ty_context);
 
     CHECK(parser != nullptr);
 
@@ -244,7 +260,8 @@ TEST_CASE("the parser will parse if expressions as atoms") {
 
 TEST_CASE("the parser will parse if statements") {
     std::string buffer = "if x then {}";
-    auto parser = parser::from_buffer(buffer);
+    ast::type_context ty_context;
+    auto parser = parser::from_buffer(buffer, ty_context);
 
     CHECK(parser != nullptr);
 
@@ -263,7 +280,8 @@ TEST_CASE("the parser will parse if statements") {
 
 TEST_CASE("the parser will parse if-else statements") {
     std::string buffer = "if x then {} else {}";
-    auto parser = parser::from_buffer(buffer);
+    ast::type_context ty_context;
+    auto parser = parser::from_buffer(buffer, ty_context);
 
     CHECK(parser != nullptr);
 
@@ -282,7 +300,8 @@ TEST_CASE("the parser will parse if-else statements") {
 
 TEST_CASE("the parser will parse return statements") {
     std::string buffer = "return;";
-    auto parser = parser::from_buffer(buffer);
+    ast::type_context ty_context;
+    auto parser = parser::from_buffer(buffer, ty_context);
 
     CHECK(parser != nullptr);
 
@@ -295,7 +314,8 @@ TEST_CASE("the parser will parse return statements") {
 
 TEST_CASE("the parser will parse return statements with values") {
     std::string buffer = "return 5 * 10;";
-    auto parser = parser::from_buffer(buffer);
+    ast::type_context ty_context;
+    auto parser = parser::from_buffer(buffer, ty_context);
 
     CHECK(parser != nullptr);
 
@@ -314,7 +334,8 @@ TEST_CASE("the parser will parse return statements with values") {
 
 TEST_CASE("the parser will parse function calls as expressions") {
     std::string buffer = "return foo(5, 'x');";
-    auto parser = parser::from_buffer(buffer);
+    ast::type_context ty_context;
+    auto parser = parser::from_buffer(buffer, ty_context);
 
     CHECK(parser != nullptr);
 
@@ -332,7 +353,8 @@ TEST_CASE("the parser will parse function calls as expressions") {
 
 TEST_CASE("the parser will parse function calls as statements") {
     std::string buffer = "{ foo(5, 'x'); }";
-    auto parser = parser::from_buffer(buffer);
+    ast::type_context ty_context;
+    auto parser = parser::from_buffer(buffer, ty_context);
 
     CHECK(parser != nullptr);
 
@@ -354,7 +376,8 @@ TEST_CASE("the parser will parse a struct declaration") {
 		y : string,
 		z : bool
 	})";
-    auto parser = parser::from_buffer(buffer);
+    ast::type_context ty_context;
+    auto parser = parser::from_buffer(buffer, ty_context);
 
     CHECK(parser != nullptr);
 
@@ -371,7 +394,8 @@ TEST_CASE("the parser will parse a struct declaration") {
 
 TEST_CASE("the parser will parse a unit function") {
     std::string buffer = "main() {}";
-    auto parser = parser::from_buffer(buffer);
+    ast::type_context ty_context;
+    auto parser = parser::from_buffer(buffer, ty_context);
 
     CHECK(parser != nullptr);
 
@@ -387,7 +411,8 @@ TEST_CASE("the parser will parse a unit function") {
 
 TEST_CASE("the parser will parse a struct initialization") {
     std::string buffer = "let x = my_struct_type { x = 5; y = 6, z = 10, a = 6 / 2 };";
-    auto parser = parser::from_buffer(buffer);
+    ast::type_context ty_context;
+    auto parser = parser::from_buffer(buffer, ty_context);
 
     CHECK(parser != nullptr);
 
@@ -408,7 +433,8 @@ TEST_CASE("the parser will parse a struct initialization") {
 
 TEST_CASE("the parser will parse a member access") {
     std::string buffer = "x.y.z";
-    auto parser = parser::from_buffer(buffer);
+    ast::type_context ty_context;
+    auto parser = parser::from_buffer(buffer, ty_context);
 
     CHECK(parser != nullptr);
 
@@ -436,7 +462,8 @@ TEST_CASE("the parser will parse a member access") {
 
 TEST_CASE("the parser will parse a function with return type") {
     std::string buffer = "main() -> int {}";
-    auto parser = parser::from_buffer(buffer);
+    ast::type_context ty_context;
+    auto parser = parser::from_buffer(buffer, ty_context);
 
     CHECK(parser != nullptr);
 
@@ -452,7 +479,8 @@ TEST_CASE("the parser will parse a function with return type") {
 
 TEST_CASE("the parser will parse a function with parameters") {
     std::string buffer = "foo(int x, y : bool) -> int {}";
-    auto parser = parser::from_buffer(buffer);
+    ast::type_context ty_context;
+    auto parser = parser::from_buffer(buffer, ty_context);
 
     CHECK(parser != nullptr);
 
@@ -472,7 +500,8 @@ TEST_CASE("the parser will parse a function with parameters") {
 
 TEST_CASE("the parser will parse a function with an expression body") {
     std::string buffer = "foo(int x, y : int) -> int = (x + y) / 2";
-    auto parser = parser::from_buffer(buffer);
+    ast::type_context ty_context;
+    auto parser = parser::from_buffer(buffer, ty_context);
 
     CHECK(parser != nullptr);
 
@@ -503,7 +532,8 @@ factorial(int input) -> int {
 	return input * factorial(input - 1);
 })";
 
-    auto parser = parser::from_buffer(buffer);
+    ast::type_context ty_context;
+    auto parser = parser::from_buffer(buffer, ty_context);
 
     CHECK(parser != nullptr);
 
@@ -531,7 +561,8 @@ factorial(int input) -> int {
 
 TEST_CASE("the parser will parse a module with one import") {
     std::string buffer = "from \"test.lil\" import foo, bar; main() {}";
-    auto parser = parser::from_buffer(buffer);
+    ast::type_context ty_context;
+    auto parser = parser::from_buffer(buffer, ty_context);
 
     CHECK(parser != nullptr);
 
@@ -552,7 +583,8 @@ TEST_CASE("the parser will parse a module with one import") {
 
 TEST_CASE("the parser will parse imports with or without semicolons") {
     std::string buffer = "from \"test.lil\" import foo, bar\nmain() {}";
-    auto parser = parser::from_buffer(buffer);
+    ast::type_context ty_context;
+    auto parser = parser::from_buffer(buffer, ty_context);
 
     CHECK(parser != nullptr);
 
@@ -573,7 +605,8 @@ TEST_CASE("the parser will parse imports with or without semicolons") {
 
 TEST_CASE("the parser will parse a module with multiple imports") {
     std::string buffer = R"(from "test.lil" import foo, bar; from "foo.lil" import baz; main() {})";
-    auto parser = parser::from_buffer(buffer);
+    ast::type_context ty_context;
+    auto parser = parser::from_buffer(buffer, ty_context);
 
     CHECK(parser != nullptr);
 
@@ -599,7 +632,8 @@ TEST_CASE("the parser will parse a module with multiple imports") {
 
 TEST_CASE("the parser will parse a module with a single export") {
     std::string buffer = "export foo() {}";
-    auto parser = parser::from_buffer(buffer);
+    ast::type_context ty_context;
+    auto parser = parser::from_buffer(buffer, ty_context);
 
     CHECK(parser != nullptr);
 
@@ -620,7 +654,8 @@ TEST_CASE("the parser will parse a module with a single export") {
 
 TEST_CASE("the parser will parse a module with multiple exports") {
     std::string buffer = "export { foo() {}\nconst bar : int = 5 }";
-    auto parser = parser::from_buffer(buffer);
+    ast::type_context ty_context;
+    auto parser = parser::from_buffer(buffer, ty_context);
 
     CHECK(parser != nullptr);
 

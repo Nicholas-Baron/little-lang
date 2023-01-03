@@ -17,7 +17,8 @@ TEST_CASE("serializer handles hello world") {
 	}
 	)";
 
-    auto parser = parser::from_buffer(buffer);
+    ast::type_context type_context;
+    auto parser = parser::from_buffer(buffer, type_context);
     REQUIRE(parser != nullptr);
 
     auto mod = parser->parse();
