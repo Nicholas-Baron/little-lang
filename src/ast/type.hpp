@@ -131,11 +131,13 @@ namespace ast {
 
         [[nodiscard]] bool is_pointer_type() const final { return false; }
 
+        [[nodiscard]] const std::string & containing_module_name() const { return module_name; }
         [[nodiscard]] const std::string & user_name() const { return name; }
 
       protected:
-        explicit user_type(std::string name)
-            : name{std::move(name)} {}
+        explicit user_type(std::string name, std::string module_name)
+            : name{std::move(name)}
+            , module_name{std::move(module_name)} {}
 
         static void add_user_type(const std::string & module_name, const std::string & name,
                                   std::shared_ptr<user_type> type) {
@@ -146,6 +148,7 @@ namespace ast {
         // NOLINTNEXTLINE
         inline static global_map<std::string, std::shared_ptr<user_type>> user_made_types;
         std::string name;
+        std::string module_name;
     };
 
     struct struct_type final : public user_type {
@@ -165,8 +168,8 @@ namespace ast {
         [[nodiscard]] const field_type & field(size_t index) const { return fields[index]; }
 
       private:
-        struct_type(std::string && name, std::vector<field_type> && fields)
-            : user_type{std::move(name)}
+        struct_type(std::string && name, std::string module_name, std::vector<field_type> && fields)
+            : user_type{std::move(name), std::move(module_name)}
             , fields{std::move(fields)} {}
 
         std::vector<field_type> fields;
