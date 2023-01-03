@@ -22,7 +22,7 @@ namespace control_flow {
         has_seen_error = true;
     }
 
-    void type_checker::bind_type(control_flow::node * value, ast::type * type) {
+    void type_checker::bind_type(control_flow::node * value, ast::type_ptr type) {
         node_type.emplace(value, type);
     }
 
@@ -30,7 +30,7 @@ namespace control_flow {
         bound_identifiers.emplace(std::move(name), type);
     }
 
-    ast::type * type_checker::find_type_of(control_flow::node * value) const {
+    ast::type_ptr type_checker::find_type_of(control_flow::node * value) const {
         auto iter = node_type.find(value);
         return (iter != node_type.end()) ? iter->second : nullptr;
     }
@@ -47,15 +47,15 @@ namespace control_flow {
 
         bool first = true;
         for (auto * arg : call.arguments) {
-            auto * arg_type = find_type_of(arg);
-            if (not arg_type->is_pointer_type() and arg_type != int_type.get()) {
+            auto arg_type = find_type_of(arg);
+            if (not arg_type->is_pointer_type() and arg_type != int_type) {
                 printError("syscall can only take int or pointer arguments; found ", *arg_type);
             }
 
             // The first argmuent must always be a syscall number.
             if (first) {
                 first = false;
-                if (arg_type != int_type.get()) {
+                if (arg_type != int_type) {
                     printError("syscall must have an integer as its first argument; found ",
                                *arg_type);
                 }
@@ -63,7 +63,7 @@ namespace control_flow {
         }
 
         // TODO: syscalls can return pointers and 64 bit numbers
-        bind_type(&call, int_type.get());
+        bind_type(&call, int_type);
     }
 
     void type_checker::visit(function_start & func_start) {
@@ -86,42 +86,42 @@ namespace control_flow {
 
     void type_checker::visit(binary_operation & binary_operation) {
 
-        auto * lhs_type = find_type_of(binary_operation.lhs);
+        auto lhs_type = find_type_of(binary_operation.lhs);
         assert(lhs_type != nullptr);
-        auto * rhs_type = find_type_of(binary_operation.rhs);
+        auto rhs_type = find_type_of(binary_operation.rhs);
         assert(rhs_type != nullptr);
 
         auto boolean_type = type_context.create_type<ast::prim_type>(ast::prim_type::type::boolean);
         if (operation::is_shortcircuiting(binary_operation.op)) {
             // Left and right must be booleans
-            if (lhs_type != boolean_type.get()) {
+            if (lhs_type != boolean_type) {
                 printError("lhs expected to be boolean, found ", *lhs_type);
             }
-            if (rhs_type != boolean_type.get()) {
+            if (rhs_type != boolean_type) {
                 printError("rhs expected to be boolean, found ", *rhs_type);
             }
-            bind_type(&binary_operation, boolean_type.get());
+            bind_type(&binary_operation, boolean_type);
         } else if (operation::is_comparison(binary_operation.op)) {
             if (lhs_type != rhs_type) {
                 printError("Expected comparison operands to be of same type; found ", *lhs_type,
                            " and ", *rhs_type);
             }
 
-            bind_type(&binary_operation, boolean_type.get());
+            bind_type(&binary_operation, boolean_type);
         } else if (operation::is_arithmetic(binary_operation.op)) {
-            auto * result_type = lhs_type;
+            auto result_type = lhs_type;
 
             if (binary_operation.op == operation::binary::add
                 and (lhs_type->is_pointer_type() or rhs_type->is_pointer_type())) {
                 if (lhs_type->is_pointer_type() == rhs_type->is_pointer_type()) {
                     printError("Cannot add two pointers together");
                 } else {
-                    auto * non_ptr_type = lhs_type->is_pointer_type() ? rhs_type : lhs_type;
-                    auto * ptr_type = lhs_type->is_pointer_type() ? lhs_type : rhs_type;
+                    auto non_ptr_type = lhs_type->is_pointer_type() ? rhs_type : lhs_type;
+                    auto ptr_type = lhs_type->is_pointer_type() ? lhs_type : rhs_type;
 
                     auto int_type
                         = type_context.create_type<ast::prim_type>(ast::prim_type::type::int32);
-                    if (non_ptr_type != int_type.get()) {
+                    if (non_ptr_type != int_type) {
                         printError("Expected ", *int_type, " to add with ", *ptr_type, "; found ",
                                    *non_ptr_type);
                     }
@@ -143,11 +143,11 @@ namespace control_flow {
     }
 
     void type_checker::visit(branch & branch) {
-        auto * cond_type = find_type_of(branch.condition_value);
+        auto cond_type = find_type_of(branch.condition_value);
         assert(cond_type != nullptr);
 
         auto boolean_type = type_context.create_type<ast::prim_type>(ast::prim_type::type::boolean);
-        if (cond_type != boolean_type.get()) {
+        if (cond_type != boolean_type) {
             printError("Expected condition to be of type ", *boolean_type, "; found ", *cond_type);
         }
 
@@ -157,9 +157,9 @@ namespace control_flow {
     }
 
     void type_checker::visit(constant & constant) {
-        ast::type * const_type = nullptr;
+        ast::type_ptr const_type = nullptr;
         auto get_type = [this](ast::prim_type::type prim) -> decltype(const_type) {
-            return type_context.create_type<ast::prim_type>(prim).get();
+            return type_context.create_type<ast::prim_type>(prim);
         };
 
         switch (constant.val_type) {
@@ -199,15 +199,15 @@ namespace control_flow {
 
     void type_checker::visit(function_call & func_call) {
         const auto & func_name = func_call.callee->name;
-        auto * expected_func_type = [this, &func_name]() -> ast::function_type * {
+        auto expected_func_type = [this, &func_name] {
             auto iter = bound_identifiers.find(func_name);
 
             if (iter == bound_identifiers.end()) {
                 printError("Could not find type of function ", func_name);
-                return nullptr;
+                return std::shared_ptr<ast::function_type>{};
             }
 
-            auto * to_return = dynamic_cast<ast::function_type *>(iter->second);
+            auto to_return = std::dynamic_pointer_cast<ast::function_type>(iter->second);
 
             if (to_return == nullptr) {
                 printError("Expected a function type for ", func_name, "; found ", *iter->second,
@@ -227,8 +227,8 @@ namespace control_flow {
         auto args_to_check = std::min(expected_func_type->arg_count(), func_call.arguments.size());
 
         for (auto i = 0UL; i < args_to_check; ++i) {
-            auto * actual_type = find_type_of(func_call.arguments[i]);
-            auto * expected_type = expected_func_type->arg(i).get();
+            auto actual_type = find_type_of(func_call.arguments[i]);
+            auto expected_type = expected_func_type->arg(i);
 
             if (actual_type == nullptr) {
                 printError(func_name, " argument ", i, ": Could not find type");
@@ -241,7 +241,7 @@ namespace control_flow {
             }
         }
 
-        bind_type(&func_call, expected_func_type->return_type().get());
+        bind_type(&func_call, expected_func_type->return_type());
         visited.emplace(&func_call);
         func_call.next->accept(*this);
     }
@@ -249,12 +249,12 @@ namespace control_flow {
     void type_checker::visit(function_end & func_end) {
         assert(current_return_type != nullptr);
 
-        const auto * actual_type
+        const auto actual_type
             = (func_end.value != nullptr)
                 ? find_type_of(func_end.value)
-                : type_context.create_type<ast::prim_type>(ast::prim_type::type::unit).get();
+                : type_context.create_type<ast::prim_type>(ast::prim_type::type::unit);
 
-        if (current_return_type != actual_type) {
+        if (current_return_type != actual_type.get()) {
             printError("Expected a return expression with type ", *current_return_type,
                        "; found one with ", *actual_type);
         }
@@ -286,9 +286,9 @@ namespace control_flow {
             // HACK: Sometimes, phi nodes are values and need a type.
             //       This will happen if all previous nodes have the same type.
 
-            std::optional<ast::type *> phi_type;
+            std::optional<ast::type_ptr> phi_type;
             for (auto * prev : phi.previous) {
-                if (auto * prev_type = find_type_of(prev); not phi_type.has_value()) {
+                if (auto prev_type = find_type_of(prev); not phi_type.has_value()) {
                     phi_type = prev_type;
                 } else if (phi_type != prev_type) {
                     phi_type = nullptr;
@@ -305,13 +305,13 @@ namespace control_flow {
     }
 
     void type_checker::visit(unary_operation & unary_operation) {
-        auto * operand_type = find_type_of(unary_operation.operand);
+        auto operand_type = find_type_of(unary_operation.operand);
         assert(operand_type != nullptr);
 
-        auto * result_type = operand_type;
+        auto result_type = operand_type;
 
         auto is_operand_prim = [this, &operand_type](auto prim) -> bool {
-            return operand_type == type_context.create_type<ast::prim_type>(prim).get();
+            return operand_type == type_context.create_type<ast::prim_type>(prim);
         };
 
         switch (unary_operation.op) {
@@ -333,13 +333,12 @@ namespace control_flow {
                 printError("Cannot deref a null literal");
             } else if (is_operand_prim(ast::prim_type::type::str)) {
                 result_type
-                    = type_context.create_type<ast::prim_type>(ast::prim_type::type::character)
-                          .get();
+                    = type_context.create_type<ast::prim_type>(ast::prim_type::type::character);
             } else {
                 // TODO: Enforce nonnullable_ptr_type
-                auto * ptr_type = dynamic_cast<ast::ptr_type *>(operand_type);
+                auto ptr_type = std::dynamic_pointer_cast<ast::ptr_type>(operand_type);
                 assert(ptr_type != nullptr);
-                result_type = ptr_type->pointed_to_type().get();
+                result_type = ptr_type->pointed_to_type();
             }
             break;
         }
