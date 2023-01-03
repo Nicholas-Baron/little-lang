@@ -1,6 +1,7 @@
 #ifndef CFG_TYPE_CHECKER_HPP
 #define CFG_TYPE_CHECKER_HPP
 
+#include "ast/type_context.hpp"
 #include "control_flow/visitor.hpp"
 
 #include <unordered_set>
@@ -9,11 +10,11 @@ namespace control_flow {
     class type_checker final : public visitor {
 
       public:
-        type_checker();
+        type_checker(ast::type_context & ty_context);
         ~type_checker() noexcept override = default;
 
         non_copyable(type_checker);
-        movable(type_checker);
+        non_movable(type_checker);
 
         [[nodiscard]] bool checked_good() const noexcept { return not has_seen_error; }
 
@@ -33,6 +34,8 @@ namespace control_flow {
         void bind_identifier(std::string name, ast::type * type);
         void bind_type(control_flow::node * value, ast::type * type);
         ast::type * find_type_of(control_flow::node * value) const;
+
+        ast::type_context & type_context;
 
         using instrinic_checker = void (type_checker::*)(intrinsic_call &);
         std::map<std::string, instrinic_checker> intrinsics;

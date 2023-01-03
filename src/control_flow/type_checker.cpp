@@ -7,7 +7,10 @@
 #include <iostream>
 
 namespace control_flow {
-    type_checker::type_checker() { intrinsics.emplace("syscall", &type_checker::syscall); }
+    type_checker::type_checker(ast::type_context & ty_context)
+        : type_context{ty_context} {
+        intrinsics.emplace("syscall", &type_checker::syscall);
+    }
 
     template<class... arg_t>
     void type_checker::printError(const arg_t &... args) {
@@ -40,17 +43,19 @@ namespace control_flow {
             printError("syscalls can only take 1 to 7 arguments\nFound one with ", arg_count);
         }
 
+        auto int_type = type_context.create_type<ast::prim_type>(ast::prim_type::type::int32);
+
         bool first = true;
         for (auto * arg : call.arguments) {
             auto * arg_type = find_type_of(arg);
-            if (not arg_type->is_pointer_type() and arg_type != ast::prim_type::int32.get()) {
+            if (not arg_type->is_pointer_type() and arg_type != int_type.get()) {
                 printError("syscall can only take int or pointer arguments; found ", *arg_type);
             }
 
             // The first argmuent must always be a syscall number.
             if (first) {
                 first = false;
-                if (arg_type != ast::prim_type::int32.get()) {
+                if (arg_type != int_type.get()) {
                     printError("syscall must have an integer as its first argument; found ",
                                *arg_type);
                 }
@@ -58,7 +63,7 @@ namespace control_flow {
         }
 
         // TODO: syscalls can return pointers and 64 bit numbers
-        bind_type(&call, ast::prim_type::int32.get());
+        bind_type(&call, int_type.get());
     }
 
     void type_checker::visit(function_start & func_start) {
@@ -86,22 +91,23 @@ namespace control_flow {
         auto * rhs_type = find_type_of(binary_operation.rhs);
         assert(rhs_type != nullptr);
 
+        auto boolean_type = type_context.create_type<ast::prim_type>(ast::prim_type::type::boolean);
         if (operation::is_shortcircuiting(binary_operation.op)) {
             // Left and right must be booleans
-            if (lhs_type != ast::prim_type::boolean.get()) {
+            if (lhs_type != boolean_type.get()) {
                 printError("lhs expected to be boolean, found ", *lhs_type);
             }
-            if (rhs_type != ast::prim_type::boolean.get()) {
+            if (rhs_type != boolean_type.get()) {
                 printError("rhs expected to be boolean, found ", *rhs_type);
             }
-            bind_type(&binary_operation, ast::prim_type::boolean.get());
+            bind_type(&binary_operation, boolean_type.get());
         } else if (operation::is_comparison(binary_operation.op)) {
             if (lhs_type != rhs_type) {
                 printError("Expected comparison operands to be of same type; found ", *lhs_type,
                            " and ", *rhs_type);
             }
 
-            bind_type(&binary_operation, ast::prim_type::boolean.get());
+            bind_type(&binary_operation, boolean_type.get());
         } else if (operation::is_arithmetic(binary_operation.op)) {
             auto * result_type = lhs_type;
 
@@ -113,9 +119,11 @@ namespace control_flow {
                     auto * non_ptr_type = lhs_type->is_pointer_type() ? rhs_type : lhs_type;
                     auto * ptr_type = lhs_type->is_pointer_type() ? lhs_type : rhs_type;
 
-                    if (non_ptr_type != ast::prim_type::int32.get()) {
-                        printError("Expected ", *ast::prim_type::int32, " to add with ", *ptr_type,
-                                   "; found ", *non_ptr_type);
+                    auto int_type
+                        = type_context.create_type<ast::prim_type>(ast::prim_type::type::int32);
+                    if (non_ptr_type != int_type.get()) {
+                        printError("Expected ", *int_type, " to add with ", *ptr_type, "; found ",
+                                   *non_ptr_type);
                     }
 
                     result_type = ptr_type;
@@ -138,9 +146,9 @@ namespace control_flow {
         auto * cond_type = find_type_of(branch.condition_value);
         assert(cond_type != nullptr);
 
-        if (cond_type != ast::prim_type::boolean.get()) {
-            printError("Expected condition to be of type ", *ast::prim_type::boolean, "; found ",
-                       *cond_type);
+        auto boolean_type = type_context.create_type<ast::prim_type>(ast::prim_type::type::boolean);
+        if (cond_type != boolean_type.get()) {
+            printError("Expected condition to be of type ", *boolean_type, "; found ", *cond_type);
         }
 
         visited.emplace(&branch);
@@ -150,9 +158,13 @@ namespace control_flow {
 
     void type_checker::visit(constant & constant) {
         ast::type * const_type = nullptr;
+        auto get_type = [this](ast::prim_type::type prim) -> decltype(const_type) {
+            return type_context.create_type<ast::prim_type>(prim).get();
+        };
+
         switch (constant.val_type) {
         case literal_type::null:
-            const_type = ast::prim_type::null.get();
+            const_type = get_type(ast::prim_type::type::null);
             break;
         case literal_type::identifier:
             if (auto iter = bound_identifiers.find(std::get<std::string>(constant.value));
@@ -163,19 +175,19 @@ namespace control_flow {
             }
             break;
         case literal_type::integer:
-            const_type = ast::prim_type::int32.get();
+            const_type = get_type(ast::prim_type::type::int32);
             break;
         case literal_type::floating:
-            const_type = ast::prim_type::float32.get();
+            const_type = get_type(ast::prim_type::type::float32);
             break;
         case literal_type::character:
-            const_type = ast::prim_type::character.get();
+            const_type = get_type(ast::prim_type::type::character);
             break;
         case literal_type::boolean:
-            const_type = ast::prim_type::boolean.get();
+            const_type = get_type(ast::prim_type::type::boolean);
             break;
         case literal_type::string:
-            const_type = ast::prim_type::str.get();
+            const_type = get_type(ast::prim_type::type::str);
             break;
         }
 
@@ -237,8 +249,10 @@ namespace control_flow {
     void type_checker::visit(function_end & func_end) {
         assert(current_return_type != nullptr);
 
-        const auto * actual_type = (func_end.value != nullptr) ? find_type_of(func_end.value)
-                                                               : ast::prim_type::unit.get();
+        const auto * actual_type
+            = (func_end.value != nullptr)
+                ? find_type_of(func_end.value)
+                : type_context.create_type<ast::prim_type>(ast::prim_type::type::unit).get();
 
         if (current_return_type != actual_type) {
             printError("Expected a return expression with type ", *current_return_type,
@@ -296,25 +310,31 @@ namespace control_flow {
 
         auto * result_type = operand_type;
 
+        auto is_operand_prim = [this, &operand_type](auto prim) -> bool {
+            return operand_type == type_context.create_type<ast::prim_type>(prim).get();
+        };
+
         switch (unary_operation.op) {
         case operation::unary::bool_not:
-            if (operand_type != ast::prim_type::boolean.get()) {
+            if (not is_operand_prim(ast::prim_type::type::boolean)) {
                 printError("Expected boolean for `!`; found", *operand_type);
             }
             break;
         case operation::unary::negate:
-            if (operand_type != ast::prim_type::int32.get()
-                and operand_type != ast::prim_type::float32.get()) {
+            if (not is_operand_prim(ast::prim_type::type::int32)
+                and not is_operand_prim(ast::prim_type::type::float32)) {
                 printError("Expected float or int for `-`; found", *operand_type);
             }
             break;
         case operation::unary::deref:
             if (not operand_type->is_pointer_type()) {
                 printError("Expected a pointer for `*`; found", *operand_type);
-            } else if (operand_type == ast::prim_type::null.get()) {
+            } else if (is_operand_prim(ast::prim_type::type::null)) {
                 printError("Cannot deref a null literal");
-            } else if (operand_type == ast::prim_type::str.get()) {
-                result_type = ast::prim_type::character.get();
+            } else if (is_operand_prim(ast::prim_type::type::str)) {
+                result_type
+                    = type_context.create_type<ast::prim_type>(ast::prim_type::type::character)
+                          .get();
             } else {
                 // TODO: Enforce nonnullable_ptr_type
                 auto * ptr_type = dynamic_cast<ast::ptr_type *>(operand_type);

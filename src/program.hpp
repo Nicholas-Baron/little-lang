@@ -45,6 +45,9 @@ class program final {
     std::vector<ast::top_level_sequence> ast_modules;
     std::unique_ptr<control_flow::graph> cfg;
     std::vector<std::unique_ptr<llvm::Module>> ir_modules;
+    // TODO: Sort out names
+    // HACK: ty_context needs to be a pointer to allow moves
+    ast::type_context * ty_context;
     llvm_type_lowering typ_context;
 };
 
