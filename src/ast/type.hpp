@@ -101,6 +101,8 @@ namespace ast {
             return prim == type::str or prim == type::null;
         }
 
+        [[nodiscard]] type inner() const noexcept { return prim; }
+
         static const type_ptr int32;
         static const type_ptr unit;
         static const type_ptr float32;
