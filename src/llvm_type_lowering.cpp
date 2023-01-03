@@ -2,16 +2,24 @@
 
 #include <llvm/IR/DerivedTypes.h>
 
-llvm_type_lowering::llvm_type_lowering(llvm::LLVMContext * context)
-    : active_types{
-        {ast::prim_type::int32, llvm::Type::getInt32Ty(*context)},
-        {ast::prim_type::float32, llvm::Type::getFloatTy(*context)},
-        {ast::prim_type::unit, llvm::Type::getVoidTy(*context)},
-        {ast::prim_type::boolean, llvm::Type::getInt1Ty(*context)},
-        {ast::prim_type::character, llvm::Type::getInt8Ty(*context)},
-        // TODO: Move to a Rust style 2 ptr string instead of a C style null-terminated string
-        {ast::prim_type::str, llvm::Type::getInt8PtrTy(*context)},
-    } {}
+llvm_type_lowering::llvm_type_lowering(ast::type_context & type_context,
+                                       llvm::LLVMContext * context) {
+
+    using prim_inner = ast::prim_type::type;
+    active_types.emplace(type_context.create_type<ast::prim_type>(prim_inner::int32),
+                         llvm::Type::getInt32Ty(*context));
+    active_types.emplace(type_context.create_type<ast::prim_type>(prim_inner::float32),
+                         llvm::Type::getFloatTy(*context));
+    active_types.emplace(type_context.create_type<ast::prim_type>(prim_inner::unit),
+                         llvm::Type::getVoidTy(*context));
+    active_types.emplace(type_context.create_type<ast::prim_type>(prim_inner::boolean),
+                         llvm::Type::getInt1Ty(*context));
+    active_types.emplace(type_context.create_type<ast::prim_type>(prim_inner::character),
+                         llvm::Type::getInt8Ty(*context));
+    // TODO: Move to a Rust style 2 ptr string instead of a C style null-terminated string
+    active_types.emplace(type_context.create_type<ast::prim_type>(prim_inner::str),
+                         llvm::Type::getInt8PtrTy(*context));
+}
 
 llvm::Type * llvm_type_lowering::lower_to_llvm(ast::type_ptr type) {
 

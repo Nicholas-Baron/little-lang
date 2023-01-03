@@ -82,6 +82,7 @@ program::~program() noexcept = default;
 
 std::optional<program> program::from_modules(const std::string & root_file,
                                              std::vector<ast::top_level_sequence> && modules,
+                                             ast::type_context & ty_context,
                                              std::shared_ptr<Settings> settings) {
     // topo sort the modules
     std::map<std::string, std::set<std::string>> dependencies;
@@ -116,17 +117,17 @@ std::optional<program> program::from_modules(const std::string & root_file,
         dest_iter++;
     }
 
-    return program{std::move(modules), std::move(settings),
+    return program{std::move(modules), ty_context, std::move(settings),
                    normalized_absolute_path(root_file).parent_path()};
 }
 
-program::program(std::vector<ast::top_level_sequence> && modules,
+program::program(std::vector<ast::top_level_sequence> && modules, ast::type_context & ty_context,
                  std::shared_ptr<Settings> settings, std::string && project_root)
     : project_root{std::move(project_root)}
     , context{std::make_unique<llvm::LLVMContext>()}
     , settings{std::move(settings)}
     , ast_modules(std::move(modules))
-    , typ_context(context.get()) {}
+    , typ_context{ty_context, context.get()} {}
 
 void program::lower_to_cfg() {
     ast_to_cfg lowering;
