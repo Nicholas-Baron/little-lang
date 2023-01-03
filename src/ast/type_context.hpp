@@ -34,7 +34,7 @@ namespace ast {
                 return find_function_type(args...);
             } else if constexpr (std::is_same_v<type_t, ast::struct_type>) {
                 static_assert(sizeof...(args) == 3);
-                return find_struct(args...);
+                return find_struct_type(std::forward<arg_t>(args)...);
             }
         }
 
