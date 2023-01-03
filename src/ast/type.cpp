@@ -16,6 +16,10 @@ namespace ast {
         return std::unique_ptr<nonnullable_ptr_type>{new nonnullable_ptr_type{pointed_to_type}};
     }
 
+    std::unique_ptr<prim_type> prim_type::create(prim_type::type type) {
+        return std::unique_ptr<prim_type>{new prim_type{type}};
+    }
+
     std::unique_ptr<struct_type> struct_type::create(std::string && name,
                                                      const std::string & module_name,
                                                      std::vector<field_type> && fields) {

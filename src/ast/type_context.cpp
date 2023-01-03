@@ -24,8 +24,8 @@ namespace ast {
             }
         }
 
-        // TODO: We may want to lazily allocate prim_types
-        assert(false);
+        types.emplace_back(ast::prim_type::create(type));
+        return types.back().get();
     }
 
     type_ptr type_context::find_ptr_type(bool is_nullable, type_ptr pointed_to) {
