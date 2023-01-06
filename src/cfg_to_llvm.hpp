@@ -32,14 +32,15 @@ class cfg_to_llvm final : public control_flow::visitor {
     void verify_module() const;
     void dump() const;
 
+    [[nodiscard]] std::unique_ptr<llvm::Module> take_ir_module() && noexcept {
+        return std::move(ir_module);
+    }
+
   private:
     // clang-format off
 #define expand_node_macro(name) void visit(control_flow::name & name) override;
         all_cfg_nodes
 #undef expand_node_macro
-
-        std::unique_ptr<llvm::Module> take_ir_module() && noexcept { return std::move(ir_module); }
-    // clang-format on
 
     struct node_data {
         llvm::Value * value;
@@ -47,6 +48,8 @@ class cfg_to_llvm final : public control_flow::visitor {
 
         node_data(llvm::IRBuilderBase & builder, llvm::Value * val);
     };
+    // clang-format on
+
     void bind_value(const control_flow::node & node, llvm::Value * value);
     [[nodiscard]] const node_data * find_value_of(const control_flow::node * node) const;
 
