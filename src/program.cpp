@@ -81,18 +81,19 @@ read_module(const std::string & filename, const std::filesystem::path & project_
     return module_;
 }
 
+// Breadth first search to load the full module graph
 static std::vector<ast::top_level_sequence>
-load_modules(const std::string & input, ast::type_context & type_context, bool debug_ast) {
+load_modules(const std::string & root_filename, ast::type_context & type_context, bool debug_ast) {
 
     std::vector<ast::top_level_sequence> modules;
 
     std::set<std::string> loaded;
     std::queue<std::string> to_load;
 
-    auto proper_input = normalized_absolute_path(input);
-    const auto project_root = proper_input.parent_path();
+    auto proper_root_name = normalized_absolute_path(root_filename);
+    const auto project_root = proper_root_name.parent_path();
 
-    to_load.push(std::move(proper_input));
+    to_load.push(std::move(proper_root_name));
 
     while (not to_load.empty()) {
 
