@@ -8,9 +8,14 @@
 #include "move_copy.hpp"
 #include "settings.hpp"
 
+#include <memory> // shared_ptr, unique_ptr
 #include <vector>
 
-#include <llvm/IR/LLVMContext.h>
+// Forward declare LLVM types
+namespace llvm {
+    class LLVMContext;
+    class Module;
+} // namespace llvm
 
 class program final {
   public:
