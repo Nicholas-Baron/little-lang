@@ -28,9 +28,6 @@ toposort(const std::string & root, const std::map<std::string, std::set<std::str
 
     while (not eval_stack.empty()) {
         auto & current = eval_stack.back();
-        // fmt::print("\nstack size: {}\nstack: {}\nevaluating {}\n",
-        //         eval_stack.size(), eval_stack, current);
-        // if (not to_ret.empty()) fmt::print("result: {}\n", to_ret);
 
         if (contains(to_ret, current)) {
             eval_stack.pop_back();
@@ -42,7 +39,6 @@ toposort(const std::string & root, const std::map<std::string, std::set<std::str
         if (iter == graph.end() or iter->second.empty()) {
             // we can return ourselves now
             to_ret.push_back(current);
-            // fmt::print("pushing {}\n", current);
             eval_stack.pop_back();
             continue;
         }
@@ -52,15 +48,10 @@ toposort(const std::string & root, const std::map<std::string, std::set<std::str
         for (const auto & item : iter->second) {
             if (contains(to_ret, item)) { continue; }
 
-            // fmt::print("could not find {}\n", item);
-            //
             // the item is not in the return list
             // however, there may be a cycle.
             // we need to check that we are not in the eval_stack already
-            if (contains(eval_stack, item)) {
-                // fmt::print("Cycle found: {}\n", eval_stack);
-                return {};
-            }
+            if (contains(eval_stack, item)) { return {}; }
 
             eval_stack.push_back(item);
             pushed_items = true;
