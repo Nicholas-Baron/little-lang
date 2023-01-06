@@ -217,12 +217,16 @@ bool program::type_check() {
 
 void program::generate_ir() {
     global_map<std::string, llvm::GlobalObject *> globals;
-    cfg_to_llvm code_generator{"a.out", *context, globals, llvm_lowering};
-    cfg->for_each_function(
-        [&code_generator](auto * root) { code_generator.control_flow::visitor::visit(*root); });
+    cfg->for_each_function([this, &globals](auto * root) {
+        // TODO: Remove `a.out` hard coding
+        cfg_to_llvm code_generator{"a.out", *context, globals, llvm_lowering};
+        code_generator.control_flow::visitor::visit(*root);
 
-    if (settings->flag_is_set(cmd_flag::debug_ir)) { code_generator.dump(); }
-    code_generator.verify_module();
+        if (settings->flag_is_set(cmd_flag::debug_ir)) { code_generator.dump(); }
+        code_generator.verify_module();
+
+        ir_modules.push_back(std::move(code_generator).take_ir_module());
+    });
 }
 
 std::string program::emit_and_link() {
