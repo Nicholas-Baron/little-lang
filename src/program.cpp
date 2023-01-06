@@ -16,9 +16,11 @@
 
 #include <llvm/IR/LLVMContext.h>
 
+// Topologically sort the DAG provided by `graph` starting at the `root`
 // TODO: test this
 static std::vector<std::string>
-toposort(const std::string & root, const std::map<std::string, std::set<std::string>> & graph) {
+toposort_dependencies(const std::string & root,
+                      const std::map<std::string, std::set<std::string>> & dependency_graph) {
     std::vector<std::string> to_ret;
     std::vector<std::string> eval_stack{root};
 
@@ -29,28 +31,29 @@ toposort(const std::string & root, const std::map<std::string, std::set<std::str
     while (not eval_stack.empty()) {
         auto & current = eval_stack.back();
 
+        // Prevent duplicate entries in `to_ret`
         if (contains(to_ret, current)) {
             eval_stack.pop_back();
             continue;
         }
 
-        auto iter = graph.find(current);
+        auto current_node_info = dependency_graph.find(current);
         // TODO: should finding that an item is not in the graph be an error?
-        if (iter == graph.end() or iter->second.empty()) {
-            // we can return ourselves now
+        if (current_node_info == dependency_graph.end() or current_node_info->second.empty()) {
+            // We can return ourselves now
             to_ret.push_back(current);
             eval_stack.pop_back();
             continue;
         }
 
-        // current has a non-zero dependency set
+        // `current_node_info` has a non-zero dependency set
         bool pushed_items = false;
-        for (const auto & item : iter->second) {
+        for (const auto & item : current_node_info->second) {
             if (contains(to_ret, item)) { continue; }
 
-            // the item is not in the return list
-            // however, there may be a cycle.
-            // we need to check that we are not in the eval_stack already
+            // The item is not in the return list
+            // However, there may be a cycle.
+            // We need to check that we are not in the eval_stack already.
             if (contains(eval_stack, item)) { return {}; }
 
             eval_stack.push_back(item);
@@ -148,7 +151,7 @@ std::unique_ptr<program> program::from_root_file(const std::string & root_filena
         }
         dependencies.emplace(abs_path, std::move(imports));
     }
-    auto sorted = toposort(normalized_absolute_path(root_filename), dependencies);
+    auto sorted = toposort_dependencies(normalized_absolute_path(root_filename), dependencies);
     if (sorted.empty()) {
         std::cerr << "Found cyclic file dependency.\nCannot process this program" << std::endl;
         return nullptr;
