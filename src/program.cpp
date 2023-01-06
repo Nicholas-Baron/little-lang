@@ -207,7 +207,7 @@ bool program::type_check() {
     // TODO: Add the program globals from the env pseudo-module
     control_flow::type_checker checker{*ty_context};
 
-    cfg->for_each_root([&checker](auto * root) {
+    cfg->for_each_function([&checker](auto * root) {
         assert(root != nullptr);
         // TODO: Do not require the name lookup for visit
         checker.control_flow::visitor::visit(*root);
@@ -218,7 +218,7 @@ bool program::type_check() {
 void program::generate_ir() {
     global_map<std::string, llvm::GlobalObject *> globals;
     cfg_to_llvm code_generator{"a.out", *context, globals, llvm_lowering};
-    cfg->for_each_root(
+    cfg->for_each_function(
         [&code_generator](auto * root) { code_generator.control_flow::visitor::visit(*root); });
 
     if (settings->flag_is_set(cmd_flag::debug_ir)) { code_generator.dump(); }
