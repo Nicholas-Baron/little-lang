@@ -8,17 +8,17 @@
 #include "move_copy.hpp"
 #include "settings.hpp"
 
-#include <optional>
 #include <vector>
 
 #include <llvm/IR/LLVMContext.h>
 
 class program final {
   public:
-    static std::optional<program> from_modules(const std::string & root_file,
-                                               std::vector<ast::top_level_sequence> && modules,
-                                               ast::type_context & ty_context,
-                                               std::shared_ptr<Settings> settings);
+    // Load all of the required files for one root file, which should have `main` in it.
+    // Using a `unique_ptr` will allow `program` to be non-movable.
+    static std::unique_ptr<program> from_root_file(const std::string & root_filename,
+                                                   ast::type_context & ty_context,
+                                                   std::shared_ptr<Settings> settings);
 
     void lower_to_cfg();
     [[nodiscard]] bool type_check();
