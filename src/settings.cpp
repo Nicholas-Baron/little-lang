@@ -31,7 +31,7 @@ std::shared_ptr<Settings> read_settings(int arg_count, const char * const * args
 
     auto print_help = false;
     auto print_version = false;
-	auto debug = false;
+    auto debug = false;
     // clang-format on
 
     auto cli = lyra::help(print_help) | lyra::opt(print_version)["--version"]["-V"]
@@ -74,7 +74,7 @@ std::shared_ptr<Settings> read_settings(int arg_count, const char * const * args
 
 // clang-format off
 #define flag(name) if(name) { settings->set_flag(cmd_flag::name); }
-	flags
+    flags
 #undef flag
 
     if(debug){
