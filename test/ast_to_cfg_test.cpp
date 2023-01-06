@@ -75,7 +75,7 @@ TEST_CASE("ast_to_cfg can lower an empty function") {
     // There should be 1 root.
     const control_flow::function_start * start = nullptr;
     auto root_count = 0U;
-    cfg->for_each_root([&](auto * root) {
+    cfg->for_each_function([&](auto * root) {
         CHECK(root != nullptr);
         ++root_count;
 
@@ -117,7 +117,7 @@ TEST_CASE("ast_to_cfg can lower a shortcircuiting expression") {
     // There should be 1 root.
     const control_flow::function_start * start = nullptr;
     auto root_count = 0U;
-    cfg->for_each_root([&](auto * root) {
+    cfg->for_each_function([&](auto * root) {
         CHECK(root != nullptr);
         ++root_count;
 

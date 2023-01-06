@@ -44,13 +44,13 @@ namespace control_flow {
         }
 
         template<typename Callable>
-        void for_each_root(Callable func) const noexcept {
-            for (const auto * root : roots) { func(root); }
+        void for_each_function(Callable func) const noexcept {
+            for (const auto * function : roots) { func(function); }
         }
 
         template<typename Callable>
-        void for_each_root(Callable func) noexcept {
-            for (auto * root : roots) { func(root); }
+        void for_each_function(Callable func) noexcept {
+            for (auto * function : roots) { func(function); }
         }
 
         template<typename Callable>
