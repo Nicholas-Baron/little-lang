@@ -134,10 +134,10 @@ load_modules(const std::string & input, ast::type_context & type_context, bool d
 }
 
 std::unique_ptr<program> program::from_root_file(const std::string & root_filename,
-                                                 ast::type_context & ty_context,
                                                  std::shared_ptr<Settings> settings) {
+    auto ty_context = std::make_unique<ast::type_context>();
     auto modules
-        = load_modules(root_filename, ty_context, settings->flag_is_set(cmd_flag::debug_ast));
+        = load_modules(root_filename, *ty_context, settings->flag_is_set(cmd_flag::debug_ast));
 
     if (modules.empty()) {
         std::cerr << "Could not load modules from root of " << root_filename << std::endl;
@@ -178,20 +178,21 @@ std::unique_ptr<program> program::from_root_file(const std::string & root_filena
     }
 
     return std::unique_ptr<program>{
-        new program{std::move(modules), ty_context, std::move(settings),
+        new program{std::move(modules), std::move(ty_context), std::move(settings),
                     normalized_absolute_path(root_filename).parent_path()}};
 }
 
 program::~program() noexcept = default;
 
-program::program(std::vector<ast::top_level_sequence> && modules, ast::type_context & ty_context,
-                 std::shared_ptr<Settings> settings, std::string && project_root)
+program::program(std::vector<ast::top_level_sequence> && modules,
+                 std::unique_ptr<ast::type_context> ty_context, std::shared_ptr<Settings> settings,
+                 std::string && project_root)
     : project_root{std::move(project_root)}
     , context{std::make_unique<llvm::LLVMContext>()}
     , settings{std::move(settings)}
     , ast_modules(std::move(modules))
-    , ty_context(&ty_context)
-    , llvm_lowering{ty_context, context.get()} {}
+    , ty_context{std::move(ty_context)}
+    , llvm_lowering{*this->ty_context, context.get()} {}
 
 void program::lower_to_cfg() {
     ast_to_cfg lowering;

@@ -10,9 +10,7 @@ int main(const int arg_count, const char * const * const args) {
 
     const auto & filename = command_line->file_to_read;
 
-    // TODO: Main should not be making a type_context
-    ast::type_context type_context;
-    auto program = program::from_root_file(filename, type_context, command_line);
+    auto program = program::from_root_file(filename, command_line);
 
     if (program == nullptr) { return 1; }
 
