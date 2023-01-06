@@ -30,6 +30,8 @@ struct Settings {
     std::vector<std::string> extra_args;
 };
 
+// Parse all CLI arguments before the "--".
+// This allows `littlec myfile.lil -- --myflag` to pass `--myflag` to the resulting executable.
 std::shared_ptr<Settings> read_settings(int arg_count, const char * const * args);
 
 #endif
