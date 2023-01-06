@@ -1,5 +1,5 @@
 #include "program.hpp"
-#include "settings.hpp"
+#include "settings.hpp"      // read_settings
 #include "utils/execute.hpp" // exec_command
 
 #include <iostream> // cout
