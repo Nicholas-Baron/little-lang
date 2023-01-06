@@ -185,7 +185,7 @@ program::program(std::vector<ast::top_level_sequence> && modules,
     , ty_context{std::move(ty_context)}
     , llvm_lowering{*this->ty_context, context.get()} {}
 
-void program::lower_to_cfg() {
+void program::lower_to_control_flow_graph() {
     ast_to_cfg lowering;
 
     for (auto & mod : ast_modules) {

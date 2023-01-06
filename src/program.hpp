@@ -24,7 +24,7 @@ class program final {
     static std::unique_ptr<program> from_root_file(const std::string & root_filename,
                                                    std::shared_ptr<Settings> settings);
 
-    void lower_to_cfg();
+    void lower_to_control_flow_graph();
     [[nodiscard]] bool type_check();
     void generate_ir();
 
