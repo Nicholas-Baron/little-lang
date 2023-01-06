@@ -1,5 +1,6 @@
 #include "program.hpp"
 
+#include "ast/serializer.hpp"
 #include "ast/top_lvl_nodes.hpp"
 #include "ast_to_cfg.hpp"
 #include "cfg_to_llvm.hpp"
@@ -7,11 +8,10 @@
 #include "emit_asm.hpp"
 #include "jit.hpp"
 #include "utils/execute.hpp"
-#include "utils/global_map.hpp"
-#include "utils/string_utils.hpp"
+#include "utils/string_utils.hpp" // normalized_absolute_path
 
-#include <filesystem>
-#include <iostream>
+#include <iostream> // cout, cerr
+#include <queue>
 #include <set>
 
 #include <llvm/IR/LLVMContext.h>
@@ -80,10 +80,74 @@ program::program(program &&) noexcept = default;
 program & program::operator=(program &&) noexcept = default;
 program::~program() noexcept = default;
 
-std::optional<program> program::from_modules(const std::string & root_file,
-                                             std::vector<ast::top_level_sequence> && modules,
-                                             ast::type_context & ty_context,
-                                             std::shared_ptr<Settings> settings) {
+static std::unique_ptr<ast::top_level_sequence>
+read_module(const std::string & filename, const std::filesystem::path & project_root,
+            ast::type_context & type_context) {
+    auto parser = parser::from_file(filename, project_root, type_context);
+    if (parser == nullptr) { return nullptr; }
+
+    auto module_ = parser->parse();
+    if (module_ == nullptr) { std::cerr << parser->error_message() << std::endl; }
+    return module_;
+}
+
+static std::vector<ast::top_level_sequence>
+load_modules(const std::string & input, ast::type_context & type_context, bool debug_ast) {
+
+    std::vector<ast::top_level_sequence> modules;
+
+    std::set<std::string> loaded;
+    std::queue<std::string> to_load;
+
+    auto proper_input = normalized_absolute_path(input);
+    const auto project_root = proper_input.parent_path();
+
+    to_load.push(std::move(proper_input));
+
+    while (not to_load.empty()) {
+
+        auto filename = to_load.front();
+        to_load.pop();
+
+        // do not double load files
+        if (loaded.find(filename) != loaded.end()) { continue; }
+
+        auto parsed_module = read_module(filename, project_root, type_context);
+        if (parsed_module == nullptr) {
+            std::cout << "Failed to parse " << filename << std::endl;
+            assert(false);
+        }
+
+        parsed_module->filename = unquote(filename);
+
+        if (debug_ast) { ast::serializer::into_stream(std::cout, filename, *parsed_module, true); }
+
+        for (const auto & iter : parsed_module->imports) {
+            // certain modules are "pseudo" (only containing intrinsics)
+            if (iter.first == "env") { continue; }
+
+            to_load.push(project_root / unquote(iter.first));
+        }
+
+        modules.push_back(std::move(*parsed_module));
+        parsed_module.reset();
+        loaded.insert(std::move(filename));
+    }
+
+    return modules;
+}
+
+std::unique_ptr<program> program::from_root_file(const std::string & root_filename,
+                                                 ast::type_context & ty_context,
+                                                 std::shared_ptr<Settings> settings) {
+    auto modules
+        = load_modules(root_filename, ty_context, settings->flag_is_set(cmd_flag::debug_ast));
+
+    if (modules.empty()) {
+        std::cerr << "Could not load modules from root of " << root_filename << std::endl;
+        return nullptr;
+    }
+
     // topo sort the modules
     std::map<std::string, std::set<std::string>> dependencies;
     for (auto & mod : modules) {
@@ -97,10 +161,10 @@ std::optional<program> program::from_modules(const std::string & root_file,
         }
         dependencies.emplace(abs_path, std::move(imports));
     }
-    auto sorted = toposort(normalized_absolute_path(root_file), dependencies);
+    auto sorted = toposort(normalized_absolute_path(root_filename), dependencies);
     if (sorted.empty()) {
         std::cerr << "Found cyclic file dependency.\nCannot process this program" << std::endl;
-        return std::nullopt;
+        return nullptr;
     }
 
     assert(sorted.size() == modules.size());
@@ -117,8 +181,9 @@ std::optional<program> program::from_modules(const std::string & root_file,
         dest_iter++;
     }
 
-    return program{std::move(modules), ty_context, std::move(settings),
-                   normalized_absolute_path(root_file).parent_path()};
+    return std::unique_ptr<program>{
+        new program{std::move(modules), ty_context, std::move(settings),
+                    normalized_absolute_path(root_filename).parent_path()}};
 }
 
 program::program(std::vector<ast::top_level_sequence> && modules, ast::type_context & ty_context,
