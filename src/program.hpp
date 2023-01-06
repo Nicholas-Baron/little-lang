@@ -29,10 +29,9 @@ class program final {
     [[nodiscard]] uint64_t jit();
 
     non_copyable(program);
+    non_movable(program);
 
-    // These need to be out of line for LLVM types
-    program(program &&) noexcept;
-    program & operator=(program &&) noexcept;
+    // This needs to be out of line for the llvm types.
     ~program() noexcept;
 
   private:

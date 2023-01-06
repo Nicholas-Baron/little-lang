@@ -76,10 +76,6 @@ toposort(const std::string & root, const std::map<std::string, std::set<std::str
     return to_ret;
 }
 
-program::program(program &&) noexcept = default;
-program & program::operator=(program &&) noexcept = default;
-program::~program() noexcept = default;
-
 static std::unique_ptr<ast::top_level_sequence>
 read_module(const std::string & filename, const std::filesystem::path & project_root,
             ast::type_context & type_context) {
@@ -185,6 +181,8 @@ std::unique_ptr<program> program::from_root_file(const std::string & root_filena
         new program{std::move(modules), ty_context, std::move(settings),
                     normalized_absolute_path(root_filename).parent_path()}};
 }
+
+program::~program() noexcept = default;
 
 program::program(std::vector<ast::top_level_sequence> && modules, ast::type_context & ty_context,
                  std::shared_ptr<Settings> settings, std::string && project_root)
