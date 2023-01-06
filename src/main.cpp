@@ -14,7 +14,7 @@ int main(const int arg_count, const char * const * const args) {
 
     if (program == nullptr) { return 1; }
 
-    program->lower_to_cfg();
+    program->lower_to_control_flow_graph();
     if (not program->type_check()) { return 2; }
     program->generate_ir();
 
