@@ -14,6 +14,7 @@ enum class cmd_flag : unsigned {
     debug_show_execs = 1 << 4,
     run_result = 1 << 5,
     no_output = 1 << 6,
+    debug_cfg = 1 << 7,
 };
 
 struct Settings {

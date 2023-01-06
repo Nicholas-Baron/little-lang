@@ -200,7 +200,8 @@ void program::lower_to_control_flow_graph() {
     }
 
     this->cfg = std::move(lowering).take_cfg();
-    cfg->list_all_nodes();
+
+    if (settings->flag_is_set(cmd_flag::debug_cfg)) { cfg->list_all_nodes(); }
 }
 
 bool program::type_check() {
