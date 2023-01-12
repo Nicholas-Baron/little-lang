@@ -65,11 +65,22 @@ Using `std::shared_ptr` is a possible [anti-pattern](https://ddanilov.me/shared-
 Additionally, reference cycles are a persistent worry surrounding their usage.
 Data structures using `std::shared_ptr` thus should ensure that they can form a directed acyclic graph (DAG).
 
-Currently, the frontend type system uses `std::shared_ptr` to enforce singleton invariants and allow composition.
-Since the only source for types is user code and all compositional types are registered after their full definition is complete,
-there is no way for a user to write a cyclic type without an infinitely long file.
-
 This safety mechanism may not last forever.
 As such, single owner systems are preferable.
-Previous work within the repo is the `control_flow::graph`,
-which is cyclic due to value and control passing between nodes.
+Previous work within the repo are the `control_flow::graph` and the `ast::type_context`,
+the former of which is cyclic due to value and control passing between nodes.
+
+# Compiler Internals
+
+## Control Flow Graph
+
+The control flow graph is used to typecheck programs and is the intermediate stage before LLVM.
+
+
+Most nodes are possibly values.
+However, there is no explicit marking of this fact due to certain nodes not "making sense" in a value position.
+The list of such cases:
+- `function_start` only makes sense as the callee of a `function_call` node.
+NOTE: This may change when function pointers get implemented.
+- `function_end` is not a value, as it marks the `return` statement of a function.
+- `phi` is only a value iff all of its previous nodes have the same type.
