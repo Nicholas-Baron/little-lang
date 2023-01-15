@@ -13,7 +13,7 @@
 #include <map>
 #include <memory> // unique_ptr
 #include <optional>
-#include <string>
+#include <sstream>
 #include <vector>
 
 #include <move_copy.hpp>
@@ -47,7 +47,9 @@ class parser final {
     [[nodiscard]] std::unique_ptr<ast::top_level_sequence> parse();
 
     // In the case that `parse` failed, `error_message` will provide a human readable error.
-    [[nodiscard]] std::string error_message() const { return error; }
+    // To check that no error has occured in parsing,
+    // ensure that the result of this function is empty.
+    [[nodiscard]] std::string error_message() const { return error_printout.str(); }
 
     // The parser's inner state is rather complex, so not moving or copying it is essential.
     non_copyable(parser);
@@ -125,7 +127,10 @@ class parser final {
 
     lex_ptr lex;
     ast::type_context & ty_context;
-    std::string error;
+    std::stringstream error_printout;
+
+    template<typename... Args>
+    void print_error(Location loc, Args... args);
 };
 
 #endif
