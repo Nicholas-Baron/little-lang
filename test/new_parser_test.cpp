@@ -18,9 +18,10 @@ TEST_CASE("the parser will parse braces as a compound statement") {
 
 TEST_CASE("the parser will parse typed identifiers in both new style and C-style") {
 
-    ast::typed_identifier typed_id_1 = [] {
+    ast::type_context ty_context;
+
+    ast::typed_identifier typed_id_1 = [&ty_context] {
         std::string buffer = "int x";
-        ast::type_context ty_context;
         auto parser = parser::from_buffer(buffer, ty_context);
 
         CHECK(parser != nullptr);
@@ -28,9 +29,8 @@ TEST_CASE("the parser will parse typed identifiers in both new style and C-style
         return parser->parse_typed_identifier();
     }();
 
-    ast::typed_identifier typed_id_2 = [] {
+    ast::typed_identifier typed_id_2 = [&ty_context] {
         std::string buffer = "x : int";
-        ast::type_context ty_context;
         auto parser = parser::from_buffer(buffer, ty_context);
 
         CHECK(parser != nullptr);
@@ -139,8 +139,9 @@ TEST_CASE("the parser will parse pointer types and expressions") {
     auto * let = dynamic_cast<ast::let_stmt *>(stmt.get());
     CHECK(let != nullptr);
     CHECK(let->name_and_type.name() == "x");
-    CHECK(let->name_and_type.type()
-          == ty_context.create_type<ast::prim_type>(ast::prim_type::type::int32));
+
+    auto * int_type = ty_context.create_type<ast::prim_type>(ast::prim_type::type::int32);
+    CHECK(let->name_and_type.type() == ty_context.create_type<ast::nullable_ptr_type>(int_type));
     CHECK(let->value != nullptr);
 
     auto * value = dynamic_cast<ast::user_val *>(let->value.get());
