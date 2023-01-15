@@ -37,7 +37,7 @@ std::unique_ptr<ast::top_level_sequence> parser::parse() {
 
     if (tok == lexer::token_type::eof) {
         // We do not allow an empty module.
-        error = "Found empty file";
+        print_error(Location{}, "Found empty file");
         return nullptr;
     }
 
@@ -49,12 +49,7 @@ std::unique_ptr<ast::top_level_sequence> parser::parse() {
         if (lex->peek_token() == lexer::token_type::export_) {
             to_ret->append(parse_exports());
         } else {
-            auto item = parse_top_level();
-            if (item == nullptr) {
-                std::cerr << "Error: " << error << std::endl;
-                assert(false);
-            }
-            to_ret->append(std::move(item));
+            to_ret->append(parse_top_level());
         }
     }
     return to_ret;
@@ -70,13 +65,14 @@ ast::top_lvl_ptr parser::parse_top_level() {
         } else if (lex->peek_token(1) == lexer::token_type::lbrace) {
             return parse_struct_decl();
         }
-        error = "Unexpected " + lex->peek_token(1).text + " after " + lex->peek_token().text;
+        print_error(lex->peek_token(1).location, "Unexpected ", lex->peek_token(1).text, " after ",
+                    lex->peek_token().text);
         return nullptr;
     case lexer::token_type::const_:
         // Parse a constant
         return parse_const_decl();
     default:
-        error = "Unexpected " + lex->next_token().text;
+        print_error(lex->peek_token().location, "Unexpected ", lex->next_token().text);
         return nullptr;
     }
 }
@@ -206,7 +202,7 @@ std::unique_ptr<ast::func_decl> parser::parse_function() {
     }
 
     if (body == nullptr) {
-        error = "Could not find body for " + func_name_tok.text;
+        print_error(func_name_tok.location, "Could not find body for ", func_name_tok.text);
         return nullptr;
     }
 
@@ -305,7 +301,8 @@ ast::stmt_ptr parser::parse_statement() {
         return func_call;
     }
     default:
-        error = "Unexpected " + lex->peek_token().text + " at start of statement";
+        print_error(lex->peek_token().location, "Unexpected ", lex->peek_token().text,
+                    " at start of statement");
         return nullptr;
     }
 }
@@ -482,7 +479,7 @@ ast::type_ptr parser::parse_type() {
         lex->next_token();
         return ty_context.create_type<ast::nullable_ptr_type>(parse_type());
     default:
-        error = "Expected a type. Found " + lex->peek_token().text;
+        print_error(lex->peek_token().location, "Expected a type. Found ", lex->peek_token().text);
         return nullptr;
     }
 }
@@ -789,4 +786,11 @@ std::unique_ptr<ast::struct_init> parser::parse_struct_init(std::string && type_
     auto init = std::make_unique<ast::struct_init>(std::move(type_name), std::move(initializers));
     init->set_location(loc);
     return init;
+}
+
+template<typename... Args>
+void parser::print_error(Location loc, Args... args) {
+    static_assert(sizeof...(args) > 0);
+    error_printout << module_name() << ':' << loc << ": ";
+    (error_printout << ... << args);
 }
