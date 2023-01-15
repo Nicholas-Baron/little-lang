@@ -7,6 +7,7 @@
 
 #include <cassert>
 #include <filesystem>
+#include <functional>
 #include <iostream> // cerr
 #include <map>
 #include <memory> // unique_ptr
@@ -460,17 +461,35 @@ ast::type_ptr parser::parse_type() {
         return type_ptr;
     }
     case lexer::token_type::prim_type: {
-        static const std::map<std::string, ast::type_ptr> prim_types{
-            {"int", ty_context.create_type<ast::prim_type>(ast::prim_type::type::int32)},
-            {"float", ty_context.create_type<ast::prim_type>(ast::prim_type::type::float32)},
-            {"char", ty_context.create_type<ast::prim_type>(ast::prim_type::type::character)},
-            {"unit", ty_context.create_type<ast::prim_type>(ast::prim_type::type::unit)},
-            {"bool", ty_context.create_type<ast::prim_type>(ast::prim_type::type::boolean)},
-            {"string", ty_context.create_type<ast::prim_type>(ast::prim_type::type::str)},
+        static const std::map<std::string, std::function<ast::type_ptr()>> prim_types{
+            {"int",
+             [this] {
+                 return ty_context.create_type<ast::prim_type>(ast::prim_type::type::int32);
+             }},
+            {"float",
+             [this] {
+                 return ty_context.create_type<ast::prim_type>(ast::prim_type::type::float32);
+             }},
+            {"char",
+             [this] {
+                 return ty_context.create_type<ast::prim_type>(ast::prim_type::type::character);
+             }},
+            {"unit",
+             [this] { return ty_context.create_type<ast::prim_type>(ast::prim_type::type::unit); }},
+            {"bool",
+             [this] {
+                 return ty_context.create_type<ast::prim_type>(ast::prim_type::type::boolean);
+             }},
+            {"string",
+             [this] { return ty_context.create_type<ast::prim_type>(ast::prim_type::type::str); }},
         };
         auto iter = prim_types.find(lex->next_token().text);
-        assert(iter != prim_types.end());
-        return iter->second;
+        if (iter == prim_types.end()) {
+            print_error(lex->peek_token().location, "Could not find primitive type named ",
+                        lex->peek_token().text);
+            return nullptr;
+        }
+        return iter->second();
     }
     case lexer::token_type::amp:
         lex->next_token();
