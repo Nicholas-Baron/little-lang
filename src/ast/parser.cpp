@@ -185,6 +185,7 @@ std::unique_ptr<ast::func_decl> parser::parse_function() {
     assert(tok == lexer::token_type::rparen);
 
     std::vector<ast::type_ptr> arg_types;
+    arg_types.reserve(args.size());
     for (auto & arg : args) { arg_types.push_back(arg.type()); }
 
     auto * return_type = ty_context.create_type<ast::prim_type>(ast::prim_type::type::unit);
@@ -263,7 +264,7 @@ std::unique_ptr<ast::struct_decl> parser::parse_struct_decl() {
         }
     }
 
-    auto struct_type = [&] {
+    auto * struct_type = [&] {
         // Insert the new struct type into the ast type registry
         std::vector<ast::struct_type::field_type> struct_fields;
         struct_fields.reserve(fields.size());
@@ -414,10 +415,10 @@ ast::typed_identifier parser::parse_opt_typed_identifier() {
     // Since type may be null, this covers the third (`name`) and first (`type name`) cases.
     // However, we need to check that there are at least 2 identifiers in a row before calling
     // parse_type. Otherwise, we may interpret the third case of just a name as a type.
-    auto type = (lex->peek_token() == lexer::token_type::identifier
-                 and lex->peek_token(1) != lexer::token_type::identifier)
-                  ? nullptr
-                  : parse_type();
+    auto * type = (lex->peek_token() == lexer::token_type::identifier
+                   and lex->peek_token(1) != lexer::token_type::identifier)
+                    ? nullptr
+                    : parse_type();
     auto name = lex->next_token();
     if (name != lexer::token_type::identifier) {
         std::cout << "Expected identifier, found " << name.text << std::endl;
@@ -445,18 +446,18 @@ ast::typed_identifier parser::parse_typed_identifier() {
     }
 
     // the first case (`type name`) has occured.
-    auto type = parse_type();
+    auto * type = parse_type();
     assert(type != nullptr);
     auto name = lex->next_token();
     assert(name == lexer::token_type::identifier);
-    return {std::move(name.text), std::move(type), location};
+    return {std::move(name.text), type, location};
 }
 
 ast::type_ptr parser::parse_type() {
     // a type can either be some primitive or a user-defined type.
     switch (lex->peek_token().type) {
     case lexer::token_type::identifier: {
-        auto type_ptr = ty_context.lookup_user_type(lex->next_token().text, module_name());
+        auto * type_ptr = ty_context.lookup_user_type(lex->next_token().text, module_name());
         assert(type_ptr != nullptr);
         return type_ptr;
     }
