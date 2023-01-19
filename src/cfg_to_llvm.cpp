@@ -30,9 +30,9 @@ namespace {
             return count;
         }
 
-        constexpr auto * first_part = "=A,A,{di},{si},{dx},{r10},{r8},{r9},";
+        constexpr auto * first_part = "={ax},{ax},{di},{si},{dx},{r10},{r8},{r9},";
         constexpr auto count = count_in(first_part, ',') - 1;
-        constexpr auto * suffix = ",~{r11},~{rcx},~{dirflag},~{fpsr},~{flags}";
+        constexpr auto * suffix = ",0,~{r11},~{rcx},~{dirflag},~{fpsr},~{flags}";
 
     } // namespace constraints
 
@@ -168,7 +168,7 @@ void cfg_to_llvm::visit(control_flow::binary_operation & binary_operation) {
 
             auto * pointer_type = llvm::dyn_cast_or_null<llvm::PointerType>(pointer->getType());
             assert(pointer_type != nullptr);
-            auto * element_ty = pointer_type->getPointerElementType();
+            auto * element_ty = type_lowering.lower_to_llvm(binary_operation.result_type);
             result = ir_builder->CreateGEP(element_ty, pointer, index);
         }
 
@@ -386,7 +386,7 @@ void cfg_to_llvm::syscall(control_flow::intrinsic_call & intrinsic_call) {
         = llvm::cast_or_null<llvm::FunctionType>(type_lowering.lower_to_llvm(intrinsic_call.type));
     assert(func_type != nullptr);
 
-    assert(llvm::InlineAsm::Verify(func_type, constraint));
+    assert(llvm::InlineAsm::verify(func_type, constraint));
 
     bind_value(intrinsic_call,
                ir_builder->CreateCall(
@@ -476,12 +476,10 @@ void cfg_to_llvm::visit(control_flow::unary_operation & unary_operation) {
     case operand::deref: {
         assert(const_val == nullptr);
 
-        auto * ptr_ty = llvm::dyn_cast<llvm::PointerType>(value->value->getType());
-        assert(ptr_ty != nullptr);
+        auto * element_ty = type_lowering.lower_to_llvm(unary_operation.result_type);
 
         // TODO: Align it?
-        bind_value(unary_operation,
-                   ir_builder->CreateLoad(ptr_ty->getPointerElementType(), value->value));
+        bind_value(unary_operation, ir_builder->CreateLoad(element_ty, value->value));
     } break;
     case operand::negate:
         if (auto float_op = value->value->getType()->isFloatingPointTy(); const_val != nullptr) {

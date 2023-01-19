@@ -25,6 +25,14 @@ namespace control_flow {
 
     void type_checker::bind_type(control_flow::node * value, ast::type_ptr type) {
         node_type.emplace(value, type);
+
+        if (auto * binary_op = dynamic_cast<control_flow::binary_operation *>(value);
+            binary_op != nullptr) {
+            binary_op->result_type = type;
+        } else if (auto * unary_op = dynamic_cast<control_flow::unary_operation *>(value);
+                   unary_op != nullptr) {
+            unary_op->result_type = type;
+        }
     }
 
     void type_checker::bind_identifier(std::string name, ast::type * type) {

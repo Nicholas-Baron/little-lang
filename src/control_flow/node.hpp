@@ -1,6 +1,7 @@
 #ifndef NODE_HPP
 #define NODE_HPP
 
+#include "ast/type.hpp"
 #include "common/operations.hpp"
 #include "literal_type.hpp"
 #include "visitor.hpp"
@@ -86,6 +87,7 @@ namespace control_flow {
         node * next;
         node * lhs;
         node * rhs;
+        ast::type_ptr result_type;
         operation::binary op;
     };
 
@@ -101,6 +103,7 @@ namespace control_flow {
         node * previous;
         node * next;
         node * operand;
+        ast::type_ptr result_type;
         operation::unary op;
     };
 
