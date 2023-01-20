@@ -235,15 +235,15 @@ std::string program::emit_and_link() {
 
     // TODO: make a better path to stdlib
     // TODO: do not invoke as if start.o already exists
-    auto main_file = std::filesystem::path(ast_modules.back().filename);
+    auto project = std::filesystem::path(project_root);
 
-    auto bootstrap = main_file.parent_path() / "stdlib/start.S";
+    auto bootstrap = project / "stdlib" / "start.S";
     if (not exec_command({"as", std::move(bootstrap), "-o", "start.o"}, debug_print_execs)) {
         std::cerr << "Error assembling start.S" << std::endl;
         exit(0);
     }
 
-    auto program_name = std::filesystem::current_path() / main_file.stem();
+    auto program_name = std::filesystem::current_path() / project.stem();
     std::vector<std::string> linker_args{"ld", "-static",    "--gc-sections",
                                          "-o", program_name, "start.o"};
     if (debug_print_execs) { linker_args.emplace_back("--print-gc-sections"); }
