@@ -1,5 +1,4 @@
-#ifndef STMT_NODES_HPP
-#define STMT_NODES_HPP
+#pragma once
 
 #include "base_nodes.hpp"
 #include "node_utils.hpp"
@@ -88,5 +87,3 @@ namespace ast {
         expr_ptr value;
     };
 } // namespace ast
-
-#endif

@@ -1,6 +1,5 @@
 
-#ifndef VISITOR_HPP
-#define VISITOR_HPP
+#pragma once
 
 #include "node_forward.hpp"
 
@@ -28,4 +27,3 @@ namespace control_flow {
     };
 
 } // namespace control_flow
-#endif

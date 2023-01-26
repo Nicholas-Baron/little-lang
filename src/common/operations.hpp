@@ -1,5 +1,4 @@
-#ifndef COMMON_OPERATIONS_HPP
-#define COMMON_OPERATIONS_HPP
+#pragma once
 
 namespace operation {
     enum class binary {
@@ -52,5 +51,3 @@ namespace operation {
 
     enum class unary { bool_not, negate, deref };
 } // namespace operation
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef NODE_HPP
-#define NODE_HPP
+#pragma once
 
 #include "ast/type.hpp"
 #include "common/operations.hpp"
@@ -233,5 +232,3 @@ namespace control_flow {
 #undef make_visitable
 
 } // namespace control_flow
-
-#endif

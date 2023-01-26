@@ -1,5 +1,4 @@
-#ifndef EXPR_NODES_HPP
-#define EXPR_NODES_HPP
+#pragma once
 
 #include "base_nodes.hpp"
 #include "location.hpp"
@@ -118,5 +117,3 @@ namespace ast {
         std::vector<std::pair<std::string, ast::expr_ptr>> initializers;
     };
 } // namespace ast
-
-#endif

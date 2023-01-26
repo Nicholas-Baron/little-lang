@@ -1,5 +1,4 @@
-#ifndef AST_TYPE_CONTEXT_HPP
-#define AST_TYPE_CONTEXT_HPP
+#pragma once
 
 #include "type.hpp"
 
@@ -57,5 +56,3 @@ namespace ast {
         std::vector<std::unique_ptr<ast::type>> types;
     };
 } // namespace ast
-
-#endif

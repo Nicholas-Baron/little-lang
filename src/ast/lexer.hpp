@@ -1,5 +1,4 @@
-#ifndef LEXER_HPP
-#define LEXER_HPP
+#pragma once
 
 #include "location.hpp"
 
@@ -160,5 +159,3 @@ class lexer final {
 };
 
 using lex_ptr = std::unique_ptr<lexer>;
-
-#endif

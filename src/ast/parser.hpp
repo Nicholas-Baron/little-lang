@@ -1,5 +1,4 @@
-#ifndef PARSER_HPP
-#define PARSER_HPP
+#pragma once
 
 #include "base_nodes.hpp"
 #include "lexer.hpp"
@@ -132,5 +131,3 @@ class parser final {
     template<typename... Args>
     void print_error(Location loc, Args... args);
 };
-
-#endif

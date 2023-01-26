@@ -1,5 +1,4 @@
-#ifndef MOVE_COPY_HPP
-#define MOVE_COPY_HPP
+#pragma once
 
 #define movable(type)        \
     type(type &&) = default; \
@@ -12,5 +11,3 @@
 #define non_copyable(type)       \
     type(const type &) = delete; \
     type & operator=(const type &) = delete
-
-#endif

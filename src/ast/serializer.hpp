@@ -1,5 +1,4 @@
-#ifndef AST_SERIALIZER_HPP
-#define AST_SERIALIZER_HPP
+#pragma once
 
 #include "visitor_base.hpp"
 
@@ -42,5 +41,3 @@ namespace ast {
         // clang-format on
     };
 } // namespace ast
-
-#endif

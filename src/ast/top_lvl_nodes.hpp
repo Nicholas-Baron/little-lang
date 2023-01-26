@@ -1,5 +1,4 @@
-#ifndef TOP_LVL_NODES_HPP
-#define TOP_LVL_NODES_HPP
+#pragma once
 
 #include "base_nodes.hpp"
 #include "node_utils.hpp"
@@ -110,5 +109,3 @@ namespace ast {
         void update_export(bool /*val*/) final {}
     };
 } // namespace ast
-
-#endif

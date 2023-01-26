@@ -1,5 +1,4 @@
-#ifndef NODES_FORWARD_HPP
-#define NODES_FORWARD_HPP
+#pragma once
 
 // clang-format off
 #define ast_nodes                 \
@@ -32,5 +31,3 @@ namespace ast {
     ast_nodes
 #undef expand_node_macro
 } // namespace ast
-
-#endif
