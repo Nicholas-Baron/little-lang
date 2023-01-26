@@ -1,5 +1,4 @@
-#ifndef GRAPH_HPP
-#define GRAPH_HPP
+#pragma once
 
 #include <memory> // unique_ptr
 #include <vector>
@@ -74,5 +73,3 @@ namespace control_flow {
         node * previously_created{nullptr};
     };
 } // namespace control_flow
-
-#endif

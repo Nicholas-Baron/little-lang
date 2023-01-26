@@ -1,5 +1,4 @@
-#ifndef PROGRAM_HPP
-#define PROGRAM_HPP
+#pragma once
 
 #include "ast/top_lvl_nodes.hpp"
 #include "ast/type_context.hpp"
@@ -52,5 +51,3 @@ class program final {
     std::unique_ptr<ast::type_context> ty_context;
     llvm_type_lowering llvm_lowering;
 };
-
-#endif

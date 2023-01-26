@@ -1,5 +1,4 @@
-#ifndef CFG_SERIALIZER_HPP
-#define CFG_SERIALIZER_HPP
+#pragma once
 
 #include "node_forward.hpp"
 #include "utils/value_getter.hpp"
@@ -36,5 +35,3 @@ namespace control_flow {
         std::map<node *, size_t> visited;
     };
 } // namespace control_flow
-
-#endif

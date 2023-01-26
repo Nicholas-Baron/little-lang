@@ -1,5 +1,4 @@
-#ifndef LOCATION_HPP
-#define LOCATION_HPP
+#pragma once
 
 #include <iosfwd>
 #include <utility>
@@ -38,5 +37,3 @@ class Location final {
 };
 
 std::ostream & operator<<(std::ostream & lhs, const Location & rhs);
-
-#endif

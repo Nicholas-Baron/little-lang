@@ -1,5 +1,4 @@
-#ifndef GLOBAL_VALUES_HPP
-#define GLOBAL_VALUES_HPP
+#pragma once
 
 #include <cassert>
 #include <map>
@@ -63,5 +62,3 @@ class global_map final {
         return lhs << '}';
     }
 };
-
-#endif

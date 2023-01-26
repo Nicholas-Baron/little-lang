@@ -1,5 +1,4 @@
-#ifndef NODE_FORWARD_HPP
-#define NODE_FORWARD_HPP
+#pragma once
 
 // clang-format off
 #define all_cfg_nodes                    \
@@ -22,5 +21,3 @@ namespace control_flow {
     all_cfg_nodes
 #undef expand_node_macro
 } // namespace control_flow
-
-#endif

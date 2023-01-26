@@ -1,5 +1,4 @@
-#ifndef SCOPED_MAP_HPP
-#define SCOPED_MAP_HPP
+#pragma once
 
 #include <list>
 #include <map>
@@ -33,5 +32,3 @@ class scoped_map final {
     // `list` is prefered to `vector`, due to the former never indirectly invalidating iterators.
     std::list<std::map<key_t, value_t>> active_values;
 };
-
-#endif

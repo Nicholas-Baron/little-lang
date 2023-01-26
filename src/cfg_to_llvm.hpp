@@ -1,5 +1,4 @@
-#ifndef CFG_TO_LLVM_HPP
-#define CFG_TO_LLVM_HPP
+#pragma once
 
 #include "control_flow/node_forward.hpp"
 #include "control_flow/visitor.hpp"
@@ -69,5 +68,3 @@ class cfg_to_llvm final : public control_flow::visitor {
     std::unordered_set<const control_flow::node *> visited;
     scoped_map<std::string, llvm::Value *> local_names;
 };
-
-#endif

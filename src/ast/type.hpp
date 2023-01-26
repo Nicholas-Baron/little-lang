@@ -1,5 +1,4 @@
-#ifndef TYPE_HPP
-#define TYPE_HPP
+#pragma once
 
 #include <iosfwd> // ostream
 #include <memory> // unique_ptr
@@ -196,5 +195,3 @@ namespace ast {
     };
 
 } // namespace ast
-
-#endif

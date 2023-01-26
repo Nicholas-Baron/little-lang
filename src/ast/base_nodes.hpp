@@ -1,5 +1,4 @@
-#ifndef BASE_NODES_HPP
-#define BASE_NODES_HPP
+#pragma once
 
 #include "location.hpp"
 #include "nodes_forward.hpp"
@@ -71,5 +70,3 @@ namespace ast {
     using stmt_ptr = std::unique_ptr<stmt>;
     using top_lvl_ptr = std::unique_ptr<top_level>;
 } // namespace ast
-
-#endif

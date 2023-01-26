@@ -1,5 +1,4 @@
-#ifndef CFG_TYPE_CHECKER_HPP
-#define CFG_TYPE_CHECKER_HPP
+#pragma once
 
 #include "ast/type_context.hpp"
 #include "control_flow/visitor.hpp"
@@ -47,5 +46,3 @@ namespace control_flow {
         bool has_seen_error{false};
     };
 } // namespace control_flow
-
-#endif

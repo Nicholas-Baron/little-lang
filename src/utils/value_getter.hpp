@@ -1,5 +1,4 @@
-#ifndef VALUE_GETTER_HPP
-#define VALUE_GETTER_HPP
+#pragma once
 
 #include <cassert>
 #include <optional>
@@ -50,5 +49,3 @@ class value_getter {
   private:
     std::optional<result_t> result;
 };
-
-#endif

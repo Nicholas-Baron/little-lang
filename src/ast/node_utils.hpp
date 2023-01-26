@@ -1,5 +1,4 @@
-#ifndef NODE_UTILS_HPP
-#define NODE_UTILS_HPP
+#pragma once
 
 #include "base_nodes.hpp"
 #include "location.hpp"
@@ -68,5 +67,3 @@ namespace ast {
         std::vector<expr_ptr> args_{};
     };
 } // namespace ast
-
-#endif

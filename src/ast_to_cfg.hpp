@@ -1,5 +1,4 @@
-#ifndef AST_TO_CFG
-#define AST_TO_CFG
+#pragma once
 
 #include "ast/visitor_base.hpp"
 #include "control_flow/graph.hpp"
@@ -60,5 +59,3 @@ class ast_to_cfg final : public ast::visitor_base,
         globals;
     std::string current_module;
 };
-
-#endif

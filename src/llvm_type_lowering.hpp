@@ -1,5 +1,4 @@
-#ifndef TYPE_CONTEXT_HPP
-#define TYPE_CONTEXT_HPP
+#pragma once
 
 #include "ast/node_utils.hpp"
 #include "ast/type_context.hpp"
@@ -20,5 +19,3 @@ class llvm_type_lowering final {
     global_map<std::string, ast::type_ptr> global_types;
     std::map<ast::type_ptr, llvm::Type *> active_types;
 };
-
-#endif

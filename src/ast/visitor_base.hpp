@@ -1,5 +1,4 @@
-#ifndef VISITOR_BASE_HPP
-#define VISITOR_BASE_HPP
+#pragma once
 
 #include "nodes_forward.hpp"
 
@@ -24,5 +23,3 @@ namespace ast {
         // clang-format on
     };
 } // namespace ast
-
-#endif
