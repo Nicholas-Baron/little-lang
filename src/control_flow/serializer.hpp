@@ -8,7 +8,9 @@
 
 namespace control_flow {
     /// The value returned is actually an index into the result vector.
-    class serializer final : public visitor, public value_getter<serializer, node, size_t> {
+    class serializer final
+        : public visitor
+        , public value_getter<serializer, node, size_t> {
       public:
         static void into_stream(std::ostream & stream, const std::vector<node *> & roots,
                                 bool human_readable);

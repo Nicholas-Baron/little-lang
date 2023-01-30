@@ -46,6 +46,7 @@ namespace ast {
     };
 
     class stmt : public virtual node {};
+
     class top_level : public virtual node {
 
       public:

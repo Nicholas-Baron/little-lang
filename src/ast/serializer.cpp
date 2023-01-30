@@ -31,8 +31,11 @@ namespace ast {
     // These four should not be called under any circumstance.
     // TODO: Remove from the trick macro.
     void serializer::visit(node & /*node*/) { assert(false and "Should not get here"); }
+
     void serializer::visit(expr & /*expr*/) { assert(false and "Should not get here"); }
+
     void serializer::visit(stmt & /*stmt*/) { assert(false and "Should not get here"); }
+
     void serializer::visit(top_level & /*top_level*/) { assert(false and "Should not get here"); }
 
     void serializer::visit(const_decl & const_decl) {
@@ -59,6 +62,7 @@ namespace ast {
     }
 
     void serializer::visit(func_call_expr & func_call_expr) { visit(func_call_expr.data); }
+
     void serializer::visit(func_call_stmt & func_call_stmt) { visit(func_call_stmt.data); }
 
     void serializer::visit(func_decl & func_decl) {

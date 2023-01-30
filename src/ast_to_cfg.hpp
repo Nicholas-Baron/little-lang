@@ -18,8 +18,9 @@ struct basic_block {
     bool from_id_lookup{false};
 };
 
-class ast_to_cfg final : public ast::visitor_base,
-                         public value_getter<ast_to_cfg, ast::node, basic_block> {
+class ast_to_cfg final
+    : public ast::visitor_base
+    , public value_getter<ast_to_cfg, ast::node, basic_block> {
   public:
     ast_to_cfg();
 

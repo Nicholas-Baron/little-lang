@@ -22,6 +22,7 @@ std::unique_ptr<lexer> lexer::from_file(const std::string & filename) {
 
     // Then, we read the open file's size.
     struct stat file_stats {};
+
     if (fstat(fd, &file_stats) == -1) {
         perror("lexer stat");
         return nullptr;

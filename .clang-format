@@ -26,13 +26,21 @@ AllowShortLoopsOnASingleLine: true
 
 # Where line breaks should be
 AlwaysBreakTemplateDeclarations: Yes
+BinPackArguments: true
+BinPackParameters: true
+BreakBeforeBinaryOperators: All
 BreakBeforeBraces: Attach
+BreakBeforeConceptDeclarations: Always
+BreakBeforeTernaryOperators: true
 BreakConstructorInitializers: BeforeComma
+BreakInheritanceList: BeforeComma
+BreakStringLiterals: true
+ReflowComments: true
+SeparateDefinitionBlocks: Always
+
 DerivePointerAlignment: false
 PointerAlignment: Middle
 
-BreakBeforeBinaryOperators: All
-BreakBeforeTernaryOperators: true
 
 SpaceAfterTemplateKeyword: false
 SpaceBeforeAssignmentOperators: true
