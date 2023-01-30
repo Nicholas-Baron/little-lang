@@ -8,7 +8,7 @@
 #include <cassert>
 #include <memory>
 #ifdef DEBUG
-#include <iostream>
+    #include <iostream>
 #endif
 #include <string>
 #include <variant>

@@ -40,7 +40,12 @@ SeparateDefinitionBlocks: Always
 
 DerivePointerAlignment: false
 PointerAlignment: Middle
+ReferenceAlignment: Pointer
 
+IndentCaseBlocks: false
+IndentCaseLabels: false
+IndentPPDirectives: BeforeHash
+IndentRequires: false
 
 SpaceAfterTemplateKeyword: false
 SpaceBeforeAssignmentOperators: true
