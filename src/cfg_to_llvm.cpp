@@ -13,9 +13,14 @@
 
 namespace {
 
-    const std::map<std::string, bool> valid_bools{{"true", true},   {"True", true},
-                                                  {"TRUE", true},   {"false", false},
-                                                  {"False", false}, {"FALSE", false}};
+    const std::map<std::string, bool> valid_bools{
+        {"true",  true },
+        {"True",  true },
+        {"TRUE",  true },
+        {"false", false},
+        {"False", false},
+        {"FALSE", false}
+    };
 
     namespace constraints {
 
@@ -122,14 +127,16 @@ void cfg_to_llvm::visit(control_flow::binary_operation & binary_operation) {
     if (operation::is_shortcircuiting(binary_operation.op)) {
         assert(false);
     } else if (operation::is_comparison(binary_operation.op)) {
-        static constexpr std::array<float_int_op_pair<operand, predicate>, 6> comparison_ops{{
-            {operand::le, predicate::ICMP_SGE, predicate::FCMP_OLE},
-            {operand::lt, predicate::ICMP_SLT, predicate::FCMP_OLT},
-            {operand::ge, predicate::ICMP_SGE, predicate::FCMP_OGE},
-            {operand::gt, predicate::ICMP_SGT, predicate::FCMP_OGT},
-            {operand::eq, predicate::ICMP_EQ, predicate::FCMP_OEQ},
-            {operand::ne, predicate::ICMP_NE, predicate::FCMP_ONE},
-        }};
+        static constexpr std::array<float_int_op_pair<operand, predicate>, 6> comparison_ops{
+            {
+             {operand::le, predicate::ICMP_SGE, predicate::FCMP_OLE},
+             {operand::lt, predicate::ICMP_SLT, predicate::FCMP_OLT},
+             {operand::ge, predicate::ICMP_SGE, predicate::FCMP_OGE},
+             {operand::gt, predicate::ICMP_SGT, predicate::FCMP_OGT},
+             {operand::eq, predicate::ICMP_EQ, predicate::FCMP_OEQ},
+             {operand::ne, predicate::ICMP_NE, predicate::FCMP_ONE},
+             }
+        };
 
         const auto * selected_op
             = find_in(comparison_ops, [op = binary_operation.op](auto & entry) -> bool {
@@ -175,12 +182,14 @@ void cfg_to_llvm::visit(control_flow::binary_operation & binary_operation) {
         using operand = operation::binary;
         using bin_ops = llvm::Instruction::BinaryOps;
 
-        static constexpr std::array<float_int_op_pair<operand, bin_ops>, 4> arithmetic_ops{{
-            {operand::add, bin_ops::Add, bin_ops::FAdd},
-            {operand::sub, bin_ops::Sub, bin_ops::FSub},
-            {operand::mult, bin_ops::Mul, bin_ops::FMul},
-            {operand::div, bin_ops::SDiv, bin_ops::FDiv},
-        }};
+        static constexpr std::array<float_int_op_pair<operand, bin_ops>, 4> arithmetic_ops{
+            {
+             {operand::add, bin_ops::Add, bin_ops::FAdd},
+             {operand::sub, bin_ops::Sub, bin_ops::FSub},
+             {operand::mult, bin_ops::Mul, bin_ops::FMul},
+             {operand::div, bin_ops::SDiv, bin_ops::FDiv},
+             }
+        };
 
         const auto * selected_op
             = find_in(arithmetic_ops, [op = binary_operation.op](auto & entry) -> bool {

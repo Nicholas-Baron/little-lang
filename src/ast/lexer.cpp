@@ -121,33 +121,33 @@ lexer::token lexer::next_identifier(Location loc) {
     while (isalnum(peek_char()) != 0 or peek_char() == '_') { to_ret += next_char(); }
 
     static const std::map<std::string, lexer::token_type> reserved_words{
-        // alternate tokens
-        {"and", token_type::double_and},
-        {"equals", token_type::eq},
-        {"is", token_type::colon},
-        {"or", token_type::double_or},
-        // keywords
-        {"const", token_type::const_},
-        {"else", token_type::else_},
-        {"export", token_type::export_},
-        {"from", token_type::from},
-        {"if", token_type::if_},
-        {"import", token_type::import_},
-        {"let", token_type::let},
-        {"null", token_type::null},
-        {"ret", token_type::return_},
-        {"return", token_type::return_},
-        {"then", token_type::then},
-        // primitive types
-        {"bool", token_type::prim_type},
-        {"char", token_type::prim_type},
-        {"float", token_type::prim_type},
-        {"int", token_type::prim_type},
-        {"string", token_type::prim_type},
-        {"unit", token_type::prim_type},
-        // literal values
-        {"true", token_type::boolean},
-        {"false", token_type::boolean},
+  // alternate tokens
+        {"and",    token_type::double_and},
+        {"equals", token_type::eq        },
+        {"is",     token_type::colon     },
+        {"or",     token_type::double_or },
+ // keywords
+        {"const",  token_type::const_    },
+        {"else",   token_type::else_     },
+        {"export", token_type::export_   },
+        {"from",   token_type::from      },
+        {"if",     token_type::if_       },
+        {"import", token_type::import_   },
+        {"let",    token_type::let       },
+        {"null",   token_type::null      },
+        {"ret",    token_type::return_   },
+        {"return", token_type::return_   },
+        {"then",   token_type::then      },
+ // primitive types
+        {"bool",   token_type::prim_type },
+        {"char",   token_type::prim_type },
+        {"float",  token_type::prim_type },
+        {"int",    token_type::prim_type },
+        {"string", token_type::prim_type },
+        {"unit",   token_type::prim_type },
+ // literal values
+        {"true",   token_type::boolean   },
+        {"false",  token_type::boolean   },
     };
 
     if (auto iter = reserved_words.find(to_ret); iter != reserved_words.end()) {

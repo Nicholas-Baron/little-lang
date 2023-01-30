@@ -29,12 +29,15 @@ namespace ast {
         assert(not module_name.empty());
 
         return std::unique_ptr<struct_type>{
-            new struct_type{std::move(name), module_name, std::move(fields)}};
+            new struct_type{std::move(name), module_name, std::move(fields)}
+        };
     }
 
     std::unique_ptr<function_type> function_type::create(ast::type_ptr ret_type,
                                                          std::vector<ast::type_ptr> && arg_types) {
-        return std::unique_ptr<function_type>{new function_type{ret_type, std::move(arg_types)}};
+        return std::unique_ptr<function_type>{
+            new function_type{ret_type, std::move(arg_types)}
+        };
     }
 
     // Printing types
