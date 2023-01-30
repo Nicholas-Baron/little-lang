@@ -42,6 +42,8 @@ DerivePointerAlignment: false
 PointerAlignment: Middle
 ReferenceAlignment: Pointer
 
+BitFieldColonSpacing: Both
+
 IndentCaseBlocks: false
 IndentCaseLabels: false
 IndentPPDirectives: BeforeHash
@@ -49,6 +51,10 @@ IndentRequires: false
 
 SpaceAfterTemplateKeyword: false
 SpaceBeforeAssignmentOperators: true
+SpaceBeforeRangeBasedForLoopColon: true
+SpacesInLineCommentPrefix:
+  Minimum: 1
+  Maximum: 10
 
 SortIncludes: true
 SortUsingDeclarations: true
