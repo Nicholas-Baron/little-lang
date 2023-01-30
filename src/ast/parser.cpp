@@ -466,23 +466,23 @@ ast::type_ptr parser::parse_type() {
             {"int",
              [this] {
                  return ty_context.create_type<ast::prim_type>(ast::prim_type::type::int32);
-             }},
+             }                                                                                    },
             {"float",
              [this] {
                  return ty_context.create_type<ast::prim_type>(ast::prim_type::type::float32);
-             }},
+             }                                                                                    },
             {"char",
              [this] {
                  return ty_context.create_type<ast::prim_type>(ast::prim_type::type::character);
-             }},
+             }                                                                                    },
             {"unit",
              [this] { return ty_context.create_type<ast::prim_type>(ast::prim_type::type::unit); }},
             {"bool",
              [this] {
                  return ty_context.create_type<ast::prim_type>(ast::prim_type::type::boolean);
-             }},
+             }                                                                                    },
             {"string",
-             [this] { return ty_context.create_type<ast::prim_type>(ast::prim_type::type::str); }},
+             [this] { return ty_context.create_type<ast::prim_type>(ast::prim_type::type::str); } },
         };
         auto iter = prim_types.find(lex->next_token().text);
         if (iter == prim_types.end()) {

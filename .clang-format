@@ -9,20 +9,24 @@ UseTab: Never
 MaxEmptyLinesToKeep: 1
 
 # Alignment checks
+AlignAfterOpenBracket: Align
+AlignArrayOfStructures: Left
+AlignEscapedNewlines: Left
 AlignOperands: AlignAfterOperator
 AlignTrailingComments: true
-AlignAfterOpenBracket: Align
-AlignEscapedNewlines: Left
 
 # Allowed shortenings
+AllowAllArgumentsOnNextLine: true
+AllowAllParametersOfDeclarationOnNextLine: false
 AllowShortBlocksOnASingleLine: true
 AllowShortFunctionsOnASingleLine: All
 AllowShortIfStatementsOnASingleLine: Always
+AllowShortLambdasOnASingleLine: All
 AllowShortLoopsOnASingleLine: true
-BreakBeforeBraces: Attach
 
+# Where line breaks should be
 AlwaysBreakTemplateDeclarations: Yes
-
+BreakBeforeBraces: Attach
 BreakConstructorInitializers: BeforeComma
 DerivePointerAlignment: false
 PointerAlignment: Middle

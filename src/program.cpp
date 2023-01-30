@@ -174,7 +174,8 @@ std::unique_ptr<program> program::from_root_file(const std::string & root_filena
 
     return std::unique_ptr<program>{
         new program{std::move(modules), std::move(ty_context), std::move(settings),
-                    normalized_absolute_path(root_filename).parent_path()}};
+                    normalized_absolute_path(root_filename).parent_path()}
+    };
 }
 
 program::~program() noexcept = default;

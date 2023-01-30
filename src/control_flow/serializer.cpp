@@ -59,9 +59,11 @@ namespace control_flow {
         auto [result, index] = add_node(&function_start);
         if (result == nullptr) { return value_getter::store_result(index); }
 
-        *result = {{"arg count", function_start.arg_count},
-                   {"exported", function_start.exported},
-                   {"next", get_value(*function_start.next, *this)}};
+        *result = {
+            {"arg count", function_start.arg_count},
+            {"exported", function_start.exported},
+            {"next", get_value(*function_start.next, *this)}
+        };
         return store_result(result);
     }
 
@@ -72,7 +74,9 @@ namespace control_flow {
         auto value = nlohmann::json{};
         if (function_end.value != nullptr) { value = get_value(*function_end.value, *this); }
 
-        *result = {{"value", std::move(value)}};
+        *result = {
+            {"value", std::move(value)}
+        };
         return store_result(result);
     }
 
@@ -80,10 +84,12 @@ namespace control_flow {
         auto [result, index] = add_node(&binary_operation);
         if (result == nullptr) { return value_getter::store_result(index); }
 
-        *result = {{"next", get_value(*binary_operation.next, *this)},
-                   {"left", get_value(*binary_operation.lhs, *this)},
-                   {"right", get_value(*binary_operation.rhs, *this)},
-                   {"op", token_to_string(binary_operation.op)}};
+        *result = {
+            {"next", get_value(*binary_operation.next, *this)},
+            {"left", get_value(*binary_operation.lhs, *this)},
+            {"right", get_value(*binary_operation.rhs, *this)},
+            {"op", token_to_string(binary_operation.op)}
+        };
         return store_result(result);
     }
 
@@ -92,9 +98,9 @@ namespace control_flow {
         if (result == nullptr) { return value_getter::store_result(index); }
 
         *result = {
-            {"condition", get_value(*branch.condition_value, *this)},
-            {"true case", get_value(*branch.true_case, *this)},
-            {"false case", get_value(*branch.false_case, *this)},
+            {"condition",  get_value(*branch.condition_value, *this)},
+            {"true case",  get_value(*branch.true_case,       *this)},
+            {"false case", get_value(*branch.false_case,      *this)},
         };
         return store_result(result);
     }
@@ -114,9 +120,11 @@ namespace control_flow {
             },
             constant.value);
 
-        *result = {{"value", std::move(value)},
-                   {"type", token_to_string(constant.val_type)},
-                   {"next", get_value(*constant.next, *this)}};
+        *result = {
+            {"value", std::move(value)},
+            {"type", token_to_string(constant.val_type)},
+            {"next", get_value(*constant.next, *this)}
+        };
         return store_result(result);
     }
 
@@ -127,9 +135,11 @@ namespace control_flow {
         nlohmann::json::array_t args;
         for (auto * arg : function_call.arguments) { args.push_back(get_value(*arg, *this)); }
 
-        *result = {{"next", get_value(*function_call.next, *this)},
-                   {"arguments", std::move(args)},
-                   {"callee", function_call.callee->name}};
+        *result = {
+            {"next", get_value(*function_call.next, *this)},
+            {"arguments", std::move(args)},
+            {"callee", function_call.callee->name}
+        };
         return store_result(result);
     }
 
@@ -140,9 +150,11 @@ namespace control_flow {
         nlohmann::json::array_t args;
         for (auto * arg : intrinsic_call.arguments) { args.push_back(get_value(*arg, *this)); }
 
-        *result = {{"next", get_value(*intrinsic_call.next, *this)},
-                   {"arguments", std::move(args)},
-                   {"callee", intrinsic_call.name}};
+        *result = {
+            {"next", get_value(*intrinsic_call.next, *this)},
+            {"arguments", std::move(args)},
+            {"callee", intrinsic_call.name}
+        };
         return store_result(result);
     }
 
@@ -184,9 +196,11 @@ namespace control_flow {
         auto [result, index] = add_node(&unary_operation);
         if (result == nullptr) { return value_getter::store_result(index); }
 
-        *result = {{"next", get_value(*unary_operation.next, *this)},
-                   {"op", token_to_string(unary_operation.op)},
-                   {"operand", get_value(*unary_operation.operand, *this)}};
+        *result = {
+            {"next", get_value(*unary_operation.next, *this)},
+            {"op", token_to_string(unary_operation.op)},
+            {"operand", get_value(*unary_operation.operand, *this)}
+        };
         return store_result(result);
     }
 } // namespace control_flow

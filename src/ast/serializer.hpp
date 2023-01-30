@@ -15,7 +15,10 @@ namespace ast {
         static nlohmann::json to_json(std::string filename, ast::top_level_sequence & mod) {
             ast::serializer serializer;
             serializer.visit(mod);
-            return {{"filename", std::move(filename)}, {"contents", serializer.get_result()}};
+            return {
+                {"filename", std::move(filename)    },
+                {"contents", serializer.get_result()}
+            };
         }
 
         static void into_stream(std::ostream & stream, std::string filename,
