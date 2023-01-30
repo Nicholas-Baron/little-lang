@@ -17,6 +17,7 @@ template<typename visitor_t, typename visitable_t, typename result_t>
 class value_getter {
   public:
     static_assert(std::is_class_v<visitable_t>, "we must visit classes");
+
     [[nodiscard]] static result_t get_value(visitable_t & node, visitor_t & context) {
         assert(not context.result.has_value());
         node.accept(context);
@@ -24,6 +25,7 @@ class value_getter {
     }
 
     static_assert(not std::is_reference_v<result_t>, "we can only return non-references");
+
     void store_result(result_t value) {
         assert(not result.has_value());
         result = value;

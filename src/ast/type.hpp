@@ -25,6 +25,7 @@ namespace ast {
             rhs.print(lhs);
             return lhs;
         }
+
         virtual void print(std::ostream &) const = 0;
     };
 
@@ -33,6 +34,7 @@ namespace ast {
     class ptr_type : public type {
       public:
         [[nodiscard]] virtual bool nullable() const noexcept = 0;
+
         [[nodiscard]] bool is_pointer_type() const final { return true; }
 
         [[nodiscard]] type_ptr pointed_to_type() const { return pointed_to; }
@@ -127,6 +129,7 @@ namespace ast {
         [[nodiscard]] bool is_pointer_type() const final { return false; }
 
         [[nodiscard]] const std::string & containing_module_name() const { return module_name; }
+
         [[nodiscard]] const std::string & user_name() const { return name; }
 
       protected:
@@ -149,6 +152,7 @@ namespace ast {
         ~struct_type() final = default;
 
         [[nodiscard]] size_t field_count() const noexcept { return fields.size(); }
+
         [[nodiscard]] const field_type & field(size_t index) const { return fields[index]; }
 
       private:
@@ -175,7 +179,9 @@ namespace ast {
         [[nodiscard]] bool is_pointer_type() const final { return false; }
 
         [[nodiscard]] size_t arg_count() const noexcept { return arg_types.size(); }
+
         [[nodiscard]] type_ptr arg(size_t index) const { return arg_types[index]; }
+
         [[nodiscard]] type_ptr return_type() const { return ret_type; }
 
       private:

@@ -178,8 +178,11 @@ void ast_to_cfg::export_if_needed(const ast::top_level & ast_node,
 }
 
 void ast_to_cfg::visit(ast::node & node) { node.accept(*this); }
+
 void ast_to_cfg::visit(ast::top_level & top_level) { top_level.accept(*this); }
+
 void ast_to_cfg::visit(ast::stmt & stmt) { stmt.accept(*this); }
+
 void ast_to_cfg::visit(ast::expr & expr) { expr.accept(*this); }
 
 void ast_to_cfg::import_item(const std::string & id, const std::string & mod) {
@@ -300,6 +303,7 @@ void ast_to_cfg::visit(ast::func_call_data & func_call_data) {
 }
 
 void ast_to_cfg::visit(ast::func_call_expr & func_call_expr) { return visit(func_call_expr.data); }
+
 void ast_to_cfg::visit(ast::func_call_stmt & func_call_stmt) { return visit(func_call_stmt.data); }
 
 void ast_to_cfg::visit(ast::func_decl & func_decl) {

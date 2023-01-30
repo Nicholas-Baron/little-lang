@@ -86,6 +86,7 @@ class lexer final {
 
       private:
         friend bool operator==(const token & tok, token_type type) { return tok.type == type; }
+
         friend bool operator==(const token & tok, const std::string & text) {
             return tok.text == text;
         }

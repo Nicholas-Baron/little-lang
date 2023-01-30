@@ -9,8 +9,9 @@
 #include <value_getter.hpp>
 
 namespace ast {
-    class serializer : public visitor_base,
-                       public value_getter<serializer, ast::node, nlohmann::json> {
+    class serializer
+        : public visitor_base
+        , public value_getter<serializer, ast::node, nlohmann::json> {
       public:
         static nlohmann::json to_json(std::string filename, ast::top_level_sequence & mod) {
             ast::serializer serializer;

@@ -11,9 +11,11 @@ class scoped_map final {
 
     // Iterate thru the scopes in reverse
     [[nodiscard]] auto begin() noexcept { return active_values.rbegin(); }
+
     [[nodiscard]] auto end() noexcept { return active_values.rend(); }
 
     [[nodiscard]] auto begin() const noexcept { return active_values.rbegin(); }
+
     [[nodiscard]] auto end() const noexcept { return active_values.rend(); }
 
     auto add_to_root(key_t key, value_t value) {

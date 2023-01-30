@@ -47,6 +47,7 @@ class cfg_to_llvm final : public control_flow::visitor {
 
         node_data(llvm::IRBuilderBase & builder, llvm::Value * val);
     };
+
     // clang-format on
 
     void bind_value(const control_flow::node & node, llvm::Value * value);

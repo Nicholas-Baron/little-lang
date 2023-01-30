@@ -14,6 +14,7 @@ class Location final {
         , column_num{column} {}
 
     [[nodiscard]] constexpr auto line() const noexcept { return line_num; }
+
     [[nodiscard]] constexpr auto column() const noexcept { return column_num; }
 
   private:
