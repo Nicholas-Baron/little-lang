@@ -326,6 +326,8 @@ void ast_to_cfg::visit(ast::func_decl & func_decl) {
         auto & func_end = result_cfg->create<control_flow::function_end>();
         func_end.flows_from(previous_node);
     }
+
+    export_if_needed(func_decl, &func_start);
 }
 
 void ast_to_cfg::visit(ast::if_expr & if_expr) {
