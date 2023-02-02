@@ -177,13 +177,18 @@ namespace control_flow {
         void flows_from(node * node) override { previous = node; }
 
         void flows_to(node * node) override {
-            if (true_case != nullptr and false_case != nullptr) { return; }
+            if (node == true_case or node == false_case) { return; }
+
+            if (true_case != nullptr and false_case != nullptr) {
+                assert(false and "branch that is filled is being set again");
+            }
 
             if (true_case == nullptr and false_case == nullptr) {
                 assert(false and "branch has a null true and false cases");
             }
 
             (true_case == nullptr ? true_case : false_case) = node;
+            assert(true_case != false_case);
         }
 
         // Invariant: none of the following `node *` may be null
