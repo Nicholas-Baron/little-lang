@@ -25,7 +25,7 @@ for f in $examples_dir/*.lil; do
 	fi
 
 	echo "Compiling $f ..."
-	$compiler $f
+	$compiler $f --no-output
 	success=$?
 	if [ $success -ne 0 ]; then
 		echo "Failed to compile $f : exited with $success"
