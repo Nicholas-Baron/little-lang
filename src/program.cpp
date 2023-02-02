@@ -83,8 +83,8 @@ read_module(const std::string & filename, const std::filesystem::path & project_
 }
 
 // Breadth first search to load the full module graph
-static std::vector<ast::top_level_sequence>
-load_modules(const std::string & root_filename, ast::type_context & type_context, bool debug_ast) {
+static std::vector<ast::top_level_sequence> load_modules(const std::string & root_filename,
+                                                         ast::type_context & type_context) {
 
     std::vector<ast::top_level_sequence> modules;
 
@@ -112,8 +112,6 @@ load_modules(const std::string & root_filename, ast::type_context & type_context
 
         parsed_module->filename = unquote(filename);
 
-        if (debug_ast) { ast::serializer::into_stream(std::cout, filename, *parsed_module, true); }
-
         for (const auto & iter : parsed_module->imports) {
             // certain modules are "pseudo" (only containing intrinsics)
             if (iter.first == "env") { continue; }
@@ -132,8 +130,7 @@ load_modules(const std::string & root_filename, ast::type_context & type_context
 std::unique_ptr<program> program::from_root_file(const std::string & root_filename,
                                                  std::shared_ptr<Settings> settings) {
     auto ty_context = std::make_unique<ast::type_context>();
-    auto modules
-        = load_modules(root_filename, *ty_context, settings->flag_is_set(cmd_flag::debug_ast));
+    auto modules = load_modules(root_filename, *ty_context);
 
     if (modules.empty()) {
         std::cerr << "Could not load modules from root of " << root_filename << std::endl;
@@ -161,6 +158,7 @@ std::unique_ptr<program> program::from_root_file(const std::string & root_filena
 
     assert(sorted.size() == modules.size());
 
+    const auto debug_ast = settings->flag_is_set(cmd_flag::debug_ast);
     // swap the given modules into the toposorted order
     auto dest_iter = modules.begin();
     for (auto & file : sorted) {
@@ -169,6 +167,9 @@ std::unique_ptr<program> program::from_root_file(const std::string & root_filena
         });
         assert(iter != modules.end());
         assert(dest_iter != modules.end());
+
+        if (debug_ast) { ast::serializer::into_stream(std::cout, file, *iter, true); }
+
         std::iter_swap(dest_iter, iter);
         dest_iter++;
     }
