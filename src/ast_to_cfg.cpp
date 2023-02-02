@@ -165,7 +165,6 @@ void ast_to_cfg::export_if_needed(const ast::top_level & ast_node,
 
     if (const auto * const_decl = dynamic_cast<const ast::const_decl *>(&ast_node);
         const_decl != nullptr) {
-        std::cout << "Exporting " << const_decl->name_and_type.name() << std::endl;
         assert(func_start == nullptr);
         globals.add(current_module, const_decl->name_and_type.name(), const_decl->expr.get());
     } else if (const auto * func_decl = dynamic_cast<const ast::func_decl *>(&ast_node);
