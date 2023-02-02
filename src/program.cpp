@@ -7,6 +7,7 @@
 #include "control_flow/type_checker.hpp"
 #include "emit_asm.hpp"
 #include "jit.hpp"
+#include "settings.hpp"
 #include "utils/execute.hpp"
 #include "utils/string_utils.hpp" // normalized_absolute_path
 
@@ -230,6 +231,16 @@ void program::generate_ir() {
     ir_modules.push_back(std::move(code_generator).take_ir_module());
 }
 
+bool program::optimize() {
+    auto print_optimized_ir = settings->flag_is_set(cmd_flag::debug_optimized_ir);
+
+    for (auto & mod : ir_modules) {
+        if (not optimize_module(*mod, print_optimized_ir)) { return false; }
+    }
+
+    return true;
+}
+
 std::string program::emit_and_link() {
 
     const auto debug_print_execs = settings->flag_is_set(cmd_flag::debug_show_execs);
@@ -252,8 +263,7 @@ std::string program::emit_and_link() {
     for (auto && mod : ir_modules) {
         auto output_name = std::filesystem::path(mod->getSourceFileName()).replace_extension("o");
         linker_args.emplace_back(output_name);
-        emit_asm(std::move(mod), std::string{output_name},
-                 settings->flag_is_set(cmd_flag::debug_optimized_ir));
+        emit_asm(std::move(mod), std::string{output_name});
     }
 
     if (not exec_command(std::move(linker_args), debug_print_execs)) {

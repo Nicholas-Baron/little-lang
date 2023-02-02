@@ -29,8 +29,52 @@ std::string init_llvm_targets() {
     return sys::getDefaultTargetTriple();
 }
 
-void emit_asm(std::unique_ptr<llvm::Module> ir_module, std::string && output_filename,
-              bool debug_optimized_ir) {
+bool optimize_module(llvm::Module & ir_module, bool debug_optimized_ir) {
+
+    std::string error;
+    const auto * target = llvm::TargetRegistry::lookupTarget(ir_module.getTargetTriple(), error);
+    if (target == nullptr) {
+        errs() << error << '\n';
+        errs().flush();
+        return false;
+    }
+
+    llvm::TargetOptions opt;
+    opt.FunctionSections = true;
+    opt.DataSections = true;
+    const auto * cpu = "generic";
+
+    auto * target_machine
+        = target->createTargetMachine(ir_module.getTargetTriple(), cpu, "", opt, llvm::Reloc::PIC_);
+    assert(target->hasTargetMachine());
+
+    ir_module.setDataLayout(target_machine->createDataLayout());
+
+    // new pass manager
+    PassBuilder pass_builder{target_machine};
+
+    LoopAnalysisManager lam;
+    FunctionAnalysisManager fam;
+    CGSCCAnalysisManager cgam;
+    ModuleAnalysisManager mam;
+
+    fam.registerPass([&] { return pass_builder.buildDefaultAAPipeline(); });
+
+    pass_builder.registerModuleAnalyses(mam);
+    pass_builder.registerCGSCCAnalyses(cgam);
+    pass_builder.registerFunctionAnalyses(fam);
+    pass_builder.registerLoopAnalyses(lam);
+    pass_builder.crossRegisterProxies(lam, fam, cgam, mam);
+
+    auto mpm = pass_builder.buildPerModuleDefaultPipeline(OptimizationLevel::O2);
+
+    mpm.run(ir_module, mam);
+
+    if (debug_optimized_ir) { llvm::outs() << ir_module << '\n'; }
+    return true;
+}
+
+void emit_asm(std::unique_ptr<llvm::Module> ir_module, std::string && output_filename) {
 
     std::string error;
     const auto * target = llvm::TargetRegistry::lookupTarget(ir_module->getTargetTriple(), error);
@@ -44,12 +88,6 @@ void emit_asm(std::unique_ptr<llvm::Module> ir_module, std::string && output_fil
     opt.FunctionSections = true;
     opt.DataSections = true;
     const auto * cpu = "generic";
-
-    auto * target_machine = target->createTargetMachine(ir_module->getTargetTriple(), cpu, "", opt,
-                                                        llvm::Reloc::PIC_);
-    assert(target->hasTargetMachine());
-
-    ir_module->setDataLayout(target_machine->createDataLayout());
 
     std::error_code error_code;
 
@@ -72,29 +110,9 @@ void emit_asm(std::unique_ptr<llvm::Module> ir_module, std::string && output_fil
         return;
     }
 
-    {
-        // new pass manager
-        PassBuilder pass_builder{target_machine};
-
-        LoopAnalysisManager lam;
-        FunctionAnalysisManager fam;
-        CGSCCAnalysisManager cgam;
-        ModuleAnalysisManager mam;
-
-        fam.registerPass([&] { return pass_builder.buildDefaultAAPipeline(); });
-
-        pass_builder.registerModuleAnalyses(mam);
-        pass_builder.registerCGSCCAnalyses(cgam);
-        pass_builder.registerFunctionAnalyses(fam);
-        pass_builder.registerLoopAnalyses(lam);
-        pass_builder.crossRegisterProxies(lam, fam, cgam, mam);
-
-        auto mpm = pass_builder.buildPerModuleDefaultPipeline(OptimizationLevel::O2);
-
-        mpm.run(*ir_module, mam);
-    }
-
-    if (debug_optimized_ir) { llvm::outs() << *ir_module << '\n'; }
+    auto * target_machine = target->createTargetMachine(ir_module->getTargetTriple(), cpu, "", opt,
+                                                        llvm::Reloc::PIC_);
+    assert(target->hasTargetMachine());
 
     {
         legacy::PassManager pass_manager;

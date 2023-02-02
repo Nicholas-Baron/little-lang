@@ -7,5 +7,7 @@
 
 [[nodiscard]] std::string init_llvm_targets();
 
-void emit_asm(std::unique_ptr<llvm::Module> ir_module, std::string && output_filename,
-              bool debug_optimized_ir);
+// Returns `true` if the module was successfully optimized
+bool optimize_module(llvm::Module & ir_module, bool debug_optimized_ir);
+
+void emit_asm(std::unique_ptr<llvm::Module> ir_module, std::string && output_filename);

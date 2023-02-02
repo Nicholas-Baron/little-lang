@@ -27,6 +27,9 @@ class program final {
     [[nodiscard]] bool type_check();
     void generate_ir();
 
+    // Returns whether the optimizations succeded
+    bool optimize();
+
     // Returns the absolute path to the final program
     std::string emit_and_link();
     [[nodiscard]] uint64_t jit();
