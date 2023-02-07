@@ -455,8 +455,31 @@ void ast_to_cfg::visit(ast::struct_decl & struct_decl) {
     declared_structs.emplace(struct_decl.name, found_type);
 }
 
-void ast_to_cfg::visit(ast::struct_init & /*unused*/) {
-    assert(false and "TODO: Implement struct_init");
+void ast_to_cfg::visit(ast::struct_init & struct_init) {
+    auto * previous_node = result_cfg->previous_node();
+
+    auto & cfg_struct_init = result_cfg->create<control_flow::struct_init>();
+
+    auto * struct_type = declared_structs[struct_init.type_name];
+    if (struct_type == nullptr) { assert(false); }
+
+    cfg_struct_init.result_type = struct_type;
+    struct_init.type = struct_type;
+
+    basic_block result{nullptr, &cfg_struct_init};
+
+    for (auto & [field, value] : struct_init.initializers) {
+        auto cfg_value = get_value(*value, *this);
+
+        cfg_value.beginning->flows_from(previous_node);
+        previous_node = cfg_value.end;
+
+        if (result.beginning == nullptr) { result.beginning = cfg_value.beginning; }
+
+        cfg_struct_init.fields.emplace(field, cfg_value.end);
+    }
+
+    return store_result(result);
 }
 
 void ast_to_cfg::visit(ast::typed_identifier & /*typed_identifier*/) {

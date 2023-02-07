@@ -90,6 +90,20 @@ namespace control_flow {
         operation::binary op;
     };
 
+    class struct_init final : public node {
+      public:
+        make_visitable;
+
+        void flows_from(node * node) override { previous = node; }
+
+        void flows_to(node * node) override { next = node; }
+
+        node * previous;
+        node * next;
+        std::map<std::string, node *> fields;
+        ast::struct_type * result_type;
+    };
+
     class unary_operation final : public node {
       public:
         make_visitable;
