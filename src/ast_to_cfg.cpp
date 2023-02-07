@@ -141,6 +141,12 @@ void ast_to_cfg::check_flow() noexcept {
             return;
         }
 
+        if (auto * struct_init = dynamic_cast<control_flow::struct_init *>(node);
+            struct_init != nullptr) {
+            found_links.push_back({struct_init->previous, struct_init});
+            return;
+        }
+
         std::cout << "Previous reading for " << typeid(*node).name() << " has not been implemented"
                   << std::endl;
         assert(false);
@@ -479,6 +485,7 @@ void ast_to_cfg::visit(ast::struct_init & struct_init) {
         cfg_struct_init.fields.emplace(field, cfg_value.end);
     }
 
+    cfg_struct_init.flows_from(previous_node);
     return store_result(result);
 }
 
