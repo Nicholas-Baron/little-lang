@@ -342,8 +342,33 @@ namespace control_flow {
         }
     }
 
-    void type_checker::visit(struct_init & /*unused*/) {
-        assert(false and "TODO: Implement type checking for struct_init");
+    void type_checker::visit(struct_init & struct_init) {
+
+        // Check that all fields are initialized
+
+        auto * struct_type = struct_init.result_type;
+
+        for (auto field_index = 0UL; field_index < struct_type->field_count(); ++field_index) {
+            auto [field_name, expected_type] = struct_type->field(field_index);
+
+            auto iter = struct_init.fields.find(field_name);
+            if (iter == struct_init.fields.end()) {
+                printError("Field ", field_name, " is not initialized for struct of type ",
+                           struct_type->user_name());
+                continue;
+            }
+
+            if (auto * actual_type = find_type_of(iter->second); actual_type != expected_type) {
+                printError("Expected type of ", *expected_type, " for field ", field_name,
+                           " in struct ", struct_type->user_name(), "; Found expession with type ",
+                           *actual_type);
+            }
+        }
+
+        bind_type(&struct_init, struct_init.result_type);
+
+        visited.emplace(&struct_init);
+        struct_init.next->accept(*this);
     }
 
     void type_checker::visit(unary_operation & unary_operation) {
