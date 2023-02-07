@@ -191,6 +191,26 @@ namespace control_flow {
         return store_result(result);
     }
 
+    void serializer::visit(struct_init & struct_init) {
+        auto [result, index] = add_node(&struct_init);
+        if (result == nullptr) { return value_getter::store_result(index); }
+
+        nlohmann::json::array_t fields;
+        for (auto [name, value] : struct_init.fields) {
+            fields.push_back(nlohmann::json::object_t{
+                {"value", get_value(*value, *this)},
+                {"name", name}
+            });
+        }
+
+        *result = {
+            {"type name",    struct_init.result_type->user_name()},
+            {"initializers", std::move(fields)                   }
+        };
+
+        return store_result(result);
+    }
+
     void serializer::visit(unary_operation & unary_operation) {
 
         auto [result, index] = add_node(&unary_operation);

@@ -467,6 +467,10 @@ void cfg_to_llvm::visit(control_flow::phi & phi) {
     phi.next->accept(*this);
 }
 
+void cfg_to_llvm::visit(control_flow::struct_init & /*unused*/) {
+    assert(false and "TODO: Lower struct_init into LLVM");
+}
+
 void cfg_to_llvm::visit(control_flow::unary_operation & unary_operation) {
 
     const auto * value = find_value_of(unary_operation.operand);

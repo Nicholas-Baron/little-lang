@@ -320,6 +320,10 @@ namespace control_flow {
         }
     }
 
+    void type_checker::visit(struct_init & /*unused*/) {
+        assert(false and "TODO: Implement type checking for struct_init");
+    }
+
     void type_checker::visit(unary_operation & unary_operation) {
         auto * operand_type = find_type_of(unary_operation.operand);
         assert(operand_type != nullptr);
