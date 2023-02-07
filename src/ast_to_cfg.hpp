@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ast/type_context.hpp"
 #include "ast/visitor_base.hpp"
 #include "control_flow/graph.hpp"
 #include "control_flow/node.hpp"
@@ -22,7 +23,7 @@ class ast_to_cfg final
     : public ast::visitor_base
     , public value_getter<ast_to_cfg, ast::node, basic_block> {
   public:
-    ast_to_cfg();
+    ast_to_cfg(ast::type_context &);
 
     non_copyable(ast_to_cfg);
     movable(ast_to_cfg);
@@ -52,9 +53,12 @@ class ast_to_cfg final
 
     std::map<std::string, const control_flow::function_start *> seen_functions;
     std::map<std::string, ast::expr *> constants;
+    std::map<std::string, ast::struct_type *> declared_structs;
+
     scoped_map<std::string, control_flow::node *> lets;
     const control_flow::function_start * current_function{nullptr};
 
+    ast::type_context * type_context;
     global_map<std::string,
                std::variant<std::monostate, ast::expr *, control_flow::function_start *>>
         globals;

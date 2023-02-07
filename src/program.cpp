@@ -193,7 +193,7 @@ program::program(std::vector<ast::top_level_sequence> && modules,
     , llvm_lowering{*this->ty_context, context.get()} {}
 
 void program::lower_to_control_flow_graph() {
-    ast_to_cfg lowering;
+    ast_to_cfg lowering{*ty_context};
 
     for (auto & mod : ast_modules) {
         // TODO: Preserve both the absolute and project-relative filepaths

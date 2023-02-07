@@ -9,7 +9,8 @@
 #include <catch2/catch.hpp>
 
 TEST_CASE("ast_to_cfg is initially empty") {
-    auto lowering = ast_to_cfg{};
+    auto type_context = ast::type_context{};
+    auto lowering = ast_to_cfg{type_context};
     auto cfg = std::move(lowering).take_cfg();
 
     CHECK(cfg != nullptr);
@@ -65,7 +66,7 @@ TEST_CASE("ast_to_cfg can lower an empty function") {
     auto parser = parser::from_buffer(buffer, ty_context);
     auto mod = parser->parse();
 
-    auto lowering = ast_to_cfg{};
+    auto lowering = ast_to_cfg{ty_context};
 
     lowering.visit(*mod);
 
@@ -107,7 +108,7 @@ TEST_CASE("ast_to_cfg can lower a shortcircuiting expression") {
     auto parser = parser::from_buffer(buffer, ty_context);
     auto mod = parser->parse();
 
-    auto lowering = ast_to_cfg{};
+    auto lowering = ast_to_cfg{ty_context};
 
     lowering.visit(*mod);
 

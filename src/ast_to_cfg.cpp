@@ -5,8 +5,9 @@
 
 #include <iostream> // cout
 
-ast_to_cfg::ast_to_cfg()
-    : result_cfg{std::make_unique<control_flow::graph>()} {}
+ast_to_cfg::ast_to_cfg(ast::type_context & type_context)
+    : result_cfg{std::make_unique<control_flow::graph>()}
+    , type_context{&type_context} {}
 
 struct link {
     control_flow::node * node;
@@ -438,8 +439,20 @@ void ast_to_cfg::visit(ast::stmt_sequence & stmt_sequence) {
     return store_result(result);
 }
 
-void ast_to_cfg::visit(ast::struct_decl & /*struct_decl*/) {
-    assert(false and "Implement struct_decl visit");
+void ast_to_cfg::visit(ast::struct_decl & struct_decl) {
+    std::vector<ast::struct_type::field_type> fields;
+
+    fields.reserve(struct_decl.fields.size());
+    for (auto & typed_id : struct_decl.fields) {
+        fields.emplace_back(typed_id.name(), typed_id.type());
+    }
+
+    auto * found_type = type_context->create_type<ast::struct_type>(
+        struct_decl.name, current_module, std::move(fields));
+
+    assert(found_type == struct_decl.type);
+
+    declared_structs.emplace(struct_decl.name, found_type);
 }
 
 void ast_to_cfg::visit(ast::struct_init & /*unused*/) {
