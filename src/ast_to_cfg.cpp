@@ -500,6 +500,21 @@ void ast_to_cfg::visit(ast::unary_expr & unary_expr) {
     return store_result({operand.beginning, &unary_op});
 }
 
+static bool convert_to_bool(const std::string & value) {
+    static const std::map<std::string, bool> values{
+        {"true",  true },
+        {"True",  true },
+        {"TRUE",  true },
+        {"false", false},
+        {"False", false},
+        {"FALSE", false},
+    };
+
+    auto iter = values.find(value);
+    assert(iter != values.end());
+    return iter->second;
+}
+
 void ast_to_cfg::visit(ast::user_val & user_val) {
 
     if (user_val.val_type == literal_type::identifier) {
@@ -556,7 +571,7 @@ void ast_to_cfg::visit(ast::user_val & user_val) {
         }
         break;
     case literal_type::boolean:
-        assert(false);
+        value.value = convert_to_bool(user_val.val);
         break;
     case literal_type::string:
         value.value = unquote(user_val.val);
