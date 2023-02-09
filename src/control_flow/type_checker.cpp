@@ -229,6 +229,7 @@ namespace control_flow {
             break;
         }
 
+        constant.type = const_type;
         visited.emplace(&constant);
         bind_type(&constant, const_type);
 

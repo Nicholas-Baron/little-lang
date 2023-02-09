@@ -138,6 +138,7 @@ namespace control_flow {
 
         std::variant<std::monostate, long, double, char, bool, std::string> value;
         literal_type val_type;
+        ast::type_ptr type;
 
         // Invariant: none of the following `node *` may be null
         node * previous{nullptr};
