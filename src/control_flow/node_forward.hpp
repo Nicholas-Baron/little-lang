@@ -9,6 +9,7 @@
     expand_node_macro(function_end)      \
     expand_node_macro(function_start)    \
     expand_node_macro(intrinsic_call)    \
+    expand_node_macro(member_access)     \
     expand_node_macro(phi)               \
     expand_node_macro(struct_init)       \
     expand_node_macro(unary_operation)

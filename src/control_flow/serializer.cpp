@@ -158,6 +158,20 @@ namespace control_flow {
         return store_result(result);
     }
 
+    void serializer::visit(member_access & member_access) {
+
+        auto [result, index] = add_node(&member_access);
+        if (result == nullptr) { return value_getter::store_result(index); }
+
+        *result = {
+            {"next", get_value(*member_access.next, *this)},
+            {"member", member_access.member_name},
+            {"lhs", get_value(*member_access.lhs, *this)}
+        };
+
+        return store_result(result);
+    }
+
     void serializer::visit(phi & phi) {
 #ifdef DEBUG
         // DEBUG: Print the visited set

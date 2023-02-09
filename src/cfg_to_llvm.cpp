@@ -113,6 +113,26 @@ template<typename Result, size_t size, typename Pred>
     return (iter != arr.end()) ? iter : nullptr;
 }
 
+void cfg_to_llvm::visit(control_flow::member_access & member_access) {
+    const auto * lhs_value = find_value_of(member_access.lhs);
+    assert(lhs_value != nullptr);
+
+    assert(member_access.member_index.has_value());
+
+    auto * llvm_struct_type = type_lowering.lower_to_llvm(lhs_value->ast_type);
+    assert(llvm_struct_type != nullptr);
+
+    auto * pointer_to_result = ir_builder->CreateStructGEP(llvm_struct_type, lhs_value->value,
+                                                           *member_access.member_index);
+
+    auto * result = ir_builder->CreateLoad(type_lowering.lower_to_llvm(member_access.result_type),
+                                           pointer_to_result);
+
+    bind_value(member_access, result, member_access.result_type);
+    visited.emplace(&member_access);
+    member_access.next->accept(*this);
+}
+
 void cfg_to_llvm::visit(control_flow::binary_operation & binary_operation) {
     const auto * lhs_value = find_value_of(binary_operation.lhs);
     assert(lhs_value != nullptr);
@@ -127,7 +147,8 @@ void cfg_to_llvm::visit(control_flow::binary_operation & binary_operation) {
     using predicate = llvm::CmpInst::Predicate;
     using operand = operation::binary;
 
-    if (operation::is_shortcircuiting(binary_operation.op)) {
+    if (operation::is_shortcircuiting(binary_operation.op)
+        or binary_operation.op == operation::binary::member_access) {
         assert(false);
     } else if (operation::is_comparison(binary_operation.op)) {
         static constexpr std::array<float_int_op_pair<operand, predicate>, 6> comparison_ops{
@@ -350,16 +371,24 @@ void cfg_to_llvm::visit(control_flow::function_start & func_start) {
     // add the function to the current scope
     bind_value(func_start, func, func_start.type);
 
+    auto * block = llvm::BasicBlock::Create(context, func->getName(), func);
+    ir_builder->SetInsertPoint(block);
+
     auto & func_scope = local_names.add_scope();
     for (auto i = 0UL; i < func_start.parameter_names.size(); ++i) {
-        auto * llvm_value = func->getArg(i);
+        llvm::Value * llvm_value = func->getArg(i);
+
+        if (llvm_value->getType()->isStructTy()) {
+            // We need to copy the struct to ourselves
+            auto * slot = ir_builder->CreateAlloca(llvm_value->getType());
+            ir_builder->CreateStore(llvm_value, slot);
+            llvm_value = slot;
+        }
+
         llvm_value->setName(func_start.parameter_names[i]);
         func_scope.emplace(func_start.parameter_names[i], llvm_value);
     }
     local_names.add_to_root(func_start.name, func);
-
-    auto * block = llvm::BasicBlock::Create(context, func->getName(), func);
-    ir_builder->SetInsertPoint(block);
 
     visited.emplace(&func_start);
     func_start.next->accept(*this);

@@ -147,6 +147,12 @@ void ast_to_cfg::check_flow() noexcept {
             return;
         }
 
+        if (auto * member_access = dynamic_cast<control_flow::member_access *>(node);
+            member_access != nullptr) {
+            found_links.push_back({member_access->previous, member_access});
+            return;
+        }
+
         std::cout << "Previous reading for " << typeid(*node).name() << " has not been implemented"
                   << std::endl;
         assert(false);
@@ -263,6 +269,20 @@ void ast_to_cfg::visit(ast::binary_expr & binary_expr) {
         join_node.flows_from(cfg_rhs.end);
 
         return store_result({cfg_lhs.beginning, &join_node});
+    }
+
+    if (binary_expr.op == operation::binary::member_access) {
+        auto & cfg_access = result_cfg->create<control_flow::member_access>();
+
+        cfg_access.flows_from(cfg_lhs.end);
+        cfg_access.lhs = cfg_lhs.end; // NOTE: `lhs` could be merged with `previous`
+
+        auto * member_ast = dynamic_cast<ast::user_val *>(binary_expr.rhs.get());
+        assert(member_ast != nullptr);
+        assert(member_ast->val_type == literal_type::identifier);
+
+        cfg_access.member_name = member_ast->val;
+        return store_result({cfg_lhs.beginning, &cfg_access});
     }
 
     auto cfg_rhs = get_value(*binary_expr.rhs, *this);

@@ -104,6 +104,23 @@ namespace control_flow {
         ast::struct_type * result_type;
     };
 
+    class member_access final : public node {
+      public:
+        make_visitable;
+
+        void flows_from(node * node) override { previous = node; }
+
+        void flows_to(node * node) override { next = node; }
+
+        node * previous;
+        node * next;
+        node * lhs;
+        std::string member_name;
+        // The type_checker needs to set this
+        std::optional<unsigned> member_index;
+        ast::type_ptr result_type;
+    };
+
     class unary_operation final : public node {
       public:
         make_visitable;

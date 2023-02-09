@@ -103,27 +103,6 @@ namespace control_flow {
         auto * lhs_type = find_type_of(binary_operation.lhs);
         assert(lhs_type != nullptr);
 
-        if (auto * struct_type = dynamic_cast<ast::struct_type *>(lhs_type);
-            struct_type != nullptr and binary_operation.op == operation::binary::member_access) {
-
-            auto * identifier_node = dynamic_cast<control_flow::constant *>(binary_operation.rhs);
-            assert(identifier_node != nullptr);
-
-            assert(identifier_node->val_type == literal_type::identifier);
-            auto identifier = std::get<std::string>(identifier_node->value);
-            assert(not identifier.empty());
-
-            for (auto field_index = 0UL; field_index < struct_type->field_count(); ++field_index) {
-                auto field = struct_type->field(field_index);
-                if (field.first == identifier) {
-                    return bind_type(&binary_operation, field.second);
-                }
-            }
-
-            return printError("Struct type ", struct_type->user_name(),
-                              " does not have a field named ", identifier);
-        }
-
         auto * rhs_type = find_type_of(binary_operation.rhs);
         assert(rhs_type != nullptr);
 
@@ -307,6 +286,39 @@ namespace control_flow {
         } else {
             printError("Could not type check intrinsic named ", intrinsic_call.name);
         }
+    }
+
+    void type_checker::visit(member_access & member_access) {
+        auto * lhs_type = find_type_of(member_access.lhs);
+        assert(lhs_type != nullptr);
+
+        auto * struct_type = dynamic_cast<ast::struct_type *>(lhs_type);
+        if (struct_type == nullptr) {
+            printError("Expected a struct as the left-hand side of `.`; found ", *struct_type);
+            visited.emplace(&member_access);
+            return member_access.next->accept(*this);
+        }
+
+        ast::type_ptr found_type = nullptr;
+        for (auto i = 0UL; i < struct_type->field_count() and found_type == nullptr; ++i) {
+            const auto & [name, type] = struct_type->field(i);
+
+            if (name == member_access.member_name) {
+                found_type = type;
+                member_access.member_index = i;
+            }
+        }
+
+        if (found_type != nullptr) {
+            bind_type(&member_access, found_type);
+            member_access.result_type = found_type;
+        } else {
+            printError("Could not find field named ", member_access.member_name, " in struct ",
+                       *struct_type);
+        }
+
+        visited.emplace(&member_access);
+        return member_access.next->accept(*this);
     }
 
     void type_checker::visit(phi & phi) {
