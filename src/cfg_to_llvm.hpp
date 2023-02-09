@@ -44,13 +44,15 @@ class cfg_to_llvm final : public control_flow::visitor {
     struct node_data {
         llvm::Value * value;
         llvm::BasicBlock * parent_block;
+		// Using the ast type allows us to lower lazily.
+		ast::type_ptr ast_type;
 
-        node_data(llvm::IRBuilderBase & builder, llvm::Value * val);
+        node_data(llvm::IRBuilderBase & builder, llvm::Value * val, ast::type_ptr type);
     };
 
     // clang-format on
 
-    void bind_value(const control_flow::node & node, llvm::Value * value);
+    void bind_value(const control_flow::node & node, llvm::Value * value, ast::type_ptr type);
     [[nodiscard]] const node_data * find_value_of(const control_flow::node * node) const;
 
     void syscall(control_flow::intrinsic_call &);

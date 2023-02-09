@@ -77,18 +77,21 @@ cfg_to_llvm::cfg_to_llvm(const std::string & name, llvm::LLVMContext & context,
     ir_module->setTargetTriple(init_llvm_targets());
 }
 
-cfg_to_llvm::node_data::node_data(llvm::IRBuilderBase & builder, llvm::Value * val)
+cfg_to_llvm::node_data::node_data(llvm::IRBuilderBase & builder, llvm::Value * val,
+                                  ast::type_ptr type)
     : value{val}
-    , parent_block{builder.GetInsertBlock()} {}
+    , parent_block{builder.GetInsertBlock()}
+    , ast_type{type} {}
 
 void cfg_to_llvm::verify_module() const { llvm::verifyModule(*ir_module, &llvm::errs()); }
 
 void cfg_to_llvm::dump() const { llvm::outs() << *ir_module << '\n'; }
 
-void cfg_to_llvm::bind_value(const control_flow::node & node, llvm::Value * value) {
+void cfg_to_llvm::bind_value(const control_flow::node & node, llvm::Value * value,
+                             ast::type_ptr type) {
     assert(values.find(&node) == values.end());
 
-    values.emplace(&node, node_data{*ir_builder, value});
+    values.emplace(&node, node_data{*ir_builder, value, type});
 }
 
 const cfg_to_llvm::node_data * cfg_to_llvm::find_value_of(const control_flow::node * node) const {
@@ -150,15 +153,18 @@ void cfg_to_llvm::visit(control_flow::binary_operation & binary_operation) {
             auto * constant_lhs = llvm::dyn_cast<llvm::Constant>(lhs_value->value);
             auto * constant_rhs = llvm::dyn_cast<llvm::Constant>(rhs_value->value);
             bind_value(binary_operation,
-                       llvm::ConstantExpr::getCompare(pred, constant_lhs, constant_rhs));
+                       llvm::ConstantExpr::getCompare(pred, constant_lhs, constant_rhs),
+                       binary_operation.result_type);
         } else if (is_float) {
             bind_value(
                 binary_operation,
-                ir_builder->CreateFCmp(selected_op->float_op, lhs_value->value, rhs_value->value));
+                ir_builder->CreateFCmp(selected_op->float_op, lhs_value->value, rhs_value->value),
+                binary_operation.result_type);
         } else {
             bind_value(
                 binary_operation,
-                ir_builder->CreateICmp(selected_op->int_op, lhs_value->value, rhs_value->value));
+                ir_builder->CreateICmp(selected_op->int_op, lhs_value->value, rhs_value->value),
+                binary_operation.result_type);
         }
     } else if (operation::is_arithmetic(binary_operation.op)) {
 
@@ -208,7 +214,7 @@ void cfg_to_llvm::visit(control_flow::binary_operation & binary_operation) {
             }
         }
 
-        bind_value(binary_operation, result);
+        bind_value(binary_operation, result, binary_operation.result_type);
     } else {
         assert(false);
     }
@@ -248,7 +254,8 @@ void cfg_to_llvm::visit(control_flow::constant & constant) {
         for (auto & scope : local_names) {
             if (auto iter = scope.find(std::get<std::string>(constant.value));
                 iter != scope.end()) {
-                bind_value(constant, iter->second);
+                assert(constant.type != nullptr);
+                bind_value(constant, iter->second, constant.type);
                 break;
             }
         }
@@ -258,25 +265,31 @@ void cfg_to_llvm::visit(control_flow::constant & constant) {
         break;
     case literal_type::integer:
         assert(std::holds_alternative<long>(constant.value));
-        bind_value(constant, llvm::ConstantInt::get(llvm::Type::getInt32Ty(context),
-                                                    std::get<long>(constant.value)));
+        bind_value(
+            constant,
+            llvm::ConstantInt::get(llvm::Type::getInt32Ty(context), std::get<long>(constant.value)),
+            constant.type);
         break;
     case literal_type::floating:
         assert(false and "Implement floating point IR");
         break;
     case literal_type::character:
         assert(std::holds_alternative<char>(constant.value));
-        bind_value(constant, llvm::ConstantInt::get(llvm::Type::getInt8Ty(context),
-                                                    std::get<char>(constant.value)));
+        bind_value(
+            constant,
+            llvm::ConstantInt::get(llvm::Type::getInt8Ty(context), std::get<char>(constant.value)),
+            constant.type);
         break;
     case literal_type::boolean:
         assert(std::holds_alternative<bool>(constant.value));
-        bind_value(constant, llvm::ConstantInt::getBool(context, std::get<bool>(constant.value)));
+        bind_value(constant, llvm::ConstantInt::getBool(context, std::get<bool>(constant.value)),
+                   constant.type);
         break;
     case literal_type::string:
         assert(std::holds_alternative<std::string>(constant.value));
         bind_value(constant,
-                   ir_builder->CreateGlobalStringPtr(std::get<std::string>(constant.value)));
+                   ir_builder->CreateGlobalStringPtr(std::get<std::string>(constant.value)),
+                   constant.type);
         break;
     }
 
@@ -302,7 +315,8 @@ void cfg_to_llvm::visit(control_flow::function_call & func_call) {
         args.push_back(node_data->value);
     }
 
-    bind_value(func_call, ir_builder->CreateCall(func_type, func, args));
+    bind_value(func_call, ir_builder->CreateCall(func_type, func, args),
+               func_call.callee->type->return_type());
     visited.emplace(&func_call);
     func_call.next->accept(*this);
 }
@@ -334,7 +348,7 @@ void cfg_to_llvm::visit(control_flow::function_start & func_start) {
     auto * func = llvm::Function::Create(func_type, linkage, func_start.name, ir_module.get());
 
     // add the function to the current scope
-    bind_value(func_start, func);
+    bind_value(func_start, func, func_start.type);
 
     auto & func_scope = local_names.add_scope();
     for (auto i = 0UL; i < func_start.parameter_names.size(); ++i) {
@@ -399,7 +413,8 @@ void cfg_to_llvm::syscall(control_flow::intrinsic_call & intrinsic_call) {
 
     bind_value(intrinsic_call,
                ir_builder->CreateCall(
-                   func_type, llvm::InlineAsm::get(func_type, "syscall", constraint, true), args));
+                   func_type, llvm::InlineAsm::get(func_type, "syscall", constraint, true), args),
+               intrinsic_call.type->return_type());
 }
 
 void cfg_to_llvm::visit(control_flow::intrinsic_call & intrinsic_call) {
@@ -460,7 +475,7 @@ void cfg_to_llvm::visit(control_flow::phi & phi) {
         for (auto incoming_value : values) {
             llvm_phi->addIncoming(incoming_value.value, incoming_value.parent_block);
         }
-        bind_value(phi, llvm_phi);
+        bind_value(phi, llvm_phi, phi.type);
     }
 
     visited.emplace(&phi);
@@ -481,9 +496,11 @@ void cfg_to_llvm::visit(control_flow::unary_operation & unary_operation) {
     switch (unary_operation.op) {
     case operand::bool_not:
         if (const_val != nullptr) {
-            bind_value(unary_operation, llvm::ConstantExpr::getNot(const_val));
+            bind_value(unary_operation, llvm::ConstantExpr::getNot(const_val),
+                       unary_operation.result_type);
         } else {
-            bind_value(unary_operation, ir_builder->CreateNot(value->value));
+            bind_value(unary_operation, ir_builder->CreateNot(value->value),
+                       unary_operation.result_type);
         }
         break;
     case operand::deref: {
@@ -492,15 +509,20 @@ void cfg_to_llvm::visit(control_flow::unary_operation & unary_operation) {
         auto * element_ty = type_lowering.lower_to_llvm(unary_operation.result_type);
 
         // TODO: Align it?
-        bind_value(unary_operation, ir_builder->CreateLoad(element_ty, value->value));
+        bind_value(unary_operation, ir_builder->CreateLoad(element_ty, value->value),
+                   unary_operation.result_type);
     } break;
     case operand::negate:
         if (auto float_op = value->value->getType()->isFloatingPointTy(); const_val != nullptr) {
-            bind_value(unary_operation, float_op ? llvm::ConstantExpr::getFNeg(const_val)
-                                                 : llvm::ConstantExpr::getNeg(const_val));
+            bind_value(unary_operation,
+                       float_op ? llvm::ConstantExpr::getFNeg(const_val)
+                                : llvm::ConstantExpr::getNeg(const_val),
+                       unary_operation.result_type);
         } else {
-            bind_value(unary_operation, float_op ? ir_builder->CreateFNeg(value->value)
-                                                 : ir_builder->CreateNeg(value->value));
+            bind_value(unary_operation,
+                       float_op ? ir_builder->CreateFNeg(value->value)
+                                : ir_builder->CreateNeg(value->value),
+                       unary_operation.result_type);
         }
         break;
     }
