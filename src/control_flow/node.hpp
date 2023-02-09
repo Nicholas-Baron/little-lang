@@ -247,6 +247,7 @@ namespace control_flow {
         // Invariant: none of the following `node *` may be null
         std::vector<node *> previous;
         node * next;
+        ast::type_ptr type;
     };
 
 #undef make_visitable

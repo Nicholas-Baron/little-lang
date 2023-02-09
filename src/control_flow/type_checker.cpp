@@ -336,7 +336,10 @@ namespace control_flow {
 
             assert(phi_type.has_value());
 
-            if (phi_type != nullptr) { bind_type(&phi, *phi_type); }
+            if (phi_type != nullptr) {
+                bind_type(&phi, *phi_type);
+                phi.type = *phi_type;
+            }
 
             visited.emplace(&phi);
             phi.next->accept(*this);
