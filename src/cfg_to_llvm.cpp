@@ -333,7 +333,14 @@ void cfg_to_llvm::visit(control_flow::function_call & func_call) {
     for (auto & argument : func_call.arguments) {
         const auto * node_data = find_value_of(argument);
         assert(node_data != nullptr);
-        args.push_back(node_data->value);
+
+        auto * llvm_value = node_data->value;
+        if (dynamic_cast<ast::struct_type *>(node_data->ast_type) != nullptr) {
+            llvm_value = ir_builder->CreateLoad(type_lowering.lower_to_llvm(node_data->ast_type),
+                                                llvm_value);
+        }
+
+        args.push_back(llvm_value);
     }
 
     bind_value(func_call, ir_builder->CreateCall(func_type, func, args),
