@@ -511,8 +511,34 @@ void cfg_to_llvm::visit(control_flow::phi & phi) {
     phi.next->accept(*this);
 }
 
-void cfg_to_llvm::visit(control_flow::struct_init & /*unused*/) {
-    assert(false and "TODO: Lower struct_init into LLVM");
+void cfg_to_llvm::visit(control_flow::struct_init & struct_init) {
+
+    auto * llvm_struct_type = type_lowering.lower_to_llvm(struct_init.result_type);
+    assert(llvm_struct_type != nullptr);
+
+    auto * slot = ir_builder->CreateAlloca(llvm_struct_type);
+
+    for (auto & [name, expr] : struct_init.fields) {
+
+        auto index = struct_init.result_type->field_count();
+        for (auto i = 0UL; i < struct_init.result_type->field_count(); ++i) {
+            if (struct_init.result_type->field(i).first == name) {
+                index = i;
+                break;
+            }
+        }
+
+        assert(index < struct_init.result_type->field_count());
+
+        auto * pointer_to_dest = ir_builder->CreateStructGEP(llvm_struct_type, slot, index);
+
+        ir_builder->CreateStore(find_value_of(expr)->value, pointer_to_dest);
+    }
+
+    bind_value(struct_init, slot, struct_init.result_type);
+
+    visited.emplace(&struct_init);
+    struct_init.next->accept(*this);
 }
 
 void cfg_to_llvm::visit(control_flow::unary_operation & unary_operation) {
