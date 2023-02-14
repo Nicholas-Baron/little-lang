@@ -64,6 +64,10 @@ namespace control_flow {
 
         void list_all_nodes() const noexcept;
 
+        [[nodiscard]] const std::string & program_name() const { return prog_name; }
+
+        void set_program_name(std::string name) { prog_name = std::move(name); }
+
       private:
         std::vector<std::unique_ptr<node>> nodes{};
 
@@ -71,5 +75,7 @@ namespace control_flow {
         std::vector<node *> roots{};
 
         node * previously_created{nullptr};
+
+        std::string prog_name;
     };
 } // namespace control_flow

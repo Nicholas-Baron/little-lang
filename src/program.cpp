@@ -222,7 +222,7 @@ bool program::type_check() {
 void program::generate_ir() {
     global_map<std::string, llvm::GlobalObject *> globals;
     // TODO: Remove `a.out` hard coding
-    cfg_to_llvm code_generator{"a.out", *context, globals, llvm_lowering};
+    cfg_to_llvm code_generator{cfg->program_name(), *context, globals, llvm_lowering};
     cfg->for_each_function([this, &code_generator](auto * root) {
         code_generator.control_flow::visitor::visit(*root);
 

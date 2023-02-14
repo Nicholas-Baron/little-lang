@@ -75,6 +75,7 @@ cfg_to_llvm::cfg_to_llvm(const std::string & name, llvm::LLVMContext & context,
     , type_lowering{typ_context}
     , intrinsics{{"syscall", &cfg_to_llvm::syscall}} {
     ir_module->setTargetTriple(init_llvm_targets());
+    ir_module->setSourceFileName(name);
 }
 
 cfg_to_llvm::node_data::node_data(llvm::IRBuilderBase & builder, llvm::Value * val,

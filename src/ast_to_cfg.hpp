@@ -32,6 +32,7 @@ class ast_to_cfg final
 
     [[nodiscard]] std::unique_ptr<control_flow::graph> take_cfg() && noexcept {
         check_flow();
+        result_cfg->set_program_name(std::move(current_module));
         return std::move(result_cfg);
     }
 
