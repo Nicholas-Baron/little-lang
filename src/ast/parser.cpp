@@ -253,7 +253,18 @@ std::unique_ptr<ast::struct_decl> parser::parse_struct_decl() {
     // Parse the fields
     std::vector<ast::typed_identifier> fields;
     while (not lex->consume_if(lexer::token_type::rbrace).has_value() and lex->has_more_tokens()) {
-        fields.emplace_back(parse_typed_identifier());
+        auto new_field = parse_typed_identifier();
+
+        if (auto iter = std::find_if(fields.begin(), fields.end(),
+                                     [&new_field](auto & old_field) -> bool {
+                                         return new_field.name() == old_field.name();
+                                     });
+            iter != fields.end()) {
+            print_error(new_field.location(), "Found fields with same name ", new_field.name(),
+                        " in struct ", name.text);
+        }
+
+        fields.emplace_back(std::move(new_field));
         switch (lex->peek_token().type) {
         case lexer::token_type::comma:
         case lexer::token_type::semi:
