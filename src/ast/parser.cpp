@@ -53,6 +53,9 @@ std::unique_ptr<ast::top_level_sequence> parser::parse() {
             to_ret->append(parse_top_level());
         }
     }
+
+    if (not error_printout.empty()) { return nullptr; }
+
     return to_ret;
 }
 
@@ -811,6 +814,10 @@ std::unique_ptr<ast::struct_init> parser::parse_struct_init(std::string && type_
 template<typename... Args>
 void parser::print_error(Location loc, Args... args) {
     static_assert(sizeof...(args) > 0);
-    error_printout << module_name() << ':' << loc << ": ";
-    (error_printout << ... << args);
+
+    std::stringstream error_line;
+    error_line << module_name() << ':' << loc << ": ";
+    (error_line << ... << args);
+
+    error_printout.emplace_back(error_line.str());
 }

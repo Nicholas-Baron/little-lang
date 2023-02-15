@@ -48,7 +48,8 @@ class parser final {
     // In the case that `parse` failed, `error_message` will provide a human readable error.
     // To check that no error has occured in parsing,
     // ensure that the result of this function is empty.
-    [[nodiscard]] std::string error_message() const { return error_printout.str(); }
+    // Each error is a separate string in the vector to allow for nicer formatting.
+    [[nodiscard]] const std::vector<std::string> & error_message() const { return error_printout; }
 
     // The parser's inner state is rather complex, so not moving or copying it is essential.
     non_copyable(parser);
@@ -126,7 +127,7 @@ class parser final {
 
     lex_ptr lex;
     ast::type_context & ty_context;
-    std::stringstream error_printout;
+    std::vector<std::string> error_printout;
 
     template<typename... Args>
     void print_error(Location loc, Args... args);

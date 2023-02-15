@@ -78,7 +78,10 @@ read_module(const std::string & filename, const std::filesystem::path & project_
     if (parser == nullptr) { return nullptr; }
 
     auto module_ = parser->parse();
-    if (module_ == nullptr) { std::cerr << parser->error_message() << std::endl; }
+    if (module_ == nullptr) {
+        const auto & errors = parser->error_message();
+        for (const auto & error : errors) { std::cerr << error << std::endl; }
+    }
     return module_;
 }
 
@@ -87,6 +90,7 @@ static std::vector<ast::top_level_sequence> load_modules(const std::string & roo
                                                          ast::type_context & type_context) {
 
     std::vector<ast::top_level_sequence> modules;
+    bool failed_parsing = false;
 
     std::set<std::string> loaded;
     std::queue<std::string> to_load;
@@ -106,23 +110,24 @@ static std::vector<ast::top_level_sequence> load_modules(const std::string & roo
 
         auto parsed_module = read_module(filename, project_root, type_context);
         if (parsed_module == nullptr) {
-            std::cout << "Failed to parse " << filename << std::endl;
-            assert(false);
+            failed_parsing = true;
+        } else {
+            parsed_module->filename = unquote(filename);
+
+            for (const auto & iter : parsed_module->imports) {
+                // certain modules are "pseudo" (only containing intrinsics)
+                if (iter.first == "env") { continue; }
+
+                to_load.push(project_root / unquote(iter.first));
+            }
+
+            modules.push_back(std::move(*parsed_module));
+            parsed_module.reset();
         }
-
-        parsed_module->filename = unquote(filename);
-
-        for (const auto & iter : parsed_module->imports) {
-            // certain modules are "pseudo" (only containing intrinsics)
-            if (iter.first == "env") { continue; }
-
-            to_load.push(project_root / unquote(iter.first));
-        }
-
-        modules.push_back(std::move(*parsed_module));
-        parsed_module.reset();
         loaded.insert(std::move(filename));
     }
+
+    if (failed_parsing) { modules.clear(); }
 
     return modules;
 }
