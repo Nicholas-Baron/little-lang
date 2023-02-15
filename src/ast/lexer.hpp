@@ -99,6 +99,9 @@ class lexer final {
     };
 
     // The following functions are used to read and pop from the token stream.
+
+    [[nodiscard]] bool has_more_tokens() { return peek_token() != token_type::eof; }
+
     // `consume_if` will only pop the next token if it is of the given type.
     std::optional<std::string> consume_if(token_type tok_type) {
         if (peek_token() == tok_type) { return next_token().text; }
