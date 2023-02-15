@@ -45,7 +45,7 @@ std::unique_ptr<ast::top_level_sequence> parser::parse() {
     // There may be some imports to parse.
     if (tok == lexer::token_type::from) { to_ret->imports = parse_imports(); }
 
-    while (lex->peek_token() != lexer::token_type::eof) {
+    while (lex->has_more_tokens()) {
         // The only special case here is `export`, as we do not allow `export export`.
         if (lex->peek_token() == lexer::token_type::export_) {
             to_ret->append(parse_exports());
@@ -252,7 +252,7 @@ std::unique_ptr<ast::struct_decl> parser::parse_struct_decl() {
 
     // Parse the fields
     std::vector<ast::typed_identifier> fields;
-    while (not lex->consume_if(lexer::token_type::rbrace).has_value()) {
+    while (not lex->consume_if(lexer::token_type::rbrace).has_value() and lex->has_more_tokens()) {
         fields.emplace_back(parse_typed_identifier());
         switch (lex->peek_token().type) {
         case lexer::token_type::comma:
@@ -262,8 +262,12 @@ std::unique_ptr<ast::struct_decl> parser::parse_struct_decl() {
         case lexer::token_type::rbrace:
         case lexer::token_type::identifier:
             break;
-        default:
-            assert(false);
+        default: {
+            auto error_token = lex->next_token();
+            print_error(error_token.location,
+                        "Expected one of the following: `,`, `;`, `{`, or identifier; Found ",
+                        error_token.text);
+        } break;
         }
     }
 
@@ -450,18 +454,26 @@ ast::typed_identifier parser::parse_typed_identifier() {
 
     // the first case (`type name`) has occured.
     auto * type = parse_type();
-    assert(type != nullptr);
     auto name = lex->next_token();
-    assert(name == lexer::token_type::identifier);
+
+    if (name != lexer::token_type::identifier) {
+        print_error(name.location, "Expected identifier; found ", name.text);
+    }
+
     return {std::move(name.text), type, location};
 }
 
 ast::type_ptr parser::parse_type() {
     // a type can either be some primitive or a user-defined type.
-    switch (lex->peek_token().type) {
+    auto type_name_token = lex->next_token();
+    switch (type_name_token.type) {
     case lexer::token_type::identifier: {
-        auto * type_ptr = ty_context.lookup_user_type(lex->next_token().text, module_name());
-        assert(type_ptr != nullptr);
+        auto * type_ptr = ty_context.lookup_user_type(type_name_token.text, module_name());
+        if (type_ptr == nullptr) {
+            print_error(type_name_token.location,
+                        "Expected a type name; Could not find user type named ",
+                        type_name_token.text);
+        }
         return type_ptr;
     }
     case lexer::token_type::prim_type: {
@@ -487,7 +499,7 @@ ast::type_ptr parser::parse_type() {
             {"string",
              [this] { return ty_context.create_type<ast::prim_type>(ast::prim_type::type::str); } },
         };
-        auto iter = prim_types.find(lex->next_token().text);
+        auto iter = prim_types.find(type_name_token.text);
         if (iter == prim_types.end()) {
             print_error(lex->peek_token().location, "Could not find primitive type named ",
                         lex->peek_token().text);
@@ -502,7 +514,7 @@ ast::type_ptr parser::parse_type() {
         lex->next_token();
         return ty_context.create_type<ast::nullable_ptr_type>(parse_type());
     default:
-        print_error(lex->peek_token().location, "Expected a type. Found ", lex->peek_token().text);
+        print_error(type_name_token.location, "Expected a type. Found ", type_name_token.text);
         return nullptr;
     }
 }
