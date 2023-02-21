@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.7)
 
-set(CMAKE_CXX_COMPILER clang++)
+if("${CMAKE_CXX_COMPILER}" STREQUAL "")
+    set(CMAKE_CXX_COMPILER clang++)
+else()
+    message(STATUS "Using ${CMAKE_CXX_COMPILER}")
+endif()
+
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
