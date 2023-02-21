@@ -16,7 +16,8 @@
     flag(debug_show_execs)   \
     flag(no_output)          \
     flag(run_result)         \
-    flag(debug_cfg)
+    flag(debug_cfg)          \
+    flag(parse_only)
 
 // clang-format on
 
@@ -39,7 +40,7 @@ std::shared_ptr<Settings> read_settings(int arg_count, const char * const * args
              | lyra::opt(no_output)["--no-output"] | lyra::opt(debug_ast)["--ast"]
              | lyra::opt(debug_cfg)["--cfg"] | lyra::opt(debug_ir)["--llvm"]
              | lyra::opt(debug_optimized_ir)["--opt-llvm"] | lyra::opt(debug)["--debug"]
-             | lyra::opt(debug_show_execs)["--exec"]
+             | lyra::opt(debug_show_execs)["--exec"] | lyra::opt(parse_only)["--parse-only"]
              | lyra::arg(settings->file_to_read, "file to read");
 
     // Make a new vector with all the args from before the "--"
