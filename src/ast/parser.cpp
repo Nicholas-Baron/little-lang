@@ -540,11 +540,22 @@ ast::expr_ptr parser::parse_if_expression() {
     }
     // we did consume an if
     auto condition = parse_expression();
-    assert(lex->next_token() == lexer::token_type::then);
+
+    if (auto then_tok = lex->peek_token(); then_tok != lexer::token_type::then) {
+        print_error(then_tok.location, "Expected `then`; Found ", then_tok.text);
+    } else {
+        // Should be a `then`
+        lex->next_token();
+    }
 
     auto then_branch = parse_expression();
 
-    assert(lex->next_token() == lexer::token_type::else_);
+    if (auto else_tok = lex->peek_token(); else_tok != lexer::token_type::else_) {
+        print_error(else_tok.location, "Expected `else`; Found ", else_tok.text);
+    } else {
+        // Should be an `else`
+        lex->next_token();
+    }
 
     auto else_branch = parse_expression();
 
