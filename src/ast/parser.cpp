@@ -384,7 +384,7 @@ std::unique_ptr<ast::return_stmt> parser::parse_return_statement() {
 
     // Found an expression
     auto value = parse_expression();
-    assert(lex->next_token() == lexer::token_type::semi);
+    expect_token(lexer::token_type::semi, ";");
     auto ret = std::make_unique<ast::return_stmt>(std::move(value));
     ret->set_location(location);
     return ret;
@@ -776,7 +776,7 @@ ast::func_call_data parser::parse_func_call(std::optional<lexer::token> func_nam
         // we need to take the function name
         assert(lex->peek_token() == lexer::token_type::identifier);
         auto name = lex->next_token();
-        assert(lex->next_token() == lexer::token_type::lparen);
+        expect_token(lexer::token_type::lparen, "(");
         return name;
     }();
 
@@ -797,7 +797,7 @@ ast::func_call_data parser::parse_func_call(std::optional<lexer::token> func_nam
         }
     }
 
-    assert(lex->next_token() == lexer::token_type::rparen);
+    expect_token(lexer::token_type::rparen, ")");
 
     return {std::move(name.text), std::move(args), name.location};
 }
