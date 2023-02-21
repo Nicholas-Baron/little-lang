@@ -232,7 +232,6 @@ std::unique_ptr<ast::const_decl> parser::parse_const_decl() {
 
     // Parse the initializer of the constant
     auto value = parse_expression();
-    assert(value != nullptr);
 
     // Parse optional semicolon
     lex->consume_if(lexer::token_type::semi);
@@ -749,7 +748,12 @@ ast::expr_ptr parser::parse_atom() {
     // if expression
     if (tok == lexer::token_type::if_) { return parse_if_expression(); }
 
-    assert(tok == lexer::token_type::identifier);
+    if (tok != lexer::token_type::identifier) {
+        print_error(tok.location, "Expected an identifier, `(`, or a literal; Found ", tok.text);
+        lex->next_token();
+        return nullptr;
+    }
+
     auto id = lex->next_token();
     // function call
     if (lex->peek_token() == lexer::token_type::lparen) {
@@ -783,9 +787,7 @@ ast::func_call_data parser::parse_func_call(std::optional<lexer::token> func_nam
     // we have already taken the lparen
     std::vector<ast::expr_ptr> args;
     while (lex->peek_token() != lexer::token_type::rparen) {
-        auto expr = parse_expression();
-        assert(expr != nullptr);
-        args.push_back(std::move(expr));
+        args.push_back(parse_expression());
         switch (lex->peek_token().type) {
         case lexer::token_type::rparen:
             break;
@@ -793,7 +795,9 @@ ast::func_call_data parser::parse_func_call(std::optional<lexer::token> func_nam
             lex->next_token();
             break;
         default:
-            assert(false);
+            print_error(lex->peek_token().location, "Expected a `)` or a `,`; Found ",
+                        lex->next_token().text);
+            break;
         }
     }
 
