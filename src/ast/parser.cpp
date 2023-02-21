@@ -228,7 +228,12 @@ std::unique_ptr<ast::const_decl> parser::parse_const_decl() {
     // Parse the identifier and type of the constant
     auto typed_id = parse_typed_identifier();
 
-    assert(lex->next_token() == lexer::token_type::equal);
+    if (auto equ_tok = lex->peek_token(); equ_tok != lexer::token_type::equal) {
+        print_error(equ_tok.location, "Expected `=`; Found ", equ_tok.text);
+    } else {
+        lex->next_token();
+    }
+
     // Parse the initializer of the constant
     auto value = parse_expression();
     assert(value != nullptr);
