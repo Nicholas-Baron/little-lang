@@ -131,4 +131,8 @@ class parser final {
 
     template<typename... Args>
     void print_error(Location loc, Args... args);
+
+    // Utility function to check for a next expected token.
+    // Since it does not return anything, it should only be used on "symbol" tokens.
+    void expect_token(lexer::token_type, std::string);
 };

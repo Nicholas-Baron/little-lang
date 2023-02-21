@@ -228,11 +228,7 @@ std::unique_ptr<ast::const_decl> parser::parse_const_decl() {
     // Parse the identifier and type of the constant
     auto typed_id = parse_typed_identifier();
 
-    if (auto equ_tok = lex->peek_token(); equ_tok != lexer::token_type::equal) {
-        print_error(equ_tok.location, "Expected `=`; Found ", equ_tok.text);
-    } else {
-        lex->next_token();
-    }
+    expect_token(lexer::token_type::equal, "=");
 
     // Parse the initializer of the constant
     auto value = parse_expression();
@@ -546,21 +542,11 @@ ast::expr_ptr parser::parse_if_expression() {
     // we did consume an if
     auto condition = parse_expression();
 
-    if (auto then_tok = lex->peek_token(); then_tok != lexer::token_type::then) {
-        print_error(then_tok.location, "Expected `then`; Found ", then_tok.text);
-    } else {
-        // Should be a `then`
-        lex->next_token();
-    }
+    expect_token(lexer::token_type::then, "then");
 
     auto then_branch = parse_expression();
 
-    if (auto else_tok = lex->peek_token(); else_tok != lexer::token_type::else_) {
-        print_error(else_tok.location, "Expected `else`; Found ", else_tok.text);
-    } else {
-        // Should be an `else`
-        lex->next_token();
-    }
+    expect_token(lexer::token_type::else_, "else");
 
     auto else_branch = parse_expression();
 
@@ -859,4 +845,12 @@ void parser::print_error(Location loc, Args... args) {
     (error_line << ... << args);
 
     error_printout.emplace_back(error_line.str());
+}
+
+void parser::expect_token(lexer::token_type tok_type, std::string text) {
+    if (auto tok = lex->peek_token(); tok != tok_type) {
+        print_error(tok.location, "Expected `", std::move(text), "`; Found ", tok.text);
+    } else {
+        lex->next_token();
+    }
 }
