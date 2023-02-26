@@ -6,6 +6,9 @@
 
 #include <iostream>
 
+#define NODE_NAME(node) \
+    { "node name", #node }
+
 namespace control_flow {
 
     serializer::serializer() = default;
@@ -60,6 +63,7 @@ namespace control_flow {
         if (result == nullptr) { return value_getter::store_result(index); }
 
         *result = {
+            NODE_NAME(function_start),
             {"arg count", function_start.arg_count},
             {"exported", function_start.exported},
             {"next", get_value(*function_start.next, *this)}
@@ -75,7 +79,7 @@ namespace control_flow {
         if (function_end.value != nullptr) { value = get_value(*function_end.value, *this); }
 
         *result = {
-            {"value", std::move(value)}
+            NODE_NAME(function_end), {"value", std::move(value)}
         };
         return store_result(result);
     }
@@ -85,6 +89,7 @@ namespace control_flow {
         if (result == nullptr) { return value_getter::store_result(index); }
 
         *result = {
+            NODE_NAME(binary_operation),
             {"next", get_value(*binary_operation.next, *this)},
             {"left", get_value(*binary_operation.lhs, *this)},
             {"right", get_value(*binary_operation.rhs, *this)},
@@ -98,6 +103,7 @@ namespace control_flow {
         if (result == nullptr) { return value_getter::store_result(index); }
 
         *result = {
+            NODE_NAME(branch),
             {"condition",  get_value(*branch.condition_value, *this)},
             {"true case",  get_value(*branch.true_case,       *this)},
             {"false case", get_value(*branch.false_case,      *this)},
@@ -121,6 +127,7 @@ namespace control_flow {
             constant.value);
 
         *result = {
+            NODE_NAME(constant),
             {"value", std::move(value)},
             {"type", token_to_string(constant.val_type)},
             {"next", get_value(*constant.next, *this)}
@@ -136,6 +143,7 @@ namespace control_flow {
         for (auto * arg : function_call.arguments) { args.push_back(get_value(*arg, *this)); }
 
         *result = {
+            NODE_NAME(function_call),
             {"next", get_value(*function_call.next, *this)},
             {"arguments", std::move(args)},
             {"callee", function_call.callee->name}
@@ -151,6 +159,7 @@ namespace control_flow {
         for (auto * arg : intrinsic_call.arguments) { args.push_back(get_value(*arg, *this)); }
 
         *result = {
+            NODE_NAME(intrinsic_call),
             {"next", get_value(*intrinsic_call.next, *this)},
             {"arguments", std::move(args)},
             {"callee", intrinsic_call.name}
@@ -164,6 +173,7 @@ namespace control_flow {
         if (result == nullptr) { return value_getter::store_result(index); }
 
         *result = {
+            NODE_NAME(member_access),
             {"next", get_value(*member_access.next, *this)},
             {"member", member_access.member_name},
             {"lhs", get_value(*member_access.lhs, *this)}
@@ -198,6 +208,7 @@ namespace control_flow {
         for (auto * arg : phi.previous) { args.push_back(get_value(*arg, *this)); }
 
         *result = {
+            NODE_NAME(phi),
             {"next", get_value(*phi.next, *this)},
             {"arguments", std::move(args)},
         };
@@ -218,6 +229,7 @@ namespace control_flow {
         }
 
         *result = {
+            NODE_NAME(struct_init),
             {"type name",    struct_init.result_type->user_name()},
             {"initializers", std::move(fields)                   }
         };
@@ -231,6 +243,7 @@ namespace control_flow {
         if (result == nullptr) { return value_getter::store_result(index); }
 
         *result = {
+            NODE_NAME(unary_operation),
             {"next", get_value(*unary_operation.next, *this)},
             {"op", token_to_string(unary_operation.op)},
             {"operand", get_value(*unary_operation.operand, *this)}
