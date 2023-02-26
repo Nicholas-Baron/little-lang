@@ -42,7 +42,7 @@ namespace ast {
     // Base classes
     class expr : public virtual node {
       public:
-        ast::type_ptr type;
+        ast::type_ptr type{nullptr};
     };
 
     class stmt : public virtual node {};
