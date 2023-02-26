@@ -21,6 +21,7 @@ namespace ast {
 
     void serializer::visit(top_level_sequence & top_level_sequence) {
         std::vector<nlohmann::json> sequence;
+        sequence.reserve(top_level_sequence.items.size());
         for (auto & top_level : top_level_sequence.items) {
             sequence.emplace_back(get_value(*top_level, *this));
         }
@@ -130,6 +131,7 @@ namespace ast {
     void serializer::visit(ast::stmt_sequence & stmt_sequence) {
         std::vector<nlohmann::json> stmts;
 
+        stmts.reserve(stmt_sequence.stmts.size());
         for (auto & stmt : stmt_sequence.stmts) { stmts.push_back(get_value(*stmt, *this)); }
 
         return store_result(std::move(stmts));
@@ -139,6 +141,7 @@ namespace ast {
 
         std::vector<nlohmann::json> fields;
 
+        fields.reserve(struct_decl.fields.size());
         for (auto & field : struct_decl.fields) { fields.push_back(get_value(field, *this)); }
 
         return store_result(nlohmann::json::object_t{
@@ -151,6 +154,7 @@ namespace ast {
 
         std::vector<nlohmann::json> fields;
 
+        fields.reserve(struct_init.initializers.size());
         for (auto & [name, value] : struct_init.initializers) {
             fields.emplace_back(nlohmann::json::object_t{
                 {"name", name},
