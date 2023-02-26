@@ -8,11 +8,18 @@
 
 namespace ast {
 
+    static std::string serialize_type(ast::type_ptr type) {
+        assert(type != nullptr);
+        return (std::stringstream{} << *type).str();
+    }
+
+    using object_t = nlohmann::json::object_t;
+
     void serializer::visit(binary_expr & binary_expr) {
         auto lhs = get_value(*binary_expr.lhs, *this);
         auto rhs = get_value(*binary_expr.rhs, *this);
 
-        return store_result(std::map<std::string, nlohmann::json>{
+        return store_result(object_t{
             {"operator", nlohmann::json{token_to_string(binary_expr.op)}},
             {"lhs",      lhs                                            },
             {"rhs",      rhs                                            }
@@ -42,9 +49,10 @@ namespace ast {
     void serializer::visit(const_decl & const_decl) {
         auto value = get_value(*const_decl.expr, *this);
 
-        return store_result(nlohmann::json::object_t{
+        return store_result(object_t{
             {"decl_type", "const"},
             {"variable", get_value(const_decl.name_and_type, *this)},
+            {"type", serialize_type(const_decl.name_and_type.type())},
             {"value", std::move(value)}
         });
     }
@@ -56,7 +64,7 @@ namespace ast {
             args[i] = get_value(func_call_data.arg(i), *this);
         }
 
-        return store_result(std::map<std::string, nlohmann::json>{
+        return store_result(object_t{
             {"name", func_call_data.name()},
             {"args", std::move(args)      }
         });
@@ -74,14 +82,11 @@ namespace ast {
 
         for (auto & param : func_decl.params) { params.push_back(get_value(param, *this)); }
 
-        assert(func_decl.func_type != nullptr);
-        auto return_type = (std::stringstream{} << *func_decl.func_type->return_type()).str();
-
-        return store_result(nlohmann::json::object_t{
-            {"body",        std::move(body)       },
-            {"name",        func_decl.name        },
-            {"paramaters",  std::move(params)     },
-            {"return type", std::move(return_type)}
+        return store_result(object_t{
+            {"body",       std::move(body)                    },
+            {"name",       func_decl.name                     },
+            {"paramaters", std::move(params)                  },
+            {"type",       serialize_type(func_decl.func_type)}
         });
     }
 
@@ -91,9 +96,10 @@ namespace ast {
         auto else_value = get_value(*if_expr.else_case, *this);
 
         return store_result(std::map<std::string, nlohmann::json>{
-            {"condition",  std::move(condition) },
-            {"then_value", std::move(then_value)},
-            {"else_value", std::move(else_value)}
+            {"condition",  std::move(condition)        },
+            {"then_value", std::move(then_value)       },
+            {"else_value", std::move(else_value)       },
+            {"type",       serialize_type(if_expr.type)}
         });
     }
 
@@ -104,7 +110,7 @@ namespace ast {
         auto else_value = if_stmt.else_branch != nullptr ? get_value(*if_stmt.else_branch, *this)
                                                          : nlohmann::json{};
 
-        return store_result(std::map<std::string, nlohmann::json>{
+        return store_result(object_t{
             {"condition",  std::move(condition) },
             {"then_value", std::move(then_value)},
             {"else_value", std::move(else_value)}
@@ -114,15 +120,16 @@ namespace ast {
     void serializer::visit(ast::let_stmt & let_stmt) {
         auto value = get_value(*let_stmt.value, *this);
 
-        return store_result(nlohmann::json::object_t{
+        return store_result(object_t{
             {"decl_type", "let"},
             {"variable", get_value(let_stmt.name_and_type, *this)},
+            {"type", serialize_type(let_stmt.name_and_type.type())},
             {"value", std::move(value)}
         });
     }
 
     void serializer::visit(ast::return_stmt & return_stmt) {
-        return store_result(std::map<std::string, nlohmann::json>{
+        return store_result(object_t{
             {"value",
              return_stmt.value != nullptr ? get_value(*return_stmt.value, *this) : nullptr}
         });
@@ -144,7 +151,7 @@ namespace ast {
         fields.reserve(struct_decl.fields.size());
         for (auto & field : struct_decl.fields) { fields.push_back(get_value(field, *this)); }
 
-        return store_result(nlohmann::json::object_t{
+        return store_result(object_t{
             {"name",   struct_decl.name },
             {"fields", std::move(fields)}
         });
@@ -156,13 +163,13 @@ namespace ast {
 
         fields.reserve(struct_init.initializers.size());
         for (auto & [name, value] : struct_init.initializers) {
-            fields.emplace_back(nlohmann::json::object_t{
+            fields.emplace_back(object_t{
                 {"name", name},
                 {"value", get_value(*value, *this)}
             });
         }
 
-        return store_result({
+        return store_result(object_t{
             {"type",         struct_init.type_name},
             {"initializers", std::move(fields)    }
         });
@@ -170,25 +177,24 @@ namespace ast {
 
     void serializer::visit(ast::typed_identifier & typed_identifier) {
 
-        auto type = typed_identifier.type() != nullptr
-                      ? nlohmann::json{(std::stringstream{} << typed_identifier.type()).str()}
-                      : nlohmann::json{};
+        auto type
+            = typed_identifier.type() != nullptr ? serialize_type(typed_identifier.type()) : "";
 
-        return store_result(nlohmann::json::object_t{
+        return store_result(object_t{
             {"name", typed_identifier.name()},
             {"type", std::move(type)        }
         });
     }
 
     void serializer::visit(ast::unary_expr & unary_expr) {
-        return store_result({
+        return store_result(object_t{
             {"operator", unary_expr.op},
             {"operand", get_value(*unary_expr.expr, *this)}
         });
     }
 
     void serializer::visit(ast::user_val & user_val) {
-        return store_result({
+        return store_result(object_t{
             {"value_type", token_to_string(user_val.val_type)},
             {"value",      user_val.val                      }
         });
