@@ -52,19 +52,9 @@ target_compile_options(
 )
 target_link_libraries(littlec_lib littlec_ast littlec_utils)
 
-llvm_map_components_to_libnames(
-    LLVM_LIBS
-    all
-    core
-    support
-    native
-    executionengine
-    asmprinter
-    codegen
-    passes
-)
+llvm_map_components_to_libnames(LLVM_LIBS all support)
 
-target_link_libraries(littlec_lib ${LLVM_LIBS} CONAN_PKG::lyra)
+target_link_libraries(littlec_lib ${LLVM_LIBS} LLVM CONAN_PKG::lyra)
 target_link_options(littlec_lib PUBLIC -Wl,--gc-sections)
 target_include_directories(
     littlec_lib
