@@ -60,8 +60,9 @@ class ast_to_cfg final
     const control_flow::function_start * current_function{nullptr};
 
     ast::type_context * type_context;
-    global_map<std::string,
-               std::variant<std::monostate, ast::expr *, control_flow::function_start *>>
-        globals;
+    using global_map_t
+        = global_map<std::string,
+                     std::variant<std::monostate, ast::expr *, control_flow::function_start *>>;
+    global_map_t globals;
     std::string current_module;
 };
