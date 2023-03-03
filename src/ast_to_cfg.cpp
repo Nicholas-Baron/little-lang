@@ -1,6 +1,7 @@
 #include "ast_to_cfg.hpp"
 
 #include "control_flow/node.hpp"
+#include "intrinsics.hpp"
 #include "string_utils.hpp"
 
 #include <iostream> // cout
@@ -207,7 +208,8 @@ void ast_to_cfg::import_item(const std::string & id, const std::string & mod) {
         } else {
             assert(false);
         }
-    } else {
+        // TODO: Mark that id has been imported. Useful for pseudo-modules
+    } else if (not is_intrinsic(mod, id)) {
         std::cout << "Could not find " << id << " in module " << mod << "\nIt may not be exported."
                   << std::endl;
         assert(false);
@@ -313,13 +315,15 @@ void ast_to_cfg::visit(ast::func_call_data & func_call_data) {
 
     auto iter = seen_functions.find(func_call_data.name());
     if (iter == seen_functions.end()) {
-        // TODO: Make central instrinics 'database'
-        if (func_call_data.name() == "syscall") {
-            auto & intrinsic_call
-                = result_cfg->create<control_flow::intrinsic_call>("syscall", args);
-            intrinsic_call.flows_from(prev_node);
-            return store_result({first_arg, &intrinsic_call});
+        auto * possible_intrinsic
+            = generate_ast_intrinsic(*result_cfg, func_call_data.name(), std::move(args));
+
+        if (possible_intrinsic != nullptr) {
+            possible_intrinsic->flows_from(prev_node);
+            return store_result(
+                {first_arg != nullptr ? first_arg : possible_intrinsic, possible_intrinsic});
         }
+
         assert(false and "TODO: Make acutal error printout");
     }
 
