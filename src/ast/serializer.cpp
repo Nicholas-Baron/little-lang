@@ -96,10 +96,9 @@ namespace ast {
         auto else_value = get_value(*if_expr.else_case, *this);
 
         return store_result(std::map<std::string, nlohmann::json>{
-            {"condition",  std::move(condition)        },
-            {"then_value", std::move(then_value)       },
-            {"else_value", std::move(else_value)       },
-            {"type",       serialize_type(if_expr.type)}
+            {"condition",  std::move(condition) },
+            {"then_value", std::move(then_value)},
+            {"else_value", std::move(else_value)}
         });
     }
 
@@ -120,12 +119,17 @@ namespace ast {
     void serializer::visit(ast::let_stmt & let_stmt) {
         auto value = get_value(*let_stmt.value, *this);
 
-        return store_result(object_t{
+        auto result = object_t{
             {"decl_type", "let"},
             {"variable", get_value(let_stmt.name_and_type, *this)},
-            {"type", serialize_type(let_stmt.name_and_type.type())},
             {"value", std::move(value)}
-        });
+        };
+
+        if (let_stmt.name_and_type.type() != nullptr) {
+            result.insert_or_assign("type", serialize_type(let_stmt.name_and_type.type()));
+        }
+
+        return store_result(std::move(result));
     }
 
     void serializer::visit(ast::return_stmt & return_stmt) {
