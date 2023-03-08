@@ -11,6 +11,7 @@ namespace control_flow {
     type_checker::type_checker(ast::type_context & ty_context)
         : type_context{ty_context} {
         intrinsics.emplace("syscall", &type_checker::syscall);
+        intrinsics.emplace("arg_count", &type_checker::arg_count);
     }
 
     template<class... arg_t>
@@ -42,6 +43,17 @@ namespace control_flow {
     ast::type_ptr type_checker::find_type_of(control_flow::node * value) const {
         auto iter = node_type.find(value);
         return (iter != node_type.end()) ? iter->second : nullptr;
+    }
+
+    void type_checker::arg_count(intrinsic_call & call) {
+        // arg_count takes no parameter_names and returns an int
+        if (not call.arguments.empty()) {
+            printError("`arg_count` does not take any parameter_names");
+        }
+        auto * int_type = type_context.create_type<ast::prim_type>(ast::prim_type::type::int32);
+
+        call.type = type_context.create_type<ast::function_type>(int_type);
+        bind_type(&call, int_type);
     }
 
     void type_checker::syscall(intrinsic_call & call) {
