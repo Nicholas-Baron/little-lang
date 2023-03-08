@@ -298,6 +298,9 @@ namespace control_flow {
         } else {
             printError("Could not type check intrinsic named ", intrinsic_call.name);
         }
+
+        visited.emplace(&intrinsic_call);
+        return intrinsic_call.next->accept(*this);
     }
 
     void type_checker::visit(member_access & member_access) {
