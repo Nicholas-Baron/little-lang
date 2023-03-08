@@ -55,6 +55,7 @@ class cfg_to_llvm final : public control_flow::visitor {
     void bind_value(const control_flow::node & node, llvm::Value * value, ast::type_ptr type);
     [[nodiscard]] const node_data * find_value_of(const control_flow::node * node) const;
 
+    void arg_count(control_flow::intrinsic_call &);
     void syscall(control_flow::intrinsic_call &);
 
     // Keep these behind unique_ptr to allow for moving the visitor

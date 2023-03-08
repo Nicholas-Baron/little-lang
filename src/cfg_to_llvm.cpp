@@ -72,8 +72,10 @@ cfg_to_llvm::cfg_to_llvm(const std::string & name, llvm::LLVMContext & context,
     , ir_module{std::make_unique<llvm::Module>(name, context)}
     , ir_builder{std::make_unique<llvm::IRBuilder<>>(context)}
     , globals{globals}
-    , type_lowering{typ_context}
-    , intrinsics{{"syscall", &cfg_to_llvm::syscall}} {
+    , type_lowering{typ_context} {
+    intrinsics.emplace("syscall", &cfg_to_llvm::syscall);
+    intrinsics.emplace("arg_count", &cfg_to_llvm::arg_count);
+
     ir_module->setTargetTriple(init_llvm_targets());
     ir_module->setSourceFileName(name);
 }
@@ -419,6 +421,20 @@ void cfg_to_llvm::visit(control_flow::function_start & func_start) {
     if (func_start.exported) {
         globals.add(ir_module->getModuleIdentifier(), func_start.name, func);
     }
+
+    local_names.remove_scope();
+}
+
+void cfg_to_llvm::arg_count(control_flow::intrinsic_call & intrinsic_call) {
+    auto * func_type
+        = llvm::cast_or_null<llvm::FunctionType>(type_lowering.lower_to_llvm(intrinsic_call.type));
+    assert(func_type != nullptr);
+
+    auto * arg_count_ir = llvm::Function::Create(func_type, llvm::Function::ExternalLinkage,
+                                                 "arg_count", ir_module.get());
+
+    bind_value(intrinsic_call, ir_builder->CreateCall(func_type, arg_count_ir),
+               intrinsic_call.type);
 }
 
 void cfg_to_llvm::syscall(control_flow::intrinsic_call & intrinsic_call) {
