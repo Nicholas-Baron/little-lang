@@ -12,6 +12,7 @@ namespace control_flow {
         : type_context{ty_context} {
         intrinsics.emplace("syscall", &type_checker::syscall);
         intrinsics.emplace("arg_count", &type_checker::arg_count);
+        intrinsics.emplace("arg_at", &type_checker::arg_at);
     }
 
     template<class... arg_t>
@@ -43,6 +44,24 @@ namespace control_flow {
     ast::type_ptr type_checker::find_type_of(control_flow::node * value) const {
         auto iter = node_type.find(value);
         return (iter != node_type.end()) ? iter->second : nullptr;
+    }
+
+    void type_checker::arg_at(intrinsic_call & call) {
+        // arg_at takes 1 int parameter and returns a str
+        // TODO: handle when int goes out of bounds
+
+        if (call.arguments.size() != 1) {
+            printError("`arg_at` takes exactly 1 parameter");
+            return;
+        }
+
+        auto * arg_type = find_type_of(call.arguments.front());
+        auto * int_type = type_context.create_type<ast::prim_type>(ast::prim_type::type::int32);
+        if (arg_type != int_type) { printError("`arg_at` only takes int parameters"); }
+
+        auto * str_type = type_context.create_type<ast::prim_type>(ast::prim_type::type::str);
+        call.type = type_context.create_type<ast::function_type>(str_type, std::vector{int_type});
+        bind_type(&call, str_type);
     }
 
     void type_checker::arg_count(intrinsic_call & call) {

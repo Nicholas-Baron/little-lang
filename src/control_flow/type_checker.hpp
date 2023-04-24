@@ -28,6 +28,7 @@ namespace control_flow {
         void printError(const arg_t &... args);
         // clang-format on
 
+        void arg_at(control_flow::intrinsic_call & call);
         void arg_count(control_flow::intrinsic_call & call);
         void syscall(control_flow::intrinsic_call & call);
 
