@@ -75,6 +75,7 @@ cfg_to_llvm::cfg_to_llvm(const std::string & name, llvm::LLVMContext & context,
     , type_lowering{typ_context} {
     intrinsics.emplace("syscall", &cfg_to_llvm::syscall);
     intrinsics.emplace("arg_count", &cfg_to_llvm::arg_count);
+    intrinsics.emplace("arg_at", &cfg_to_llvm::arg_at);
 
     ir_module->setTargetTriple(init_llvm_targets());
     ir_module->setSourceFileName(name);
@@ -423,6 +424,31 @@ void cfg_to_llvm::visit(control_flow::function_start & func_start) {
     }
 
     local_names.remove_scope();
+}
+
+void cfg_to_llvm::arg_at(control_flow::intrinsic_call & intrinsic_call) {
+
+    assert(intrinsic_call.arguments.size() == 1);
+    auto * arg_cfg = intrinsic_call.arguments.front();
+    assert(arg_cfg != nullptr);
+
+    const auto * arg_data = find_value_of(arg_cfg);
+    assert(arg_data != nullptr);
+
+    auto * arg_ir = arg_data->value;
+    assert(arg_ir != nullptr);
+
+    assert(intrinsic_call.type != nullptr);
+
+    auto * func_type
+        = llvm::cast_or_null<llvm::FunctionType>(type_lowering.lower_to_llvm(intrinsic_call.type));
+    assert(func_type != nullptr);
+
+    auto * arg_at_ir = llvm::Function::Create(func_type, llvm::Function::ExternalLinkage, "arg_at",
+                                              ir_module.get());
+
+    bind_value(intrinsic_call, ir_builder->CreateCall(func_type, arg_at_ir, {arg_ir}),
+               intrinsic_call.type);
 }
 
 void cfg_to_llvm::arg_count(control_flow::intrinsic_call & intrinsic_call) {
