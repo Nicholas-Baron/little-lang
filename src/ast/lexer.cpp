@@ -1,8 +1,9 @@
 #include "lexer.hpp"
 
 #include <cassert>
-#include <cctype>   // isspace
-#include <iostream> // cerr
+#include <cctype>     // isspace
+#include <filesystem> // absolute
+#include <iostream>   // cerr
 #include <map>
 
 #include <fcntl.h>    // open
@@ -52,8 +53,8 @@ std::unique_ptr<lexer> lexer::from_buffer(std::string & buffer) {
     return std::unique_ptr<lexer>(new lexer(buffer.c_str(), buffer.size()));
 }
 
-lexer::lexer(std::string filename, const char * data, size_t size)
-    : filename{std::move(filename)}
+lexer::lexer(const std::string & filename, const char * data, size_t size)
+    : filename{std::filesystem::absolute(filename)}
     , data{data}
     , length{size}
     , type{data_type::mmapped} {}
@@ -109,7 +110,7 @@ lexer::token lexer::next_token(bool increasing_lookahead) {
 template<class... args_t>
 void lexer::print_error(args_t... args) const {
 
-    std::cerr << filename << ':' << line_num << ':' << col_num << ": ";
+    std::cerr << file_name() << ':' << line_num << ':' << col_num << ": ";
     (std::cerr << ... << args) << std::endl;
 }
 

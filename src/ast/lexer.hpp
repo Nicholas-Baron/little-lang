@@ -3,6 +3,7 @@
 #include "location.hpp"
 
 #include <deque>
+#include <filesystem>
 #include <memory> // unique_ptr
 #include <optional>
 #include <string>
@@ -129,10 +130,10 @@ class lexer final {
     // provided string.
     bool next_chars(const std::string & text, unsigned offset = 0);
 
-    [[nodiscard]] std::string file_name() const { return filename; }
+    [[nodiscard]] std::string file_name() const { return filename.value_or("internal buffer"); }
 
   private:
-    lexer(std::string filename, const char * data, size_t size);
+    lexer(const std::string & filename, const char * data, size_t size);
     lexer(const char * data, size_t size);
 
     template<class... args_t>
@@ -148,7 +149,7 @@ class lexer final {
     char next_escaped();
 
     std::deque<token> peeked_tokens;
-    std::string filename;
+    std::optional<std::filesystem::path> filename;
 
     const char * data;
     size_t length;
