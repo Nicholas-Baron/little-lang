@@ -34,6 +34,8 @@ std::unique_ptr<ast::top_level_sequence> parser::parse() {
 
     auto to_ret = std::make_unique<ast::top_level_sequence>();
 
+    to_ret->filename = lex->file_name();
+
     auto tok = lex->peek_token();
 
     if (tok == lexer::token_type::eof) {
