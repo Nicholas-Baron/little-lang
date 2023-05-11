@@ -26,7 +26,7 @@ namespace control_flow {
     }
 
     void type_checker::bind_type(control_flow::node * value, ast::type_ptr type) {
-        node_type.emplace(value, type);
+        node_information.emplace(value, type_checker::node_info{type});
 
         if (auto * binary_op = dynamic_cast<control_flow::binary_operation *>(value);
             binary_op != nullptr) {
@@ -42,8 +42,8 @@ namespace control_flow {
     }
 
     ast::type_ptr type_checker::find_type_of(control_flow::node * value) const {
-        auto iter = node_type.find(value);
-        return (iter != node_type.end()) ? iter->second : nullptr;
+        auto iter = node_information.find(value);
+        return (iter != node_information.end()) ? iter->second.type : nullptr;
     }
 
     void type_checker::arg_at(intrinsic_call & call) {

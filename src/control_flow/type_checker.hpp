@@ -42,7 +42,12 @@ namespace control_flow {
         std::map<std::string, instrinic_checker> intrinsics;
 
         std::map<std::string, ast::type_ptr> bound_identifiers;
-        std::map<control_flow::node *, ast::type_ptr> node_type;
+
+        struct node_info {
+            ast::type_ptr type;
+        };
+
+        std::map<control_flow::node *, node_info> node_information;
         std::unordered_set<control_flow::node *> visited;
         const ast::type * current_return_type{nullptr};
         bool has_seen_error{false};
