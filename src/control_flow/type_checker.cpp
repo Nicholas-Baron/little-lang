@@ -313,7 +313,8 @@ namespace control_flow {
                 : type_context.create_type<ast::prim_type>(ast::prim_type::type::unit);
 
         if (expected_return_type != actual_type) {
-            printError("Expected a return expression with type ", *expected_return_type,
+            printError("Function `", current_function->name,
+                       "` expected a return expression with type ", *expected_return_type,
                        "; found one with ", *actual_type);
         }
 
