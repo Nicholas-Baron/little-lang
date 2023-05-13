@@ -763,18 +763,20 @@ ast::expr_ptr parser::parse_atom() {
     }
 
     auto id = lex->next_token();
+    switch (auto next = lex->peek_token(); next.type) {
     // function call
-    if (lex->peek_token() == lexer::token_type::lparen) {
+    case lexer::token_type::lparen:
         return std::make_unique<ast::func_call_expr>(parse_func_call(std::move(id)), tok.location);
-    }
 
     // struct initialization
-    if (lex->peek_token() == lexer::token_type::lbrace) {
+    case lexer::token_type::lbrace:
         return parse_struct_init(std::move(id.text), tok.location);
-    }
 
     // some variable
-    return std::make_unique<ast::user_val>(std::move(id.text), val_type::identifier, tok.location);
+    default:
+        return std::make_unique<ast::user_val>(std::move(id.text), val_type::identifier,
+                                               tok.location);
+    }
 }
 
 ast::func_call_data parser::parse_func_call(std::optional<lexer::token> func_name) {
