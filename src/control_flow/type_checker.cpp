@@ -378,23 +378,20 @@ namespace control_flow {
 
         if (should_continue) {
 
-            // HACK: Sometimes, phi nodes are values and need a type.
-            //       This will happen if all previous nodes have the same type.
+            std::set<ast::type_ptr> input_types;
+            for (auto * prev : phi.previous) { input_types.emplace(find_type_of(prev)); }
+            assert(not input_types.empty());
 
-            std::optional<ast::type_ptr> phi_type;
-            for (auto * prev : phi.previous) {
-                if (auto * prev_type = find_type_of(prev); not phi_type.has_value()) {
-                    phi_type = prev_type;
-                } else if (phi_type != prev_type) {
-                    phi_type = nullptr;
-                }
-            }
+            if (input_types.size() == 1) {
+                auto * phi_type = *input_types.begin();
+                bind_type(&phi, phi_type);
+                phi.type = phi_type;
+            } else {
+                std::stringstream competing_types;
+                for (auto * type : input_types) { competing_types << '`' << *type << "`, "; }
 
-            assert(phi_type.has_value());
-
-            if (phi_type != nullptr) {
-                bind_type(&phi, *phi_type);
-                phi.type = *phi_type;
+                printError("Expected branches to have the same type; found competing types of ",
+                           competing_types.str());
             }
 
             visited.emplace(&phi);
