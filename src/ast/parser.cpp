@@ -527,10 +527,8 @@ ast::type_ptr parser::parse_type() {
         return iter->second();
     }
     case lexer::token_type::amp:
-        lex->next_token();
         return ty_context.create_type<ast::nonnullable_ptr_type>(parse_type());
     case lexer::token_type::question:
-        lex->next_token();
         return ty_context.create_type<ast::nullable_ptr_type>(parse_type());
     default:
         print_error(type_name_token.location, "Expected a type. Found ", type_name_token.text);
