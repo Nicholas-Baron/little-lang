@@ -36,6 +36,8 @@ namespace control_flow {
         void bind_type(control_flow::node * value, ast::type_ptr type);
         ast::type_ptr find_type_of(control_flow::node * value) const;
 
+        [[nodiscard]] const ast::type * current_return_type() const;
+
         ast::type_context & type_context;
 
         using instrinic_checker = void (type_checker::*)(intrinsic_call &);
@@ -49,7 +51,7 @@ namespace control_flow {
 
         std::map<control_flow::node *, node_info> node_information;
         std::unordered_set<control_flow::node *> visited;
-        const ast::type * current_return_type{nullptr};
+        const control_flow::function_start * current_function{nullptr};
         bool has_seen_error{false};
     };
 } // namespace control_flow

@@ -46,6 +46,12 @@ namespace control_flow {
         return (iter != node_information.end()) ? iter->second.type : nullptr;
     }
 
+    const ast::type * type_checker::current_return_type() const {
+        return (current_function != nullptr and current_function->type != nullptr)
+                 ? current_function->type->return_type()
+                 : nullptr;
+    }
+
     void type_checker::arg_at(intrinsic_call & call) {
         // arg_at takes 1 int parameter and returns a str
         // TODO: handle when int goes out of bounds
@@ -112,7 +118,7 @@ namespace control_flow {
     }
 
     void type_checker::visit(function_start & func_start) {
-        current_return_type = func_start.type->return_type();
+        current_function = &func_start;
 
         for (auto i = 0UL; i < func_start.arg_count; ++i) {
             bind_identifier(func_start.parameter_names[i], func_start.type->arg(i));
@@ -296,15 +302,18 @@ namespace control_flow {
     }
 
     void type_checker::visit(function_end & func_end) {
-        assert(current_return_type != nullptr);
+
+        const auto * expected_return_type = current_return_type();
+
+        assert(expected_return_type != nullptr);
 
         auto * const actual_type
             = (func_end.value != nullptr)
                 ? find_type_of(func_end.value)
                 : type_context.create_type<ast::prim_type>(ast::prim_type::type::unit);
 
-        if (current_return_type != actual_type) {
-            printError("Expected a return expression with type ", *current_return_type,
+        if (expected_return_type != actual_type) {
+            printError("Expected a return expression with type ", *expected_return_type,
                        "; found one with ", *actual_type);
         }
 
