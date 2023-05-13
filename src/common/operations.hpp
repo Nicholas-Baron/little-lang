@@ -49,5 +49,5 @@ namespace operation {
         }
     }
 
-    enum class unary { bool_not, negate, deref };
+    enum class unary { bool_not, negate, deref, addrof };
 } // namespace operation

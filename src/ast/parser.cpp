@@ -684,6 +684,15 @@ ast::expr_ptr parser::parse_unary() {
         expr->set_location(location);
         return expr;
     }
+    case lexer::token_type::amp: {
+        // & expr
+        auto location = lex->next_token().location;
+        auto expr = parse_atom();
+        assert(expr != nullptr);
+        expr = std::make_unique<ast::unary_expr>(operand::addrof, std::move(expr));
+        expr->set_location(location);
+        return expr;
+    }
     default:
         return parse_member_access();
     }

@@ -465,6 +465,14 @@ namespace control_flow {
                 result_type = ptr_type->pointed_to_type();
             }
             break;
+        case operation::unary::addrof:
+            if (is_operand_prim(ast::prim_type::type::unit)) {
+                printError("Cannot take the address of unit");
+            } else if (is_operand_prim(ast::prim_type::type::null)) {
+                printError("Cannot take the address of null");
+            } else {
+                result_type = type_context.create_type<ast::nonnullable_ptr_type>(operand_type);
+            }
         }
 
         bind_type(&unary_operation, result_type);

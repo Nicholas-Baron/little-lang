@@ -630,6 +630,8 @@ void cfg_to_llvm::visit(control_flow::unary_operation & unary_operation) {
                        unary_operation.result_type);
         }
         break;
+    case operand::addrof:
+        assert(false);
     }
 
     unary_operation.next->accept(*this);

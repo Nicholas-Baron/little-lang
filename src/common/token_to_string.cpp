@@ -50,6 +50,8 @@
         return "operand::negate";
     case operand::deref:
         return "operand::deref";
+    case operand::addrof:
+        return "operand::addrof";
     }
 }
 

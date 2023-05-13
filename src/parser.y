@@ -176,6 +176,7 @@ expr : atom
      | T_NOT expr
      | T_MULT expr   %prec T_NOT
      | T_MINUS expr  %prec T_NOT
+     | T_AMP expr    %prec T_NOT
      | expr T_DOT T_IDENT
      | expr T_MULT expr
      | expr T_MOD expr
