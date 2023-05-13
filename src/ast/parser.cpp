@@ -454,26 +454,32 @@ ast::typed_identifier parser::parse_typed_identifier() {
 
     auto location = lex->peek_token().location;
 
-    // Assume that the first token we see is a type,
-    // as that covers the identifier in the second case as well.
-    if (lex->peek_token(1) == lexer::token_type::colon) {
+    switch (auto colon_or_name = lex->peek_token(1); colon_or_name.type) {
+    case lexer::token_type::colon: {
         // the second case (`name : type`) has occured.
         auto identifier = lex->next_token();
         assert(identifier == lexer::token_type::identifier);
         assert(lex->next_token() == lexer::token_type::colon);
 
         return {std::move(identifier.text), parse_type(), location};
+    } break;
+    case lexer::token_type::identifier: {
+        // the first case (`type name`) has occured.
+        auto * type = parse_type();
+        auto name = lex->next_token();
+
+        if (name != lexer::token_type::identifier) {
+            print_error(name.location, "Expected identifier; found ", name.text);
+        }
+
+        return {std::move(name.text), type, location};
+    } break;
+    default:
+        print_error(colon_or_name.location, "Expected either a colon or an identifier; Found ",
+                    colon_or_name.text);
+
+        return {std::move(colon_or_name.text), nullptr, colon_or_name.location};
     }
-
-    // the first case (`type name`) has occured.
-    auto * type = parse_type();
-    auto name = lex->next_token();
-
-    if (name != lexer::token_type::identifier) {
-        print_error(name.location, "Expected identifier; found ", name.text);
-    }
-
-    return {std::move(name.text), type, location};
 }
 
 ast::type_ptr parser::parse_type() {
