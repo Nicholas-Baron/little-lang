@@ -285,9 +285,12 @@ void cfg_to_llvm::visit(control_flow::constant & constant) {
             }
         }
         break;
-    case literal_type::null:
-        assert(false and "Store the type of a pointer for null");
-        break;
+    case literal_type::null: {
+        auto * llvm_ptr_type
+            = llvm::dyn_cast_or_null<llvm::PointerType>(type_lowering.lower_to_llvm(constant.type));
+        assert(llvm_ptr_type != nullptr);
+        bind_value(constant, llvm::ConstantPointerNull::get(llvm_ptr_type), constant.type);
+    } break;
     case literal_type::integer:
         assert(std::holds_alternative<long>(constant.value));
         bind_value(
@@ -631,8 +634,16 @@ void cfg_to_llvm::visit(control_flow::unary_operation & unary_operation) {
         }
         break;
     case operand::addrof:
-        assert(false);
+        if (const_val != nullptr) {
+            auto * slot = ir_builder->CreateAlloca(type_lowering.lower_to_llvm(value->ast_type));
+            ir_builder->CreateStore(const_val, slot);
+            bind_value(unary_operation, slot, unary_operation.result_type);
+        } else {
+            assert(false);
+        }
+        break;
     }
 
+    visited.emplace(&unary_operation);
     unary_operation.next->accept(*this);
 }
