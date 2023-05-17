@@ -430,6 +430,16 @@ namespace control_flow {
         return result_type;
     }
 
+    static void update_phi_sources(ast::type_ptr phi_type,
+                                   std::vector<control_flow::node *> & previous) {
+        for (auto * prev : previous) {
+            if (auto * constant = dynamic_cast<control_flow::constant *>(prev);
+                constant != nullptr and constant->val_type == literal_type::null) {
+                constant->type = phi_type;
+            }
+        }
+    }
+
     void type_checker::visit(phi & phi) {
         // Only go to the next node if all previous nodes have been checked
 
@@ -459,6 +469,8 @@ namespace control_flow {
                 printError("Expected branches to have the same type; found competing types of ",
                            competing_types.str());
             }
+
+            update_phi_sources(phi_type, phi.previous);
 
             visited.emplace(&phi);
             phi.next->accept(*this);
