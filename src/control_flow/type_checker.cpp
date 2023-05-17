@@ -312,6 +312,8 @@ namespace control_flow {
                 ? find_type_of(func_end.value)
                 : type_context.create_type<ast::prim_type>(ast::prim_type::type::unit);
 
+        assert(actual_type != nullptr);
+
         if (expected_return_type != actual_type) {
             printError("Function `", current_function->name,
                        "` expected a return expression with type ", *expected_return_type,
@@ -365,6 +367,69 @@ namespace control_flow {
         return member_access.next->accept(*this);
     }
 
+    static ast::type_ptr merge_types(const std::set<ast::type_ptr> & input_types,
+                                     ast::type_context & type_context) {
+        if (input_types.empty()) { return nullptr; }
+        if (input_types.size() == 1) { return *input_types.begin(); }
+
+        assert(input_types.size() >= 2);
+
+        ast::type_ptr result_type = nullptr;
+        for (auto * current_type : input_types) {
+            // Setup the accumulator `result_type`
+            if (result_type == nullptr) {
+                result_type = current_type;
+                continue;
+            }
+
+            assert(result_type != nullptr);
+            assert(result_type != current_type);
+
+            if (auto both_pointer_types
+                = result_type->is_pointer_type() and current_type->is_pointer_type();
+                not both_pointer_types) {
+                return nullptr;
+            }
+
+            auto * null_prim = type_context.create_type<ast::prim_type>(ast::prim_type::type::null);
+
+            auto * result_ptr_type = dynamic_cast<ast::ptr_type *>(result_type);
+            auto * current_ptr_type = dynamic_cast<ast::ptr_type *>(current_type);
+
+            // Only one may be nullptr
+            assert(result_ptr_type != current_ptr_type);
+
+            auto result_is_null_prim = result_ptr_type == nullptr and result_type == null_prim;
+            auto current_is_null_prim = current_ptr_type == nullptr and current_type == null_prim;
+
+            if (result_is_null_prim or current_is_null_prim) {
+                auto * full_type = result_is_null_prim ? current_ptr_type : result_ptr_type;
+
+                if (not full_type->nullable() or result_is_null_prim) {
+                    result_type = type_context.create_type<ast::nullable_ptr_type>(
+                        full_type->pointed_to_type());
+                }
+
+                continue;
+            }
+
+            if (result_ptr_type->pointed_to_type() != current_ptr_type->pointed_to_type()) {
+                return nullptr;
+            }
+
+            // We can merge the two pointers as they have the same `pointed_to_type()`
+
+            // It is not possible, as `type_context` should ensure uniqueness
+            assert(result_ptr_type->nullable() xor current_ptr_type->nullable());
+
+            if (not result_ptr_type->nullable() and current_ptr_type->nullable()) {
+                result_type = current_ptr_type;
+            }
+        }
+
+        return result_type;
+    }
+
     void type_checker::visit(phi & phi) {
         // Only go to the next node if all previous nodes have been checked
 
@@ -380,10 +445,11 @@ namespace control_flow {
 
             std::set<ast::type_ptr> input_types;
             for (auto * prev : phi.previous) { input_types.emplace(find_type_of(prev)); }
+            auto * phi_type = merge_types(input_types, type_context);
+
             assert(not input_types.empty());
 
-            if (input_types.size() == 1) {
-                auto * phi_type = *input_types.begin();
+            if (phi_type != nullptr) {
                 bind_type(&phi, phi_type);
                 phi.type = phi_type;
             } else {
