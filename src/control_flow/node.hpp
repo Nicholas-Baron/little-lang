@@ -57,7 +57,6 @@ namespace control_flow {
 
         void flows_to(node * node) override { next = node; }
 
-        // Invariant: cannot be null
         node * next{nullptr};
         ast::function_type * type;
         std::vector<std::string> parameter_names;
@@ -68,6 +67,11 @@ namespace control_flow {
 
     class binary_operation final : public node {
       public:
+        binary_operation(node * lhs, operation::binary bin_op, node * rhs)
+            : lhs{lhs}
+            , rhs{rhs}
+            , op{bin_op} {}
+
         make_visitable;
 
         void flows_from(node * node) override {
@@ -81,12 +85,11 @@ namespace control_flow {
 
         void flows_to(node * node) override { next = node; }
 
-        // Invariant: none of the following `node *` may be null
-        node * previous;
-        node * next;
+        node * previous{nullptr};
+        node * next{nullptr};
         node * lhs;
         node * rhs;
-        ast::type_ptr result_type;
+        ast::type_ptr result_type{nullptr};
         operation::binary op;
     };
 
@@ -98,48 +101,61 @@ namespace control_flow {
 
         void flows_to(node * node) override { next = node; }
 
-        node * previous;
-        node * next;
+        node * previous{nullptr};
+        node * next{nullptr};
         std::map<std::string, node *> fields;
-        ast::struct_type * result_type;
+        ast::struct_type * result_type{nullptr};
     };
 
     class member_access final : public node {
       public:
+        member_access(node * lhs, std::string member_name)
+            : lhs{lhs}
+            , member_name{std::move(member_name)} {}
+
         make_visitable;
 
         void flows_from(node * node) override { previous = node; }
 
         void flows_to(node * node) override { next = node; }
 
-        node * previous;
-        node * next;
+        node * previous{nullptr};
+        node * next{nullptr};
         node * lhs;
         std::string member_name;
         // The type_checker needs to set this
         std::optional<unsigned> member_index;
-        ast::type_ptr result_type;
+        ast::type_ptr result_type{nullptr};
     };
 
     class unary_operation final : public node {
       public:
+        unary_operation(node * operand, operation::unary un_op)
+            : operand{operand}
+            , op{un_op} {}
+
         make_visitable;
 
         void flows_from(node * node) override { previous = node; }
 
         void flows_to(node * node) override { next = node; }
 
-        // Invariant: none of the following `node *` may be null
-        node * previous;
-        node * next;
+        node * previous{nullptr};
+        node * next{nullptr};
         node * operand;
-        ast::type_ptr result_type;
+        ast::type_ptr result_type{nullptr};
         operation::unary op;
     };
 
     // TODO: This will not be the case when mutability is added.
     class constant final : public node {
       public:
+        using value_variant_t = std::variant<std::monostate, long, double, char, bool, std::string>;
+
+        constant(value_variant_t value, literal_type val_type)
+            : value{std::move(value)}
+            , val_type{val_type} {}
+
         make_visitable;
 
         void flows_from(node * node) override {
@@ -153,13 +169,11 @@ namespace control_flow {
 
         void flows_to(node * node) override { next = node; }
 
-        std::variant<std::monostate, long, double, char, bool, std::string> value;
-        literal_type val_type;
-        ast::type_ptr type;
-
-        // Invariant: none of the following `node *` may be null
         node * previous{nullptr};
         node * next{nullptr};
+        value_variant_t value;
+        literal_type val_type;
+        ast::type_ptr type{nullptr};
     };
 
     class intrinsic_call final : public node {
@@ -174,7 +188,6 @@ namespace control_flow {
 
         void flows_to(node * node) override { next = node; }
 
-        // Invariant: none of the following `node *` may be null
         node * previous{nullptr};
         node * next{nullptr};
         std::string name;
@@ -194,7 +207,6 @@ namespace control_flow {
 
         void flows_to(node * node) override { next = node; }
 
-        // Invariant: none of the following `node *` may be null
         node * previous{nullptr};
         node * next{nullptr};
         const function_start * callee;
@@ -204,6 +216,9 @@ namespace control_flow {
     // Handles both if expressions and if statements
     class branch final : public node {
       public:
+        explicit branch(node * condition)
+            : condition_value{condition} {}
+
         make_visitable;
 
         void flows_from(node * node) override { previous = node; }
@@ -223,11 +238,10 @@ namespace control_flow {
             assert(true_case != false_case);
         }
 
-        // Invariant: none of the following `node *` may be null
-        node * previous;
+        node * previous{nullptr};
         node * condition_value;
-        node * true_case;
-        node * false_case;
+        node * true_case{nullptr};
+        node * false_case{nullptr};
     };
 
     // Handles return statements and "fall off the end"
@@ -241,10 +255,8 @@ namespace control_flow {
             assert(false and "function_end cannot have a next");
         }
 
-        // Invariant: `previous` cannot be null
-        node * previous;
-
-        node * value;
+        node * previous{nullptr};
+        node * value{nullptr};
     };
 
     // Handles joining control paths
@@ -261,10 +273,9 @@ namespace control_flow {
 
         void flows_to(node * node) override { next = node; }
 
-        // Invariant: none of the following `node *` may be null
         std::vector<node *> previous;
-        node * next;
-        ast::type_ptr type;
+        node * next{nullptr};
+        ast::type_ptr type{nullptr};
     };
 
 #undef make_visitable

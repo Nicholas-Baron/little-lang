@@ -246,19 +246,17 @@ void ast_to_cfg::visit(ast::binary_expr & binary_expr) {
     auto cfg_lhs = get_value(*binary_expr.lhs, *this);
 
     if (binary_expr.is_shortcircuiting()) {
-        auto & shorting_node = result_cfg->create<control_flow::branch>();
+        auto & shorting_node = result_cfg->create<control_flow::branch>(cfg_lhs.end);
         shorting_node.flows_from(cfg_lhs.end);
-        shorting_node.condition_value = cfg_lhs.end;
 
         auto cfg_rhs = get_value(*binary_expr.rhs, *this);
 
         assert(binary_expr.op == operation::binary::bool_or
                or binary_expr.op == operation::binary::bool_and);
 
-        auto & lhs_constant = result_cfg->create<control_flow::constant>();
+        auto & lhs_constant = result_cfg->create<control_flow::constant>(
+            binary_expr.op == operation::binary::bool_or, literal_type::boolean);
         lhs_constant.flows_from(&shorting_node);
-        lhs_constant.val_type = literal_type::boolean;
-        lhs_constant.value = binary_expr.op == operation::binary::bool_or;
 
         shorting_node.true_case
             = (binary_expr.op == operation::binary::bool_and) ? cfg_rhs.beginning : &lhs_constant;
@@ -274,26 +272,23 @@ void ast_to_cfg::visit(ast::binary_expr & binary_expr) {
     }
 
     if (binary_expr.op == operation::binary::member_access) {
-        auto & cfg_access = result_cfg->create<control_flow::member_access>();
-
-        cfg_access.flows_from(cfg_lhs.end);
-        cfg_access.lhs = cfg_lhs.end; // NOTE: `lhs` could be merged with `previous`
 
         auto * member_ast = dynamic_cast<ast::user_val *>(binary_expr.rhs.get());
         assert(member_ast != nullptr);
         assert(member_ast->val_type == literal_type::identifier);
 
-        cfg_access.member_name = member_ast->val;
+        auto & cfg_access
+            = result_cfg->create<control_flow::member_access>(cfg_lhs.end, member_ast->val);
+        // NOTE: `lhs` could be merged with `previous`
+        cfg_access.flows_from(cfg_lhs.end);
         return store_result({cfg_lhs.beginning, &cfg_access});
     }
 
     auto cfg_rhs = get_value(*binary_expr.rhs, *this);
     cfg_rhs.beginning->flows_from(cfg_lhs.end);
 
-    auto & cfg_expr = result_cfg->create<control_flow::binary_operation>();
-    cfg_expr.lhs = cfg_lhs.end;
-    cfg_expr.rhs = cfg_rhs.end;
-    cfg_expr.op = binary_expr.op;
+    auto & cfg_expr = result_cfg->create<control_flow::binary_operation>(
+        cfg_lhs.end, binary_expr.op, cfg_rhs.end);
     cfg_expr.flows_from(cfg_expr.rhs);
     return store_result({cfg_lhs.beginning, &cfg_expr});
 }
@@ -364,9 +359,8 @@ void ast_to_cfg::visit(ast::func_decl & func_decl) {
 void ast_to_cfg::visit(ast::if_expr & if_expr) {
     auto * previous_node = result_cfg->previous_node();
 
-    auto & branch = result_cfg->create<control_flow::branch>();
     auto condition = get_value(*if_expr.condition, *this);
-    branch.condition_value = condition.end;
+    auto & branch = result_cfg->create<control_flow::branch>(condition.end);
     condition.beginning->flows_from(previous_node);
 
     branch.flows_from(condition.end);
@@ -389,11 +383,10 @@ void ast_to_cfg::visit(ast::if_expr & if_expr) {
 void ast_to_cfg::visit(ast::if_stmt & if_stmt) {
     auto * previous_node = result_cfg->previous_node();
 
-    auto & branch = result_cfg->create<control_flow::branch>();
     auto condition_value = get_value(*if_stmt.condition, *this);
     condition_value.beginning->flows_from(previous_node);
-    branch.condition_value = condition_value.end;
 
+    auto & branch = result_cfg->create<control_flow::branch>(condition_value.end);
     branch.flows_from(condition_value.end);
 
     auto true_case = get_value(*if_stmt.true_branch, *this);
@@ -523,10 +516,8 @@ void ast_to_cfg::visit(ast::unary_expr & unary_expr) {
     auto operand = get_value(*unary_expr.expr, *this);
     operand.beginning->flows_from(previous_node);
 
-    auto & unary_op = result_cfg->create<control_flow::unary_operation>();
-    unary_op.operand = operand.end;
+    auto & unary_op = result_cfg->create<control_flow::unary_operation>(operand.end, unary_expr.op);
     unary_op.flows_from(unary_op.operand);
-    unary_op.op = unary_expr.op;
 
     return store_result({operand.beginning, &unary_op});
 }
@@ -561,19 +552,17 @@ void ast_to_cfg::visit(ast::user_val & user_val) {
     }
 
     auto * prev_node = result_cfg->previous_node();
-    auto & value = result_cfg->create<control_flow::constant>();
-    value.flows_from(prev_node);
-    value.val_type = user_val.val_type;
 
+    control_flow::constant::value_variant_t value;
     switch (user_val.val_type) {
     case literal_type::null:
         break;
     case literal_type::identifier:
-        value.value = user_val.val;
+        value = user_val.val;
         break;
     case literal_type::integer:
         // TODO: Define our own string to int conversion
-        value.value = std::stoi(user_val.val);
+        value = std::stoi(user_val.val);
         break;
     case literal_type::floating:
         assert(false);
@@ -581,20 +570,20 @@ void ast_to_cfg::visit(ast::user_val & user_val) {
     case literal_type::character:
         switch (user_val.val.size()) {
         case 3:
-            value.value = user_val.val.at(1);
-            assert(std::holds_alternative<char>(value.value));
+            value = user_val.val.at(1);
+            assert(std::holds_alternative<char>(value));
             break;
         case 4:
             assert(user_val.val.at(1) == '\\');
             switch (user_val.val.at(2)) {
             case '0':
-                value.value = '\0';
+                value = '\0';
                 break;
             case 'n':
-                value.value = '\n';
+                value = '\n';
                 break;
             }
-            if (std::holds_alternative<char>(value.value)) { break; }
+            if (std::holds_alternative<char>(value)) { break; }
             [[fallthrough]];
         default:
             std::cout << "Cannot interpret " << user_val.val << " as a character" << std::endl;
@@ -602,12 +591,16 @@ void ast_to_cfg::visit(ast::user_val & user_val) {
         }
         break;
     case literal_type::boolean:
-        value.value = convert_to_bool(user_val.val);
+        value = convert_to_bool(user_val.val);
         break;
     case literal_type::string:
-        value.value = unquote(user_val.val);
+        value = unquote(user_val.val);
         break;
     }
 
-    return store_result({&value, &value});
+    auto & value_node
+        = result_cfg->create<control_flow::constant>(std::move(value), user_val.val_type);
+    value_node.flows_from(prev_node);
+
+    return store_result({&value_node, &value_node});
 }
