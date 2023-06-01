@@ -18,7 +18,7 @@ namespace ast {
     class typed_identifier final : public node {
       public:
         typed_identifier(std::string && name, ast::type_ptr type, Location loc)
-            : type_{std::move(type)}
+            : type_{type}
             , name_{std::move(name)}
             , loc{loc} {}
 
