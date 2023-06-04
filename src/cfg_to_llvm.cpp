@@ -9,6 +9,7 @@
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/InlineAsm.h>
 #include <llvm/IR/Instructions.h>
+#include <llvm/IR/Value.h>
 #include <llvm/IR/Verifier.h> // verifyModule
 
 namespace {
@@ -137,16 +138,58 @@ void cfg_to_llvm::visit(control_flow::member_access & member_access) {
     member_access.next->accept(*this);
 }
 
+static llvm::Value * lower_arithmetic_op(llvm::IRBuilderBase & ir_builder,
+                                         llvm_type_lowering & type_lowering,
+                                         llvm::Value * lhs_value, llvm::Value * rhs_value,
+                                         operation::binary ast_bin_op, ast::type * result_type) {
+
+    if (lhs_value->getType()->isPointerTy() or rhs_value->getType()->isPointerTy()) {
+        assert(lhs_value->getType()->isPointerTy() != rhs_value->getType()->isPointerTy());
+        auto * pointer = lhs_value->getType()->isPointerTy() ? lhs_value : rhs_value;
+        auto * index = lhs_value->getType()->isPointerTy() ? rhs_value : lhs_value;
+
+        auto * pointer_type = llvm::dyn_cast_or_null<llvm::PointerType>(pointer->getType());
+        assert(pointer_type != nullptr);
+        auto * element_ty = type_lowering.lower_to_llvm(result_type);
+        return ir_builder.CreateGEP(element_ty, pointer, index);
+    }
+
+    const auto is_constant
+        = llvm::isa<llvm::Constant>(lhs_value) and llvm::isa<llvm::Constant>(rhs_value);
+    const auto is_float
+        = lhs_value->getType()->isFloatingPointTy() or rhs_value->getType()->isFloatingPointTy();
+
+    using operand = operation::binary;
+    using bin_ops = llvm::Instruction::BinaryOps;
+
+    static constexpr std::array<float_int_op_pair<operand, bin_ops>, 4> arithmetic_ops{
+        {
+         {operand::add, bin_ops::Add, bin_ops::FAdd},
+         {operand::sub, bin_ops::Sub, bin_ops::FSub},
+         {operand::mult, bin_ops::Mul, bin_ops::FMul},
+         {operand::div, bin_ops::SDiv, bin_ops::FDiv},
+         }
+    };
+
+    const auto * selected_op = find_in(
+        arithmetic_ops, [&ast_bin_op](auto & entry) -> bool { return entry.our_op == ast_bin_op; });
+
+    assert(selected_op != nullptr);
+    auto bin_op = is_float ? selected_op->float_op : selected_op->int_op;
+    if (is_constant) {
+        auto * constant_lhs = llvm::dyn_cast<llvm::Constant>(lhs_value);
+        auto * constant_rhs = llvm::dyn_cast<llvm::Constant>(rhs_value);
+        return llvm::ConstantExpr::get(bin_op, constant_lhs, constant_rhs);
+    }
+
+    return ir_builder.CreateBinOp(bin_op, lhs_value, rhs_value);
+}
+
 void cfg_to_llvm::visit(control_flow::binary_operation & binary_operation) {
     const auto * lhs_value = find_value_of(binary_operation.lhs);
     assert(lhs_value != nullptr);
     const auto * rhs_value = find_value_of(binary_operation.rhs);
     assert(rhs_value != nullptr);
-
-    const auto is_constant = llvm::isa<llvm::Constant>(lhs_value->value)
-                         and llvm::isa<llvm::Constant>(rhs_value->value);
-    const auto is_float = lhs_value->value->getType()->isFloatingPointTy()
-                       or rhs_value->value->getType()->isFloatingPointTy();
 
     using predicate = llvm::CmpInst::Predicate;
     using operand = operation::binary;
@@ -173,6 +216,11 @@ void cfg_to_llvm::visit(control_flow::binary_operation & binary_operation) {
 
         assert(selected_op != nullptr);
 
+        const auto is_constant = llvm::isa<llvm::Constant>(lhs_value->value)
+                             and llvm::isa<llvm::Constant>(rhs_value->value);
+        const auto is_float = lhs_value->value->getType()->isFloatingPointTy()
+                           or rhs_value->value->getType()->isFloatingPointTy();
+
         if (is_constant) {
             auto pred = is_float ? selected_op->float_op : selected_op->int_op;
             auto * constant_lhs = llvm::dyn_cast<llvm::Constant>(lhs_value->value);
@@ -192,54 +240,11 @@ void cfg_to_llvm::visit(control_flow::binary_operation & binary_operation) {
                 binary_operation.result_type);
         }
     } else if (operation::is_arithmetic(binary_operation.op)) {
-
-        llvm::Value * result = nullptr;
-
-        if (lhs_value->value->getType()->isPointerTy()
-            or rhs_value->value->getType()->isPointerTy()) {
-            assert(lhs_value->value->getType()->isPointerTy()
-                   != rhs_value->value->getType()->isPointerTy());
-            auto * pointer
-                = (lhs_value->value->getType()->isPointerTy() ? lhs_value : rhs_value)->value;
-            auto * index
-                = (lhs_value->value->getType()->isPointerTy() ? rhs_value : lhs_value)->value;
-
-            auto * pointer_type = llvm::dyn_cast_or_null<llvm::PointerType>(pointer->getType());
-            assert(pointer_type != nullptr);
-            auto * element_ty = type_lowering.lower_to_llvm(binary_operation.result_type);
-            result = ir_builder->CreateGEP(element_ty, pointer, index);
-        }
-
-        using operand = operation::binary;
-        using bin_ops = llvm::Instruction::BinaryOps;
-
-        static constexpr std::array<float_int_op_pair<operand, bin_ops>, 4> arithmetic_ops{
-            {
-             {operand::add, bin_ops::Add, bin_ops::FAdd},
-             {operand::sub, bin_ops::Sub, bin_ops::FSub},
-             {operand::mult, bin_ops::Mul, bin_ops::FMul},
-             {operand::div, bin_ops::SDiv, bin_ops::FDiv},
-             }
-        };
-
-        const auto * selected_op
-            = find_in(arithmetic_ops, [op = binary_operation.op](auto & entry) -> bool {
-                  return entry.our_op == op;
-              });
-
-        if (result == nullptr) {
-            assert(selected_op != nullptr);
-            auto bin_op = is_float ? selected_op->float_op : selected_op->int_op;
-            if (is_constant) {
-                auto * constant_lhs = llvm::dyn_cast<llvm::Constant>(lhs_value->value);
-                auto * constant_rhs = llvm::dyn_cast<llvm::Constant>(rhs_value->value);
-                result = llvm::ConstantExpr::get(bin_op, constant_lhs, constant_rhs);
-            } else {
-                result = ir_builder->CreateBinOp(bin_op, lhs_value->value, rhs_value->value);
-            }
-        }
-
-        bind_value(binary_operation, result, binary_operation.result_type);
+        bind_value(binary_operation,
+                   lower_arithmetic_op(*ir_builder, type_lowering, lhs_value->value,
+                                       rhs_value->value, binary_operation.op,
+                                       binary_operation.result_type),
+                   binary_operation.result_type);
     } else {
         assert(false);
     }
