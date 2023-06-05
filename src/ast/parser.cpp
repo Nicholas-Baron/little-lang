@@ -837,7 +837,9 @@ std::unique_ptr<ast::struct_init> parser::parse_struct_init(std::string && type_
         auto field_name = lex->next_token();
         assert(field_name == lexer::token_type::identifier);
 
-        assert(lex->next_token() == lexer::token_type::equal);
+        if (auto next_tok = lex->next_token(); next_tok != lexer::token_type::equal) {
+            print_error(next_tok.location, "Expected `=`; found ", next_tok.text);
+        }
 
         auto expr = parse_expression();
 
