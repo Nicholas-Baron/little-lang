@@ -501,6 +501,10 @@ ast::type_ptr parser::parse_type() {
              [this] {
                  return ty_context.create_type<ast::prim_type>(ast::prim_type::type::int32);
              }                                                                                    },
+            {"int32",
+             [this] {
+                 return ty_context.create_type<ast::prim_type>(ast::prim_type::type::int32);
+             }                                                                                    },
             {"float",
              [this] {
                  return ty_context.create_type<ast::prim_type>(ast::prim_type::type::float32);
