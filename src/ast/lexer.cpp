@@ -18,6 +18,7 @@ std::unique_ptr<lexer> lexer::from_file(const std::string & filename) {
     auto fd = open(filename.c_str(), O_CLOEXEC | O_RDONLY);
     if (fd == -1) {
         perror("lexer open");
+        std::cerr << "Failed to open " << filename << std::endl;
         return nullptr;
     }
 
