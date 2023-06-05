@@ -58,6 +58,9 @@ namespace ast {
         case type::int32:
             lhs << "int32";
             break;
+        case type::int64:
+            lhs << "int64";
+            break;
         case type::float32:
             lhs << "float32";
             break;

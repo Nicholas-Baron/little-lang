@@ -146,6 +146,7 @@ lexer::token lexer::next_identifier(Location loc) {
         {"float",  token_type::prim_type },
         {"int",    token_type::prim_type },
         {"int32",  token_type::prim_type },
+        {"int64",  token_type::prim_type },
         {"string", token_type::prim_type },
         {"unit",   token_type::prim_type },
  // literal values

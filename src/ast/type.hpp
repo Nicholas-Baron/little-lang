@@ -88,6 +88,7 @@ namespace ast {
     struct prim_type final : public type {
         enum class type {
             int32,
+            int64,
             boolean,
             character,
             float32,
