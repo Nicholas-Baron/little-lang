@@ -200,8 +200,10 @@ TEST_CASE("ast_to_cfg can lower an let of struct followed by a return") {
     scan_graph(start, func_end);
 }
 
-TEST_CASE("ast_to_cfg can lower a struct init followed by an intrinsic followed by a return of the struct") {
-    std::string buffer = "bar {z : bool}\n foo{ y : int32, sub : bar }\nlol() -> foo { let x = foo{ y = 0, sub = bar { z = false } }; syscall(1, x); return x;}";
+TEST_CASE("ast_to_cfg can lower a struct init followed by an intrinsic followed by a return of the "
+          "struct") {
+    std::string buffer = "bar {z : bool}\n foo{ y : int32, sub : bar }\nlol() -> foo { let x = "
+                         "foo{ y = 0, sub = bar { z = false } }; syscall(1, x); return x;}";
     std::cout << "Testing " << buffer << std::endl;
 
     ast::type_context ty_context;
