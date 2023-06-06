@@ -345,9 +345,9 @@ void ast_to_cfg::visit(ast::func_decl & func_decl) {
     seen_functions.emplace(func_decl.name, current_function);
 
     auto body = get_value(*func_decl.body, *this);
-    body.beginning->flows_from(&func_start);
+    if (body.beginning != nullptr) { body.beginning->flows_from(&func_start); }
 
-    if (auto * previous_node = body.end;
+    if (auto * previous_node = body.end != nullptr ? body.end : &func_start;
         dynamic_cast<control_flow::function_end *>(previous_node) == nullptr) {
         auto & func_end = result_cfg->create<control_flow::function_end>();
         func_end.flows_from(previous_node);
@@ -448,7 +448,7 @@ void ast_to_cfg::visit(ast::return_stmt & return_stmt) {
 void ast_to_cfg::visit(ast::stmt_sequence & stmt_sequence) {
 
     lets.add_scope();
-    basic_block result{nullptr, result_cfg->previous_node()};
+    basic_block result{nullptr, nullptr};
 
     for (auto & stmt : stmt_sequence.stmts) {
         auto stmt_node = get_value(*stmt, *this);
