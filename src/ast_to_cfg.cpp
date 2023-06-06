@@ -502,6 +502,8 @@ void ast_to_cfg::visit(ast::struct_init & struct_init) {
         cfg_struct_init.fields.emplace(field, cfg_value.end);
     }
 
+    if (result.beginning == nullptr) { result.beginning = &cfg_struct_init; }
+
     cfg_struct_init.flows_from(previous_node);
     return store_result(result);
 }
