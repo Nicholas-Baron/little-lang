@@ -324,7 +324,8 @@ TEST_CASE("ast_to_cfg can lower a function call followed by an intrinsic call") 
 }
 
 TEST_CASE("ast_to_cfg can lower 2 let-intrinsic calls") {
-    std::string buffer = "main () { let x = syscall(); let y = syscall(x); if y == 1 then syscall(); }";
+    std::string buffer
+        = "main () { let x = syscall(); let y = syscall(x); if y == 1 then syscall(); }";
     std::cout << "Testing " << buffer << std::endl;
 
     ast::type_context ty_context;
