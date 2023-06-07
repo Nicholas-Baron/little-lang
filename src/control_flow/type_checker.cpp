@@ -138,10 +138,10 @@ namespace control_flow {
     void type_checker::visit(binary_operation & binary_operation) {
 
         auto * lhs_type = find_type_of(binary_operation.lhs);
-        assert(lhs_type != nullptr);
+        if (lhs_type == nullptr) { return bind_type(&binary_operation, nullptr); }
 
         auto * rhs_type = find_type_of(binary_operation.rhs);
-        assert(rhs_type != nullptr);
+        if (rhs_type == nullptr) { return bind_type(&binary_operation, nullptr); }
 
         auto * boolean_type
             = type_context.create_type<ast::prim_type>(ast::prim_type::type::boolean);
