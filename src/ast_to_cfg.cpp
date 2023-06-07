@@ -453,10 +453,12 @@ void ast_to_cfg::visit(ast::return_stmt & return_stmt) {
     if (return_stmt.value != nullptr) { return_value = get_value(*return_stmt.value, *this); }
 
     auto & return_node = result_cfg->create<control_flow::function_end>();
-    if (return_value.has_value() and not return_value->from_id_lookup) {
-        return_node.flows_from(return_value->end);
+    if (return_value.has_value()) {
         return_node.value = return_value->end;
-        return store_result({return_value->beginning, &return_node});
+        if (not return_value->from_id_lookup) {
+            return_node.flows_from(return_value->end);
+            return store_result({return_value->beginning, &return_node});
+        }
     }
     return store_result({&return_node, &return_node});
 }
