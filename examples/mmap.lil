@@ -1,0 +1,72 @@
+from "stdlib/syscall_nums.lil" import mmap_num, write_num, open_num, fstat_num, exit_num
+
+timespec {
+	tv_sec : int64;
+	tv_nsec : int64;
+}
+
+stat {
+	int64 st_dev;
+	st_ino : int64;
+	int64 st_nlink;
+    st_mode : int32;
+
+	int32 st_uid;
+	int32 st_gid;
+	int32 __pad0;
+
+    int64 st_rdev;
+    int64 st_size;
+	int64 st_blksize;
+
+	int64 st_blocks;
+
+	timespec st_atim;
+	timespec st_mtim;
+	timespec st_ctim;
+}
+
+fstat(fd : int32) -> stat {
+	let result = stat {
+		st_dev = 0,
+		st_ino = 0,
+		st_nlink = 0,
+		st_mode = 0,
+
+		st_uid = 0,
+		st_gid = 0,
+		__pad0 = 0,
+
+		st_rdev = 0,
+		st_size = 0,
+		st_blksize = 0,
+
+		st_blocks = 0,
+
+		st_atim = timespec { tv_sec = 0, tv_nsec = 0 },
+		st_mtim = timespec { tv_sec = 0, tv_nsec = 0 },
+		st_ctim = timespec { tv_sec = 0, tv_nsec = 0 },
+	};
+
+	syscall(fstat_num, fd, result);
+
+	return result;
+}
+
+const PROT_READ : int32 = 0x1
+
+const MAP_PRIVATE : int32 = 0x2
+
+main () {
+	let fd = syscall(open_num, arg_at(1), 0);
+
+	let file_stats = fstat(fd);
+
+	let text = syscall(mmap_num, null, file_stats.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+
+	if text == MMAP_FAILED then syscall(exit_num, 1);
+
+	syscall(close_num, fd);
+
+	syscall(write_num, 1, text, file_stats.st_size);
+}

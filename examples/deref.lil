@@ -1,0 +1,9 @@
+const hello : string = "hello"
+
+five (lol : bool) -> ? string
+	= if lol then & hello else null
+
+main () {
+	let text = five(true);
+	syscall(1, 1, text, 5);
+}
