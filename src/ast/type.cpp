@@ -81,7 +81,7 @@ namespace ast {
 
     void struct_type::print(std::ostream & lhs) const {
         lhs << user_name() << '{';
-        for (const auto & [name, type] : fields) { lhs << name << " : " << type << ", "; }
+        for (const auto & [name, type] : fields) { lhs << name << " : " << *type << ", "; }
         lhs << '}';
     }
 
