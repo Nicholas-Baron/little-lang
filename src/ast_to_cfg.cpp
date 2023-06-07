@@ -61,6 +61,15 @@ static void print_graphviz(const std::vector<link> & links) {
             if (auto * constant = dynamic_cast<control_flow::constant *>(node);
                 constant != nullptr) {
                 label << ' ' << print_constant(constant);
+            } else if (auto * func_start = dynamic_cast<control_flow::function_start *>(node);
+                       func_start != nullptr) {
+                label << ' ' << func_start->name;
+            } else if (auto * intrinsic_call = dynamic_cast<control_flow::intrinsic_call *>(node);
+                       intrinsic_call != nullptr) {
+                label << ' ' << intrinsic_call->name;
+            } else if (auto * function_call = dynamic_cast<control_flow::function_call *>(node);
+                       function_call != nullptr) {
+                label << ' ' << function_call->callee->name;
             }
 
             std::cout << value << " [label=\"" << label.str() << "\"]\n";
