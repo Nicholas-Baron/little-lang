@@ -482,6 +482,36 @@ ast::typed_identifier parser::parse_typed_identifier() {
     }
 }
 
+static ast::type_ptr make_type(ast::type_context & ty_context, const std::string & type_name) {
+
+    if (type_name == "int") {
+        return ty_context.create_type<ast::prim_type>(ast::prim_type::type::int32);
+    }
+    if (type_name == "int32") {
+        return ty_context.create_type<ast::prim_type>(ast::prim_type::type::int32);
+    }
+    if (type_name == "int64") {
+        return ty_context.create_type<ast::prim_type>(ast::prim_type::type::int64);
+    }
+    if (type_name == "float") {
+        return ty_context.create_type<ast::prim_type>(ast::prim_type::type::float32);
+    }
+    if (type_name == "char") {
+        return ty_context.create_type<ast::prim_type>(ast::prim_type::type::character);
+    }
+    if (type_name == "unit") {
+        return ty_context.create_type<ast::prim_type>(ast::prim_type::type::unit);
+    }
+    if (type_name == "bool") {
+        return ty_context.create_type<ast::prim_type>(ast::prim_type::type::boolean);
+    }
+    if (type_name == "string") {
+        return ty_context.create_type<ast::prim_type>(ast::prim_type::type::str);
+    }
+
+    return nullptr;
+}
+
 ast::type_ptr parser::parse_type() {
     // a type can either be some primitive or a user-defined type.
     auto type_name_token = lex->next_token();
@@ -496,43 +526,13 @@ ast::type_ptr parser::parse_type() {
         return type_ptr;
     }
     case lexer::token_type::prim_type: {
-        static const std::map<std::string, std::function<ast::type_ptr()>> prim_types{
-            {"int",
-             [this] {
-                 return ty_context.create_type<ast::prim_type>(ast::prim_type::type::int32);
-             }                                                                                    },
-            {"int32",
-             [this] {
-                 return ty_context.create_type<ast::prim_type>(ast::prim_type::type::int32);
-             }                                                                                    },
-            {"int64",
-             [this] {
-                 return ty_context.create_type<ast::prim_type>(ast::prim_type::type::int64);
-             }                                                                                    },
-            {"float",
-             [this] {
-                 return ty_context.create_type<ast::prim_type>(ast::prim_type::type::float32);
-             }                                                                                    },
-            {"char",
-             [this] {
-                 return ty_context.create_type<ast::prim_type>(ast::prim_type::type::character);
-             }                                                                                    },
-            {"unit",
-             [this] { return ty_context.create_type<ast::prim_type>(ast::prim_type::type::unit); }},
-            {"bool",
-             [this] {
-                 return ty_context.create_type<ast::prim_type>(ast::prim_type::type::boolean);
-             }                                                                                    },
-            {"string",
-             [this] { return ty_context.create_type<ast::prim_type>(ast::prim_type::type::str); } },
-        };
-        auto iter = prim_types.find(type_name_token.text);
-        if (iter == prim_types.end()) {
+        auto * type = make_type(ty_context, type_name_token.text);
+        if (type == nullptr) {
             print_error(lex->peek_token().location, "Could not find primitive type named ",
                         lex->peek_token().text);
             return nullptr;
         }
-        return iter->second();
+        return type;
     }
     case lexer::token_type::amp:
         return ty_context.create_type<ast::nonnullable_ptr_type>(parse_type());
