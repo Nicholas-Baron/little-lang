@@ -282,6 +282,8 @@ void ast_to_cfg::visit(ast::binary_expr & binary_expr) {
 
     if (binary_expr.op == operation::binary::member_access) {
 
+        auto * previous_node = result_cfg->previous_node();
+
         auto * member_ast = dynamic_cast<ast::user_val *>(binary_expr.rhs.get());
         assert(member_ast != nullptr);
         assert(member_ast->val_type == literal_type::identifier);
@@ -289,8 +291,9 @@ void ast_to_cfg::visit(ast::binary_expr & binary_expr) {
         auto & cfg_access
             = result_cfg->create<control_flow::member_access>(cfg_lhs.end, member_ast->val);
         // NOTE: `lhs` could be merged with `previous`
-        cfg_access.flows_from(cfg_lhs.end);
-        return store_result({cfg_lhs.beginning, &cfg_access});
+        cfg_access.flows_from(previous_node);
+        return store_result(
+            {cfg_lhs.from_id_lookup ? &cfg_access : cfg_lhs.beginning, &cfg_access});
     }
 
     auto cfg_rhs = get_value(*binary_expr.rhs, *this);
@@ -323,6 +326,8 @@ void ast_to_cfg::visit(ast::func_call_data & func_call_data) {
             = generate_ast_intrinsic(*result_cfg, func_call_data.name(), std::move(args));
 
         if (possible_intrinsic != nullptr) {
+            assert(prev_node != nullptr);
+            assert(prev_node != possible_intrinsic);
             possible_intrinsic->flows_from(prev_node);
             return store_result(
                 {first_arg != nullptr ? first_arg : possible_intrinsic, possible_intrinsic});
@@ -393,7 +398,9 @@ void ast_to_cfg::visit(ast::if_stmt & if_stmt) {
     auto * previous_node = result_cfg->previous_node();
 
     auto condition_value = get_value(*if_stmt.condition, *this);
-    condition_value.beginning->flows_from(previous_node);
+    if (condition_value.beginning != previous_node) {
+        condition_value.beginning->flows_from(previous_node);
+    }
 
     auto & branch = result_cfg->create<control_flow::branch>(condition_value.end);
     branch.flows_from(condition_value.end);
@@ -461,7 +468,9 @@ void ast_to_cfg::visit(ast::stmt_sequence & stmt_sequence) {
 
     for (auto & stmt : stmt_sequence.stmts) {
         auto stmt_node = get_value(*stmt, *this);
-        stmt_node.beginning->flows_from(result.end);
+        if (result.end != nullptr and stmt_node.beginning != result.end) {
+            stmt_node.beginning->flows_from(result.end);
+        }
         result.end = stmt_node.end;
 
         if (result.beginning == nullptr) { result.beginning = stmt_node.beginning; }
