@@ -48,7 +48,7 @@ fstat(fd : int32) -> stat {
 		st_ctim = timespec { tv_sec = 0, tv_nsec = 0 },
 	};
 
-	syscall(fstat_num, fd, result);
+	syscall(fstat_num, fd, &result);
 
 	return result;
 }

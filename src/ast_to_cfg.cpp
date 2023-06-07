@@ -534,12 +534,12 @@ void ast_to_cfg::visit(ast::unary_expr & unary_expr) {
     auto * previous_node = result_cfg->previous_node();
 
     auto operand = get_value(*unary_expr.expr, *this);
-    operand.beginning->flows_from(previous_node);
+    if (not operand.from_id_lookup) { operand.beginning->flows_from(previous_node); }
 
     auto & unary_op = result_cfg->create<control_flow::unary_operation>(operand.end, unary_expr.op);
-    unary_op.flows_from(unary_op.operand);
+    if (not operand.from_id_lookup) { unary_op.flows_from(unary_op.operand); }
 
-    return store_result({operand.beginning, &unary_op});
+    return store_result({operand.from_id_lookup ? &unary_op : operand.beginning, &unary_op});
 }
 
 static bool convert_to_bool(const std::string & value) {
