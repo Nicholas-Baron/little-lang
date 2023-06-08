@@ -21,6 +21,10 @@ namespace ast {
                 // All primitive types should have been made by the constructor.
                 static_assert(sizeof...(args) == 1);
                 return find_prim_type(args...);
+            } else if constexpr (std::is_same_v<type_t, ast::int_type>) {
+                // All primitive types should have been made by the constructor.
+                static_assert(sizeof...(args) == 1);
+                return find_int_type(args...);
             } else if constexpr (std::is_convertible_v<type_t *, ptr_type *>) {
                 // NOTE: The preceding check is broader than necessary,
                 // as `ptr_type` could have more children in the future.
@@ -42,6 +46,7 @@ namespace ast {
 
       private:
         [[nodiscard]] type_ptr find_prim_type(prim_type::type type);
+        [[nodiscard]] type_ptr find_int_type(unsigned size);
         [[nodiscard]] type_ptr find_ptr_type(bool is_nullable, type_ptr pointed_to);
         [[nodiscard]] ast::function_type *
         find_function_type(type_ptr return_type, std::vector<type_ptr> && arg_types = {});

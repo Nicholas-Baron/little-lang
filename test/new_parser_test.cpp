@@ -116,7 +116,7 @@ TEST_CASE("the parser will parse let statement with types") {
     CHECK(let != nullptr);
     CHECK(let->name_and_type.name() == "x");
     CHECK(let->name_and_type.type()
-          == ty_context.create_type<ast::prim_type>(ast::prim_type::type::int32));
+          == ty_context.create_type<ast::prim_type>(ast::prim_type::type::int_prim));
     CHECK(let->value != nullptr);
 
     auto * value = dynamic_cast<ast::user_val *>(let->value.get());
@@ -140,7 +140,7 @@ TEST_CASE("the parser will parse pointer types and expressions") {
     CHECK(let != nullptr);
     CHECK(let->name_and_type.name() == "x");
 
-    auto * int_type = ty_context.create_type<ast::prim_type>(ast::prim_type::type::int32);
+    auto * int_type = ty_context.create_type<ast::prim_type>(ast::prim_type::type::int_prim);
     CHECK(let->name_and_type.type() == ty_context.create_type<ast::nullable_ptr_type>(int_type));
     CHECK(let->value != nullptr);
 
@@ -209,7 +209,7 @@ TEST_CASE("the parser will parse const declaration") {
     CHECK(const_decl != nullptr);
     CHECK(const_decl->name_and_type.name() == "x");
     CHECK(const_decl->name_and_type.type()
-          == ty_context.create_type<ast::prim_type>(ast::prim_type::type::int32));
+          == ty_context.create_type<ast::prim_type>(ast::prim_type::type::int_prim));
     CHECK(const_decl->expr != nullptr);
 
     auto * value = dynamic_cast<ast::binary_expr *>(const_decl->expr.get());
@@ -478,7 +478,7 @@ TEST_CASE("the parser will parse a function with return type") {
     CHECK(func->name == "main");
     CHECK(func->param_count() == 0);
     CHECK(func->func_type->return_type()
-          == ty_context.create_type<ast::prim_type>(ast::prim_type::type::int32));
+          == ty_context.create_type<ast::prim_type>(ast::prim_type::type::int_prim));
     CHECK(func->body != nullptr);
 }
 
@@ -497,12 +497,12 @@ TEST_CASE("the parser will parse a function with parameters") {
     CHECK(func->param_count() == 2);
     CHECK(func->params[0].name() == "x");
     CHECK(func->params[0].type()
-          == ty_context.create_type<ast::prim_type>(ast::prim_type::type::int32));
+          == ty_context.create_type<ast::prim_type>(ast::prim_type::type::int_prim));
     CHECK(func->params[1].name() == "y");
     CHECK(func->params[1].type()
           == ty_context.create_type<ast::prim_type>(ast::prim_type::type::boolean));
     CHECK(func->func_type->return_type()
-          == ty_context.create_type<ast::prim_type>(ast::prim_type::type::int32));
+          == ty_context.create_type<ast::prim_type>(ast::prim_type::type::int_prim));
     CHECK(func->body != nullptr);
 }
 
@@ -520,7 +520,7 @@ TEST_CASE("the parser will parse a function with an expression body") {
     CHECK(func->name == "foo");
     CHECK(func->param_count() == 2);
     CHECK(func->func_type->return_type()
-          == ty_context.create_type<ast::prim_type>(ast::prim_type::type::int32));
+          == ty_context.create_type<ast::prim_type>(ast::prim_type::type::int_prim));
     CHECK(func->body != nullptr);
 
     auto * ret_stmt = dynamic_cast<ast::return_stmt *>(func->body.get());
@@ -554,9 +554,9 @@ factorial(int input) -> int {
     CHECK(func->param_count() == 1);
     CHECK(func->params[0].name() == "input");
     CHECK(func->params[0].type()
-          == ty_context.create_type<ast::prim_type>(ast::prim_type::type::int32));
+          == ty_context.create_type<ast::prim_type>(ast::prim_type::type::int_prim));
     CHECK(func->func_type->return_type()
-          == ty_context.create_type<ast::prim_type>(ast::prim_type::type::int32));
+          == ty_context.create_type<ast::prim_type>(ast::prim_type::type::int_prim));
     CHECK(func->body != nullptr);
 
     auto * body = dynamic_cast<ast::stmt_sequence *>(func->body.get());

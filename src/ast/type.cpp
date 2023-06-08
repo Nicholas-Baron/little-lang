@@ -3,6 +3,7 @@
 #include <algorithm> // find_if
 #include <cassert>
 #include <iostream> // cout
+#include <memory>
 #include <utility>
 
 namespace ast {
@@ -18,6 +19,10 @@ namespace ast {
 
     std::unique_ptr<prim_type> prim_type::create(prim_type::type type) {
         return std::unique_ptr<prim_type>{new prim_type{type}};
+    }
+
+    std::unique_ptr<int_type> int_type::create(unsigned size) {
+        return std::unique_ptr<int_type>{new int_type{size}};
     }
 
     std::unique_ptr<struct_type> struct_type::create(std::string && name,
@@ -52,14 +57,11 @@ namespace ast {
 
     void prim_type::print(std::ostream & lhs) const {
         switch (prim) {
+        case type::int_prim:
+            lhs << "int";
+            break;
         case type::boolean:
             lhs << "bool";
-            break;
-        case type::int32:
-            lhs << "int32";
-            break;
-        case type::int64:
-            lhs << "int64";
             break;
         case type::float32:
             lhs << "float32";
@@ -78,6 +80,8 @@ namespace ast {
             break;
         }
     }
+
+    void int_type::print(std::ostream & lhs) const { lhs << "int" << size; }
 
     void struct_type::print(std::ostream & lhs) const {
         lhs << user_name() << '{';

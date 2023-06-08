@@ -6,8 +6,6 @@ llvm_type_lowering::llvm_type_lowering(ast::type_context & type_context,
                                        llvm::LLVMContext * context) {
 
     using prim_inner = ast::prim_type::type;
-    active_types.emplace(type_context.create_type<ast::prim_type>(prim_inner::int32),
-                         llvm::Type::getInt32Ty(*context));
     active_types.emplace(type_context.create_type<ast::prim_type>(prim_inner::float32),
                          llvm::Type::getFloatTy(*context));
     active_types.emplace(type_context.create_type<ast::prim_type>(prim_inner::unit),

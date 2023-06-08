@@ -85,10 +85,9 @@ namespace ast {
         friend class type_context;
     };
 
-    struct prim_type final : public type {
+    struct prim_type : public type {
         enum class type {
-            int32,
-            int64,
+            int_prim,
             boolean,
             character,
             float32,
@@ -99,7 +98,7 @@ namespace ast {
 
         non_copyable(prim_type);
         non_movable(prim_type);
-        ~prim_type() final = default;
+        ~prim_type() override = default;
 
         [[nodiscard]] bool is_pointer_type() const final {
             // TODO: Should `str` still be a pointer type?
@@ -108,15 +107,38 @@ namespace ast {
 
         [[nodiscard]] type inner() const noexcept { return prim; }
 
-      private:
-        static std::unique_ptr<prim_type> create(type type);
-
+      protected:
         explicit prim_type(type prim)
             : prim{prim} {}
 
-        void print(std::ostream & /*output*/) const final;
+      private:
+        static std::unique_ptr<prim_type> create(type type);
+
+        void print(std::ostream & /*output*/) const override;
 
         type prim;
+
+        friend class type_context;
+    };
+
+    struct int_type final : public prim_type {
+        non_copyable(int_type);
+        non_movable(int_type);
+        ~int_type() final = default;
+
+        [[nodiscard]] unsigned bit_width() const { return size; }
+
+      protected:
+        explicit int_type(unsigned size)
+            : prim_type{prim_type::type::int_prim}
+            , size{size} {}
+
+      private:
+        static std::unique_ptr<int_type> create(unsigned size);
+
+        void print(std::ostream & /*output*/) const override;
+
+        unsigned size;
 
         friend class type_context;
     };

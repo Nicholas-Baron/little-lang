@@ -24,6 +24,18 @@ namespace ast {
         return emplace_type<prim_type>(type);
     }
 
+    type_ptr type_context::find_int_type(unsigned size) {
+        // We should always find a int_type
+
+        for (auto & type_ptr : types) {
+            if (auto * ptr = dynamic_cast<ast::int_type *>(type_ptr.get()); ptr != nullptr) {
+                if (ptr->size == size) { return ptr; }
+            }
+        }
+
+        return emplace_type<int_type>(size);
+    }
+
     type_ptr type_context::find_ptr_type(bool is_nullable, type_ptr pointed_to) {
         for (auto & type_ptr : types) {
             if (auto * ptr = dynamic_cast<ast::ptr_type *>(type_ptr.get()); ptr != nullptr) {

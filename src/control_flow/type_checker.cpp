@@ -62,7 +62,7 @@ namespace control_flow {
         }
 
         auto * arg_type = find_type_of(call.arguments.front());
-        auto * int_type = type_context.create_type<ast::prim_type>(ast::prim_type::type::int32);
+        auto * int_type = type_context.create_type<ast::int_type>(32);
         if (arg_type != int_type) { printError("`arg_at` only takes int parameters"); }
 
         auto * str_type = type_context.create_type<ast::prim_type>(ast::prim_type::type::str);
@@ -75,7 +75,7 @@ namespace control_flow {
         if (not call.arguments.empty()) {
             printError("`arg_count` does not take any parameter_names");
         }
-        auto * int_type = type_context.create_type<ast::prim_type>(ast::prim_type::type::int32);
+        auto * int_type = type_context.create_type<ast::int_type>(32);
 
         call.type = type_context.create_type<ast::function_type>(int_type);
         bind_type(&call, int_type);
@@ -89,7 +89,7 @@ namespace control_flow {
             printError("syscalls can only take 1 to 7 arguments\nFound one with ", arg_count);
         }
 
-        auto * int_type = type_context.create_type<ast::prim_type>(ast::prim_type::type::int32);
+        auto * int_type = type_context.create_type<ast::int_type>(32);
 
         bool first = true;
         std::vector<ast::type_ptr> arg_types;
@@ -172,8 +172,7 @@ namespace control_flow {
                     auto * non_ptr_type = lhs_type->is_pointer_type() ? rhs_type : lhs_type;
                     auto * ptr_type = lhs_type->is_pointer_type() ? lhs_type : rhs_type;
 
-                    auto * int_type
-                        = type_context.create_type<ast::prim_type>(ast::prim_type::type::int32);
+                    auto * int_type = type_context.create_type<ast::int_type>(64);
                     if (non_ptr_type != int_type) {
                         printError("Expected ", *int_type, " to add with ", *ptr_type, "; found ",
                                    *non_ptr_type);
@@ -229,7 +228,7 @@ namespace control_flow {
             }
             break;
         case literal_type::integer:
-            const_type = get_type(ast::prim_type::type::int32);
+            const_type = get_type(ast::prim_type::type::int_prim);
             break;
         case literal_type::floating:
             const_type = get_type(ast::prim_type::type::float32);
@@ -523,7 +522,7 @@ namespace control_flow {
             }
             break;
         case operation::unary::negate:
-            if (not is_operand_prim(ast::prim_type::type::int32)
+            if (not is_operand_prim(ast::prim_type::type::int_prim)
                 and not is_operand_prim(ast::prim_type::type::float32)) {
                 printError("Expected float or int for `-`; found", *operand_type);
             }

@@ -6,6 +6,7 @@
 #include "type.hpp"
 
 #include <cassert>
+#include <cstring> // strncmp
 #include <filesystem>
 #include <functional>
 #include <iostream> // cerr
@@ -484,15 +485,22 @@ ast::typed_identifier parser::parse_typed_identifier() {
 
 static ast::type_ptr make_type(ast::type_context & ty_context, const std::string & type_name) {
 
-    if (type_name == "int") {
-        return ty_context.create_type<ast::prim_type>(ast::prim_type::type::int32);
+    if (strncmp(type_name.c_str(), "int", 3) == 0) {
+        if (type_name == "int") {
+            return ty_context.create_type<ast::prim_type>(ast::prim_type::type::int_prim);
+        }
+
+        const auto start_num = type_name.substr(3);
+        size_t end_num = 0;
+        auto bit_count = std::stoul(start_num, &end_num);
+
+        assert(start_num.size() == end_num);
+        assert(bit_count > 0);
+        assert(end_num % 2 == 0);
+
+        return ty_context.create_type<ast::int_type>(bit_count);
     }
-    if (type_name == "int32") {
-        return ty_context.create_type<ast::prim_type>(ast::prim_type::type::int32);
-    }
-    if (type_name == "int64") {
-        return ty_context.create_type<ast::prim_type>(ast::prim_type::type::int64);
-    }
+
     if (type_name == "float") {
         return ty_context.create_type<ast::prim_type>(ast::prim_type::type::float32);
     }
