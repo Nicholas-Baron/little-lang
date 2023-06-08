@@ -5,10 +5,10 @@
 #include "operations.hpp"
 #include "type.hpp"
 
+#include <algorithm> // find_if
 #include <cassert>
 #include <cstring> // strncmp
 #include <filesystem>
-#include <functional>
 #include <iostream> // cerr
 #include <map>
 #include <memory> // unique_ptr
