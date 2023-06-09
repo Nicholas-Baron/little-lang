@@ -17,6 +17,8 @@ namespace ast {
 
         [[nodiscard]] virtual bool is_pointer_type() const = 0;
 
+        [[nodiscard]] virtual bool is_int_type() const noexcept { return false; }
+
       protected:
         type() = default;
 
@@ -104,6 +106,8 @@ namespace ast {
             // TODO: Should `str` still be a pointer type?
             return prim == type::str or prim == type::null;
         }
+
+        [[nodiscard]] bool is_int_type() const noexcept final { return prim == type::int_prim; }
 
         [[nodiscard]] type inner() const noexcept { return prim; }
 

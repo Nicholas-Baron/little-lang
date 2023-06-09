@@ -62,11 +62,12 @@ namespace control_flow {
         }
 
         auto * arg_type = find_type_of(call.arguments.front());
-        auto * int_type = type_context.create_type<ast::int_type>(32);
-        if (arg_type != int_type) { printError("`arg_at` only takes int parameters"); }
+        if (not arg_type->is_int_type()) { printError("`arg_at` only takes int parameters"); }
 
+        auto * int_type = type_context.create_type<ast::int_type>(32);
         auto * str_type = type_context.create_type<ast::prim_type>(ast::prim_type::type::str);
-        call.type = type_context.create_type<ast::function_type>(str_type, std::vector{int_type});
+        call.type = type_context.create_type<ast::function_type>(
+            str_type, std::vector{arg_type->is_int_type() ? arg_type : int_type});
         bind_type(&call, str_type);
     }
 
@@ -89,20 +90,20 @@ namespace control_flow {
             printError("syscalls can only take 1 to 7 arguments\nFound one with ", arg_count);
         }
 
-        auto * int_type = type_context.create_type<ast::int_type>(32);
+        auto * int32_type = type_context.create_type<ast::int_type>(32);
 
         bool first = true;
         std::vector<ast::type_ptr> arg_types;
         for (auto * arg : call.arguments) {
             auto * arg_type = find_type_of(arg);
-            if (not arg_type->is_pointer_type() and arg_type != int_type) {
+            if (not arg_type->is_pointer_type() and not arg_type->is_int_type()) {
                 printError("syscall can only take int or pointer arguments; found ", *arg_type);
             }
 
             // The first argmuent must always be a syscall number.
             if (first) {
                 first = false;
-                if (arg_type != int_type) {
+                if (arg_type != int32_type) {
                     printError("syscall must have an integer as its first argument; found ",
                                *arg_type);
                 }
@@ -111,10 +112,10 @@ namespace control_flow {
             arg_types.push_back(arg_type);
         }
 
-        call.type = type_context.create_type<ast::function_type>(int_type, std::move(arg_types));
+        call.type = type_context.create_type<ast::function_type>(int32_type, std::move(arg_types));
 
         // TODO: syscalls can return pointers and 64 bit numbers
-        bind_type(&call, int_type);
+        bind_type(&call, int32_type);
     }
 
     void type_checker::visit(function_start & func_start) {
@@ -172,9 +173,8 @@ namespace control_flow {
                     auto * non_ptr_type = lhs_type->is_pointer_type() ? rhs_type : lhs_type;
                     auto * ptr_type = lhs_type->is_pointer_type() ? lhs_type : rhs_type;
 
-                    auto * int_type = type_context.create_type<ast::int_type>(64);
-                    if (non_ptr_type != int_type) {
-                        printError("Expected ", *int_type, " to add with ", *ptr_type, "; found ",
+                    if (not non_ptr_type->is_int_type()) {
+                        printError("Expected an integer to add with ", *ptr_type, "; found ",
                                    *non_ptr_type);
                     }
 
