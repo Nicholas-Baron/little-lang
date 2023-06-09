@@ -57,6 +57,8 @@ const PROT_READ : int32 = 0x1
 
 const MAP_PRIVATE : int32 = 0x2
 
+const MMAP_FAILED : int64 = -1
+
 main () {
 	let fd = syscall(open_num, arg_at(1), 0);
 
