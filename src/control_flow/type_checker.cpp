@@ -106,7 +106,7 @@ namespace control_flow {
             // The first argmuent must always be a syscall number.
             if (first) {
                 first = false;
-                if (arg_type != int32_type) {
+                if (not arg_type->is_int_type()) {
                     printError("syscall must have an integer as its first argument; found ",
                                *arg_type);
                 }
