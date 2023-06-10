@@ -62,6 +62,7 @@ namespace control_flow {
         }
 
         auto * arg_type = find_type_of(call.arguments.front());
+        if (arg_type == nullptr) { return; }
         if (not arg_type->is_int_type()) { printError("`arg_at` only takes int parameters"); }
 
         auto * int_type = type_context.create_type<ast::int_type>(32);
@@ -96,6 +97,8 @@ namespace control_flow {
         std::vector<ast::type_ptr> arg_types;
         for (auto * arg : call.arguments) {
             auto * arg_type = find_type_of(arg);
+            if (arg_type == nullptr) { continue; }
+
             if (not arg_type->is_pointer_type() and not arg_type->is_int_type()) {
                 printError("syscall can only take int or pointer arguments; found ", *arg_type);
             }
