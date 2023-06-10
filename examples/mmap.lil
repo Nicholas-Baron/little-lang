@@ -1,4 +1,4 @@
-from "stdlib/syscall_nums.lil" import mmap_num, write_num, open_num, fstat_num, exit_num
+from "stdlib/syscall_nums.lil" import mmap_num, write_num, open_num, fstat_num, exit_num, close_num
 
 timespec {
 	tv_sec : int64;
