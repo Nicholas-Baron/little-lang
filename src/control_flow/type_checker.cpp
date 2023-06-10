@@ -91,8 +91,6 @@ namespace control_flow {
             printError("syscalls can only take 1 to 7 arguments\nFound one with ", arg_count);
         }
 
-        auto * int32_type = type_context.create_type<ast::int_type>(32);
-
         bool first = true;
         std::vector<ast::type_ptr> arg_types;
         for (auto * arg : call.arguments) {
@@ -115,10 +113,11 @@ namespace control_flow {
             arg_types.push_back(arg_type);
         }
 
-        call.type = type_context.create_type<ast::function_type>(int32_type, std::move(arg_types));
+        auto * int64_type = type_context.create_type<ast::int_type>(64);
+        call.type = type_context.create_type<ast::function_type>(int64_type, std::move(arg_types));
 
         // TODO: syscalls can return pointers and 64 bit numbers
-        bind_type(&call, int32_type);
+        bind_type(&call, int64_type);
     }
 
     void type_checker::visit(function_start & func_start) {
