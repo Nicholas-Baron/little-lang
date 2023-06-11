@@ -2,6 +2,7 @@
 
 #include <iosfwd> // ostream
 #include <memory> // unique_ptr
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -130,7 +131,9 @@ namespace ast {
         non_movable(int_type);
         ~int_type() final = default;
 
-        [[nodiscard]] unsigned bit_width() const { return size; }
+        [[nodiscard]] std::optional<unsigned> bit_width() const {
+            return (size != 0) ? std::optional{size} : std::nullopt;
+        }
 
       protected:
         explicit int_type(unsigned size)
@@ -142,6 +145,7 @@ namespace ast {
 
         void print(std::ostream & /*output*/) const override;
 
+        // 0 = generic integer constant (no explicit bit_width set)
         unsigned size;
 
         friend class type_context;

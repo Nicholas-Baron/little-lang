@@ -81,7 +81,13 @@ namespace ast {
         }
     }
 
-    void int_type::print(std::ostream & lhs) const { lhs << "int" << size; }
+    void int_type::print(std::ostream & lhs) const {
+        if (size != 0) {
+            lhs << "int" << size;
+        } else {
+            lhs << "integer";
+        }
+    }
 
     void struct_type::print(std::ostream & lhs) const {
         lhs << user_name() << '{';

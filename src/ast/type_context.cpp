@@ -15,6 +15,8 @@ namespace ast {
     type_ptr type_context::find_prim_type(ast::prim_type::type type) {
         // We should always find a prim_type
 
+        if (type == prim_type::type::int_prim) { return find_int_type(0); }
+
         for (auto & type_ptr : types) {
             if (auto * ptr = dynamic_cast<ast::prim_type *>(type_ptr.get()); ptr != nullptr) {
                 if (ptr->inner() == type) { return ptr; }
