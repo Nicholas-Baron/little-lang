@@ -52,6 +52,18 @@ namespace control_flow {
                  : nullptr;
     }
 
+    static bool compatible_types(ast::type_ptr destination, ast::type_ptr source) {
+
+        auto * dest_int = dynamic_cast<ast::int_type *>(destination);
+        auto * src_int = dynamic_cast<ast::int_type *>(source);
+        if (dest_int != nullptr and src_int != nullptr) {
+            if (not src_int->bit_width().has_value()) { return true; }
+            return dest_int->bit_width() == src_int->bit_width();
+        }
+
+        return destination == source;
+    }
+
     void type_checker::arg_at(intrinsic_call & call) {
         // arg_at takes 1 int parameter and returns a str
         // TODO: handle when int goes out of bounds
@@ -158,7 +170,7 @@ namespace control_flow {
             }
             bind_type(&binary_operation, boolean_type);
         } else if (operation::is_comparison(binary_operation.op)) {
-            if (lhs_type != rhs_type) {
+            if (not compatible_types(lhs_type, rhs_type)) {
                 printError("Expected comparison operands to be of same type; found ", *lhs_type,
                            " and ", *rhs_type);
             }
@@ -494,7 +506,8 @@ namespace control_flow {
                 continue;
             }
 
-            if (auto * actual_type = find_type_of(iter->second); actual_type != expected_type) {
+            if (auto * actual_type = find_type_of(iter->second);
+                not compatible_types(expected_type, actual_type)) {
                 printError("Expected type of ", *expected_type, " for field ", field_name,
                            " in struct ", struct_type->user_name(), "; Found expession with type ",
                            *actual_type);
