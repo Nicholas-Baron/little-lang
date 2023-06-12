@@ -34,6 +34,10 @@ namespace control_flow {
         } else if (auto * unary_op = dynamic_cast<control_flow::unary_operation *>(value);
                    unary_op != nullptr) {
             unary_op->result_type = type;
+        } else if (auto * constant = dynamic_cast<control_flow::constant *>(value);
+                   constant != nullptr
+                   and (constant->type->is_pointer_type() or constant->type->is_int_type())) {
+            constant->type = type;
         }
     }
 
@@ -109,10 +113,6 @@ namespace control_flow {
             auto * arg_type = find_type_of(arg);
             if (arg_type == nullptr) { continue; }
 
-            if (not arg_type->is_pointer_type() and not arg_type->is_int_type()) {
-                printError("syscall can only take int or pointer arguments; found ", *arg_type);
-            }
-
             // The first argmuent must always be a syscall number.
             if (first) {
                 first = false;
@@ -120,6 +120,18 @@ namespace control_flow {
                     printError("syscall must have an integer as its first argument; found ",
                                *arg_type);
                 }
+            }
+
+            if (arg_type == type_context.create_type<ast::prim_type>(ast::prim_type::type::null)) {
+                auto * int8_ptr = type_context.create_type<ast::nullable_ptr_type>(
+                    type_context.create_type<ast::int_type>(8));
+                bind_type(arg, int8_ptr);
+                arg_types.push_back(int8_ptr);
+                continue;
+            }
+
+            if (not arg_type->is_pointer_type() and not arg_type->is_int_type()) {
+                printError("syscall can only take int or pointer arguments; found ", *arg_type);
             }
 
             arg_types.push_back(arg_type);
