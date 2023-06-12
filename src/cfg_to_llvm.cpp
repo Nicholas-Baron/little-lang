@@ -127,8 +127,17 @@ void cfg_to_llvm::visit(control_flow::member_access & member_access) {
     auto * llvm_struct_type = type_lowering.lower_to_llvm(lhs_value->ast_type);
     assert(llvm_struct_type != nullptr);
 
-    auto * pointer_to_result = ir_builder->CreateStructGEP(llvm_struct_type, lhs_value->value,
-                                                           *member_access.member_index);
+    auto * value = lhs_value->value;
+    assert(value != nullptr);
+    if (not value->getType()->isPointerTy()) {
+        auto * slot = ir_builder->CreateAlloca(llvm_struct_type);
+        ir_builder->CreateStore(value, slot);
+        value = slot;
+    }
+    assert(value->getType()->isPointerTy());
+
+    auto * pointer_to_result
+        = ir_builder->CreateStructGEP(llvm_struct_type, value, *member_access.member_index);
 
     auto * result = ir_builder->CreateLoad(type_lowering.lower_to_llvm(member_access.result_type),
                                            pointer_to_result);
