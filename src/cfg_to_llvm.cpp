@@ -643,6 +643,9 @@ void cfg_to_llvm::visit(control_flow::unary_operation & unary_operation) {
             auto * slot = ir_builder->CreateAlloca(type_lowering.lower_to_llvm(value->ast_type));
             ir_builder->CreateStore(const_val, slot);
             bind_value(unary_operation, slot, unary_operation.result_type);
+        } else if (auto * alloca_inst = llvm::dyn_cast<llvm::AllocaInst>(value->value);
+                   alloca_inst != nullptr) {
+            bind_value(unary_operation, alloca_inst, unary_operation.result_type);
         } else {
             assert(false);
         }
