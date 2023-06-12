@@ -174,11 +174,18 @@ namespace control_flow {
             printError("syscalls can only take 1 to 7 arguments\nFound one with ", arg_count);
         }
 
+        auto * int64_type = type_context.create_type<ast::int_type>(64);
         bool first = true;
         std::vector<ast::type_ptr> arg_types;
         for (auto * arg : call.arguments) {
             auto * arg_type = find_type_of(arg);
             if (arg_type == nullptr) { continue; }
+
+            if (auto * int_arg_type = dynamic_cast<ast::int_type *>(arg_type);
+                int_arg_type != nullptr and not int_arg_type->bit_width().has_value()) {
+                bind_type(arg, int64_type);
+                arg_type = int64_type;
+            }
 
             // The first argmuent must always be a syscall number.
             if (first) {
@@ -192,19 +199,17 @@ namespace control_flow {
             if (arg_type == type_context.create_type<ast::prim_type>(ast::prim_type::type::null)) {
                 auto * int8_ptr = type_context.create_type<ast::nullable_ptr_type>(
                     type_context.create_type<ast::int_type>(8));
-                bind_type(arg, int8_ptr);
-                arg_types.push_back(int8_ptr);
-                continue;
+                arg_type = int8_ptr;
             }
 
             if (not arg_type->is_pointer_type() and not arg_type->is_int_type()) {
                 printError("syscall can only take int or pointer arguments; found ", *arg_type);
             }
 
+            bind_type(arg, arg_type);
             arg_types.push_back(arg_type);
         }
 
-        auto * int64_type = type_context.create_type<ast::int_type>(64);
         call.type = type_context.create_type<ast::function_type>(int64_type, std::move(arg_types));
 
         // TODO: syscalls can return pointers and 64 bit numbers
