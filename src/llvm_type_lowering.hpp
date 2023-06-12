@@ -18,4 +18,5 @@ class llvm_type_lowering final {
   private:
     global_map<std::string, ast::type_ptr> global_types;
     std::map<ast::type_ptr, llvm::Type *> active_types;
+    llvm::LLVMContext * context;
 };

@@ -1,11 +1,14 @@
 #include "llvm_type_lowering.hpp"
 
+#include "ast/type.hpp"
+
 #include <iostream>
 
 #include <llvm/IR/DerivedTypes.h>
 
 llvm_type_lowering::llvm_type_lowering(ast::type_context & type_context,
-                                       llvm::LLVMContext * context) {
+                                       llvm::LLVMContext * context)
+    : context{context} {
 
     using prim_inner = ast::prim_type::type;
     active_types.emplace(type_context.create_type<ast::prim_type>(prim_inner::float32),
@@ -65,6 +68,14 @@ llvm::Type * llvm_type_lowering::lower_to_llvm(ast::type_ptr type) {
         auto * llvm_func_type = llvm::FunctionType::get(result_type, args, false);
         active_types.emplace(type, llvm_func_type);
         return llvm_func_type;
+    }
+
+    if (const auto * int_type = dynamic_cast<const ast::int_type *>(type); int_type != nullptr) {
+        static constexpr auto default_bit_width = 32U;
+        auto * llvm_int_type
+            = llvm::IntegerType::get(*context, int_type->bit_width().value_or(default_bit_width));
+        active_types.emplace(type, llvm_int_type);
+        return llvm_int_type;
     }
 
     std::cerr << "Could not lower " << *type << std::endl;
