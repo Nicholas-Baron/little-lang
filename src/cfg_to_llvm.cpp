@@ -371,7 +371,17 @@ void cfg_to_llvm::visit(control_flow::function_end & func_end) {
 
     const auto * node_data = find_value_of(func_end.value);
     assert(node_data != nullptr);
-    ir_builder->CreateRet(node_data->value);
+    auto * value = node_data->value;
+    assert(value != nullptr);
+
+    auto * ret_type = ir_builder->getCurrentFunctionReturnType();
+    if (ret_type->getPointerTo() == value->getType()) {
+        // "Auto load"
+        value = ir_builder->CreateLoad(ret_type, value);
+    }
+    assert(ret_type == value->getType());
+
+    ir_builder->CreateRet(value);
 }
 
 void cfg_to_llvm::visit(control_flow::function_start & func_start) {
