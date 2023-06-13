@@ -566,7 +566,11 @@ void cfg_to_llvm::visit(control_flow::phi & phi) {
     std::optional<llvm::Type *> phi_type;
     for (auto * prev : phi.previous) {
         const auto * prev_value = find_value_of(prev);
-        assert(prev_value != nullptr);
+        // No value from one or more paths in => control flow only (i.e. if statement)
+        if (prev_value == nullptr) {
+            phi_type = nullptr;
+            break;
+        }
 
         values.emplace_back(*prev_value);
 
