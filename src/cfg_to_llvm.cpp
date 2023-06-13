@@ -94,7 +94,12 @@ void cfg_to_llvm::dump() const { llvm::outs() << *ir_module << '\n'; }
 
 void cfg_to_llvm::bind_value(const control_flow::node & node, llvm::Value * value,
                              ast::type_ptr type) {
-    assert(values.find(&node) == values.end());
+    auto iter = values.find(&node);
+    if (iter != values.end()) {
+        llvm::outs() << "Previously value was " << *iter->second.value << "\nNow it is " << *value
+                     << '\n';
+    }
+    assert(iter == values.end() or (iter->second.value == value and iter->second.ast_type == type));
 
     values.emplace(&node, node_data{*ir_builder, value, type});
 }
