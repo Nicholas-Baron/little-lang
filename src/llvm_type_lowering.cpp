@@ -71,6 +71,7 @@ llvm::Type * llvm_type_lowering::lower_to_llvm(ast::type_ptr type) {
     }
 
     if (const auto * int_type = dynamic_cast<const ast::int_type *>(type); int_type != nullptr) {
+        assert(int_type->bit_width().has_value());
         static constexpr auto default_bit_width = 32U;
         auto * llvm_int_type
             = llvm::IntegerType::get(*context, int_type->bit_width().value_or(default_bit_width));
