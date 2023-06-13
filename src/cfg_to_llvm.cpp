@@ -308,8 +308,8 @@ void cfg_to_llvm::visit(control_flow::constant & constant) {
         }
         break;
     case literal_type::null: {
-        auto * llvm_ptr_type
-            = llvm::dyn_cast_or_null<llvm::PointerType>(type_lowering.lower_to_llvm(constant.type));
+        auto * llvm_ptr_type = llvm::dyn_cast_if_present<llvm::PointerType>(
+            type_lowering.lower_to_llvm(constant.type));
         assert(llvm_ptr_type != nullptr);
         bind_value(constant, llvm::ConstantPointerNull::get(llvm_ptr_type), constant.type);
     } break;
