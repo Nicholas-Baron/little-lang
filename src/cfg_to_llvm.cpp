@@ -274,12 +274,15 @@ void cfg_to_llvm::visit(control_flow::branch & branch) {
     auto * start_block = ir_builder->GetInsertBlock();
     auto * current_function = start_block->getParent();
 
-    visited.emplace(&branch);
-
     // Generate the true branch
     auto * then_block = llvm::BasicBlock::Create(context, "", current_function);
     ir_builder->SetInsertPoint(then_block);
     branch.true_case->accept(*this);
+
+    // The visit should only be marked after the true branch is finished.
+    // This is due to the case of `if x then y();` without an else.
+    // Our coresponding phi node is the false branch.
+    visited.emplace(&branch);
 
     // Generate the else block
     auto * else_block = llvm::BasicBlock::Create(context, "", current_function);
