@@ -35,8 +35,7 @@ namespace control_flow {
                    unary_op != nullptr) {
             unary_op->result_type = type;
         } else if (auto * constant = dynamic_cast<control_flow::constant *>(value);
-                   constant != nullptr
-                   and (constant->type->is_pointer_type() or constant->type->is_int_type())) {
+                   constant != nullptr) {
             constant->type = type;
         }
     }
