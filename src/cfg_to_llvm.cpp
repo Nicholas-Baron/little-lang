@@ -305,13 +305,14 @@ void cfg_to_llvm::visit(control_flow::constant & constant) {
         assert(llvm_ptr_type != nullptr);
         bind_value(constant, llvm::ConstantPointerNull::get(llvm_ptr_type), constant.type);
     } break;
-    case literal_type::integer:
+    case literal_type::integer: {
+        auto * llvm_int_type = llvm::dyn_cast_if_present<llvm::IntegerType>(
+            type_lowering.lower_to_llvm(constant.type));
+        assert(llvm_int_type != nullptr);
         assert(std::holds_alternative<long>(constant.value));
-        bind_value(
-            constant,
-            llvm::ConstantInt::get(llvm::Type::getInt32Ty(context), std::get<long>(constant.value)),
-            constant.type);
-        break;
+        bind_value(constant, llvm::ConstantInt::get(llvm_int_type, std::get<long>(constant.value)),
+                   constant.type);
+    } break;
     case literal_type::floating:
         assert(false and "Implement floating point IR");
         break;
