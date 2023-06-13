@@ -531,11 +531,16 @@ namespace control_flow {
                 continue;
             }
 
-            if (auto * actual_type = find_type_of(iter->second);
-                merge_types({expected_type, actual_type}, type_context) == nullptr) {
+            auto * actual_type = find_type_of(iter->second);
+            assert(actual_type != nullptr);
+
+            if (auto * common_type = merge_types({expected_type, actual_type}, type_context);
+                common_type == nullptr) {
                 printError("Expected type of ", *expected_type, " for field ", field_name,
                            " in struct ", struct_type->user_name(), "; Found expession with type ",
                            *actual_type);
+            } else {
+                bind_type(iter->second, common_type);
             }
         }
 
