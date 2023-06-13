@@ -32,8 +32,9 @@ namespace control_flow {
             binary_op != nullptr) {
             binary_op->result_type = type;
         } else if (auto * unary_op = dynamic_cast<control_flow::unary_operation *>(value);
-                   unary_op != nullptr) {
+                   unary_op != nullptr and unary_op->result_type != type) {
             unary_op->result_type = type;
+            if (unary_op->op == operation::unary::negate) { bind_type(unary_op->operand, type); }
         } else if (auto * constant = dynamic_cast<control_flow::constant *>(value);
                    constant != nullptr) {
             constant->type = type;
