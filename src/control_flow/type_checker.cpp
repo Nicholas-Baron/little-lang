@@ -567,7 +567,7 @@ namespace control_flow {
             }
             break;
         case operation::unary::negate:
-            if (not is_operand_prim(ast::prim_type::type::int_prim)
+            if (not operand_type->is_int_type()
                 and not is_operand_prim(ast::prim_type::type::float32)) {
                 printError("Expected float or int for `-`; found", *operand_type);
             }
