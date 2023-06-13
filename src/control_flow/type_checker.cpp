@@ -148,10 +148,10 @@ namespace control_flow {
         if (arg_type == nullptr) { return; }
         if (not arg_type->is_int_type()) { printError("`arg_at` only takes int parameters"); }
 
-        auto * int_type = type_context.create_type<ast::int_type>(32);
+        auto * int_type = type_context.create_type<ast::int_type>(64);
         auto * str_type = type_context.create_type<ast::prim_type>(ast::prim_type::type::str);
-        call.type = type_context.create_type<ast::function_type>(
-            str_type, std::vector{arg_type->is_int_type() ? arg_type : int_type});
+        call.type = type_context.create_type<ast::function_type>(str_type, std::vector{int_type});
+        bind_type(call.arguments.front(), int_type);
         bind_type(&call, str_type);
     }
 
