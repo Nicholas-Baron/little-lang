@@ -58,11 +58,7 @@ namespace ast {
         for (auto & type_ptr : types) {
             if (auto * ptr = dynamic_cast<ast::function_type *>(type_ptr.get()); ptr != nullptr) {
                 if (ptr->return_type() != return_type) { continue; }
-                if (ptr->arg_count() != arg_types.size()) { continue; }
-
-                for (auto i = 0UL; i < ptr->arg_count(); ++i) {
-                    if (ptr->arg(i) != arg_types[i]) { continue; }
-                }
+                if (ptr->arg_types != arg_types) { continue; }
 
                 return ptr;
             }
