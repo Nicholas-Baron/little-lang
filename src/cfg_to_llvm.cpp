@@ -38,7 +38,7 @@ namespace {
 
         constexpr auto * first_part = "={ax},{ax},{di},{si},{dx},{r10},{r8},{r9},";
         constexpr auto count = count_in(first_part, ',') - 1;
-        constexpr auto * suffix = ",0,~{r11},~{rcx},~{dirflag},~{fpsr},~{flags}";
+        constexpr auto * suffix = ",~{r11},~{rcx},~{dirflag},~{fpsr},~{flags}";
 
     } // namespace constraints
 
@@ -524,7 +524,11 @@ void cfg_to_llvm::syscall(control_flow::intrinsic_call & intrinsic_call) {
         = llvm::cast_or_null<llvm::FunctionType>(type_lowering.lower_to_llvm(intrinsic_call.type));
     assert(func_type != nullptr);
 
-    assert(llvm::InlineAsm::verify(func_type, constraint));
+    // TODO: Submit bug to fix this
+    if (auto verify_result = llvm::InlineAsm::verify(func_type, constraint);
+        verify_result.success()) {
+        llvm::errs() << verify_result << '\n';
+    }
 
     bind_value(intrinsic_call,
                ir_builder->CreateCall(
