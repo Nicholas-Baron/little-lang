@@ -261,16 +261,19 @@ std::string program::emit_and_link() {
         exit(0);
     }
 
-    auto program_name = std::filesystem::current_path() / project.stem();
-    std::vector<std::string> linker_args{"ld", "-static",    "--gc-sections",
-                                         "-o", program_name, "start.o"};
+    std::filesystem::path program_name;
+    std::vector<std::string> linker_args{"ld", "-static", "--gc-sections", "start.o"};
     if (debug_print_execs) { linker_args.emplace_back("--print-gc-sections"); }
 
     for (auto && mod : ir_modules) {
         auto output_name = std::filesystem::path(mod->getSourceFileName()).replace_extension("o");
         linker_args.emplace_back(output_name);
         emit_asm(std::move(mod), std::string{output_name});
+        program_name = std::filesystem::current_path() / output_name.stem();
     }
+
+    linker_args.emplace_back("-o");
+    linker_args.push_back(std::move(program_name));
 
     if (not exec_command(std::move(linker_args), debug_print_execs)) {
         std::cerr << "Error linking " << program_name << std::endl;
