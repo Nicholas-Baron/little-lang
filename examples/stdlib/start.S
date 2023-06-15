@@ -14,6 +14,8 @@ envp: .space 8
 .text
 .global _start
 .global main
+.global exit
+.global arg_at
 
 _start:
 #argc is at rsp
@@ -37,3 +39,14 @@ exit:
     mov ax, 60
     xor rdi, rdi
     syscall
+
+arg_at:
+	cmp [argc], rdi
+	jae find_arg
+	xor rax, rax
+	ret
+
+find_arg:
+	mov rax, [argv]
+	mov rax, [rax + 8*rdi]
+	ret
