@@ -79,6 +79,20 @@ namespace control_flow {
             auto both_int_types = result_type->is_int_type() and result_type->is_int_type();
             if (not both_pointer_types and not both_int_types) { return nullptr; }
 
+            if (auto * str_type
+                = type_context.create_type<ast::prim_type>(ast::prim_type::type::str);
+                result_type == str_type or current_type == str_type) {
+                if (result_type == current_type) { continue; }
+
+                if (auto * null_prim
+                    = type_context.create_type<ast::prim_type>(ast::prim_type::type::null);
+                    result_type == null_prim or current_type == null_prim) {
+                    continue;
+                }
+
+                return nullptr;
+            }
+
             if (both_pointer_types) {
                 auto * null_prim
                     = type_context.create_type<ast::prim_type>(ast::prim_type::type::null);
