@@ -584,7 +584,7 @@ void ast_to_cfg::visit(ast::user_val & user_val) {
         break;
     case literal_type::integer:
         // TODO: Define our own string to int conversion
-        value = std::stoi(user_val.val);
+        value = std::stoi(user_val.val, nullptr, 0);
         break;
     case literal_type::floating:
         assert(false);
