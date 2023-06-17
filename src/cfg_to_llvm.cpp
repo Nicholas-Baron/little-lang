@@ -560,9 +560,7 @@ void cfg_to_llvm::visit(control_flow::phi & phi) {
 
     auto * start_block = ir_builder->GetInsertBlock();
     auto * current_function = start_block->getParent();
-    auto * phi_block = start_block->empty()
-                         ? start_block
-                         : llvm::BasicBlock::Create(context, "", current_function);
+    auto * phi_block = llvm::BasicBlock::Create(context, "", current_function);
 
     // HACK: Sometimes, phi nodes are values and need a type.
     //       This will happen if all previous nodes have the same type.
