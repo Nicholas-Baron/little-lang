@@ -1,13 +1,11 @@
 #include "serializer.hpp"
 
 #include "control_flow/node.hpp"
-#include "nlohmann/json.hpp"
 #include "token_to_string.hpp"
 
 #include <iostream>
 
-#define NODE_NAME(node) \
-    { "node name", #node }
+#define NODE_NAME(node) &node, #node
 
 namespace control_flow {
 
@@ -15,59 +13,53 @@ namespace control_flow {
 
     serializer::~serializer() noexcept = default;
 
-    void serializer::into_stream(std::ostream & stream, const std::vector<node *> & roots,
-                                 bool human_readable) {
+    std::string serializer::node_data::id() const {
+        auto stream = std::stringstream{};
+        stream << ptr;
+        return stream.str();
+    }
+
+    void serializer::into_stream(std::ostream & stream, const std::vector<node *> & roots) {
         serializer visitor{};
         for (auto * node : roots) {
             node->accept(visitor);
             visitor.drop_result();
         }
 
-        nlohmann::json result;
-        for (auto & item : visitor.graph_array) { result.push_back(*item); }
-        stream << result.dump(human_readable ? 4 : -1);
-
-#ifdef DEBUG
         stream << "digraph {\n";
-        for (auto i = 0UL; i < result.size(); ++i) {
-            auto & node = result[i];
-            if (node.contains("next")) {
-                stream << i << " -> " << node["next"] << ";\n";
-            } else if (node.contains("condition")) {
-                stream << i << " -> " << node["true case"] << ";\n";
-                stream << i << " -> " << node["false case"] << ";\n";
+
+        for (auto & node : visitor.node_array) {
+            stream << '"' << node->id() << "\" [label=" << node->name << "]\n";
+            for (auto & [index, connection_type] : node->connections) {
+                stream << '"' << node->id() << "\" -> \"" << visitor.node_array[index]->id()
+                       << "\" [label=\"" << connection_type << "\"]\n";
             }
         }
+
         stream << "}\n";
-#endif
     }
 
-    std::pair<nlohmann::json *, size_t> serializer::add_node(node * node) {
+    std::pair<serializer::node_data *, size_t> serializer::add_node(node * node) {
         if (auto iter = visited.find(node); iter != visited.end()) {
             return {nullptr, iter->second};
         }
 
-        auto & result = graph_array.emplace_back(std::make_unique<nlohmann::json>());
-        visited.emplace(node, &result - graph_array.data());
-        return {result.get(), &result - graph_array.data()};
+        auto & result = node_array.emplace_back(std::make_unique<node_data>());
+        visited.emplace(node, &result - node_array.data());
+        return {result.get(), &result - node_array.data()};
     }
 
-    void serializer::store_result(nlohmann::json * value) {
-        auto iter = std::find_if(graph_array.begin(), graph_array.end(),
+    void serializer::store_result(node_data * value) {
+        auto iter = std::find_if(node_array.begin(), node_array.end(),
                                  [&value](auto & item) -> bool { return item.get() == value; });
-        return value_getter::store_result(std::distance(graph_array.begin(), iter));
+        return value_getter::store_result(std::distance(node_array.begin(), iter));
     }
 
     void serializer::visit(function_start & function_start) {
         auto [result, index] = add_node(&function_start);
         if (result == nullptr) { return value_getter::store_result(index); }
 
-        *result = {
-            NODE_NAME(function_start),
-            {"arg count", function_start.arg_count},
-            {"exported", function_start.exported},
-            {"next", get_value(*function_start.next, *this)}
-        };
+        *result = {NODE_NAME(function_start), {{get_value(*function_start.next, *this), "next"}}};
         return store_result(result);
     }
 
@@ -75,12 +67,13 @@ namespace control_flow {
         auto [result, index] = add_node(&function_end);
         if (result == nullptr) { return value_getter::store_result(index); }
 
-        auto value = nlohmann::json{};
-        if (function_end.value != nullptr) { value = get_value(*function_end.value, *this); }
+        decltype(result->connections) connections;
+        if (function_end.value != nullptr) {
+            auto value = get_value(*function_end.value, *this);
+            connections.emplace(value, "value");
+        }
 
-        *result = {
-            NODE_NAME(function_end), {"value", std::move(value)}
-        };
+        *result = {NODE_NAME(function_end), connections};
         return store_result(result);
     }
 
@@ -88,13 +81,13 @@ namespace control_flow {
         auto [result, index] = add_node(&binary_operation);
         if (result == nullptr) { return value_getter::store_result(index); }
 
-        *result = {
-            NODE_NAME(binary_operation),
-            {"next", get_value(*binary_operation.next, *this)},
-            {"left", get_value(*binary_operation.lhs, *this)},
-            {"right", get_value(*binary_operation.rhs, *this)},
-            {"op", token_to_string(binary_operation.op)}
+        std::map<size_t, std::string> connections{
+            {get_value(*binary_operation.next, *this), "next" },
+            {get_value(*binary_operation.lhs,  *this), "left" },
+            {get_value(*binary_operation.rhs,  *this), "right"},
         };
+
+        *result = {NODE_NAME(binary_operation), connections};
         return store_result(result);
     }
 
@@ -102,12 +95,13 @@ namespace control_flow {
         auto [result, index] = add_node(&branch);
         if (result == nullptr) { return value_getter::store_result(index); }
 
-        *result = {
-            NODE_NAME(branch),
-            {"condition",  get_value(*branch.condition_value, *this)},
-            {"true case",  get_value(*branch.true_case,       *this)},
-            {"false case", get_value(*branch.false_case,      *this)},
+        std::map<size_t, std::string> connections{
+            {get_value(*branch.condition_value, *this), "condition" },
+            {get_value(*branch.true_case,       *this), "true case" },
+            {get_value(*branch.false_case,      *this), "false case"},
         };
+
+        *result = {NODE_NAME(branch), connections};
         return store_result(result);
     }
 
@@ -115,23 +109,12 @@ namespace control_flow {
         auto [result, index] = add_node(&constant);
         if (result == nullptr) { return value_getter::store_result(index); }
 
-        auto value = std::visit(
-            [](auto arg) -> nlohmann::json {
-                using T = std::decay_t<decltype(arg)>;
-                if constexpr (std::is_same_v<T, std::monostate>) {
-                    return {};
-                } else {
-                    return arg;
-                }
-            },
-            constant.value);
-
-        *result = {
-            NODE_NAME(constant),
-            {"value", std::move(value)},
-            {"type", token_to_string(constant.val_type)},
-            {"next", get_value(*constant.next, *this)}
+        // TODO: Serialize the value
+        std::map<size_t, std::string> connections{
+            {get_value(*constant.next, *this), "next"}
         };
+
+        *result = {NODE_NAME(constant), connections};
         return store_result(result);
     }
 
@@ -139,15 +122,18 @@ namespace control_flow {
         auto [result, index] = add_node(&function_call);
         if (result == nullptr) { return value_getter::store_result(index); }
 
-        nlohmann::json::array_t args;
-        for (auto * arg : function_call.arguments) { args.push_back(get_value(*arg, *this)); }
-
-        *result = {
-            NODE_NAME(function_call),
-            {"next", get_value(*function_call.next, *this)},
-            {"arguments", std::move(args)},
-            {"callee", function_call.callee->name}
+        // TODO: Serialize the callee
+        std::map<size_t, std::string> connections{
+            {get_value(*function_call.next, *this), "next"}
         };
+
+        auto arg_place = 0U;
+        for (auto * arg : function_call.arguments) {
+            connections.emplace(get_value(*arg, *this), std::to_string(arg_place));
+            ++arg_place;
+        }
+
+        *result = {NODE_NAME(function_call), connections};
         return store_result(result);
     }
 
@@ -155,15 +141,18 @@ namespace control_flow {
         auto [result, index] = add_node(&intrinsic_call);
         if (result == nullptr) { return value_getter::store_result(index); }
 
-        nlohmann::json::array_t args;
-        for (auto * arg : intrinsic_call.arguments) { args.push_back(get_value(*arg, *this)); }
-
-        *result = {
-            NODE_NAME(intrinsic_call),
-            {"next", get_value(*intrinsic_call.next, *this)},
-            {"arguments", std::move(args)},
-            {"callee", intrinsic_call.name}
+        // TODO: Serialize the callee
+        std::map<size_t, std::string> connections{
+            {get_value(*intrinsic_call.next, *this), "next"}
         };
+
+        auto arg_place = 0U;
+        for (auto * arg : intrinsic_call.arguments) {
+            connections.emplace(get_value(*arg, *this), std::to_string(arg_place));
+            ++arg_place;
+        }
+
+        *result = {NODE_NAME(intrinsic_call), connections};
         return store_result(result);
     }
 
@@ -172,12 +161,13 @@ namespace control_flow {
         auto [result, index] = add_node(&member_access);
         if (result == nullptr) { return value_getter::store_result(index); }
 
-        *result = {
-            NODE_NAME(member_access),
-            {"next", get_value(*member_access.next, *this)},
-            {"member", member_access.member_name},
-            {"lhs", get_value(*member_access.lhs, *this)}
+        // TODO: Serialize the field name
+        std::map<size_t, std::string> connections{
+            {get_value(*member_access.next, *this), "next"},
+            {get_value(*member_access.lhs,  *this), "lhs" }
         };
+
+        *result = {NODE_NAME(member_access), connections};
 
         return store_result(result);
     }
@@ -204,14 +194,13 @@ namespace control_flow {
         auto [result, index] = add_node(&phi);
         if (result == nullptr) { return value_getter::store_result(index); }
 
-        nlohmann::json::array_t args;
-        for (auto * arg : phi.previous) { args.push_back(get_value(*arg, *this)); }
-
-        *result = {
-            NODE_NAME(phi),
-            {"next", get_value(*phi.next, *this)},
-            {"arguments", std::move(args)},
+        std::map<size_t, std::string> connections{
+            {get_value(*phi.next, *this), "next"},
         };
+
+        for (auto * arg : phi.previous) { connections.emplace(get_value(*arg, *this), "arg"); }
+
+        *result = {NODE_NAME(phi), connections};
 
         return store_result(result);
     }
@@ -220,19 +209,15 @@ namespace control_flow {
         auto [result, index] = add_node(&struct_init);
         if (result == nullptr) { return value_getter::store_result(index); }
 
-        nlohmann::json::array_t fields;
+        std::map<size_t, std::string> connections{
+            {get_value(*struct_init.next, *this), "next"},
+        };
+
         for (auto [name, value] : struct_init.fields) {
-            fields.push_back(nlohmann::json::object_t{
-                {"value", get_value(*value, *this)},
-                {"name", name}
-            });
+            connections.emplace(get_value(*value, *this), name);
         }
 
-        *result = {
-            NODE_NAME(struct_init),
-            {"type name",    struct_init.result_type->user_name()},
-            {"initializers", std::move(fields)                   }
-        };
+        *result = {NODE_NAME(struct_init), connections};
 
         return store_result(result);
     }
@@ -244,9 +229,8 @@ namespace control_flow {
 
         *result = {
             NODE_NAME(unary_operation),
-            {"next", get_value(*unary_operation.next, *this)},
-            {"op", token_to_string(unary_operation.op)},
-            {"operand", get_value(*unary_operation.operand, *this)}
+            {{get_value(*unary_operation.next, *this), "next"},
+                               {get_value(*unary_operation.operand, *this), "operand"}}
         };
         return store_result(result);
     }

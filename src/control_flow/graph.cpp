@@ -10,5 +10,5 @@ namespace control_flow {
 
     graph::~graph() noexcept = default;
 
-    void graph::list_all_nodes() const noexcept { serializer::into_stream(std::cout, roots, true); }
+    void graph::list_all_nodes() const noexcept { serializer::into_stream(std::cout, roots); }
 } // namespace control_flow

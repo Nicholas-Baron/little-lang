@@ -4,16 +4,13 @@
 #include "utils/value_getter.hpp"
 #include "visitor.hpp"
 
-#include <nlohmann/json_fwd.hpp>
-
 namespace control_flow {
     /// The value returned is actually an index into the result vector.
     class serializer final
         : public visitor
         , public value_getter<serializer, node, size_t> {
       public:
-        static void into_stream(std::ostream & stream, const std::vector<node *> & roots,
-                                bool human_readable);
+        static void into_stream(std::ostream & stream, const std::vector<node *> & roots);
 
         ~serializer() noexcept override;
 
@@ -27,13 +24,22 @@ namespace control_flow {
 #undef expand_node_macro
 
         serializer();
+
         // clang-format on
 
-        void store_result(nlohmann::json * result);
+        struct node_data {
+            node * ptr = nullptr;
+            std::string name;
+            std::map<size_t, std::string> connections;
 
-        std::pair<nlohmann::json *, size_t> add_node(node * node);
+            [[nodiscard]] std::string id() const;
+        };
 
-        std::vector<std::unique_ptr<nlohmann::json>> graph_array;
+        void store_result(node_data * result);
+
+        std::pair<node_data *, size_t> add_node(node * node);
+
+        std::vector<std::unique_ptr<node_data>> node_array;
         std::map<node *, size_t> visited;
     };
 } // namespace control_flow
