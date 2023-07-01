@@ -315,7 +315,7 @@ lexer::token lexer::next_symbol(Location loc) {
     default:
         print_error("Unknown character: ", static_cast<unsigned>(current_char), " \'", current_char,
                     '\'');
-        assert(false);
+        return {token_type::unknown, std::string(1, current_char), loc};
     }
 }
 

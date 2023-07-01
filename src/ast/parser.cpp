@@ -79,6 +79,7 @@ ast::top_lvl_ptr parser::parse_top_level() {
         }
         print_error(lex->peek_token(1).location, "Unexpected ", lex->peek_token(1).text, " after ",
                     lex->peek_token().text);
+        lex->next_token();
         return nullptr;
     case lexer::token_type::const_:
         // Parse a constant
