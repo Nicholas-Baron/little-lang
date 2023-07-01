@@ -20,6 +20,6 @@ foreach(
 endforeach()
 
 add_executable(fuzzer fuzzer.cpp)
-target_link_libraries(fuzzer littlec_lib CONAN_PKG::lyra)
+target_link_libraries(fuzzer littlec_ast)
 target_compile_options(fuzzer PRIVATE -fsanitize=fuzzer,address,undefined)
 target_link_options(fuzzer PRIVATE -fsanitize=fuzzer,address,undefined)

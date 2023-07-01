@@ -25,7 +25,12 @@ std::unique_ptr<parser> parser::from_file(const std::string & filename,
 }
 
 std::unique_ptr<parser> parser::from_buffer(std::string & buffer, ast::type_context & ty_context) {
-    auto lexer = lexer::from_buffer(buffer);
+    return parser::from_buffer(buffer.c_str(), buffer.size(), ty_context);
+}
+
+std::unique_ptr<parser> parser::from_buffer(const char * data, size_t size,
+                                            ast::type_context & ty_context) {
+    auto lexer = lexer::from_buffer(data, size);
     if (lexer == nullptr) { return nullptr; }
     // NOTE: `make_unique` does not like private constructors.
     return std::unique_ptr<parser>(new parser{std::move(lexer), ty_context});

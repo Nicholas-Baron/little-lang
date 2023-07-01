@@ -50,8 +50,8 @@ std::unique_ptr<lexer> lexer::from_file(const std::string & filename) {
     return std::unique_ptr<lexer>(new lexer(filename, data, file_length));
 }
 
-std::unique_ptr<lexer> lexer::from_buffer(std::string & buffer) {
-    return std::unique_ptr<lexer>(new lexer(buffer.c_str(), buffer.size()));
+std::unique_ptr<lexer> lexer::from_buffer(const char * buffer, size_t size) {
+    return std::unique_ptr<lexer>(new lexer(buffer, size));
 }
 
 lexer::lexer(const std::string & filename, const char * data, size_t size)

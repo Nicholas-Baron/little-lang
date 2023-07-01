@@ -17,3 +17,4 @@ target_link_libraries(
     littlec_ast PUBLIC littlec_utils littlec_type littlec_common
                        CONAN_PKG::nlohmann_json
 )
+target_include_directories(littlec_ast PUBLIC ..)

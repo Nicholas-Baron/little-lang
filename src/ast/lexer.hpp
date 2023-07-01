@@ -16,11 +16,11 @@ class lexer final {
     // The file data is internally allocated and freed by the lexer.
     static std::unique_ptr<lexer> from_file(const std::string & filename);
 
-    // `from_buffer` uses the given string as its input.
+    // `from_buffer` uses the given C string as its input.
     // Note that the lexer does not own the string and maintains a readonly view into it.
     // The caller must store the string *and* ensure that it is not modified while the lexer is
     // alive.
-    static std::unique_ptr<lexer> from_buffer(std::string & buffer);
+    static std::unique_ptr<lexer> from_buffer(const char *, size_t);
 
     non_copyable(lexer);
     non_movable(lexer);

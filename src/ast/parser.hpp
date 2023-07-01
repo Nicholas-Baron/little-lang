@@ -41,6 +41,13 @@ class parser final {
     static std::unique_ptr<parser> from_buffer(std::string & buffer,
                                                ast::type_context & ty_context);
 
+    // `from_buffer` uses the given C string as its input.
+    // Note that the parser does not own the string and maintains a readonly view into it.
+    // The caller must store the string *and* ensure that it is not modified while the parser is
+    // alive.
+    static std::unique_ptr<parser> from_buffer(const char * data, size_t size,
+                                               ast::type_context & ty_context);
+
     // `parse` parses a single module (one file).
     // Any failure in parsing results in a `nullptr`.
     // Otherwise, the AST of the parser's input is returned.
