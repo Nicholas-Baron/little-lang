@@ -5,6 +5,7 @@
 #include "location.hpp"
 #include "node_utils.hpp"
 #include "nodes_forward.hpp"
+#include "top_lvl_nodes.hpp"
 #include "type.hpp"
 #include "type_context.hpp"
 
