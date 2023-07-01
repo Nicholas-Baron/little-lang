@@ -97,10 +97,13 @@ std::vector<ast::top_lvl_ptr> parser::parse_exports() {
     if (lex->consume_if(lexer::token_type::lbrace).has_value()) {
         // We have found an export block.
         // All items inside of it need to be exported.
-        while (lex->peek_token() != lexer::token_type::rbrace) {
+        while (lex->peek_token() != lexer::token_type::rbrace
+               and lex->peek_token() != lexer::token_type::eof) {
             items.push_back(parse_top_level());
         }
-        assert(lex->next_token() == lexer::token_type::rbrace);
+        if (auto tok = lex->next_token(); tok == lexer::token_type::eof) {
+            print_error(tok.location, "Expected `}` to end `exports`; found EOF");
+        }
     } else {
         // There is only a single item to export.
         items.push_back(parse_top_level());
