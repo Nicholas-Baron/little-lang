@@ -18,10 +18,10 @@
 std::unique_ptr<parser> parser::from_file(const std::string & filename,
                                           const std::filesystem::path & project_root,
                                           ast::type_context & ty_context) {
-    auto lexer = lexer::from_file(filename);
+    auto lexer = lexer::from_file(filename, project_root);
     if (lexer == nullptr) { return nullptr; }
     // NOTE: `make_unique` does not like private constructors.
-    return std::unique_ptr<parser>(new parser{std::move(lexer), ty_context, project_root});
+    return std::unique_ptr<parser>(new parser{std::move(lexer), ty_context});
 }
 
 std::unique_ptr<parser> parser::from_buffer(std::string & buffer, ast::type_context & ty_context) {
@@ -314,7 +314,7 @@ std::unique_ptr<ast::struct_decl> parser::parse_struct_decl() {
         for (auto & typed_id : fields) {
             struct_fields.emplace_back(typed_id.name(), typed_id.type());
         }
-        return ty_context.create_type<ast::struct_type>(std::string{name.text}, module_name(),
+        return ty_context.create_type<ast::struct_type>(std::string{name.text}, lex->module_name(),
                                                         std::move(struct_fields));
     }();
     assert(struct_type != nullptr);
@@ -546,7 +546,7 @@ ast::type_ptr parser::parse_type() {
     auto type_name_token = lex->next_token();
     switch (type_name_token.type) {
     case lexer::token_type::identifier: {
-        auto * type_ptr = ty_context.lookup_user_type(type_name_token.text, module_name());
+        auto * type_ptr = ty_context.lookup_user_type(type_name_token.text, lex->module_name());
         if (type_ptr == nullptr) {
             print_error(type_name_token.location,
                         "Expected a type name; Could not find user type named ",
@@ -906,7 +906,7 @@ void parser::print_error(Location loc, Args... args) {
     static_assert(sizeof...(args) > 0);
 
     std::stringstream error_line;
-    error_line << module_name() << ':' << loc << ": ";
+    error_line << lex->module_name() << ':' << loc << ": ";
     (error_line << ... << args);
 
     error_printout.emplace_back(error_line.str());

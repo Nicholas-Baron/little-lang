@@ -66,10 +66,8 @@ class parser final {
     ~parser() noexcept = default;
 
   private:
-    explicit parser(lex_ptr && lex, ast::type_context & ty_context,
-                    std::optional<std::filesystem::path> project_root = std::nullopt)
-        : project_root{std::move(project_root)}
-        , lex{std::move(lex)}
+    explicit parser(lex_ptr && lex, ast::type_context & ty_context)
+        : lex{std::move(lex)}
         , ty_context{ty_context} {}
 
     // As stated above,
@@ -122,16 +120,6 @@ class parser final {
 
   private:
 #endif
-
-    // XXX: Separation of responsibilities issue?
-    std::optional<std::filesystem::path> project_root;
-
-    [[nodiscard]] std::string module_name() const {
-        if (project_root.has_value()) {
-            return std::filesystem::relative(lex->file_name(), *project_root);
-        }
-        return lex->file_name();
-    }
 
     lex_ptr lex;
     ast::type_context & ty_context;

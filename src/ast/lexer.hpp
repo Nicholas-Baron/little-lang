@@ -14,7 +14,8 @@ class lexer final {
   public:
     // `from_file` loads a file from given filename and uses that as input.
     // The file data is internally allocated and freed by the lexer.
-    static std::unique_ptr<lexer> from_file(const std::string & filename);
+    static std::unique_ptr<lexer> from_file(const std::string & filename,
+                                            const std::filesystem::path & project_root);
 
     // `from_buffer` uses the given C string as its input.
     // Note that the lexer does not own the string and maintains a readonly view into it.
@@ -132,8 +133,16 @@ class lexer final {
 
     [[nodiscard]] std::string file_name() const { return filename.value_or("internal buffer"); }
 
+    [[nodiscard]] std::string module_name() const {
+        if (project_root.has_value()) {
+            return std::filesystem::relative(file_name(), *project_root);
+        }
+        return file_name();
+    }
+
   private:
-    lexer(const std::string & filename, const char * data, size_t size);
+    lexer(const std::string & filename, const char * data, size_t size,
+          const std::filesystem::path & project_root);
     lexer(const char * data, size_t size);
 
     template<class... args_t>
@@ -150,6 +159,9 @@ class lexer final {
 
     std::deque<token> peeked_tokens;
     std::optional<std::filesystem::path> filename;
+
+    // XXX: Separation of responsibilities issue?
+    std::optional<std::filesystem::path> project_root;
 
     const char * data;
     size_t length;

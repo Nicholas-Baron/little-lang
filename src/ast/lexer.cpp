@@ -11,7 +11,8 @@
 #include <sys/stat.h> // fstat
 #include <unistd.h>   // close
 
-std::unique_ptr<lexer> lexer::from_file(const std::string & filename) {
+std::unique_ptr<lexer> lexer::from_file(const std::string & filename,
+                                        const std::filesystem::path & project_root) {
 
     // First, we open the file via a Linux syscall.
     // NOLINTNEXTLINE (*-vararg)
@@ -47,15 +48,17 @@ std::unique_ptr<lexer> lexer::from_file(const std::string & filename) {
     }
 
     // NOTE: `make_unique` does not like private constructors.
-    return std::unique_ptr<lexer>(new lexer(filename, data, file_length));
+    return std::unique_ptr<lexer>(new lexer(filename, data, file_length, project_root));
 }
 
 std::unique_ptr<lexer> lexer::from_buffer(const char * buffer, size_t size) {
     return std::unique_ptr<lexer>(new lexer(buffer, size));
 }
 
-lexer::lexer(const std::string & filename, const char * data, size_t size)
+lexer::lexer(const std::string & filename, const char * data, size_t size,
+             const std::filesystem::path & project_root)
     : filename{std::filesystem::absolute(filename)}
+    , project_root{project_root}
     , data{data}
     , length{size}
     , type{data_type::mmapped} {}
@@ -111,7 +114,7 @@ lexer::token lexer::next_token(bool increasing_lookahead) {
 template<class... args_t>
 void lexer::print_error(args_t... args) const {
 
-    std::cerr << file_name() << ':' << line_num << ':' << col_num << ": ";
+    std::cerr << module_name() << ':' << line_num << ':' << col_num << ": ";
     (std::cerr << ... << args) << std::endl;
 }
 
