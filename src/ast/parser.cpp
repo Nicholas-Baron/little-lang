@@ -97,8 +97,7 @@ std::vector<ast::top_lvl_ptr> parser::parse_exports() {
     if (lex->consume_if(lexer::token_type::lbrace).has_value()) {
         // We have found an export block.
         // All items inside of it need to be exported.
-        while (lex->peek_token() != lexer::token_type::rbrace
-               and lex->peek_token() != lexer::token_type::eof) {
+        while (lex->peek_token() != lexer::token_type::rbrace and lex->has_more_tokens()) {
             auto start_loc = lex->peek_token().location;
             if (auto top_lvl_item = parse_top_level(); top_lvl_item != nullptr) {
                 items.push_back(std::move(top_lvl_item));
@@ -838,8 +837,7 @@ ast::func_call_data parser::parse_func_call(std::optional<lexer::token> func_nam
 
     // we have already taken the lparen
     std::vector<ast::expr_ptr> args;
-    while (lex->peek_token() != lexer::token_type::rparen
-           and lex->peek_token() != lexer::token_type::eof) {
+    while (lex->peek_token() != lexer::token_type::rparen and lex->has_more_tokens()) {
         args.push_back(parse_expression());
         switch (lex->peek_token().type) {
         case lexer::token_type::rparen:
