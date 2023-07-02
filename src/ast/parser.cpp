@@ -158,9 +158,14 @@ std::map<std::string, std::vector<std::string>> parser::parse_imports() {
                 // `from` signals a new import.
                 more_ids = false;
                 break;
-            default:
-                std::cerr << "Unexpected " << lex->peek_token().text << " in import." << std::endl;
-                assert(false);
+            default: {
+                auto tok = lex->next_token();
+                print_error(
+                    tok.location,
+                    "Expected an identifier, `const`, or `from` after import statement; found ",
+                    tok.text);
+                more_ids = false;
+            } break;
             }
         }
 
