@@ -416,7 +416,7 @@ std::unique_ptr<ast::return_stmt> parser::parse_return_statement() {
 
 std::unique_ptr<ast::let_stmt> parser::parse_let_statement() {
     auto location = lex->peek_token().location;
-    assert(lex->next_token() == lexer::token_type::let);
+    expect_token(lexer::token_type::let, "let");
 
     // A let statement is made of `let`,
     // followed by an optionally-typed identifier,
@@ -426,11 +426,9 @@ std::unique_ptr<ast::let_stmt> parser::parse_let_statement() {
 
     auto typed_id = parse_opt_typed_identifier();
 
-    assert(lex->next_token() == lexer::token_type::equal);
+    expect_token(lexer::token_type::equal, "=");
 
-    auto val = parse_expression();
-    assert(val != nullptr);
-    auto let_stmt = std::make_unique<ast::let_stmt>(std::move(typed_id), std::move(val));
+    auto let_stmt = std::make_unique<ast::let_stmt>(std::move(typed_id), parse_expression());
     let_stmt->set_location(location);
     expect_token(lexer::token_type::semi, ";");
     return let_stmt;
