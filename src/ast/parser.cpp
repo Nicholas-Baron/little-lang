@@ -106,9 +106,9 @@ std::vector<ast::top_lvl_ptr> parser::parse_exports() {
                 print_error(start_loc, "Could not parse top level item");
             }
         }
-        if (auto tok = lex->next_token(); tok == lexer::token_type::eof) {
-            print_error(tok.location, "Expected `}` to end `exports`; found EOF");
-        }
+
+        expect_token(lexer::token_type::rbrace, "}");
+
     } else {
         // There is only a single item to export.
         items.push_back(parse_top_level());
@@ -131,9 +131,7 @@ std::map<std::string, std::vector<std::string>> parser::parse_imports() {
         auto filename = lex->next_token();
         assert(filename == lexer::token_type::string);
 
-        if (auto tok = lex->next_token(); tok != lexer::token_type::import_) {
-            print_error(tok.location, "Expected `import`; found ", tok.text);
-        }
+        expect_token(lexer::token_type::import_, "import");
 
         bool more_ids = lex->peek_token() == lexer::token_type::identifier;
         std::vector<std::string> identifiers;
@@ -208,10 +206,7 @@ std::unique_ptr<ast::func_decl> parser::parse_function() {
         }
     }
 
-    tok = lex->next_token();
-    if (tok != lexer::token_type::rparen) {
-        print_error(tok.location, "Expected `)` to close function parameters; found ", tok.text);
-    }
+    expect_token(lexer::token_type::rparen, ")");
 
     std::vector<ast::type_ptr> arg_types;
     arg_types.reserve(args.size());
@@ -379,9 +374,7 @@ std::unique_ptr<ast::if_stmt> parser::parse_if_statement() {
     assert(lex->next_token() == lexer::token_type::if_);
     auto condition = parse_expression();
 
-    if (auto tok = lex->next_token(); tok != lexer::token_type::then) {
-        print_error(tok.location, "Expected `then`; found ", tok.text);
-    }
+    expect_token(lexer::token_type::then, "then");
 
     // an `if` can only have an `else` when it is written `if x {} else {}`,
     // that is the then block is a compund statement.
@@ -467,8 +460,7 @@ ast::typed_identifier parser::parse_opt_typed_identifier() {
                     : parse_type();
     auto name = lex->next_token();
     if (name != lexer::token_type::identifier) {
-        std::cout << "Expected identifier, found " << name.text << std::endl;
-        assert(false);
+        print_error(name.location, "Expected an identifier; found ", name.text);
     }
     return {std::move(name.text), type, location};
 }
@@ -501,7 +493,7 @@ ast::typed_identifier parser::parse_typed_identifier() {
         return {std::move(name.text), type, location};
     } break;
     default:
-        print_error(colon_or_name.location, "Expected either a colon or an identifier; Found ",
+        print_error(colon_or_name.location, "Expected either `:` or identifier; Found ",
                     colon_or_name.text);
 
         return {std::move(colon_or_name.text), nullptr, colon_or_name.location};
@@ -572,7 +564,8 @@ ast::type_ptr parser::parse_type() {
     case lexer::token_type::question:
         return ty_context.create_type<ast::nullable_ptr_type>(parse_type());
     default:
-        print_error(type_name_token.location, "Expected a type. Found ", type_name_token.text);
+        print_error(type_name_token.location, "Expected an identifier, `&`, or `?`; Found ",
+                    type_name_token.text);
         return nullptr;
     }
 }
@@ -805,7 +798,8 @@ ast::expr_ptr parser::parse_atom() {
     if (tok == lexer::token_type::if_) { return parse_if_expression(); }
 
     if (tok != lexer::token_type::identifier) {
-        print_error(tok.location, "Expected an identifier, `(`, or a literal; Found ", tok.text);
+        print_error(tok.location, "Expected an identifier, `(`, `if`, or a literal; Found ",
+                    tok.text);
         lex->next_token();
         return nullptr;
     }
@@ -875,9 +869,7 @@ std::unique_ptr<ast::struct_init> parser::parse_struct_init(std::string && type_
         auto field_name = lex->next_token();
         assert(field_name == lexer::token_type::identifier);
 
-        if (auto next_tok = lex->next_token(); next_tok != lexer::token_type::equal) {
-            print_error(next_tok.location, "Expected `=`; found ", next_tok.text);
-        }
+        expect_token(lexer::token_type::equal, "=");
 
         auto expr = parse_expression();
 
