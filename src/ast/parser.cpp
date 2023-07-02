@@ -768,7 +768,7 @@ ast::expr_ptr parser::parse_atom() {
     if (tok == lexer::token_type::lparen) {
         lex->next_token();
         auto expr = parse_expression();
-        assert(lex->next_token() == lexer::token_type::rparen);
+        expect_token(lexer::token_type::rparen, ")");
         return expr;
     }
 
@@ -844,7 +844,8 @@ ast::func_call_data parser::parse_func_call(std::optional<lexer::token> func_nam
 
     // we have already taken the lparen
     std::vector<ast::expr_ptr> args;
-    while (lex->peek_token() != lexer::token_type::rparen) {
+    while (lex->peek_token() != lexer::token_type::rparen
+           and lex->peek_token() != lexer::token_type::eof) {
         args.push_back(parse_expression());
         switch (lex->peek_token().type) {
         case lexer::token_type::rparen:
@@ -852,10 +853,10 @@ ast::func_call_data parser::parse_func_call(std::optional<lexer::token> func_nam
         case lexer::token_type::comma:
             lex->next_token();
             break;
-        default:
-            print_error(lex->peek_token().location, "Expected a `)` or a `,`; Found ",
-                        lex->next_token().text);
-            break;
+        default: {
+            auto tok = lex->next_token();
+            print_error(tok.location, "Expected a `)` or a `,`; Found ", tok.text);
+        } break;
         }
     }
 
