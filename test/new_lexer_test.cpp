@@ -4,7 +4,7 @@
 
 TEST_CASE("the lexer will not accept empty inputs") {
     std::string buffer;
-    auto lexer = lexer::from_buffer(buffer);
+    auto lexer = lexer::from_buffer(buffer.c_str(), buffer.size());
 
     CHECK(lexer != nullptr);
 
@@ -13,7 +13,7 @@ TEST_CASE("the lexer will not accept empty inputs") {
 
 TEST_CASE("the lexer will report locations for tokens") {
     std::string buffer = "foo\n  bar";
-    auto lexer = lexer::from_buffer(buffer);
+    auto lexer = lexer::from_buffer(buffer.c_str(), buffer.size());
 
     CHECK(lexer != nullptr);
 
@@ -24,7 +24,7 @@ TEST_CASE("the lexer will report locations for tokens") {
 
 TEST_CASE("the lexer can look ahead for whole text fragments") {
     std::string buffer = "foo bar baz";
-    auto lexer = lexer::from_buffer(buffer);
+    auto lexer = lexer::from_buffer(buffer.c_str(), buffer.size());
 
     CHECK(lexer != nullptr);
 
@@ -40,7 +40,7 @@ TEST_CASE("the lexer will ignore comments") {
                          comment I am from the 1960s
                          Comment I am also from the 1960s
                          foo bar baz)";
-    auto lexer = lexer::from_buffer(buffer);
+    auto lexer = lexer::from_buffer(buffer.c_str(), buffer.size());
 
     CHECK(lexer != nullptr);
 
@@ -52,7 +52,7 @@ TEST_CASE("the lexer will ignore comments") {
 
 TEST_CASE("the lexer will parse an identifier") {
     std::string buffer = "main";
-    auto lexer = lexer::from_buffer(buffer);
+    auto lexer = lexer::from_buffer(buffer.c_str(), buffer.size());
 
     CHECK(lexer != nullptr);
 
@@ -64,7 +64,7 @@ TEST_CASE("the lexer will parse an identifier") {
 
 TEST_CASE("the lexer will parse primitive types") {
     std::string buffer = "int unit string char bool float";
-    auto lexer = lexer::from_buffer(buffer);
+    auto lexer = lexer::from_buffer(buffer.c_str(), buffer.size());
 
     CHECK(lexer != nullptr);
 
@@ -79,7 +79,7 @@ TEST_CASE("the lexer will parse primitive types") {
 
 TEST_CASE("the lexer will parse an identifier containing underscores") {
     std::string buffer = "my_value";
-    auto lexer = lexer::from_buffer(buffer);
+    auto lexer = lexer::from_buffer(buffer.c_str(), buffer.size());
 
     CHECK(lexer != nullptr);
 
@@ -91,7 +91,7 @@ TEST_CASE("the lexer will parse an identifier containing underscores") {
 
 TEST_CASE("the lexer will parse an identifier starting with underscores") {
     std::string buffer = "_value";
-    auto lexer = lexer::from_buffer(buffer);
+    auto lexer = lexer::from_buffer(buffer.c_str(), buffer.size());
 
     CHECK(lexer != nullptr);
 
@@ -103,7 +103,7 @@ TEST_CASE("the lexer will parse an identifier starting with underscores") {
 
 TEST_CASE("the lexer will parse a plain string") {
     std::string buffer = "\"raw\"";
-    auto lexer = lexer::from_buffer(buffer);
+    auto lexer = lexer::from_buffer(buffer.c_str(), buffer.size());
 
     CHECK(lexer != nullptr);
 
@@ -115,7 +115,7 @@ TEST_CASE("the lexer will parse a plain string") {
 
 TEST_CASE("the lexer will parse a string with escaped character") {
     std::string buffer = R"("raw\n")";
-    auto lexer = lexer::from_buffer(buffer);
+    auto lexer = lexer::from_buffer(buffer.c_str(), buffer.size());
 
     CHECK(lexer != nullptr);
 
@@ -127,7 +127,7 @@ TEST_CASE("the lexer will parse a string with escaped character") {
 
 TEST_CASE("the lexer will parse a character literal") {
     std::string buffer = "\'w\'";
-    auto lexer = lexer::from_buffer(buffer);
+    auto lexer = lexer::from_buffer(buffer.c_str(), buffer.size());
 
     CHECK(lexer != nullptr);
 
@@ -139,7 +139,7 @@ TEST_CASE("the lexer will parse a character literal") {
 
 TEST_CASE("the lexer will parse boolean literals") {
     std::string buffer = " true\n false ";
-    auto lexer = lexer::from_buffer(buffer);
+    auto lexer = lexer::from_buffer(buffer.c_str(), buffer.size());
 
     CHECK(lexer != nullptr);
 
@@ -156,7 +156,7 @@ TEST_CASE("the lexer will parse boolean literals") {
 
 TEST_CASE("the lexer will parse an integer") {
     std::string buffer = "1234";
-    auto lexer = lexer::from_buffer(buffer);
+    auto lexer = lexer::from_buffer(buffer.c_str(), buffer.size());
 
     CHECK(lexer != nullptr);
 
@@ -168,7 +168,7 @@ TEST_CASE("the lexer will parse an integer") {
 
 TEST_CASE("the lexer will parse a hexadecimal integer") {
     std::string buffer = "0x123456789aBcDeF";
-    auto lexer = lexer::from_buffer(buffer);
+    auto lexer = lexer::from_buffer(buffer.c_str(), buffer.size());
 
     CHECK(lexer != nullptr);
 
@@ -180,7 +180,7 @@ TEST_CASE("the lexer will parse a hexadecimal integer") {
 
 TEST_CASE("the lexer will parse a colon and the word 'is' as the same token") {
     std::string buffer = "is:";
-    auto lexer = lexer::from_buffer(buffer);
+    auto lexer = lexer::from_buffer(buffer.c_str(), buffer.size());
 
     CHECK(lexer != nullptr);
 
@@ -191,7 +191,7 @@ TEST_CASE("the lexer will parse a colon and the word 'is' as the same token") {
 
 TEST_CASE("the lexer will parse parentheses") {
     std::string buffer = "()";
-    auto lexer = lexer::from_buffer(buffer);
+    auto lexer = lexer::from_buffer(buffer.c_str(), buffer.size());
 
     CHECK(lexer != nullptr);
 
@@ -202,7 +202,7 @@ TEST_CASE("the lexer will parse parentheses") {
 
 TEST_CASE("the lexer will parse braces") {
     std::string buffer = "{}";
-    auto lexer = lexer::from_buffer(buffer);
+    auto lexer = lexer::from_buffer(buffer.c_str(), buffer.size());
 
     CHECK(lexer != nullptr);
 
@@ -213,7 +213,7 @@ TEST_CASE("the lexer will parse braces") {
 
 TEST_CASE("the lexer will parse a 'skinny' arrow") {
     std::string buffer = "->";
-    auto lexer = lexer::from_buffer(buffer);
+    auto lexer = lexer::from_buffer(buffer.c_str(), buffer.size());
 
     CHECK(lexer != nullptr);
 
@@ -223,7 +223,7 @@ TEST_CASE("the lexer will parse a 'skinny' arrow") {
 
 TEST_CASE("the lexer will parse a comma") {
     std::string buffer = ",";
-    auto lexer = lexer::from_buffer(buffer);
+    auto lexer = lexer::from_buffer(buffer.c_str(), buffer.size());
 
     CHECK(lexer != nullptr);
 
@@ -233,7 +233,7 @@ TEST_CASE("the lexer will parse a comma") {
 
 TEST_CASE("the lexer will parse a semicolon") {
     std::string buffer = ";";
-    auto lexer = lexer::from_buffer(buffer);
+    auto lexer = lexer::from_buffer(buffer.c_str(), buffer.size());
 
     CHECK(lexer != nullptr);
 
@@ -244,7 +244,7 @@ TEST_CASE("the lexer will parse a semicolon") {
 TEST_CASE("the lexer will parse 'from', 'import', and 'export'") {
     std::string buffer = "from import export";
 
-    auto lexer = lexer::from_buffer(buffer);
+    auto lexer = lexer::from_buffer(buffer.c_str(), buffer.size());
 
     CHECK(lexer != nullptr);
 
@@ -257,7 +257,7 @@ TEST_CASE("the lexer will parse 'from', 'import', and 'export'") {
 TEST_CASE("the lexer will parse 'if', 'then', and 'else'") {
     std::string buffer = "if else then";
 
-    auto lexer = lexer::from_buffer(buffer);
+    auto lexer = lexer::from_buffer(buffer.c_str(), buffer.size());
 
     CHECK(lexer != nullptr);
 
@@ -270,7 +270,7 @@ TEST_CASE("the lexer will parse 'if', 'then', and 'else'") {
 TEST_CASE("the lexer will parse 'return' and 'ret' the same") {
     std::string buffer = "return ret";
 
-    auto lexer = lexer::from_buffer(buffer);
+    auto lexer = lexer::from_buffer(buffer.c_str(), buffer.size());
 
     CHECK(lexer != nullptr);
 
@@ -282,7 +282,7 @@ TEST_CASE("the lexer will parse 'return' and 'ret' the same") {
 TEST_CASE("the lexer will parse '<' and '>'") {
     std::string buffer = "< >";
 
-    auto lexer = lexer::from_buffer(buffer);
+    auto lexer = lexer::from_buffer(buffer.c_str(), buffer.size());
 
     CHECK(lexer != nullptr);
 
@@ -294,7 +294,7 @@ TEST_CASE("the lexer will parse '<' and '>'") {
 TEST_CASE("the lexer will parse '<=' and '>=' as 1 token each") {
     std::string buffer = "<= >=";
 
-    auto lexer = lexer::from_buffer(buffer);
+    auto lexer = lexer::from_buffer(buffer.c_str(), buffer.size());
 
     CHECK(lexer != nullptr);
 
@@ -306,7 +306,7 @@ TEST_CASE("the lexer will parse '<=' and '>=' as 1 token each") {
 TEST_CASE("the lexer will parse 'let' and 'const'") {
     std::string buffer = "let const";
 
-    auto lexer = lexer::from_buffer(buffer);
+    auto lexer = lexer::from_buffer(buffer.c_str(), buffer.size());
 
     CHECK(lexer != nullptr);
 
@@ -318,7 +318,7 @@ TEST_CASE("the lexer will parse 'let' and 'const'") {
 TEST_CASE("the lexer will parse 'and' as '&&'") {
     std::string buffer = "and &&";
 
-    auto lexer = lexer::from_buffer(buffer);
+    auto lexer = lexer::from_buffer(buffer.c_str(), buffer.size());
 
     CHECK(lexer != nullptr);
 
@@ -330,7 +330,7 @@ TEST_CASE("the lexer will parse 'and' as '&&'") {
 TEST_CASE("the lexer will parse 'or' as '||'") {
     std::string buffer = "or ||";
 
-    auto lexer = lexer::from_buffer(buffer);
+    auto lexer = lexer::from_buffer(buffer.c_str(), buffer.size());
 
     CHECK(lexer != nullptr);
 
@@ -342,7 +342,7 @@ TEST_CASE("the lexer will parse 'or' as '||'") {
 TEST_CASE("the lexer will parse 'equals' as '=='") {
     std::string buffer = "equals ==";
 
-    auto lexer = lexer::from_buffer(buffer);
+    auto lexer = lexer::from_buffer(buffer.c_str(), buffer.size());
 
     CHECK(lexer != nullptr);
 
@@ -354,7 +354,7 @@ TEST_CASE("the lexer will parse 'equals' as '=='") {
 TEST_CASE("the lexer will parse basic mathematical symbols") {
     std::string buffer = "= + - / * %";
 
-    auto lexer = lexer::from_buffer(buffer);
+    auto lexer = lexer::from_buffer(buffer.c_str(), buffer.size());
 
     CHECK(lexer != nullptr);
 
@@ -370,7 +370,7 @@ TEST_CASE("the lexer will parse basic mathematical symbols") {
 TEST_CASE("the lexer will parse pointer-related tokens") {
     std::string buffer = " & ? null";
 
-    auto lexer = lexer::from_buffer(buffer);
+    auto lexer = lexer::from_buffer(buffer.c_str(), buffer.size());
     CHECK(lexer != nullptr);
     CHECK(lexer->next_token() == lexer::token_type::amp);
     CHECK(lexer->next_token() == lexer::token_type::question);
@@ -386,7 +386,7 @@ TEST_CASE("the lexer will parse the '.' as a distinct token") {
     // t.0.0 : t. (0.0) or (t.0).0
 
     std::string buffer = "x.y";
-    auto lexer = lexer::from_buffer(buffer);
+    auto lexer = lexer::from_buffer(buffer.c_str(), buffer.size());
     CHECK(lexer != nullptr);
     CHECK(lexer->next_token() == "x");
     CHECK(lexer->next_token() == lexer::token_type::dot);
