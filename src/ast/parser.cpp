@@ -428,7 +428,7 @@ std::unique_ptr<ast::let_stmt> parser::parse_let_statement() {
     assert(val != nullptr);
     auto let_stmt = std::make_unique<ast::let_stmt>(std::move(typed_id), std::move(val));
     let_stmt->set_location(location);
-    assert(lex->next_token() == lexer::token_type::semi);
+    expect_token(lexer::token_type::semi, ";");
     return let_stmt;
 }
 

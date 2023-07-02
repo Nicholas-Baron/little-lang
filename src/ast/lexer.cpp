@@ -281,7 +281,7 @@ lexer::token lexer::next_symbol(Location loc) {
     case '\"': {
         std::string to_ret;
         to_ret += current_char;
-        while (peek_char() != current_char) {
+        while (peek_char() != current_char and peek_char() != EOF) {
             if (peek_char() == '\\') {
                 next_char();
                 to_ret += next_escaped();
