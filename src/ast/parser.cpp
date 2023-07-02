@@ -131,7 +131,9 @@ std::map<std::string, std::vector<std::string>> parser::parse_imports() {
         auto filename = lex->next_token();
         assert(filename == lexer::token_type::string);
 
-        assert(lex->next_token() == lexer::token_type::import_);
+        if (auto tok = lex->next_token(); tok != lexer::token_type::import_) {
+            print_error(tok.location, "Expected `import`; found ", tok.text);
+        }
 
         bool more_ids = lex->peek_token() == lexer::token_type::identifier;
         std::vector<std::string> identifiers;
