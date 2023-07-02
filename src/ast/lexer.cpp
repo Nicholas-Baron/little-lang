@@ -251,8 +251,8 @@ lexer::token lexer::next_symbol(Location loc) {
             next_char();
             return {token_type::double_or, "||", loc};
         }
-        print_error("Single '|' is not a meaningful token");
-        assert(false);
+        print_error("Single '|' is not currently a meaningful token");
+        return {token_type::unknown, "|", loc};
     case '-':
         if (peek_char() == '>') {
             // found arrow
