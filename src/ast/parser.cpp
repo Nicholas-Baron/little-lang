@@ -491,11 +491,13 @@ ast::typed_identifier parser::parse_typed_identifier() {
 
         return {std::move(name.text), type, location};
     } break;
-    default:
+    default: {
+        auto tok = lex->next_token();
         print_error(colon_or_name.location, "Expected either `:` or identifier; Found ",
                     colon_or_name.text);
 
-        return {std::move(colon_or_name.text), nullptr, colon_or_name.location};
+        return {std::move(tok.text), nullptr, tok.location};
+    }
     }
 }
 
