@@ -865,12 +865,15 @@ ast::func_call_data parser::parse_func_call(std::optional<lexer::token> func_nam
 std::unique_ptr<ast::struct_init> parser::parse_struct_init(std::string && type_name,
                                                             Location loc) {
 
-    lex->consume_if(lexer::token_type::lbrace);
+    auto lbrace = lex->consume_if(lexer::token_type::lbrace);
+    assert(lbrace.has_value());
 
     std::vector<std::pair<std::string, ast::expr_ptr>> initializers;
-    while (not lex->consume_if(lexer::token_type::rbrace).has_value()) {
+    while (not lex->consume_if(lexer::token_type::rbrace).has_value() and lex->has_more_tokens()) {
         auto field_name = lex->next_token();
-        assert(field_name == lexer::token_type::identifier);
+        if (field_name != lexer::token_type::identifier) {
+            print_error(field_name.location, "Expected an identifier; Found ", field_name.text);
+        }
 
         expect_token(lexer::token_type::equal, "=");
 
@@ -886,8 +889,10 @@ std::unique_ptr<ast::struct_init> parser::parse_struct_init(std::string && type_
         case lexer::token_type::identifier:
         case lexer::token_type::rbrace:
             break;
-        default:
-            assert(false);
+        default: {
+            auto tok = lex->next_token();
+            print_error(tok.location, "Expected an identifier, `,`, `;`, or `}`; Found ", tok.text);
+        } break;
         }
     }
 
