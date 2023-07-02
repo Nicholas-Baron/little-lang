@@ -99,7 +99,12 @@ std::vector<ast::top_lvl_ptr> parser::parse_exports() {
         // All items inside of it need to be exported.
         while (lex->peek_token() != lexer::token_type::rbrace
                and lex->peek_token() != lexer::token_type::eof) {
-            items.push_back(parse_top_level());
+            auto start_loc = lex->peek_token().location;
+            if (auto top_lvl_item = parse_top_level(); top_lvl_item != nullptr) {
+                items.push_back(std::move(top_lvl_item));
+            } else {
+                print_error(start_loc, "Could not parse top level item");
+            }
         }
         if (auto tok = lex->next_token(); tok == lexer::token_type::eof) {
             print_error(tok.location, "Expected `}` to end `exports`; found EOF");
@@ -135,7 +140,10 @@ std::map<std::string, std::vector<std::string>> parser::parse_imports() {
 
             if (lex->consume_if(lexer::token_type::comma).has_value()) {
                 // There are more identifiers to import from this module
-                assert(lex->peek_token() == lexer::token_type::identifier);
+                if (lex->peek_token() != lexer::token_type::identifier) {
+                    auto tok = lex->next_token();
+                    print_error(tok.location, "Expected an identifier; found ", tok.text);
+                }
                 continue;
             }
 
@@ -192,12 +200,16 @@ std::unique_ptr<ast::func_decl> parser::parse_function() {
             break;
         default:
             // this should not happen
-            assert(false);
+            print_error(lex->peek_token().location, "Expected `)` or `,`; found ",
+                        lex->next_token().text);
+            break;
         }
     }
 
     tok = lex->next_token();
-    assert(tok == lexer::token_type::rparen);
+    if (tok != lexer::token_type::rparen) {
+        print_error(tok.location, "Expected `)` to close function parameters; found ", tok.text);
+    }
 
     std::vector<ast::type_ptr> arg_types;
     arg_types.reserve(args.size());
@@ -365,7 +377,9 @@ std::unique_ptr<ast::if_stmt> parser::parse_if_statement() {
     assert(lex->next_token() == lexer::token_type::if_);
     auto condition = parse_expression();
 
-    assert(lex->next_token() == lexer::token_type::then);
+    if (auto tok = lex->next_token(); tok != lexer::token_type::then) {
+        print_error(tok.location, "Expected `then`; found ", tok.text);
+    }
 
     // an `if` can only have an `else` when it is written `if x {} else {}`,
     // that is the then block is a compund statement.
