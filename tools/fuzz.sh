@@ -12,5 +12,5 @@ ninja fuzzer
 ./bin/fuzzer -seed_inputs=@corpus.txt -runs=25 -max_len=1024
 
 mkdir -p crashes
-mv -vt crashes crash-*
+mv -vt crashes crash-* oom-*
 
