@@ -1,7 +1,5 @@
 #!/bin/sh
 
-set -e
-
 # Setup build
 mkdir -p build
 cd build
