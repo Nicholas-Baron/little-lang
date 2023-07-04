@@ -207,8 +207,8 @@ char lexer::next_escaped() {
         return '\0';
     }
     print_error("Unknown escaped character: ", static_cast<unsigned>(current_char), " \'",
-                current_char, "\'");
-    assert(false);
+                current_char, "\'. Ignoring the `\\` for now.");
+    return current_char;
 }
 
 // NOLINTNEXTLINE
