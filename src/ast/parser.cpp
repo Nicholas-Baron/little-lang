@@ -125,7 +125,9 @@ std::map<std::string, std::vector<std::string>> parser::parse_imports() {
     while (lex->peek_token() == lexer::token_type::from) {
         assert(lex->next_token() == lexer::token_type::from);
         auto filename = lex->next_token();
-        assert(filename == lexer::token_type::string);
+        if (filename != lexer::token_type::string) {
+            print_error(filename.location, "Expected a string for filename; found ", filename.text);
+        }
 
         expect_token(lexer::token_type::import_, "import");
 
