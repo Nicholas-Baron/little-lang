@@ -309,8 +309,13 @@ lexer::token lexer::next_symbol(Location loc) {
         }
 
         // consume the quote
-        assert(peek_char() == current_char);
         to_ret += next_char();
+        if (to_ret.front() != to_ret.back()) {
+            print_error(
+                "Unclosed `\'`?; expected either only 1 character or an escape sequence; found ",
+                to_ret);
+            return {token_type::unknown, std::move(to_ret), loc};
+        }
         return {token_type::character, std::move(to_ret), loc};
     }
     case '.':
