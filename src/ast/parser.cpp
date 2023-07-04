@@ -475,7 +475,9 @@ ast::typed_identifier parser::parse_typed_identifier() {
     case lexer::token_type::colon: {
         // the second case (`name : type`) has occured.
         auto identifier = lex->next_token();
-        assert(identifier == lexer::token_type::identifier);
+        if (identifier != lexer::token_type::identifier) {
+            print_error(identifier.location, "Expected an identifier; found ", identifier.text);
+        }
         assert(lex->next_token() == lexer::token_type::colon);
 
         return {std::move(identifier.text), parse_type(), location};
