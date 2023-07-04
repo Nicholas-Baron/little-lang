@@ -602,7 +602,6 @@ ast::expr_ptr parser::parse_boolean_expression() {
         assert(tok == lexer::token_type::double_and or tok == lexer::token_type::double_or);
 
         auto rhs = parse_comparison();
-        assert(rhs != nullptr);
 
         using operand = operation::binary;
         expr = std::make_unique<ast::binary_expr>(
