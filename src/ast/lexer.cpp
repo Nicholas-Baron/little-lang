@@ -98,7 +98,9 @@ lexer::token lexer::next_token(bool increasing_lookahead) {
         if (not found_comment) { break; }
 
         // Skip the comment line
-        while (peek_char() != '\n' and peek_char() != '\r') { next_char(); }
+        while (peek_char() != '\n' and peek_char() != '\r' and peek_char() != EOF) { next_char(); }
+
+        if (peek_char() == EOF) { break; }
     }
 
     Location loc{line_num, col_num};
