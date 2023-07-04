@@ -691,46 +691,41 @@ ast::expr_ptr parser::parse_multiplicative() {
 ast::expr_ptr parser::parse_unary() {
 
     using operand = operation::unary;
+
+    std::optional<std::pair<Location, operand>> unary_op;
+
     switch (lex->peek_token().type) {
     case lexer::token_type::minus: {
         // - expr
         auto location = lex->next_token().location;
-        auto expr = parse_atom();
-        assert(expr != nullptr);
-        expr = std::make_unique<ast::unary_expr>(operand::negate, std::move(expr));
-        expr->set_location(location);
-        return expr;
-    }
+        unary_op = std::make_pair(location, operand::negate);
+    } break;
     case lexer::token_type::exclam: {
         // ! expr
         auto location = lex->next_token().location;
-        auto expr = parse_atom();
-        assert(expr != nullptr);
-        expr = std::make_unique<ast::unary_expr>(operand::bool_not, std::move(expr));
-        expr->set_location(location);
-        return expr;
-    }
+        unary_op = std::make_pair(location, operand::bool_not);
+    } break;
     case lexer::token_type::asterik: {
         // * expr
         auto location = lex->next_token().location;
-        auto expr = parse_atom();
-        assert(expr != nullptr);
-        expr = std::make_unique<ast::unary_expr>(operand::deref, std::move(expr));
-        expr->set_location(location);
-        return expr;
-    }
+        unary_op = std::make_pair(location, operand::deref);
+    } break;
     case lexer::token_type::amp: {
         // & expr
         auto location = lex->next_token().location;
-        auto expr = parse_atom();
-        assert(expr != nullptr);
-        expr = std::make_unique<ast::unary_expr>(operand::addrof, std::move(expr));
-        expr->set_location(location);
-        return expr;
-    }
+        unary_op = std::make_pair(location, operand::addrof);
+    } break;
     default:
         return parse_member_access();
     }
+
+    assert(unary_op.has_value());
+
+    auto [location, operation] = *unary_op;
+    auto expr = parse_atom();
+    expr = std::make_unique<ast::unary_expr>(operation, std::move(expr));
+    expr->set_location(location);
+    return expr;
 }
 
 ast::expr_ptr parser::parse_member_access() {
