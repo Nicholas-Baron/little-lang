@@ -98,12 +98,7 @@ std::vector<ast::top_lvl_ptr> parser::parse_exports() {
         // We have found an export block.
         // All items inside of it need to be exported.
         while (lex->peek_token() != lexer::token_type::rbrace and lex->has_more_tokens()) {
-            auto start_loc = lex->peek_token().location;
-            if (auto top_lvl_item = parse_top_level(); top_lvl_item != nullptr) {
-                items.push_back(std::move(top_lvl_item));
-            } else {
-                print_error(start_loc, "Could not parse top level item");
-            }
+            items.push_back(parse_top_level());
         }
 
         expect_token(lexer::token_type::rbrace, "}");
@@ -114,7 +109,9 @@ std::vector<ast::top_lvl_ptr> parser::parse_exports() {
     }
 
     // Mark all parsed items as exported.
-    for (auto & item : items) { item->should_export(true); }
+    for (auto & item : items) {
+        if (item != nullptr) { item->should_export(true); }
+    }
     return items;
 }
 
