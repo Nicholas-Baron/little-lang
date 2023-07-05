@@ -316,7 +316,10 @@ lexer::token lexer::next_symbol(Location loc) {
     case '\'': {
         std::string to_ret;
         to_ret += current_char;
-        assert(peek_char() != current_char);
+        if (peek_char() == current_char) {
+            print_error("To put `'` as a character literal, `'\\''` needs to be used");
+            return {token_type::unknown, std::move(to_ret), loc};
+        }
 
         if (peek_char() == '\\') {
             next_char();
