@@ -194,8 +194,23 @@ lexer::token lexer::next_number(Location loc) {
 
     // known: the next character is a '.'
 
-    print_error("Lexing floating point numbers is currently unsupported");
-    assert(false);
+    to_ret += next_char();
+
+    while (isdigit(peek_char()) != 0) { to_ret += next_char(); }
+
+	// TODO: Handle `1.0f`?
+
+    if (to_ret.back() == '.') {
+        print_error("Cannot end a floating point literal with a `.`");
+        return {token_type::unknown, std::move(to_ret), loc};
+    }
+
+    if (to_ret.back() == '0') {
+        print_error("Cannot end a floating point literal with a `0`");
+        return {token_type::unknown, std::move(to_ret), loc};
+    }
+
+    return {token_type::floating, std::move(to_ret), loc};
 }
 
 char lexer::next_escaped() {
