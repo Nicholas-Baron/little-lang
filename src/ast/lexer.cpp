@@ -198,7 +198,7 @@ lexer::token lexer::next_number(Location loc) {
 
     while (isdigit(peek_char()) != 0) { to_ret += next_char(); }
 
-	// TODO: Handle `1.0f`?
+    // TODO: Handle `1.0f`?
 
     if (to_ret.back() == '.') {
         print_error("Cannot end a floating point literal with a `.`");
