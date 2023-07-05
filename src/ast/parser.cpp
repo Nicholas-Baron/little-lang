@@ -742,9 +742,13 @@ ast::expr_ptr parser::parse_member_access() {
         //  - an identifier
         //  - an integer (if tuples get implemented)
 
-        assert(lex->peek_token() == lexer::token_type::identifier);
-
         auto tok = lex->next_token();
+
+        if (tok != lexer::token_type::identifier) {
+            print_error(tok.location, "Expected an identifier for member access; found ", tok.text);
+            break;
+        }
+
         auto rhs = std::make_unique<ast::user_val>(std::move(tok.text), literal_type::identifier,
                                                    tok.location);
         expr = std::make_unique<ast::binary_expr>(std::move(expr), operation::binary::member_access,
