@@ -115,6 +115,8 @@ class parser final {
 
     std::unique_ptr<ast::struct_init> parse_struct_init(std::string && type_name, Location loc);
 
+    ast::type_ptr make_prim_type(lexer::token type_name);
+
 #ifdef PARSER_TEST
     [[nodiscard]] bool is_eof() const { return lex->peek_token() == lexer::token_type::eof; }
 

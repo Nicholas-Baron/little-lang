@@ -63,13 +63,25 @@ TEST_CASE("the lexer will parse an identifier") {
 }
 
 TEST_CASE("the lexer will parse primitive types") {
-    std::string buffer = "int unit string char bool float";
+    std::string buffer = "unit string char bool float";
     auto lexer = lexer::from_buffer(buffer.c_str(), buffer.size());
 
     CHECK(lexer != nullptr);
 
     CHECK(lexer->next_token() == lexer::token_type::prim_type);
     CHECK(lexer->next_token() == lexer::token_type::prim_type);
+    CHECK(lexer->next_token() == lexer::token_type::prim_type);
+    CHECK(lexer->next_token() == lexer::token_type::prim_type);
+    CHECK(lexer->next_token() == lexer::token_type::prim_type);
+    CHECK(lexer->next_token() == lexer::token_type::eof);
+}
+
+TEST_CASE("the lexer will parse int types") {
+    std::string buffer = "int8 int16 int32 int64";
+    auto lexer = lexer::from_buffer(buffer.c_str(), buffer.size());
+
+    CHECK(lexer != nullptr);
+
     CHECK(lexer->next_token() == lexer::token_type::prim_type);
     CHECK(lexer->next_token() == lexer::token_type::prim_type);
     CHECK(lexer->next_token() == lexer::token_type::prim_type);

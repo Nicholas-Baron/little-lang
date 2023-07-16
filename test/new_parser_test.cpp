@@ -21,7 +21,7 @@ TEST_CASE("the parser will parse typed identifiers in both new style and C-style
     ast::type_context ty_context;
 
     ast::typed_identifier typed_id_1 = [&ty_context] {
-        std::string buffer = "int x";
+        std::string buffer = "int8 x";
         auto parser = parser::from_buffer(buffer, ty_context);
 
         CHECK(parser != nullptr);
@@ -30,7 +30,7 @@ TEST_CASE("the parser will parse typed identifiers in both new style and C-style
     }();
 
     ast::typed_identifier typed_id_2 = [&ty_context] {
-        std::string buffer = "x : int";
+        std::string buffer = "x : int8";
         auto parser = parser::from_buffer(buffer, ty_context);
 
         CHECK(parser != nullptr);
@@ -55,7 +55,7 @@ TEST_CASE("the parser will parse optionally typed identifiers") {
     }();
 
     ast::typed_identifier typed_id_2 = [] {
-        std::string buffer = "x : int";
+        std::string buffer = "x : int8";
         ast::type_context ty_context;
         auto parser = parser::from_buffer(buffer, ty_context);
 
@@ -65,7 +65,7 @@ TEST_CASE("the parser will parse optionally typed identifiers") {
     }();
 
     ast::typed_identifier typed_id_3 = [] {
-        std::string buffer = "int x";
+        std::string buffer = "int8 x";
         ast::type_context ty_context;
         auto parser = parser::from_buffer(buffer, ty_context);
 
@@ -102,7 +102,7 @@ TEST_CASE("the parser will parse let statement") {
 }
 
 TEST_CASE("the parser will parse let statement with types") {
-    std::string buffer = "let int x = 10;";
+    std::string buffer = "let int32 x = 10;";
     ast::type_context ty_context;
     auto parser = parser::from_buffer(buffer, ty_context);
 
@@ -115,8 +115,7 @@ TEST_CASE("the parser will parse let statement with types") {
     auto * let = dynamic_cast<ast::let_stmt *>(stmt.get());
     CHECK(let != nullptr);
     CHECK(let->name_and_type.name() == "x");
-    CHECK(let->name_and_type.type()
-          == ty_context.create_type<ast::prim_type>(ast::prim_type::type::int_prim));
+    CHECK(let->name_and_type.type() == ty_context.create_type<ast::int_type>(32));
     CHECK(let->value != nullptr);
 
     auto * value = dynamic_cast<ast::user_val *>(let->value.get());
@@ -126,7 +125,7 @@ TEST_CASE("the parser will parse let statement with types") {
 }
 
 TEST_CASE("the parser will parse pointer types and expressions") {
-    std::string buffer = "let ? int x = null;";
+    std::string buffer = "let ? int64 x = null;";
     ast::type_context ty_context;
     auto parser = parser::from_buffer(buffer, ty_context);
 
@@ -140,7 +139,7 @@ TEST_CASE("the parser will parse pointer types and expressions") {
     CHECK(let != nullptr);
     CHECK(let->name_and_type.name() == "x");
 
-    auto * int_type = ty_context.create_type<ast::prim_type>(ast::prim_type::type::int_prim);
+    auto * int_type = ty_context.create_type<ast::int_type>(64);
     CHECK(let->name_and_type.type() == ty_context.create_type<ast::nullable_ptr_type>(int_type));
     CHECK(let->value != nullptr);
 
@@ -195,7 +194,7 @@ TEST_CASE("the parser will parse unary minus") {
 }
 
 TEST_CASE("the parser will parse const declaration") {
-    std::string buffer = "const x : int = 5 * -3;";
+    std::string buffer = "const x : int16 = 5 * -3;";
     ast::type_context ty_context;
     auto parser = parser::from_buffer(buffer, ty_context);
 
@@ -208,8 +207,7 @@ TEST_CASE("the parser will parse const declaration") {
     auto * const_decl = dynamic_cast<ast::const_decl *>(decl.get());
     CHECK(const_decl != nullptr);
     CHECK(const_decl->name_and_type.name() == "x");
-    CHECK(const_decl->name_and_type.type()
-          == ty_context.create_type<ast::prim_type>(ast::prim_type::type::int_prim));
+    CHECK(const_decl->name_and_type.type() == ty_context.create_type<ast::int_type>(16));
     CHECK(const_decl->expr != nullptr);
 
     auto * value = dynamic_cast<ast::binary_expr *>(const_decl->expr.get());
@@ -375,7 +373,7 @@ TEST_CASE("the parser will parse function calls as statements") {
 
 TEST_CASE("the parser will parse a struct declaration") {
     std::string buffer = R"(my_struct_type {
-		x : int;
+		x : int8;
 		y : string,
 		z : bool
 	})";
@@ -465,7 +463,7 @@ TEST_CASE("the parser will parse a member access") {
 }
 
 TEST_CASE("the parser will parse a function with return type") {
-    std::string buffer = "main() -> int {}";
+    std::string buffer = "main() -> int32 {}";
     ast::type_context ty_context;
     auto parser = parser::from_buffer(buffer, ty_context);
 
@@ -477,13 +475,12 @@ TEST_CASE("the parser will parse a function with return type") {
 
     CHECK(func->name == "main");
     CHECK(func->param_count() == 0);
-    CHECK(func->func_type->return_type()
-          == ty_context.create_type<ast::prim_type>(ast::prim_type::type::int_prim));
+    CHECK(func->func_type->return_type() == ty_context.create_type<ast::int_type>(32));
     CHECK(func->body != nullptr);
 }
 
 TEST_CASE("the parser will parse a function with parameters") {
-    std::string buffer = "foo(int x, y : bool) -> int {}";
+    std::string buffer = "foo(int64 x, y : bool) -> int64 {}";
     ast::type_context ty_context;
     auto parser = parser::from_buffer(buffer, ty_context);
 
@@ -496,18 +493,16 @@ TEST_CASE("the parser will parse a function with parameters") {
     CHECK(func->name == "foo");
     CHECK(func->param_count() == 2);
     CHECK(func->params[0].name() == "x");
-    CHECK(func->params[0].type()
-          == ty_context.create_type<ast::prim_type>(ast::prim_type::type::int_prim));
+    CHECK(func->params[0].type() == ty_context.create_type<ast::int_type>(64));
     CHECK(func->params[1].name() == "y");
     CHECK(func->params[1].type()
           == ty_context.create_type<ast::prim_type>(ast::prim_type::type::boolean));
-    CHECK(func->func_type->return_type()
-          == ty_context.create_type<ast::prim_type>(ast::prim_type::type::int_prim));
+    CHECK(func->func_type->return_type() == ty_context.create_type<ast::int_type>(64));
     CHECK(func->body != nullptr);
 }
 
 TEST_CASE("the parser will parse a function with an expression body") {
-    std::string buffer = "foo(int x, y : int) -> int = (x + y) / 2";
+    std::string buffer = "foo(int32 x, y : int32) -> int32 = (x + y) / 2";
     ast::type_context ty_context;
     auto parser = parser::from_buffer(buffer, ty_context);
 
@@ -519,8 +514,7 @@ TEST_CASE("the parser will parse a function with an expression body") {
 
     CHECK(func->name == "foo");
     CHECK(func->param_count() == 2);
-    CHECK(func->func_type->return_type()
-          == ty_context.create_type<ast::prim_type>(ast::prim_type::type::int_prim));
+    CHECK(func->func_type->return_type() == ty_context.create_type<ast::int_type>(32));
     CHECK(func->body != nullptr);
 
     auto * ret_stmt = dynamic_cast<ast::return_stmt *>(func->body.get());
@@ -536,7 +530,7 @@ TEST_CASE("the parser will parse a function with an expression body") {
 
 TEST_CASE("the parser will parse a factorial function") {
     std::string buffer = R"(
-factorial(int input) -> int {
+factorial(int8 input) -> int64 {
 	if input <= 2 then { return input; }
 	return input * factorial(input - 1);
 })";
@@ -553,10 +547,8 @@ factorial(int input) -> int {
     CHECK(func->name == "factorial");
     CHECK(func->param_count() == 1);
     CHECK(func->params[0].name() == "input");
-    CHECK(func->params[0].type()
-          == ty_context.create_type<ast::prim_type>(ast::prim_type::type::int_prim));
-    CHECK(func->func_type->return_type()
-          == ty_context.create_type<ast::prim_type>(ast::prim_type::type::int_prim));
+    CHECK(func->params[0].type() == ty_context.create_type<ast::int_type>(8));
+    CHECK(func->func_type->return_type() == ty_context.create_type<ast::int_type>(64));
     CHECK(func->body != nullptr);
 
     auto * body = dynamic_cast<ast::stmt_sequence *>(func->body.get());
@@ -664,7 +656,7 @@ TEST_CASE("the parser will parse a module with a single export") {
 }
 
 TEST_CASE("the parser will parse a module with multiple exports") {
-    std::string buffer = "export { foo() {}\nconst bar : int = 5 }";
+    std::string buffer = "export { foo() {}\nconst bar : int32 = 5 }";
     ast::type_context ty_context;
     auto parser = parser::from_buffer(buffer, ty_context);
 

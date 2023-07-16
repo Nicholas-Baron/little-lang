@@ -505,20 +505,18 @@ ast::typed_identifier parser::parse_typed_identifier() {
     }
 }
 
-static ast::type_ptr make_type(ast::type_context & ty_context, const std::string & type_name) {
+ast::type_ptr parser::make_prim_type(lexer::token type_name) {
 
-    if (strncmp(type_name.c_str(), "int", 3) == 0) {
-        if (type_name == "int") {
-            return ty_context.create_type<ast::prim_type>(ast::prim_type::type::int_prim);
-        }
+    if (strncmp(type_name.text.c_str(), "int", 3) == 0) {
+        if (type_name == "int") { return nullptr; }
 
-        const auto start_num = type_name.substr(3);
+        const auto start_num = type_name.text.substr(3);
         size_t end_num = 0;
         auto bit_count = std::stoul(start_num, &end_num);
 
         assert(start_num.size() == end_num);
         assert(bit_count > 0);
-        assert(end_num % 2 == 0);
+        assert(bit_count % 2 == 0);
 
         return ty_context.create_type<ast::int_type>(bit_count);
     }
@@ -544,9 +542,10 @@ static ast::type_ptr make_type(ast::type_context & ty_context, const std::string
 
 ast::type_ptr parser::parse_type() {
     // a type can either be some primitive or a user-defined type.
-    auto type_name_token = lex->next_token();
+    auto type_name_token = lex->peek_token();
     switch (type_name_token.type) {
     case lexer::token_type::identifier: {
+        lex->next_token();
         auto * type_ptr = ty_context.lookup_user_type(type_name_token.text, lex->module_name());
         if (type_ptr == nullptr) {
             print_error(type_name_token.location,
@@ -556,7 +555,7 @@ ast::type_ptr parser::parse_type() {
         return type_ptr;
     }
     case lexer::token_type::prim_type: {
-        auto * type = make_type(ty_context, type_name_token.text);
+        auto * type = make_prim_type(lex->next_token());
         if (type == nullptr) {
             print_error(lex->peek_token().location, "Could not find primitive type named ",
                         lex->peek_token().text);
@@ -565,10 +564,13 @@ ast::type_ptr parser::parse_type() {
         return type;
     }
     case lexer::token_type::amp:
+        lex->next_token();
         return ty_context.create_type<ast::nonnullable_ptr_type>(parse_type());
     case lexer::token_type::question:
+        lex->next_token();
         return ty_context.create_type<ast::nullable_ptr_type>(parse_type());
     default:
+        lex->next_token();
         print_error(type_name_token.location, "Expected an identifier, `&`, or `?`; Found ",
                     type_name_token.text);
         return nullptr;
