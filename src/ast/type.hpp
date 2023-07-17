@@ -131,9 +131,7 @@ namespace ast {
         non_movable(int_type);
         ~int_type() final = default;
 
-        [[nodiscard]] std::optional<unsigned> bit_width() const {
-            return (size != 0) ? std::optional{size} : std::nullopt;
-        }
+        [[nodiscard]] unsigned bit_width() const { return size; }
 
       protected:
         explicit int_type(unsigned size)

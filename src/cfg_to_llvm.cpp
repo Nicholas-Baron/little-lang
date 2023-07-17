@@ -514,10 +514,6 @@ void cfg_to_llvm::syscall(control_flow::intrinsic_call & intrinsic_call) {
 
     const auto & constraint = syscall_constraints.at(intrinsic_call.arguments.size() - 1);
 
-    std::vector<llvm::Type *> param_types;
-    param_types.reserve(args.size());
-    for (auto * val : args) { param_types.push_back(val->getType()); }
-
     assert(intrinsic_call.type != nullptr);
 
     auto * func_type

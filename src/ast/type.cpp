@@ -18,6 +18,9 @@ namespace ast {
     }
 
     std::unique_ptr<prim_type> prim_type::create(prim_type::type type) {
+        if (type == prim_type::type::int_prim) {
+            assert(false and "tried to initialize an integer type without a bit_width");
+        }
         return std::unique_ptr<prim_type>{new prim_type{type}};
     }
 
@@ -81,13 +84,7 @@ namespace ast {
         }
     }
 
-    void int_type::print(std::ostream & lhs) const {
-        if (size != 0) {
-            lhs << "int" << size;
-        } else {
-            lhs << "integer";
-        }
-    }
+    void int_type::print(std::ostream & lhs) const { lhs << "int" << size; }
 
     void struct_type::print(std::ostream & lhs) const {
         lhs << user_name() << '{';

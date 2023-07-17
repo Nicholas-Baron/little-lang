@@ -195,12 +195,6 @@ namespace control_flow {
             auto * arg_type = find_type_of(arg);
             if (arg_type == nullptr) { continue; }
 
-            if (auto * int_arg_type = dynamic_cast<ast::int_type *>(arg_type);
-                int_arg_type != nullptr and not int_arg_type->bit_width().has_value()) {
-                bind_type(arg, int64_type);
-                arg_type = int64_type;
-            }
-
             // The first argmuent must always be a syscall number.
             if (first) {
                 first = false;
