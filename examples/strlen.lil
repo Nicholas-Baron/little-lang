@@ -1,8 +1,8 @@
-strlen(str is string) -> int
+strlen(str is string) -> int64
 	= if *str == '\0' then 0
 	else 1 + strlen(str + 1)
 
-main() -> int {
+main() -> int32 {
 	let text = "Hello World";
 	let length = strlen(text);
 	syscall(1, 1, text, length);

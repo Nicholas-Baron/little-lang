@@ -1,9 +1,9 @@
-factorial(int input) -> int {
+factorial(int8 input) -> int64 {
 	if input <= 2 then return input;
 	return input * factorial(input - 1);
 }
 
-const my_val : int = 5
+const my_val : int8 = 5
 
-main() -> int
+main() -> int32
 	ret factorial(my_val);

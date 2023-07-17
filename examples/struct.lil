@@ -1,12 +1,12 @@
 my_type {
-	x : int
+	x : int32
 	z : bool
 }
 
-make_result (lol : my_type) -> int
+make_result (lol : my_type) -> int32
 	return lol.x + if lol.z then 1 else 5;
 
-main () -> int {
+main () -> int32 {
 	let lol = my_type { x = 5, z = true };
 	return make_result(lol);
 }
