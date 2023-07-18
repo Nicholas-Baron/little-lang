@@ -25,6 +25,7 @@ namespace ast {
     }
 
     std::unique_ptr<int_type> int_type::create(unsigned size) {
+        if (size == 0) { assert(false); }
         return std::unique_ptr<int_type>{new int_type{size}};
     }
 
