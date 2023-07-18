@@ -338,7 +338,16 @@ namespace control_flow {
             }
             break;
         case literal_type::integer:
-            const_type = get_type(ast::prim_type::type::int_prim);
+            const_type = [this, &constant] {
+                assert(std::holds_alternative<long>(constant.value));
+                auto value = std::abs(std::get<long>(constant.value));
+                auto min_size = 1;
+                while (value > 1 or min_size % 2 != 0) {
+                    ++min_size;
+                    value >>= 1;
+                }
+                return type_context.create_type<ast::int_type>(min_size);
+            }();
             break;
         case literal_type::floating:
             const_type = get_type(ast::prim_type::type::float32);
