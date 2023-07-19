@@ -56,37 +56,51 @@ namespace control_flow {
                  : nullptr;
     }
 
-    static ast::type_ptr merge_types(const std::set<ast::type_ptr> & input_types,
+    struct type_info {
+        ast::type_ptr type;
+        bool can_widen;
+
+        type_info(ast::type_ptr type, bool can_widen)
+            : type{type}
+            , can_widen{can_widen} {}
+
+        [[nodiscard]] friend bool operator<(const type_info & lhs, const type_info & rhs) noexcept {
+            return lhs.type < rhs.type;
+        }
+    };
+
+    static ast::type_ptr merge_types(const std::set<type_info> & input_types,
                                      ast::type_context & type_context) {
         if (input_types.empty()) { return nullptr; }
-        if (input_types.size() == 1) { return *input_types.begin(); }
+        if (input_types.size() == 1) { return input_types.begin()->type; }
 
         assert(input_types.size() >= 2);
 
-        ast::type_ptr result_type = nullptr;
-        for (auto * current_type : input_types) {
+        type_info result{nullptr, true};
+        for (auto current_item : input_types) {
             // Setup the accumulator `result_type`
-            if (result_type == nullptr) {
-                result_type = current_type;
+            if (result.type == nullptr) {
+                result.type = current_item.type;
+                result.can_widen &= current_item.can_widen;
                 continue;
             }
 
-            assert(result_type != nullptr);
-            assert(result_type != current_type);
+            assert(result.type != nullptr);
+            assert(result.type != current_item.type);
 
             auto both_pointer_types
-                = result_type->is_pointer_type() and current_type->is_pointer_type();
-            auto both_int_types = result_type->is_int_type() and result_type->is_int_type();
+                = result.type->is_pointer_type() and current_item.type->is_pointer_type();
+            auto both_int_types = result.type->is_int_type() and current_item.type->is_int_type();
             if (not both_pointer_types and not both_int_types) { return nullptr; }
 
             if (auto * str_type
                 = type_context.create_type<ast::prim_type>(ast::prim_type::type::str);
-                result_type == str_type or current_type == str_type) {
-                if (result_type == current_type) { continue; }
+                result.type == str_type or current_item.type == str_type) {
+                if (result.type == current_item.type) { continue; }
 
                 if (auto * null_prim
                     = type_context.create_type<ast::prim_type>(ast::prim_type::type::null);
-                    result_type == null_prim or current_type == null_prim) {
+                    result.type == null_prim or current_item.type == null_prim) {
                     continue;
                 }
 
@@ -97,21 +111,21 @@ namespace control_flow {
                 auto * null_prim
                     = type_context.create_type<ast::prim_type>(ast::prim_type::type::null);
 
-                auto * result_ptr_type = dynamic_cast<ast::ptr_type *>(result_type);
-                auto * current_ptr_type = dynamic_cast<ast::ptr_type *>(current_type);
+                auto * result_ptr_type = dynamic_cast<ast::ptr_type *>(result.type);
+                auto * current_ptr_type = dynamic_cast<ast::ptr_type *>(current_item.type);
 
                 // Only one may be nullptr
                 assert(result_ptr_type != current_ptr_type);
 
-                auto result_is_null_prim = result_ptr_type == nullptr and result_type == null_prim;
+                auto result_is_null_prim = result_ptr_type == nullptr and result.type == null_prim;
                 auto current_is_null_prim
-                    = current_ptr_type == nullptr and current_type == null_prim;
+                    = current_ptr_type == nullptr and current_item.type == null_prim;
 
                 if (result_is_null_prim or current_is_null_prim) {
                     auto * full_type = result_is_null_prim ? current_ptr_type : result_ptr_type;
 
                     if (not full_type->nullable() or result_is_null_prim) {
-                        result_type = type_context.create_type<ast::nullable_ptr_type>(
+                        result.type = type_context.create_type<ast::nullable_ptr_type>(
                             full_type->pointed_to_type());
                     }
 
@@ -128,17 +142,26 @@ namespace control_flow {
                 assert(result_ptr_type->nullable() xor current_ptr_type->nullable());
 
                 if (not result_ptr_type->nullable() and current_ptr_type->nullable()) {
-                    result_type = current_ptr_type;
+                    result.type = current_ptr_type;
                 }
             } else if (both_int_types) {
-                auto * result_int_type = dynamic_cast<ast::int_type *>(result_type);
-                auto * current_int_type = dynamic_cast<ast::int_type *>(current_type);
+                auto * result_int_type = dynamic_cast<ast::int_type *>(result.type);
+                auto * current_int_type = dynamic_cast<ast::int_type *>(current_item.type);
 
                 // Only one may be nullptr
                 assert(result_int_type != current_int_type);
 
-                if (result_int_type->bit_width() < current_int_type->bit_width()) {
-                    result_type = current_int_type;
+                if (current_int_type->bit_width() == result_int_type->bit_width()) { continue; }
+
+                if (current_item.can_widen
+                    and current_int_type->bit_width() < result_int_type->bit_width()) {
+                    // Do nothing
+                } else if (result.can_widen
+                           and result_int_type->bit_width() < current_int_type->bit_width()) {
+                    result.type = current_int_type;
+                    result.can_widen &= current_item.can_widen;
+                } else {
+                    return nullptr;
                 }
 
             } else {
@@ -146,7 +169,7 @@ namespace control_flow {
             }
         }
 
-        return result_type;
+        return result.type;
     }
 
     void type_checker::arg_at(intrinsic_call & call) {
@@ -262,7 +285,12 @@ namespace control_flow {
             }
             bind_type(&binary_operation, boolean_type);
         } else if (operation::is_comparison(binary_operation.op)) {
-            if (auto * common_type = merge_types({lhs_type, rhs_type}, type_context);
+            if (auto * common_type = merge_types(
+                    {
+                        {lhs_type, binary_operation.lhs->allows_widening()},
+                        {rhs_type, binary_operation.rhs->allows_widening()}
+            },
+                    type_context);
                 common_type == nullptr) {
                 printError("Expected comparison operands to be of same type; found ", *lhs_type,
                            " and ", *rhs_type);
@@ -273,26 +301,45 @@ namespace control_flow {
 
             bind_type(&binary_operation, boolean_type);
         } else if (operation::is_arithmetic(binary_operation.op)) {
-            auto * result_type = lhs_type;
+            auto * result_type = merge_types(
+                {
+                    {lhs_type, binary_operation.lhs->allows_widening()},
+                    {rhs_type, binary_operation.rhs->allows_widening()}
+            },
+                type_context);
 
             if (binary_operation.op == operation::binary::add
                 and (lhs_type->is_pointer_type() or rhs_type->is_pointer_type())) {
                 if (lhs_type->is_pointer_type() == rhs_type->is_pointer_type()) {
                     printError("Cannot add two pointers together");
                 } else {
-                    auto * non_ptr_type = lhs_type->is_pointer_type() ? rhs_type : lhs_type;
-                    auto * ptr_type = lhs_type->is_pointer_type() ? lhs_type : rhs_type;
+                    bool pointer_on_lhs = lhs_type->is_pointer_type();
+                    auto * non_ptr_type = pointer_on_lhs ? rhs_type : lhs_type;
+                    auto * ptr_type = pointer_on_lhs ? lhs_type : rhs_type;
 
                     if (not non_ptr_type->is_int_type()) {
                         printError("Expected an integer to add with ", *ptr_type, "; found ",
                                    *non_ptr_type);
+                    } else if (auto * offset_type = dynamic_cast<ast::int_type *>(non_ptr_type);
+                               offset_type != nullptr and offset_type->bit_width() == 0) {
+                        static constexpr auto machine_bit_width
+                            = 64U; // TODO: actually get the real size
+                        bind_type(pointer_on_lhs ? binary_operation.rhs : binary_operation.lhs,
+                                  type_context.create_type<ast::int_type>(machine_bit_width));
                     }
 
                     result_type = ptr_type;
                 }
-            } else if (lhs_type != rhs_type) {
-                printError("Expected arithmetic operands to be of same type; found ", *lhs_type,
-                           " and ", *rhs_type);
+            } else if (result_type == nullptr) {
+                printError("Expected arithmetic operands to be of compatible type; found ",
+                           *lhs_type, " and ", *rhs_type);
+            } else {
+                if (binary_operation.lhs->allows_widening() and lhs_type != result_type) {
+                    bind_type(binary_operation.lhs, result_type);
+                }
+                if (binary_operation.rhs->allows_widening() and rhs_type != result_type) {
+                    bind_type(binary_operation.rhs, result_type);
+                }
             }
 
             bind_type(&binary_operation, result_type);
@@ -408,9 +455,18 @@ namespace control_flow {
                 continue;
             }
 
-            if (actual_type != expected_type) {
+            auto * common_type = merge_types(
+                {
+                    {expected_type, false                                    },
+                    {actual_type,   func_call.arguments[i]->allows_widening()}
+            },
+                type_context);
+
+            if (common_type == nullptr) {
                 printError(func_name, " argument ", i, ": Expected type ", *expected_type,
                            "; found ", *actual_type);
+            } else if (actual_type != common_type and func_call.arguments[i]->allows_widening()) {
+                bind_type(func_call.arguments[i], common_type);
             }
         }
 
@@ -508,8 +564,10 @@ namespace control_flow {
 
         if (should_continue) {
 
-            std::set<ast::type_ptr> input_types;
-            for (auto * prev : phi.previous) { input_types.emplace(find_type_of(prev)); }
+            std::set<type_info> input_types;
+            for (auto * prev : phi.previous) {
+                input_types.emplace(find_type_of(prev), prev->allows_widening());
+            }
             auto * phi_type = merge_types(input_types, type_context);
 
             assert(not input_types.empty());
@@ -519,7 +577,9 @@ namespace control_flow {
                 phi.type = phi_type;
             } else {
                 std::stringstream competing_types;
-                for (auto * type : input_types) { competing_types << '`' << *type << "`, "; }
+                for (auto input_type : input_types) {
+                    competing_types << '`' << input_type.type << "`, ";
+                }
 
                 printError("Expected branches to have the same type; found competing types of ",
                            competing_types.str());
@@ -551,7 +611,12 @@ namespace control_flow {
             auto * actual_type = find_type_of(iter->second);
             assert(actual_type != nullptr);
 
-            if (auto * common_type = merge_types({expected_type, actual_type}, type_context);
+            if (auto * common_type = merge_types(
+                    {
+                        {expected_type, false                          },
+                        {actual_type,   iter->second->allows_widening()}
+            },
+                    type_context);
                 common_type == nullptr) {
                 printError("Expected type of ", *expected_type, " for field ", field_name,
                            " in struct ", struct_type->user_name(), "; Found expession with type ",
