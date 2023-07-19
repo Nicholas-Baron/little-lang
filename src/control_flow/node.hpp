@@ -34,6 +34,8 @@ namespace control_flow {
         // Makes `node` the next of `this`.
         virtual void flows_to(node * node) = 0;
 
+        [[nodiscard]] virtual bool allows_widening() const { return false; }
+
       protected:
         node() = default;
     };
@@ -84,6 +86,10 @@ namespace control_flow {
         }
 
         void flows_to(node * node) override { next = node; }
+
+        [[nodiscard]] bool allows_widening() const override {
+            return lhs->allows_widening() and rhs->allows_widening();
+        }
 
         node * previous{nullptr};
         node * next{nullptr};
@@ -140,6 +146,8 @@ namespace control_flow {
 
         void flows_to(node * node) override { next = node; }
 
+        [[nodiscard]] bool allows_widening() const override { return operand->allows_widening(); }
+
         node * previous{nullptr};
         node * next{nullptr};
         node * operand;
@@ -168,6 +176,10 @@ namespace control_flow {
         }
 
         void flows_to(node * node) override { next = node; }
+
+        [[nodiscard]] bool allows_widening() const override {
+            return val_type == literal_type::integer or val_type == literal_type::floating;
+        }
 
         node * previous{nullptr};
         node * next{nullptr};
