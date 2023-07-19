@@ -16,6 +16,7 @@ envp: .space 8
 .global main
 .global exit
 .global arg_at
+.global arg_count
 
 _start:
 #argc is at rsp
@@ -49,4 +50,8 @@ arg_at:
 find_arg:
 	mov rax, [argv]
 	mov rax, [rax + 8*rdi]
+	ret
+
+arg_count:
+	mov rax, [argc]
 	ret
