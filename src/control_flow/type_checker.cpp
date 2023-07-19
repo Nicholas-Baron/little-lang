@@ -387,7 +387,7 @@ namespace control_flow {
                 assert(std::holds_alternative<long>(constant.value));
                 auto value = std::abs(std::get<long>(constant.value));
                 auto min_size = 1;
-                while (value > 1 or min_size % 2 != 0) {
+                while (value > 1 or min_size % 8 != 0) {
                     ++min_size;
                     value >>= 1;
                 }
