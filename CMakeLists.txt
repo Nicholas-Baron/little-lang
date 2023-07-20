@@ -58,8 +58,11 @@ add_compile_options(-Wundef)
 add_compile_options(-Wunused)
 add_compile_options(-Wwrite-strings)
 add_compile_options(-ftime-trace)
-add_compile_options(-fsanitize=undefined,address)
-add_link_options(-lasan -lubsan)
+
+if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+	add_compile_options(-fsanitize=undefined,address)
+	add_link_options(-lasan -lubsan)
+endif()
 
 add_subdirectory(src)
 add_subdirectory(test)
