@@ -286,11 +286,12 @@ void cfg_to_llvm::visit(control_flow::branch & branch) {
 
     // Generate the else block
     auto * else_block = llvm::BasicBlock::Create(context, "", current_function);
-    ir_builder->SetInsertPoint(else_block);
-    branch.false_case->accept(*this);
 
     ir_builder->SetInsertPoint(start_block);
     ir_builder->CreateCondBr(condition_value->value, then_block, else_block);
+
+    ir_builder->SetInsertPoint(else_block);
+    branch.false_case->accept(*this);
 }
 
 void cfg_to_llvm::visit(control_flow::constant & constant) {
@@ -543,6 +544,33 @@ void cfg_to_llvm::visit(control_flow::intrinsic_call & intrinsic_call) {
     intrinsic_call.next->accept(*this);
 }
 
+void cfg_to_llvm::patch_parent_block(llvm::Function * current_function,
+                                     std::vector<cfg_to_llvm::node_data> & values,
+                                     node_data & incoming_value, llvm::BasicBlock * phi_block) {
+
+    for (auto & block : current_function->getBasicBlockList()) {
+        if (std::find_if(values.begin(), values.end(),
+                         [&block](const node_data & value) { return value.parent_block == &block; })
+            != values.end()) {
+            continue;
+        }
+
+        auto * terminator = llvm::dyn_cast_if_present<llvm::BranchInst>(block.getTerminator());
+        if (terminator == nullptr) { continue; }
+
+        if (std::find_if(terminator->successors().begin(), terminator->successors().end(),
+                         [&phi_block](auto * succ) { return succ == phi_block; })
+            == terminator->successors().end()) {
+            continue;
+        }
+
+        incoming_value.parent_block = &block;
+        return;
+    }
+
+    assert(false);
+}
+
 void cfg_to_llvm::visit(control_flow::phi & phi) {
     bool should_continue = true;
     for (auto * prev : phi.previous) {
@@ -583,8 +611,13 @@ void cfg_to_llvm::visit(control_flow::phi & phi) {
             phi_type = nullptr;
         }
 
-        ir_builder->SetInsertPoint(prev_value->parent_block);
-        ir_builder->CreateBr(phi_block);
+        // HACK: This is done for constants in if expressions,
+        // since they need to come from the previous block,
+        // but we may have added them to our current one.
+        if (prev_value->parent_block != phi_block) {
+            ir_builder->SetInsertPoint(prev_value->parent_block);
+            ir_builder->CreateBr(phi_block);
+        }
     }
 
     ir_builder->SetInsertPoint(phi_block);
@@ -594,6 +627,12 @@ void cfg_to_llvm::visit(control_flow::phi & phi) {
         // HACK
         auto * llvm_phi = ir_builder->CreatePHI(*phi_type, values.size());
         for (auto incoming_value : values) {
+            // HACK: This is done for constants in if expressions,
+            // since they need to come from the previous block,
+            // but we may have added them to our current one.
+            if (incoming_value.parent_block == phi_block) {
+                patch_parent_block(current_function, values, incoming_value, phi_block);
+            }
             llvm_phi->addIncoming(incoming_value.value, incoming_value.parent_block);
         }
         bind_value(phi, llvm_phi, phi.type);
