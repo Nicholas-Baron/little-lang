@@ -487,10 +487,19 @@ namespace control_flow {
 
         assert(actual_type != nullptr);
 
-        if (expected_return_type != actual_type) {
+        if (auto * result_type = merge_types(
+                {
+                    type_info{expected_return_type, false},
+                    {actual_type,          true }
+        },
+                type_context);
+            result_type == nullptr) {
+
             printError("Function `", current_function->name,
                        "` expected a return expression with type ", *expected_return_type,
                        "; found one with ", *actual_type);
+        } else {
+            bind_type(func_end.value, result_type);
         }
 
         visited.emplace(&func_end);
