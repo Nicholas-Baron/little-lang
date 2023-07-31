@@ -41,7 +41,7 @@ namespace control_flow {
         }
     }
 
-    void type_checker::bind_identifier(std::string name, ast::type * type) {
+    void type_checker::bind_identifier(std::string name, ast::type_ptr type) {
         bound_identifiers.emplace(std::move(name), type);
     }
 
@@ -111,8 +111,8 @@ namespace control_flow {
                 auto * null_prim
                     = type_context.create_type<ast::prim_type>(ast::prim_type::type::null);
 
-                auto * result_ptr_type = dynamic_cast<ast::ptr_type *>(result.type);
-                auto * current_ptr_type = dynamic_cast<ast::ptr_type *>(current_item.type);
+                auto * result_ptr_type = dynamic_cast<const ast::ptr_type *>(result.type);
+                auto * current_ptr_type = dynamic_cast<const ast::ptr_type *>(current_item.type);
 
                 // Only one may be nullptr
                 assert(result_ptr_type != current_ptr_type);
@@ -145,8 +145,8 @@ namespace control_flow {
                     result.type = current_ptr_type;
                 }
             } else if (both_int_types) {
-                auto * result_int_type = dynamic_cast<ast::int_type *>(result.type);
-                auto * current_int_type = dynamic_cast<ast::int_type *>(current_item.type);
+                auto * result_int_type = dynamic_cast<const ast::int_type *>(result.type);
+                auto * current_int_type = dynamic_cast<const ast::int_type *>(current_item.type);
 
                 // Only one may be nullptr
                 assert(result_int_type != current_int_type);
@@ -318,7 +318,8 @@ namespace control_flow {
                     if (not non_ptr_type->is_int_type()) {
                         printError("Expected an integer to add with ", *ptr_type, "; found ",
                                    *non_ptr_type);
-                    } else if (auto * offset_type = dynamic_cast<ast::int_type *>(non_ptr_type);
+                    } else if (auto * offset_type
+                               = dynamic_cast<const ast::int_type *>(non_ptr_type);
                                offset_type != nullptr and offset_type->bit_width() == 0) {
                         static constexpr auto machine_bit_width
                             = 64U; // TODO: actually get the real size
@@ -417,7 +418,7 @@ namespace control_flow {
 
     void type_checker::visit(function_call & func_call) {
         const auto & func_name = func_call.callee->name;
-        auto * expected_func_type = [this, &func_name]() -> ast::function_type * {
+        auto * expected_func_type = [this, &func_name]() -> const ast::function_type * {
             auto iter = bound_identifiers.find(func_name);
 
             if (iter == bound_identifiers.end()) {
@@ -425,7 +426,7 @@ namespace control_flow {
                 return nullptr;
             }
 
-            auto * to_return = dynamic_cast<ast::function_type *>(iter->second);
+            auto * to_return = dynamic_cast<const ast::function_type *>(iter->second);
 
             if (to_return == nullptr) {
                 printError("Expected a function type for ", func_name, "; found ", *iter->second,
@@ -510,7 +511,7 @@ namespace control_flow {
         auto * lhs_type = find_type_of(member_access.lhs);
         assert(lhs_type != nullptr);
 
-        auto * struct_type = dynamic_cast<ast::struct_type *>(lhs_type);
+        auto * struct_type = dynamic_cast<const ast::struct_type *>(lhs_type);
         if (struct_type == nullptr) {
             printError("Expected a struct as the left-hand side of `.`; found ", *struct_type);
             visited.emplace(&member_access);
@@ -662,7 +663,7 @@ namespace control_flow {
                     = type_context.create_type<ast::prim_type>(ast::prim_type::type::character);
             } else {
                 // TODO: Enforce nonnullable_ptr_type
-                auto * ptr_type = dynamic_cast<ast::ptr_type *>(operand_type);
+                auto * ptr_type = dynamic_cast<const ast::ptr_type *>(operand_type);
                 assert(ptr_type != nullptr);
                 result_type = ptr_type->pointed_to_type();
             }

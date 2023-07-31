@@ -155,7 +155,7 @@ void cfg_to_llvm::visit(control_flow::member_access & member_access) {
 static llvm::Value * lower_arithmetic_op(llvm::IRBuilderBase & ir_builder,
                                          llvm_type_lowering & type_lowering,
                                          llvm::Value * lhs_value, llvm::Value * rhs_value,
-                                         operation::binary ast_bin_op, ast::type * result_type) {
+                                         operation::binary ast_bin_op, ast::type_ptr result_type) {
 
     if (lhs_value->getType()->isPointerTy() or rhs_value->getType()->isPointerTy()) {
         assert(lhs_value->getType()->isPointerTy() != rhs_value->getType()->isPointerTy());
@@ -366,7 +366,7 @@ void cfg_to_llvm::visit(control_flow::function_call & func_call) {
         assert(node_data != nullptr);
 
         auto * llvm_value = node_data->value;
-        if (dynamic_cast<ast::struct_type *>(node_data->ast_type) != nullptr) {
+        if (dynamic_cast<const ast::struct_type *>(node_data->ast_type) != nullptr) {
             llvm_value = ir_builder->CreateLoad(type_lowering.lower_to_llvm(node_data->ast_type),
                                                 llvm_value);
         }

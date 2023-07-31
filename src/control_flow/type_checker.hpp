@@ -32,7 +32,7 @@ namespace control_flow {
         void arg_count(control_flow::intrinsic_call & call);
         void syscall(control_flow::intrinsic_call & call);
 
-        void bind_identifier(std::string name, ast::type * type);
+        void bind_identifier(std::string name, ast::type_ptr type);
         void bind_type(control_flow::node * value, ast::type_ptr type);
         ast::type_ptr find_type_of(control_flow::node * value) const;
 

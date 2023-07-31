@@ -32,7 +32,7 @@ namespace ast {
         virtual void print(std::ostream &) const = 0;
     };
 
-    using type_ptr = type *;
+    using type_ptr = const type *;
 
     class ptr_type : public type {
       public:
