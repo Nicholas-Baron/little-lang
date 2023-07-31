@@ -32,10 +32,6 @@ namespace control_flow {
         void arg_count(control_flow::intrinsic_call & call);
         void syscall(control_flow::intrinsic_call & call);
 
-        void bind_identifier(std::string name, ast::type_ptr type);
-        void bind_type(control_flow::node * value, ast::type_ptr type);
-        ast::type_ptr find_type_of(control_flow::node * value) const;
-
         [[nodiscard]] const ast::type * current_return_type() const;
 
         ast::type_context & type_context;
@@ -49,9 +45,25 @@ namespace control_flow {
             ast::type_ptr type;
             bool can_widen;
 
+            node_info(std::nullptr_t)
+                : type{nullptr}
+                , can_widen{} {}
+
             node_info(ast::type_ptr type, bool can_widen)
                 : type{type}
                 , can_widen{can_widen} {}
+
+            [[nodiscard]] bool has_type() const { return type != nullptr; }
+
+            [[nodiscard]] friend bool operator==(const node_info & lhs,
+                                                 const node_info & rhs) noexcept {
+                return lhs.type == rhs.type and lhs.can_widen == rhs.can_widen;
+            }
+
+            [[nodiscard]] friend bool operator!=(const node_info & lhs,
+                                                 const node_info & rhs) noexcept {
+                return not(lhs == rhs);
+            }
 
             [[nodiscard]] friend bool operator<(const node_info & lhs,
                                                 const node_info & rhs) noexcept {
@@ -59,7 +71,10 @@ namespace control_flow {
             }
         };
 
-        ast::type_ptr merge_types(const std::set<node_info> & input_types);
+        node_info merge_types(const std::set<node_info> & input_types);
+        void bind_identifier(std::string name, ast::type_ptr type);
+        void bind_type(control_flow::node * value, node_info type_info);
+        node_info find_type_of(control_flow::node * value) const;
 
         std::map<control_flow::node *, node_info> node_information;
         std::unordered_set<control_flow::node *> visited;
