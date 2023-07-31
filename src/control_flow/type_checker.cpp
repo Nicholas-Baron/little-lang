@@ -26,7 +26,7 @@ namespace control_flow {
     }
 
     void type_checker::bind_type(control_flow::node * value, ast::type_ptr type) {
-        node_information.emplace(value, type_checker::node_info{type});
+        node_information.emplace(value, type_checker::node_info{type, false});
 
         if (auto * binary_op = dynamic_cast<control_flow::binary_operation *>(value);
             binary_op != nullptr) {
@@ -56,27 +56,13 @@ namespace control_flow {
                  : nullptr;
     }
 
-    struct type_info {
-        ast::type_ptr type;
-        bool can_widen;
-
-        type_info(ast::type_ptr type, bool can_widen)
-            : type{type}
-            , can_widen{can_widen} {}
-
-        [[nodiscard]] friend bool operator<(const type_info & lhs, const type_info & rhs) noexcept {
-            return lhs.type < rhs.type;
-        }
-    };
-
-    static ast::type_ptr merge_types(const std::set<type_info> & input_types,
-                                     ast::type_context & type_context) {
+    ast::type_ptr type_checker::merge_types(const std::set<node_info> & input_types) {
         if (input_types.empty()) { return nullptr; }
         if (input_types.size() == 1) { return input_types.begin()->type; }
 
         assert(input_types.size() >= 2);
 
-        type_info result{nullptr, true};
+        node_info result{nullptr, true};
         for (auto current_item : input_types) {
             // Setup the accumulator `result_type`
             if (result.type == nullptr) {
@@ -283,12 +269,10 @@ namespace control_flow {
             }
             bind_type(&binary_operation, boolean_type);
         } else if (operation::is_comparison(binary_operation.op)) {
-            if (auto * common_type = merge_types(
-                    {
-                        {lhs_type, binary_operation.lhs->allows_widening()},
-                        {rhs_type, binary_operation.rhs->allows_widening()}
-            },
-                    type_context);
+            if (auto * common_type = merge_types({
+                    {lhs_type, binary_operation.lhs->allows_widening()},
+                    {rhs_type, binary_operation.rhs->allows_widening()}
+            });
                 common_type == nullptr) {
                 printError("Expected comparison operands to be of same type; found ", *lhs_type,
                            " and ", *rhs_type);
@@ -299,12 +283,10 @@ namespace control_flow {
 
             bind_type(&binary_operation, boolean_type);
         } else if (operation::is_arithmetic(binary_operation.op)) {
-            auto * result_type = merge_types(
-                {
-                    {lhs_type, binary_operation.lhs->allows_widening()},
-                    {rhs_type, binary_operation.rhs->allows_widening()}
-            },
-                type_context);
+            auto * result_type = merge_types({
+                {lhs_type, binary_operation.lhs->allows_widening()},
+                {rhs_type, binary_operation.rhs->allows_widening()}
+            });
 
             if (binary_operation.op == operation::binary::add
                 and (lhs_type->is_pointer_type() or rhs_type->is_pointer_type())) {
@@ -454,12 +436,10 @@ namespace control_flow {
                 continue;
             }
 
-            auto * common_type = merge_types(
-                {
-                    {expected_type, false                                    },
-                    {actual_type,   func_call.arguments[i]->allows_widening()}
-            },
-                type_context);
+            auto * common_type = merge_types({
+                {expected_type, false                                    },
+                {actual_type,   func_call.arguments[i]->allows_widening()}
+            });
 
             if (common_type == nullptr) {
                 printError(func_name, " argument ", i, ": Expected type ", *expected_type,
@@ -487,12 +467,10 @@ namespace control_flow {
 
         assert(actual_type != nullptr);
 
-        if (auto * result_type = merge_types(
-                {
-                    type_info{expected_return_type, false},
-                    {actual_type,          true }
-        },
-                type_context);
+        if (auto * result_type = merge_types({
+                {expected_return_type, false},
+                {actual_type,          true }
+        });
             result_type == nullptr) {
 
             printError("Function `", current_function->name,
@@ -572,11 +550,11 @@ namespace control_flow {
 
         if (should_continue) {
 
-            std::set<type_info> input_types;
+            std::set<node_info> input_types;
             for (auto * prev : phi.previous) {
                 input_types.emplace(find_type_of(prev), prev->allows_widening());
             }
-            auto * phi_type = merge_types(input_types, type_context);
+            auto * phi_type = merge_types(input_types);
 
             assert(not input_types.empty());
 
@@ -619,12 +597,10 @@ namespace control_flow {
             auto * actual_type = find_type_of(iter->second);
             assert(actual_type != nullptr);
 
-            if (auto * common_type = merge_types(
-                    {
-                        {expected_type, false                          },
-                        {actual_type,   iter->second->allows_widening()}
-            },
-                    type_context);
+            if (auto * common_type = merge_types({
+                    {expected_type, false                          },
+                    {actual_type,   iter->second->allows_widening()}
+            });
                 common_type == nullptr) {
                 printError("Expected type of ", *expected_type, " for field ", field_name,
                            " in struct ", struct_type->user_name(), "; Found expession with type ",

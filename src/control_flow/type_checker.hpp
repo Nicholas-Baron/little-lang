@@ -47,7 +47,19 @@ namespace control_flow {
 
         struct node_info {
             ast::type_ptr type;
+            bool can_widen;
+
+            node_info(ast::type_ptr type, bool can_widen)
+                : type{type}
+                , can_widen{can_widen} {}
+
+            [[nodiscard]] friend bool operator<(const node_info & lhs,
+                                                const node_info & rhs) noexcept {
+                return lhs.type < rhs.type;
+            }
         };
+
+        ast::type_ptr merge_types(const std::set<node_info> & input_types);
 
         std::map<control_flow::node *, node_info> node_information;
         std::unordered_set<control_flow::node *> visited;
