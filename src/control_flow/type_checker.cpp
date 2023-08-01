@@ -29,7 +29,7 @@ namespace control_flow {
         node_information.emplace(value, type_info);
 
         if (auto * binary_op = dynamic_cast<control_flow::binary_operation *>(value);
-            binary_op != nullptr) {
+            binary_op != nullptr and binary_op->result_type != type_info.type) {
             binary_op->result_type = type_info.type;
         } else if (auto * unary_op = dynamic_cast<control_flow::unary_operation *>(value);
                    unary_op != nullptr and unary_op->result_type != type_info.type) {
@@ -38,13 +38,17 @@ namespace control_flow {
                 bind_type(unary_op->operand, type_info);
             }
         } else if (auto * constant = dynamic_cast<control_flow::constant *>(value);
-                   constant != nullptr) {
+                   constant != nullptr and constant->type != type_info.type) {
             constant->type = type_info.type;
             // TODO: Carry information about the possibly explicit declaration type
             if (constant->val_type == literal_type::identifier) {
                 bound_identifiers.insert_or_assign(std::get<std::string>(constant->value),
                                                    type_info.type);
             }
+        } else if (auto * phi = dynamic_cast<control_flow::phi *>(value);
+                   phi != nullptr and phi->type != type_info.type) {
+            phi->type = type_info.type;
+            for (auto * prev : phi->previous) { bind_type(prev, type_info); }
         }
     }
 
