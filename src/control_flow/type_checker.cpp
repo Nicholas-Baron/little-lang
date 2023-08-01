@@ -324,10 +324,10 @@ namespace control_flow {
                 printError("Expected arithmetic operands to be of compatible type; found ",
                            *lhs_type.type, " and ", *rhs_type.type);
             } else {
-                if (binary_operation.lhs->allows_widening() and lhs_type != result_type) {
+                if (lhs_type.can_widen and lhs_type != result_type) {
                     bind_type(binary_operation.lhs, result_type);
                 }
-                if (binary_operation.rhs->allows_widening() and rhs_type != result_type) {
+                if (rhs_type.can_widen and rhs_type != result_type) {
                     bind_type(binary_operation.rhs, result_type);
                 }
             }
