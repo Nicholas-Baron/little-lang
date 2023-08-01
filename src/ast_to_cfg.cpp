@@ -622,6 +622,7 @@ void ast_to_cfg::visit(ast::user_val & user_val) {
 
     auto & value_node
         = result_cfg->create<control_flow::constant>(std::move(value), user_val.val_type);
+    value_node.type = user_val.type;
     value_node.flows_from(prev_node);
 
     return store_result({&value_node, &value_node});
