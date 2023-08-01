@@ -73,12 +73,12 @@ namespace control_flow {
 
         assert(input_types.size() >= 2);
 
-        node_info result{nullptr, true};
+        node_info result = nullptr;
         for (auto current_item : input_types) {
             // Setup the accumulator `result_type`
-            if (result.type == nullptr) {
+            if (not result.has_type()) {
                 result.type = current_item.type;
-                result.can_widen &= current_item.can_widen;
+                result.can_widen = current_item.can_widen;
                 continue;
             }
 
