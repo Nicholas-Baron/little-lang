@@ -582,9 +582,10 @@ ast::expr_ptr parser::parse_expression() { return parse_if_expression(); }
 ast::expr_ptr parser::parse_if_expression() {
 
     // if expr then expr else expr
-    if (not lex->consume_if(lexer::token_type::if_).has_value()) {
-        return parse_boolean_expression();
-    }
+    auto possibly_if_tok = lex->peek_token();
+    if (possibly_if_tok != lexer::token_type::if_) { return parse_boolean_expression(); }
+    lex->next_token();
+
     // we did consume an if
     auto condition = parse_expression();
 
@@ -596,8 +597,8 @@ ast::expr_ptr parser::parse_if_expression() {
 
     auto else_branch = parse_expression();
 
-    return std::make_unique<ast::if_expr>(std::move(condition), std::move(then_branch),
-                                          std::move(else_branch));
+    return std::make_unique<ast::if_expr>(possibly_if_tok.location, std::move(condition),
+                                          std::move(then_branch), std::move(else_branch));
 }
 
 ast::expr_ptr parser::parse_boolean_expression() {
@@ -614,6 +615,7 @@ ast::expr_ptr parser::parse_boolean_expression() {
             std::move(expr),
             tok == lexer::token_type::double_or ? operand::bool_or : operand::bool_and,
             std::move(rhs));
+        expr->set_location(tok.location);
     }
     return expr;
 }
@@ -629,20 +631,27 @@ ast::expr_ptr parser::parse_comparison() {
         auto rhs = parse_additive();
         switch (tok.type) {
         case lexer::token_type::le:
-            return std::make_unique<ast::binary_expr>(std::move(expr), operand::le, std::move(rhs));
+            expr = std::make_unique<ast::binary_expr>(std::move(expr), operand::le, std::move(rhs));
+            break;
         case lexer::token_type::lt:
-            return std::make_unique<ast::binary_expr>(std::move(expr), operand::lt, std::move(rhs));
+            expr = std::make_unique<ast::binary_expr>(std::move(expr), operand::lt, std::move(rhs));
+            break;
         case lexer::token_type::ge:
-            return std::make_unique<ast::binary_expr>(std::move(expr), operand::ge, std::move(rhs));
+            expr = std::make_unique<ast::binary_expr>(std::move(expr), operand::ge, std::move(rhs));
+            break;
         case lexer::token_type::gt:
-            return std::make_unique<ast::binary_expr>(std::move(expr), operand::gt, std::move(rhs));
+            expr = std::make_unique<ast::binary_expr>(std::move(expr), operand::gt, std::move(rhs));
+            break;
         case lexer::token_type::eq:
-            return std::make_unique<ast::binary_expr>(std::move(expr), operand::eq, std::move(rhs));
+            expr = std::make_unique<ast::binary_expr>(std::move(expr), operand::eq, std::move(rhs));
+            break;
         case lexer::token_type::ne:
-            return std::make_unique<ast::binary_expr>(std::move(expr), operand::ne, std::move(rhs));
+            expr = std::make_unique<ast::binary_expr>(std::move(expr), operand::ne, std::move(rhs));
+            break;
         default:
             assert(false);
         }
+        expr->set_location(tok.location);
     }
     return expr;
 }
@@ -656,14 +665,17 @@ ast::expr_ptr parser::parse_additive() {
         using operand = operation::binary;
         switch (tok.type) {
         case lexer::token_type::plus:
-            return std::make_unique<ast::binary_expr>(std::move(expr), operand::add,
-                                                      std::move(rhs));
+            expr
+                = std::make_unique<ast::binary_expr>(std::move(expr), operand::add, std::move(rhs));
+            break;
         case lexer::token_type::minus:
-            return std::make_unique<ast::binary_expr>(std::move(expr), operand::sub,
-                                                      std::move(rhs));
+            expr
+                = std::make_unique<ast::binary_expr>(std::move(expr), operand::sub, std::move(rhs));
+            break;
         default:
             assert(false);
         }
+        expr->set_location(tok.location);
     }
     return expr;
 }
@@ -678,17 +690,21 @@ ast::expr_ptr parser::parse_multiplicative() {
         auto rhs = parse_unary();
         switch (tok.type) {
         case lexer::token_type::percent:
-            return std::make_unique<ast::binary_expr>(std::move(expr), operand::mod,
-                                                      std::move(rhs));
+            expr
+                = std::make_unique<ast::binary_expr>(std::move(expr), operand::mod, std::move(rhs));
+            break;
         case lexer::token_type::asterik:
-            return std::make_unique<ast::binary_expr>(std::move(expr), operand::mult,
+            expr = std::make_unique<ast::binary_expr>(std::move(expr), operand::mult,
                                                       std::move(rhs));
+            break;
         case lexer::token_type::slash:
-            return std::make_unique<ast::binary_expr>(std::move(expr), operand::div,
-                                                      std::move(rhs));
+            expr
+                = std::make_unique<ast::binary_expr>(std::move(expr), operand::div, std::move(rhs));
+            break;
         default:
             assert(false);
         }
+        expr->set_location(tok.location);
     }
     return expr;
 }
@@ -739,11 +755,14 @@ ast::expr_ptr parser::parse_member_access() {
     // We must try to parse an atom for the parenthesis-enclosed lhs.
     auto expr = parse_atom();
 
-    while (lex->consume_if(lexer::token_type::dot)) {
+    auto possibly_dot = lex->peek_token();
+
+    while (possibly_dot == lexer::token_type::dot) {
         // the rhs could be:
         //  - an identifier
         //  - an integer (if tuples get implemented)
 
+        auto dot = lex->next_token();
         auto tok = lex->next_token();
 
         if (tok != lexer::token_type::identifier) {
@@ -755,6 +774,8 @@ ast::expr_ptr parser::parse_member_access() {
                                                    tok.location);
         expr = std::make_unique<ast::binary_expr>(std::move(expr), operation::binary::member_access,
                                                   std::move(rhs));
+        expr->set_location(dot.location);
+        possibly_dot = lex->peek_token();
     }
 
     return expr;

@@ -76,10 +76,12 @@ namespace ast {
 
     class if_expr final : public expr {
       public:
-        if_expr(expr_ptr condition, expr_ptr then_case, expr_ptr else_case)
+        if_expr(Location loc, expr_ptr condition, expr_ptr then_case, expr_ptr else_case)
             : condition{std::move(condition)}
             , then_case{std::move(then_case)}
-            , else_case{std::move(else_case)} {}
+            , else_case{std::move(else_case)} {
+            set_location(loc);
+        }
 
         non_copyable(if_expr);
 
