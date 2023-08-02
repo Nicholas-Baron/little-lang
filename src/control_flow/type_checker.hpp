@@ -25,7 +25,7 @@ namespace control_flow {
 
         // TODO: control_flow::node should store location data
         template<class... arg_t>
-        void printError(const arg_t &... args);
+        void printError(std::optional<Location> loc, const arg_t &... args);
         // clang-format on
 
         void arg_at(control_flow::intrinsic_call & call);

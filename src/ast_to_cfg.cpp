@@ -257,6 +257,7 @@ void ast_to_cfg::visit(ast::binary_expr & binary_expr) {
     if (binary_expr.is_shortcircuiting()) {
         auto & shorting_node = result_cfg->create<control_flow::branch>(cfg_lhs.end);
         shorting_node.flows_from(cfg_lhs.end);
+        shorting_node.source_location = binary_expr.location();
 
         auto cfg_rhs = get_value(*binary_expr.rhs, *this);
 
@@ -276,6 +277,7 @@ void ast_to_cfg::visit(ast::binary_expr & binary_expr) {
         auto & join_node = result_cfg->create<control_flow::phi>();
         join_node.flows_from(&lhs_constant);
         join_node.flows_from(cfg_rhs.end);
+        join_node.source_location = binary_expr.location();
 
         return store_result({cfg_lhs.beginning, &join_node});
     }
@@ -292,6 +294,7 @@ void ast_to_cfg::visit(ast::binary_expr & binary_expr) {
             = result_cfg->create<control_flow::member_access>(cfg_lhs.end, member_ast->val);
         // NOTE: `lhs` could be merged with `previous`
         cfg_access.flows_from(previous_node);
+        cfg_access.source_location = binary_expr.location();
         return store_result(
             {cfg_lhs.from_id_lookup ? &cfg_access : cfg_lhs.beginning, &cfg_access});
     }
@@ -302,6 +305,7 @@ void ast_to_cfg::visit(ast::binary_expr & binary_expr) {
     auto & cfg_expr = result_cfg->create<control_flow::binary_operation>(
         cfg_lhs.end, binary_expr.op, cfg_rhs.end);
     cfg_expr.flows_from(cfg_expr.rhs);
+    cfg_expr.source_location = binary_expr.location();
     return store_result({cfg_lhs.beginning, &cfg_expr});
 }
 
@@ -329,6 +333,7 @@ void ast_to_cfg::visit(ast::func_call_data & func_call_data) {
             assert(prev_node != nullptr);
             assert(prev_node != possible_intrinsic);
             possible_intrinsic->flows_from(prev_node);
+            possible_intrinsic->source_location = func_call_data.location();
             return store_result(
                 {first_arg != nullptr ? first_arg : possible_intrinsic, possible_intrinsic});
         }
@@ -338,6 +343,7 @@ void ast_to_cfg::visit(ast::func_call_data & func_call_data) {
 
     auto & func_call = result_cfg->create<control_flow::function_call>(iter->second, args);
     func_call.flows_from(prev_node);
+    func_call.source_location = func_call_data.location();
     return store_result({first_arg != nullptr ? first_arg : &func_call, &func_call});
 }
 
@@ -349,6 +355,7 @@ void ast_to_cfg::visit(ast::func_decl & func_decl) {
     auto & func_start = result_cfg->create_root<control_flow::function_start>(
         func_decl.name, func_decl.param_count(), func_decl.exported(), func_decl.func_type);
     current_function = &func_start;
+    func_start.source_location = func_decl.location();
 
     func_start.parameter_names.reserve(func_start.arg_count);
     for (auto i = 0UL; i < func_start.arg_count; ++i) {
@@ -376,6 +383,7 @@ void ast_to_cfg::visit(ast::if_expr & if_expr) {
     auto condition = get_value(*if_expr.condition, *this);
     auto & branch = result_cfg->create<control_flow::branch>(condition.end);
     condition.beginning->flows_from(previous_node);
+    branch.source_location = if_expr.location();
 
     branch.flows_from(condition.end);
 
@@ -404,6 +412,7 @@ void ast_to_cfg::visit(ast::if_stmt & if_stmt) {
 
     auto & branch = result_cfg->create<control_flow::branch>(condition_value.end);
     branch.flows_from(condition_value.end);
+    branch.source_location = if_stmt.location();
 
     auto true_case = get_value(*if_stmt.true_branch, *this);
     branch.true_case = true_case.beginning;
@@ -453,6 +462,7 @@ void ast_to_cfg::visit(ast::return_stmt & return_stmt) {
     if (return_stmt.value != nullptr) { return_value = get_value(*return_stmt.value, *this); }
 
     auto & return_node = result_cfg->create<control_flow::function_end>();
+    return_node.source_location = return_stmt.location();
     if (return_value.has_value()) {
         return_node.value = return_value->end;
         if (not return_value->from_id_lookup) {
@@ -502,6 +512,7 @@ void ast_to_cfg::visit(ast::struct_init & struct_init) {
     auto * previous_node = result_cfg->previous_node();
 
     auto & cfg_struct_init = result_cfg->create<control_flow::struct_init>();
+    cfg_struct_init.source_location = struct_init.location();
 
     auto * struct_type = declared_structs[struct_init.type_name];
     if (struct_type == nullptr) { assert(false); }
@@ -539,6 +550,7 @@ void ast_to_cfg::visit(ast::unary_expr & unary_expr) {
     if (not operand.from_id_lookup) { operand.beginning->flows_from(previous_node); }
 
     auto & unary_op = result_cfg->create<control_flow::unary_operation>(operand.end, unary_expr.op);
+    unary_op.source_location = unary_expr.location();
     if (not operand.from_id_lookup) { unary_op.flows_from(unary_op.operand); }
 
     return store_result({operand.from_id_lookup ? &unary_op : operand.beginning, &unary_op});
@@ -622,6 +634,7 @@ void ast_to_cfg::visit(ast::user_val & user_val) {
 
     auto & value_node
         = result_cfg->create<control_flow::constant>(std::move(value), user_val.val_type);
+    value_node.source_location = user_val.location();
     value_node.type = user_val.type;
     value_node.flows_from(prev_node);
 

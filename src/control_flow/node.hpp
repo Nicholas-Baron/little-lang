@@ -36,6 +36,9 @@ namespace control_flow {
 
         [[nodiscard]] virtual bool allows_widening() const { return false; }
 
+        // TODO: Put in constructor
+        Location source_location;
+
       protected:
         node() = default;
     };

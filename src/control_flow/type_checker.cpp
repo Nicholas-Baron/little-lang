@@ -16,8 +16,10 @@ namespace control_flow {
     }
 
     template<class... arg_t>
-    void type_checker::printError(const arg_t &... args) {
+    void type_checker::printError(std::optional<Location> loc, const arg_t &... args) {
         std::stringstream to_print;
+
+        if (loc.has_value()) to_print << *loc << ':';
 
         (to_print << ... << args);
 
@@ -174,13 +176,15 @@ namespace control_flow {
         // TODO: handle when int goes out of bounds
 
         if (call.arguments.size() != 1) {
-            printError("`arg_at` takes exactly 1 parameter");
+            printError(call.source_location, "`arg_at` takes exactly 1 parameter");
             return;
         }
 
         auto arg_type = find_type_of(call.arguments.front());
         if (not arg_type.has_type()) { return; }
-        if (not arg_type.type->is_int_type()) { printError("`arg_at` only takes int parameters"); }
+        if (not arg_type.type->is_int_type()) {
+            printError(call.source_location, "`arg_at` only takes int parameters");
+        }
 
         auto * str_type = type_context.create_type<ast::prim_type>(ast::prim_type::type::str);
         call.type
@@ -191,7 +195,7 @@ namespace control_flow {
     void type_checker::arg_count(intrinsic_call & call) {
         // arg_count takes no parameter_names and returns an int
         if (not call.arguments.empty()) {
-            printError("`arg_count` does not take any parameter_names");
+            printError(call.source_location, "`arg_count` does not take any parameter_names");
         }
 
         auto * int_type = type_context.create_type<ast::int_type>(32);
@@ -205,7 +209,8 @@ namespace control_flow {
         static constexpr auto max_syscall_args = 7U;
         if (const auto arg_count = call.arguments.size();
             arg_count == 0 or arg_count > max_syscall_args) {
-            printError("syscalls can only take 1 to 7 arguments\nFound one with ", arg_count);
+            printError(call.source_location,
+                       "syscalls can only take 1 to 7 arguments\nFound one with ", arg_count);
         }
 
         auto * int64_type = type_context.create_type<ast::int_type>(64);
@@ -219,7 +224,8 @@ namespace control_flow {
             if (first) {
                 first = false;
                 if (not arg_type.type->is_int_type()) {
-                    printError("syscall must have an integer as its first argument; found ",
+                    printError(arg->source_location,
+                               "syscall must have an integer as its first argument; found ",
                                *arg_type.type);
                 }
             }
@@ -232,7 +238,8 @@ namespace control_flow {
             }
 
             if (not arg_type.type->is_pointer_type() and not arg_type.type->is_int_type()) {
-                printError("syscall can only take int or pointer arguments; found ",
+                printError(arg->source_location,
+                           "syscall can only take int or pointer arguments; found ",
                            *arg_type.type);
             }
 
@@ -277,15 +284,18 @@ namespace control_flow {
         if (operation::is_shortcircuiting(binary_operation.op)) {
             // Left and right must be booleans
             if (lhs_type.type != boolean_type) {
-                printError("lhs expected to be boolean, found ", *lhs_type.type);
+                printError(binary_operation.lhs->source_location,
+                           "lhs expected to be boolean, found ", *lhs_type.type);
             }
             if (rhs_type.type != boolean_type) {
-                printError("rhs expected to be boolean, found ", *rhs_type.type);
+                printError(binary_operation.rhs->source_location,
+                           "rhs expected to be boolean, found ", *rhs_type.type);
             }
             bind_type(&binary_operation, {boolean_type, false});
         } else if (operation::is_comparison(binary_operation.op)) {
             if (auto common_type = merge_types({lhs_type, rhs_type}); not common_type.has_type()) {
-                printError("Expected comparison operands to be of same type; found ",
+                printError(binary_operation.source_location,
+                           "Expected comparison operands to be of same type; found ",
                            *lhs_type.type, " and ", *rhs_type.type);
             } else {
                 bind_type(binary_operation.lhs, common_type);
@@ -299,14 +309,17 @@ namespace control_flow {
             if (binary_operation.op == operation::binary::add
                 and (lhs_type.type->is_pointer_type() or rhs_type.type->is_pointer_type())) {
                 if (lhs_type.type->is_pointer_type() == rhs_type.type->is_pointer_type()) {
-                    printError("Cannot add two pointers together");
+                    printError(binary_operation.source_location,
+                               "Cannot add two pointers together");
                 } else {
                     bool pointer_on_lhs = lhs_type.type->is_pointer_type();
                     auto non_ptr_type = pointer_on_lhs ? rhs_type : lhs_type;
                     auto ptr_type = pointer_on_lhs ? lhs_type : rhs_type;
 
                     if (not non_ptr_type.type->is_int_type()) {
-                        printError("Expected an integer to add with ", *ptr_type.type, "; found ",
+                        printError((pointer_on_lhs ? binary_operation.rhs : binary_operation.lhs)
+                                       ->source_location,
+                                   "Expected an integer to add with ", *ptr_type.type, "; found ",
                                    *non_ptr_type.type);
                     } else if (auto * offset_type
                                = dynamic_cast<const ast::int_type *>(non_ptr_type.type);
@@ -321,7 +334,8 @@ namespace control_flow {
                     result_type = ptr_type;
                 }
             } else if (not result_type.has_type()) {
-                printError("Expected arithmetic operands to be of compatible type; found ",
+                printError(binary_operation.source_location,
+                           "Expected arithmetic operands to be of compatible type; found ",
                            *lhs_type.type, " and ", *rhs_type.type);
             } else {
                 if (lhs_type.can_widen and lhs_type != result_type) {
@@ -348,8 +362,8 @@ namespace control_flow {
         auto * boolean_type
             = type_context.create_type<ast::prim_type>(ast::prim_type::type::boolean);
         if (cond_type.type != boolean_type) {
-            printError("Expected condition to be of type ", *boolean_type, "; found ",
-                       *cond_type.type);
+            printError(branch.condition_value->source_location, "Expected condition to be of type ",
+                       *boolean_type, "; found ", *cond_type.type);
         }
 
         visited.emplace(&branch);
@@ -372,7 +386,8 @@ namespace control_flow {
                 iter != bound_identifiers.end()) {
                 const_type = iter->second;
             } else {
-                printError("Could not find the type of ", std::get<std::string>(constant.value));
+                printError(constant.source_location, "Could not find the type of ",
+                           std::get<std::string>(constant.value));
             }
             break;
         case literal_type::integer:
@@ -410,19 +425,20 @@ namespace control_flow {
 
     void type_checker::visit(function_call & func_call) {
         const auto & func_name = func_call.callee->name;
-        auto * expected_func_type = [this, &func_name]() -> const ast::function_type * {
+        auto * expected_func_type = [this, &func_name, &func_call]() -> const ast::function_type * {
             auto iter = bound_identifiers.find(func_name);
 
             if (iter == bound_identifiers.end()) {
-                printError("Could not find type of function ", func_name);
+                printError(func_call.source_location, "Could not find type of function ",
+                           func_name);
                 return nullptr;
             }
 
             auto * to_return = dynamic_cast<const ast::function_type *>(iter->second);
 
             if (to_return == nullptr) {
-                printError("Expected a function type for ", func_name, "; found ", *iter->second,
-                           ", which is not a function");
+                printError(func_call.source_location, "Expected a function type for ", func_name,
+                           "; found ", *iter->second, ", which is not a function");
             }
 
             return to_return;
@@ -431,8 +447,9 @@ namespace control_flow {
         if (expected_func_type == nullptr) { return; }
 
         if (expected_func_type->arg_count() != func_call.arguments.size()) {
-            printError(func_name, " expects ", expected_func_type->arg_count(),
-                       " arguments; found ", func_call.arguments.size());
+            printError(func_call.source_location, func_name, " expects ",
+                       expected_func_type->arg_count(), " arguments; found ",
+                       func_call.arguments.size());
         }
 
         auto args_to_check = std::min(expected_func_type->arg_count(), func_call.arguments.size());
@@ -442,7 +459,8 @@ namespace control_flow {
             auto * expected_type = expected_func_type->arg(i);
 
             if (not actual_type.has_type()) {
-                printError(func_name, " argument ", i, ": Could not find type");
+                printError(func_call.arguments[i]->source_location, func_name, " argument ", i,
+                           ": Could not find type");
                 continue;
             }
 
@@ -452,8 +470,8 @@ namespace control_flow {
             });
 
             if (not common_type.has_type()) {
-                printError(func_name, " argument ", i, ": Expected type ", *expected_type,
-                           "; found ", *actual_type.type);
+                printError(func_call.arguments[i]->source_location, func_name, " argument ", i,
+                           ": Expected type ", *expected_type, "; found ", *actual_type.type);
             } else if (actual_type != common_type and func_call.arguments[i]->allows_widening()) {
                 bind_type(func_call.arguments[i], common_type);
             }
@@ -484,7 +502,7 @@ namespace control_flow {
         });
             not result_type.has_type()) {
 
-            printError("Function `", current_function->name,
+            printError(func_end.source_location, "Function `", current_function->name,
                        "` expected a return expression with type ", *expected_return_type,
                        "; found one with ", *actual_type.type);
         } else {
@@ -498,7 +516,8 @@ namespace control_flow {
         if (auto iter = intrinsics.find(intrinsic_call.name); iter != intrinsics.end()) {
             (this->*iter->second)(intrinsic_call);
         } else {
-            printError("Could not type check intrinsic named ", intrinsic_call.name);
+            printError(intrinsic_call.source_location, "Could not type check intrinsic named ",
+                       intrinsic_call.name);
         }
 
         visited.emplace(&intrinsic_call);
@@ -511,7 +530,8 @@ namespace control_flow {
 
         auto * struct_type = dynamic_cast<const ast::struct_type *>(lhs_type.type);
         if (struct_type == nullptr) {
-            printError("Expected a struct as the left-hand side of `.`; found ", *struct_type);
+            printError(member_access.lhs->source_location,
+                       "Expected a struct as the left-hand side of `.`; found ", *struct_type);
             visited.emplace(&member_access);
             return member_access.next->accept(*this);
         }
@@ -530,8 +550,8 @@ namespace control_flow {
             bind_type(&member_access, {found_type, false});
             member_access.result_type = found_type;
         } else {
-            printError("Could not find field named ", member_access.member_name, " in struct ",
-                       *struct_type);
+            printError(member_access.source_location, "Could not find field named ",
+                       member_access.member_name, " in struct ", *struct_type);
         }
 
         visited.emplace(&member_access);
@@ -578,7 +598,8 @@ namespace control_flow {
                     competing_types << '`' << *input_type.type << "`, ";
                 }
 
-                printError("Expected branches to have the same type; found competing types of ",
+                printError(phi.source_location,
+                           "Expected branches to have the same type; found competing types of ",
                            competing_types.str());
             }
 
@@ -600,8 +621,8 @@ namespace control_flow {
 
             auto iter = struct_init.fields.find(field_name);
             if (iter == struct_init.fields.end()) {
-                printError("Field ", field_name, " is not initialized for struct of type ",
-                           struct_type->user_name());
+                printError(struct_init.source_location, "Field ", field_name,
+                           " is not initialized for struct of type ", struct_type->user_name());
                 continue;
             }
 
@@ -613,9 +634,9 @@ namespace control_flow {
                     actual_type
             });
                 common_type == nullptr) {
-                printError("Expected type of ", *expected_type, " for field ", field_name,
-                           " in struct ", struct_type->user_name(), "; Found expession with type ",
-                           *actual_type.type);
+                printError(iter->second->source_location, "Expected type of ", *expected_type,
+                           " for field ", field_name, " in struct ", struct_type->user_name(),
+                           "; Found expession with type ", *actual_type.type);
             } else {
                 bind_type(iter->second, common_type);
             }
@@ -640,20 +661,23 @@ namespace control_flow {
         switch (unary_operation.op) {
         case operation::unary::bool_not:
             if (not is_operand_prim(ast::prim_type::type::boolean)) {
-                printError("Expected boolean for `!`; found", *operand_type.type);
+                printError(unary_operation.operand->source_location,
+                           "Expected boolean for `!`; found", *operand_type.type);
             }
             break;
         case operation::unary::negate:
             if (not operand_type.type->is_int_type()
                 and not is_operand_prim(ast::prim_type::type::float32)) {
-                printError("Expected float or int for `-`; found", *operand_type.type);
+                printError(unary_operation.operand->source_location,
+                           "Expected float or int for `-`; found", *operand_type.type);
             }
             break;
         case operation::unary::deref:
             if (not operand_type.type->is_pointer_type()) {
-                printError("Expected a pointer for `*`; found", *operand_type.type);
+                printError(unary_operation.operand->source_location,
+                           "Expected a pointer for `*`; found", *operand_type.type);
             } else if (is_operand_prim(ast::prim_type::type::null)) {
-                printError("Cannot deref a null literal");
+                printError(unary_operation.operand->source_location, "Cannot deref a null literal");
             } else if (is_operand_prim(ast::prim_type::type::str)) {
                 result_type.type
                     = type_context.create_type<ast::prim_type>(ast::prim_type::type::character);
@@ -666,9 +690,11 @@ namespace control_flow {
             break;
         case operation::unary::addrof:
             if (is_operand_prim(ast::prim_type::type::unit)) {
-                printError("Cannot take the address of unit");
+                printError(unary_operation.operand->source_location,
+                           "Cannot take the address of unit");
             } else if (is_operand_prim(ast::prim_type::type::null)) {
-                printError("Cannot take the address of null");
+                printError(unary_operation.operand->source_location,
+                           "Cannot take the address of null");
             } else {
                 result_type.type
                     = type_context.create_type<ast::nonnullable_ptr_type>(operand_type.type);
