@@ -46,6 +46,7 @@ class lexer final {
         return_,
         let,
         const_,
+        as,
         null,
         character,
         string,

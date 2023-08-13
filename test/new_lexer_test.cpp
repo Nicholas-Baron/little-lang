@@ -405,3 +405,14 @@ TEST_CASE("the lexer will parse the '.' as a distinct token") {
     CHECK(lexer->next_token() == "y");
     CHECK(lexer->next_token() == lexer::token_type::eof);
 }
+
+TEST_CASE("the lexer will parse the word 'as'") {
+
+    std::string buffer = "x as y";
+    auto lexer = lexer::from_buffer(buffer.c_str(), buffer.size());
+    CHECK(lexer != nullptr);
+    CHECK(lexer->next_token() == "x");
+    CHECK(lexer->next_token() == lexer::token_type::as);
+    CHECK(lexer->next_token() == "y");
+    CHECK(lexer->next_token() == lexer::token_type::eof);
+}

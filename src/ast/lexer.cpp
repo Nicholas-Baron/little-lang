@@ -146,6 +146,7 @@ lexer::token lexer::next_identifier(Location loc) {
         {"ret",    token_type::return_   },
         {"return", token_type::return_   },
         {"then",   token_type::then      },
+        {"as",     token_type::as        },
  // primitive types
         {"bool",   token_type::prim_type },
         {"char",   token_type::prim_type },

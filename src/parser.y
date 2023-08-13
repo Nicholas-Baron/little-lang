@@ -24,6 +24,7 @@
 %nonassoc T_LE T_LT T_GE T_GT T_EQ T_NE
 %left T_PLUS T_MINUS
 %left T_MOD T_DIV T_MULT
+%precedence "as"
 %precedence T_NOT
 %precedence T_DOT
 
@@ -177,6 +178,7 @@ expr : atom
      | T_MULT expr   %prec T_NOT
      | T_MINUS expr  %prec T_NOT
      | T_AMP expr    %prec T_NOT
+     | expr "as" type
      | expr T_DOT T_IDENT
      | expr T_MULT expr
      | expr T_MOD expr
