@@ -104,6 +104,7 @@ class parser final {
     ast::expr_ptr parse_comparison();
     ast::expr_ptr parse_additive();
     ast::expr_ptr parse_multiplicative();
+    ast::expr_ptr parse_cast();
     ast::expr_ptr parse_unary();
     ast::expr_ptr parse_member_access();
     ast::expr_ptr parse_atom();

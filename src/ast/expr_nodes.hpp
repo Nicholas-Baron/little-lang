@@ -118,4 +118,16 @@ namespace ast {
         std::string type_name;
         std::vector<std::pair<std::string, ast::expr_ptr>> initializers;
     };
+
+    class cast_expr final : public expr {
+      public:
+        cast_expr(ast::expr_ptr source, ast::type_ptr destination)
+            : operand{std::move(source)}
+            , destination{destination} {}
+
+        make_visitable;
+
+        ast::expr_ptr operand;
+        ast::type_ptr destination;
+    };
 } // namespace ast

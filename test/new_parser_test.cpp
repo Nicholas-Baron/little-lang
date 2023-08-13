@@ -193,6 +193,25 @@ TEST_CASE("the parser will parse unary minus") {
     CHECK(val->val == "3");
 }
 
+TEST_CASE("the parser will parse type casts") {
+    std::string buffer = "-x as int32";
+    ast::type_context ty_context;
+    auto parser = parser::from_buffer(buffer, ty_context);
+
+    auto expr = parser->parse_expression();
+    CHECK(expr != nullptr);
+    CHECK(parser->is_eof());
+
+    auto * cast_expr = dynamic_cast<ast::cast_expr *>(expr.get());
+    CHECK(cast_expr != nullptr);
+    CHECK(cast_expr->destination != nullptr);
+
+    auto * unary_expr = dynamic_cast<ast::unary_expr *>(cast_expr->operand.get());
+    CHECK(unary_expr != nullptr);
+    CHECK(unary_expr->expr != nullptr);
+    CHECK(unary_expr->op == operation::unary::negate);
+}
+
 TEST_CASE("the parser will parse const declaration") {
     std::string buffer = "const x : int16 = 5 * -3;";
     ast::type_context ty_context;

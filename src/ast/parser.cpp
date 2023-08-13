@@ -681,13 +681,13 @@ ast::expr_ptr parser::parse_additive() {
 }
 
 ast::expr_ptr parser::parse_multiplicative() {
-    auto expr = parse_unary();
+    auto expr = parse_cast();
     if (auto tok_type = lex->peek_token(); tok_type == lexer::token_type::percent
                                            or tok_type == lexer::token_type::asterik
                                            or tok_type == lexer::token_type::slash) {
         auto tok = lex->next_token();
         using operand = operation::binary;
-        auto rhs = parse_unary();
+        auto rhs = parse_cast();
         switch (tok.type) {
         case lexer::token_type::percent:
             expr
@@ -705,6 +705,17 @@ ast::expr_ptr parser::parse_multiplicative() {
             assert(false);
         }
         expr->set_location(tok.location);
+    }
+    return expr;
+}
+
+ast::expr_ptr parser::parse_cast() {
+    auto expr = parse_unary();
+    while (lex->peek_token() == lexer::token_type::as) {
+        auto location = lex->next_token().location;
+        const auto * type = parse_type();
+        expr = std::make_unique<ast::cast_expr>(std::move(expr), type);
+        expr->set_location(location);
     }
     return expr;
 }
