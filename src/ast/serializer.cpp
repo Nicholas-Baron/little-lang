@@ -139,6 +139,13 @@ namespace ast {
         });
     }
 
+    void serializer::visit(ast::cast_expr & cast_expr) {
+        return store_result(object_t{
+            {"value", get_value(*cast_expr.operand, *this)},
+            {"destination type", serialize_type(cast_expr.destination)}
+        });
+    }
+
     void serializer::visit(ast::stmt_sequence & stmt_sequence) {
         std::vector<nlohmann::json> stmts;
 

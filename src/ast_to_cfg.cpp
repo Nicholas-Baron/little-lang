@@ -4,6 +4,7 @@
 #include "intrinsics.hpp"
 #include "string_utils.hpp"
 
+#include <cassert>
 #include <iostream> // cout
 
 ast_to_cfg::ast_to_cfg(ast::type_context & type_context)

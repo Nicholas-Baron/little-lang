@@ -3,6 +3,7 @@
 // clang-format off
 #define ast_nodes                 \
     expand_node_macro(binary_expr)           \
+    expand_node_macro(cast_expr)             \
     expand_node_macro(const_decl)            \
     expand_node_macro(expr)                  \
     expand_node_macro(func_call_data)        \
