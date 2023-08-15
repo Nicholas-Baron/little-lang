@@ -164,6 +164,11 @@ void ast_to_cfg::check_flow() noexcept {
             return;
         }
 
+        if (auto * cast = dynamic_cast<control_flow::cast *>(node); cast != nullptr) {
+            found_links.push_back({cast->previous, cast});
+            return;
+        }
+
         std::cout << "Previous reading for " << typeid(*node).name() << " has not been implemented"
                   << std::endl;
         assert(false);
@@ -308,6 +313,17 @@ void ast_to_cfg::visit(ast::binary_expr & binary_expr) {
     cfg_expr.flows_from(cfg_expr.rhs);
     cfg_expr.source_location = binary_expr.location();
     return store_result({cfg_lhs.beginning, &cfg_expr});
+}
+
+void ast_to_cfg::visit(ast::cast_expr & ast_cast) {
+    auto operand = get_value(*ast_cast.operand, *this);
+
+    auto & cfg_cast = result_cfg->create<control_flow::cast>(operand.end, ast_cast.type);
+
+    cfg_cast.flows_from(operand.end);
+    cfg_cast.source_location = ast_cast.location();
+
+    return store_result({operand.beginning, &cfg_cast});
 }
 
 void ast_to_cfg::visit(ast::func_call_data & func_call_data) {

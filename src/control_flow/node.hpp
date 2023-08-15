@@ -293,6 +293,24 @@ namespace control_flow {
         ast::type_ptr type{nullptr};
     };
 
+    class cast final : public node {
+      public:
+        cast(node * value, ast::type_ptr type)
+            : value{value}
+            , type{type} {}
+
+        make_visitable;
+
+        void flows_from(node * node) override { previous = node; }
+
+        void flows_to(node * node) override { next = node; }
+
+        node * previous{nullptr};
+        node * next{nullptr};
+        node * value;
+        ast::type_ptr type;
+    };
+
 #undef make_visitable
 
 } // namespace control_flow
