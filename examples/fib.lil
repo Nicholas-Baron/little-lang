@@ -1,6 +1,6 @@
 fib(pos is int8) -> int64
-	if pos <= 1 or pos equals 5 then { ret pos; }
-	else if pos > 1 and pos < 5 then { ret pos - 1; }
+	if pos <= 1 or pos equals 5 then { ret pos as int64; }
+	else if pos > 1 and pos < 5 then { ret (pos - 1) as int64; }
 	else { return fib(pos - 2) + fib(pos - 1); }
 
 main() -> int64 = fib(5)
