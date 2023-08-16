@@ -42,6 +42,7 @@ namespace ast {
     // Base classes
     class expr : public virtual node {
       public:
+        // TODO: Move to the subclasses
         ast::type_ptr type{nullptr};
     };
 
