@@ -4,6 +4,7 @@
 #define all_cfg_nodes                    \
     expand_node_macro(binary_operation)  \
     expand_node_macro(branch)            \
+    expand_node_macro(cast)              \
     expand_node_macro(constant)          \
     expand_node_macro(function_call)     \
     expand_node_macro(function_end)      \

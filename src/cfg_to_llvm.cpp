@@ -294,6 +294,20 @@ void cfg_to_llvm::visit(control_flow::branch & branch) {
     branch.false_case->accept(*this);
 }
 
+void cfg_to_llvm::visit(control_flow::cast & cast) {
+    const auto * src = find_value_of(cast.value);
+    auto * llvm_dest_type = type_lowering.lower_to_llvm(cast.type);
+
+    assert(src->value->getType()->isIntegerTy() and llvm_dest_type->isIntegerTy());
+
+    // TODO: Determine what other kind of cast to use
+    bind_value(cast,
+               ir_builder->CreateCast(llvm::Instruction::CastOps::SExt, src->value, llvm_dest_type),
+               cast.type);
+
+    cast.next->accept(*this);
+}
+
 void cfg_to_llvm::visit(control_flow::constant & constant) {
 
     switch (constant.val_type) {

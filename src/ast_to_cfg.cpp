@@ -318,7 +318,7 @@ void ast_to_cfg::visit(ast::binary_expr & binary_expr) {
 void ast_to_cfg::visit(ast::cast_expr & ast_cast) {
     auto operand = get_value(*ast_cast.operand, *this);
 
-    auto & cfg_cast = result_cfg->create<control_flow::cast>(operand.end, ast_cast.type);
+    auto & cfg_cast = result_cfg->create<control_flow::cast>(operand.end, ast_cast.destination);
 
     cfg_cast.flows_from(operand.end);
     cfg_cast.source_location = ast_cast.location();

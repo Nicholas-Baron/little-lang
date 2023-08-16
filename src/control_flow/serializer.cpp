@@ -77,6 +77,19 @@ namespace control_flow {
         return store_result(result);
     }
 
+    void serializer::visit(cast & cast) {
+        auto [result, index] = add_node(&cast);
+        if (result == nullptr) { return value_getter::store_result(index); }
+
+        std::map<size_t, std::string> connections{
+            {get_value(*cast.next,  *this), "next"   },
+            {get_value(*cast.value, *this), "operand"},
+        };
+
+        *result = {NODE_NAME(cast), connections};
+        return store_result(result);
+    }
+
     void serializer::visit(binary_operation & binary_operation) {
         auto [result, index] = add_node(&binary_operation);
         if (result == nullptr) { return value_getter::store_result(index); }

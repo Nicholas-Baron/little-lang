@@ -371,6 +371,33 @@ namespace control_flow {
         branch.false_case->accept(*this);
     }
 
+    void type_checker::visit(cast & cast) {
+        assert(cast.type != nullptr);
+
+        const auto * src_type = find_type_of(cast.value).type;
+        assert(src_type != nullptr);
+
+        ast::type_ptr dest_type = nullptr;
+
+        if (cast.type->is_int_type() and src_type->is_int_type()) {
+            const auto * src_int_type = dynamic_cast<const ast::int_type *>(src_type);
+            const auto * dest_int_type = dynamic_cast<const ast::int_type *>(cast.type);
+
+            if (dest_int_type->bit_width() >= src_int_type->bit_width()) {
+                dest_type = dest_int_type;
+            }
+        }
+
+        if (dest_type == nullptr) {
+            printError(cast.source_location, "Cannot cast from ", *src_type, " to ", *cast.type);
+        } else {
+            bind_type(&cast, node_info{dest_type, true});
+        }
+
+        visited.emplace(&cast);
+        cast.next->accept(*this);
+    }
+
     void type_checker::visit(constant & constant) {
         ast::type_ptr const_type = nullptr;
         auto get_type = [this](ast::prim_type::type prim) -> decltype(const_type) {
