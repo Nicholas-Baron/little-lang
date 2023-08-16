@@ -89,8 +89,7 @@ namespace control_flow {
 
             auto both_pointer_types
                 = result.type->is_pointer_type() and current_item.type->is_pointer_type();
-            auto both_int_types = result.type->is_int_type() and current_item.type->is_int_type();
-            if (not both_pointer_types and not both_int_types) { return nullptr; }
+            if (not both_pointer_types) { return nullptr; }
 
             if (auto * str_type
                 = type_context.create_type<ast::prim_type>(ast::prim_type::type::str);
@@ -143,26 +142,6 @@ namespace control_flow {
                 if (not result_ptr_type->nullable() and current_ptr_type->nullable()) {
                     result.type = current_ptr_type;
                 }
-            } else if (both_int_types) {
-                auto * result_int_type = dynamic_cast<const ast::int_type *>(result.type);
-                auto * current_int_type = dynamic_cast<const ast::int_type *>(current_item.type);
-
-                // Only one may be nullptr
-                assert(result_int_type != current_int_type);
-
-                if (current_int_type->bit_width() == result_int_type->bit_width()) { continue; }
-
-                if (current_item.can_widen
-                    and current_int_type->bit_width() < result_int_type->bit_width()) {
-                    // Do nothing
-                } else if (result.can_widen
-                           and result_int_type->bit_width() < current_int_type->bit_width()) {
-                    result.type = current_int_type;
-                    result.can_widen &= current_item.can_widen;
-                } else {
-                    return nullptr;
-                }
-
             } else {
                 assert(false);
             }
