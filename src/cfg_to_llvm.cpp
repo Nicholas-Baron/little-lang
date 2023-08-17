@@ -214,7 +214,7 @@ void cfg_to_llvm::visit(control_flow::binary_operation & binary_operation) {
     } else if (operation::is_comparison(binary_operation.op)) {
         static constexpr std::array<float_int_op_pair<operand, predicate>, 6> comparison_ops{
             {
-             {operand::le, predicate::ICMP_SGE, predicate::FCMP_OLE},
+             {operand::le, predicate::ICMP_SLE, predicate::FCMP_OLE},
              {operand::lt, predicate::ICMP_SLT, predicate::FCMP_OLT},
              {operand::ge, predicate::ICMP_SGE, predicate::FCMP_OGE},
              {operand::gt, predicate::ICMP_SGT, predicate::FCMP_OGT},
