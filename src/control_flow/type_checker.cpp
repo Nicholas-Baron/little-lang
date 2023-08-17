@@ -445,7 +445,7 @@ namespace control_flow {
 
         constant.type = const_type;
         visited.emplace(&constant);
-        bind_type(&constant, {const_type, true});
+        bind_type(&constant, {const_type, constant.val_type != literal_type::identifier});
 
         constant.next->accept(*this);
     }

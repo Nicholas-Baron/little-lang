@@ -412,9 +412,17 @@ void ast_to_cfg::visit(ast::if_expr & if_expr) {
     branch.false_case = false_case.beginning;
     branch.false_case->flows_from(&branch);
 
-    auto & join_node = result_cfg->create<control_flow::phi>();
-    join_node.flows_from(true_case.end);
-    join_node.flows_from(false_case.end);
+    auto & join_node = [&]() -> control_flow::phi & {
+        control_flow::phi * phi_node = nullptr;
+        if (phi_node == nullptr) { phi_node = dynamic_cast<control_flow::phi *>(true_case.end); }
+        if (phi_node == nullptr) { phi_node = dynamic_cast<control_flow::phi *>(false_case.end); }
+        if (phi_node == nullptr) { return result_cfg->create<control_flow::phi>(); }
+        return *phi_node;
+    }();
+
+    if (&join_node != true_case.end) { join_node.flows_from(true_case.end); }
+    if (&join_node != false_case.end) { join_node.flows_from(false_case.end); }
+	join_node.source_location = if_expr.location();
 
     return store_result({condition.beginning, &join_node});
 }

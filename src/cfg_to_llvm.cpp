@@ -305,6 +305,7 @@ void cfg_to_llvm::visit(control_flow::cast & cast) {
                ir_builder->CreateCast(llvm::Instruction::CastOps::SExt, src->value, llvm_dest_type),
                cast.type);
 
+    visited.emplace(&cast);
     cast.next->accept(*this);
 }
 
