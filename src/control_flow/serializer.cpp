@@ -122,12 +122,24 @@ namespace control_flow {
         auto [result, index] = add_node(&constant);
         if (result == nullptr) { return value_getter::store_result(index); }
 
-        // TODO: Serialize the value
+        auto printable_value = std::visit(
+            [](auto & arg) -> std::string {
+                using contained_type = std::decay_t<decltype(arg)>;
+                if constexpr (std::is_same_v<contained_type, std::string>) {
+                    return arg;
+                } else if constexpr (std::is_same_v<contained_type, std::monostate>) {
+                    return "monostate";
+                } else {
+                    return (std::stringstream{} << arg).str();
+                }
+            },
+            constant.value);
+
         std::map<size_t, std::string> connections{
-            {get_value(*constant.next, *this), "next"}
+            {get_value(*constant.next, *this), "next"},
         };
 
-        *result = {NODE_NAME(constant), connections};
+        *result = {&constant, "constant " + printable_value, connections};
         return store_result(result);
     }
 
@@ -135,9 +147,9 @@ namespace control_flow {
         auto [result, index] = add_node(&function_call);
         if (result == nullptr) { return value_getter::store_result(index); }
 
-        // TODO: Serialize the callee
         std::map<size_t, std::string> connections{
-            {get_value(*function_call.next, *this), "next"}
+            {get_value(*function_call.next,   *this), "next"  },
+            {get_value(*function_call.callee, *this), "callee"}
         };
 
         auto arg_place = 0U;
@@ -154,7 +166,6 @@ namespace control_flow {
         auto [result, index] = add_node(&intrinsic_call);
         if (result == nullptr) { return value_getter::store_result(index); }
 
-        // TODO: Serialize the callee
         std::map<size_t, std::string> connections{
             {get_value(*intrinsic_call.next, *this), "next"}
         };
@@ -165,7 +176,7 @@ namespace control_flow {
             ++arg_place;
         }
 
-        *result = {NODE_NAME(intrinsic_call), connections};
+        *result = {&intrinsic_call, "intrinsic_call " + intrinsic_call.name, connections};
         return store_result(result);
     }
 
@@ -174,13 +185,12 @@ namespace control_flow {
         auto [result, index] = add_node(&member_access);
         if (result == nullptr) { return value_getter::store_result(index); }
 
-        // TODO: Serialize the field name
         std::map<size_t, std::string> connections{
             {get_value(*member_access.next, *this), "next"},
             {get_value(*member_access.lhs,  *this), "lhs" }
         };
 
-        *result = {NODE_NAME(member_access), connections};
+        *result = {&member_access, "member_access " + member_access.member_name, connections};
 
         return store_result(result);
     }
