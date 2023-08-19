@@ -52,12 +52,12 @@ class ast_to_cfg final
 
     std::unique_ptr<control_flow::graph> result_cfg;
 
-    std::map<std::string, const control_flow::function_start *> seen_functions;
+    std::map<std::string, control_flow::function_start *> seen_functions;
     std::map<std::string, ast::expr *> constants;
     std::map<std::string, ast::struct_type *> declared_structs;
 
     scoped_map<std::string, control_flow::node *> lets;
-    const control_flow::function_start * current_function{nullptr};
+    control_flow::function_start * current_function{nullptr};
 
     ast::type_context * type_context;
     using global_map_t

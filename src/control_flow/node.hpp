@@ -212,7 +212,7 @@ namespace control_flow {
 
     class function_call final : public node {
       public:
-        explicit function_call(const function_start * callee, std::vector<node *> args = {})
+        explicit function_call(function_start * callee, std::vector<node *> args = {})
             : callee{callee}
             , arguments{std::move(args)} {}
 
@@ -224,7 +224,7 @@ namespace control_flow {
 
         node * previous{nullptr};
         node * next{nullptr};
-        const function_start * callee;
+        function_start * callee;
         std::vector<node *> arguments;
     };
 
