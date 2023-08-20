@@ -8,8 +8,9 @@
 namespace ast {
     class if_stmt final : public stmt {
       public:
-        if_stmt(expr_ptr cond, stmt_ptr on_true, stmt_ptr on_false)
-            : condition(std::move(cond))
+        if_stmt(expr_ptr cond, stmt_ptr on_true, stmt_ptr on_false, Location loc)
+            : node{loc}
+            , condition(std::move(cond))
             , true_branch(std::move(on_true))
             , else_branch(std::move(on_false)) {}
 
@@ -28,8 +29,9 @@ namespace ast {
 
     class let_stmt final : public stmt {
       public:
-        let_stmt(typed_identifier && typed_name, expr_ptr value)
-            : name_and_type(std::move(typed_name))
+        let_stmt(typed_identifier && typed_name, expr_ptr value, Location loc)
+            : node{loc}
+            , name_and_type(std::move(typed_name))
             , value(std::move(value)) {}
 
         non_copyable(let_stmt);
@@ -46,7 +48,8 @@ namespace ast {
 
     class stmt_sequence final : public stmt {
       public:
-        stmt_sequence() = default;
+        explicit stmt_sequence(Location loc)
+            : node{loc} {}
 
         non_copyable(stmt_sequence);
 
@@ -64,7 +67,8 @@ namespace ast {
     class func_call_stmt final : public stmt {
       public:
         explicit func_call_stmt(func_call_data && data)
-            : data{std::move(data)} {}
+            : node{data.location()}
+            , data{std::move(data)} {}
 
         make_visitable;
 
@@ -73,8 +77,9 @@ namespace ast {
 
     class return_stmt final : public stmt {
       public:
-        explicit return_stmt(expr_ptr val = nullptr)
-            : value(std::move(val)) {}
+        explicit return_stmt(Location loc, expr_ptr val = nullptr)
+            : node{loc}
+            , value(std::move(val)) {}
 
         non_copyable(return_stmt);
 

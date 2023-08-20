@@ -17,8 +17,6 @@ namespace ast {
 
     class node {
       public:
-        node() = default;
-
         non_copyable(node);
 
         movable(node);
@@ -30,10 +28,11 @@ namespace ast {
 #define make_visitable \
     void accept(visitor_base & visitor) override { visitor.visit(*this); }
 
-        // TODO: Just public location
-        void set_location(const Location & loc_new) { loc = loc_new; }
+        [[nodiscard]] auto location() const noexcept { return loc; }
 
-        [[nodiscard]] const auto & location() const noexcept { return loc; }
+      protected:
+        explicit node(Location loc)
+            : loc{loc} {}
 
       private:
         Location loc{};

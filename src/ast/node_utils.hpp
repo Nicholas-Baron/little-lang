@@ -18,22 +18,19 @@ namespace ast {
     class typed_identifier final : public node {
       public:
         typed_identifier(std::string && name, ast::type_ptr type, Location loc)
-            : type_{type}
-            , name_{std::move(name)}
-            , loc{loc} {}
+            : node{loc}
+            , type_{type}
+            , name_{std::move(name)} {}
 
         [[nodiscard]] const auto & name() const { return name_; }
 
         [[nodiscard]] ast::type_ptr type() const { return type_; }
-
-        [[nodiscard]] const auto & location() const noexcept { return loc; }
 
         make_visitable;
 
       private:
         ast::type_ptr type_;
         std::string name_;
-        Location loc{};
     };
 
     // Stores the function call data.
@@ -41,10 +38,9 @@ namespace ast {
     class func_call_data final : public node {
       public:
         func_call_data(std::string && name, std::vector<expr_ptr> && args, const Location & loc)
-            : name_(std::move(name))
-            , args_{std::move(args)} {
-            set_location(loc);
-        }
+            : node{loc}
+            , name_(std::move(name))
+            , args_{std::move(args)} {}
 
         non_copyable(func_call_data);
 

@@ -13,11 +13,10 @@ namespace ast {
     // TODO: Mark some AST nodes as constants
     class user_val final : public expr {
       public:
-        user_val(std::string && value, literal_type type, Location loc = {})
-            : val(std::move(value))
-            , val_type{type} {
-            set_location(loc);
-        }
+        user_val(std::string && value, literal_type type, Location loc)
+            : node{loc}
+            , val(std::move(value))
+            , val_type{type} {}
 
         non_copyable(user_val);
 
@@ -34,8 +33,9 @@ namespace ast {
     class unary_expr final : public expr {
       public:
         // NOLINTNEXTLINE
-        unary_expr(operation::unary op, expr_ptr operand)
-            : op(op)
+        unary_expr(operation::unary op, expr_ptr operand, Location loc)
+            : node{loc}
+            , op(op)
             , expr(std::move(operand)) {}
 
         non_copyable(unary_expr);
@@ -53,8 +53,9 @@ namespace ast {
     class binary_expr final : public expr {
       public:
         // NOLINTNEXTLINE
-        binary_expr(expr_ptr lhs, operation::binary op, expr_ptr rhs)
-            : lhs(std::move(lhs))
+        binary_expr(expr_ptr lhs, operation::binary op, expr_ptr rhs, Location loc)
+            : node{loc}
+            , lhs(std::move(lhs))
             , rhs(std::move(rhs))
             , op(op) {}
 
@@ -77,11 +78,10 @@ namespace ast {
     class if_expr final : public expr {
       public:
         if_expr(Location loc, expr_ptr condition, expr_ptr then_case, expr_ptr else_case)
-            : condition{std::move(condition)}
+            : node{loc}
+            , condition{std::move(condition)}
             , then_case{std::move(then_case)}
-            , else_case{std::move(else_case)} {
-            set_location(loc);
-        }
+            , else_case{std::move(else_case)} {}
 
         non_copyable(if_expr);
 
@@ -96,10 +96,9 @@ namespace ast {
 
     class func_call_expr final : public expr {
       public:
-        explicit func_call_expr(func_call_data && data, Location loc = {})
-            : data{std::move(data)} {
-            set_location(loc);
-        }
+        explicit func_call_expr(func_call_data && data, Location loc)
+            : node{loc}
+            , data{std::move(data)} {}
 
         make_visitable;
 
@@ -109,8 +108,10 @@ namespace ast {
     class struct_init final : public expr {
       public:
         struct_init(std::string name,
-                    std::vector<std::pair<std::string, ast::expr_ptr>> && initializers)
-            : type_name{std::move(name)}
+                    std::vector<std::pair<std::string, ast::expr_ptr>> && initializers,
+                    Location loc)
+            : node{loc}
+            , type_name{std::move(name)}
             , initializers{std::move(initializers)} {}
 
         make_visitable;
@@ -121,8 +122,9 @@ namespace ast {
 
     class cast_expr final : public expr {
       public:
-        cast_expr(ast::expr_ptr source, ast::type_ptr destination)
-            : operand{std::move(source)}
+        cast_expr(ast::expr_ptr source, ast::type_ptr destination, Location loc)
+            : node{loc}
+            , operand{std::move(source)}
             , destination{destination} {}
 
         make_visitable;

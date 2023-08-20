@@ -11,7 +11,8 @@
 namespace ast {
     class top_level_sequence final : public top_level {
       public:
-        top_level_sequence() = default;
+        explicit top_level_sequence(Location loc)
+            : node{loc} {}
 
         non_copyable(top_level_sequence);
 
@@ -41,8 +42,9 @@ namespace ast {
 
     class func_decl final : public top_level {
       public:
-        func_decl(std::string name, ast::function_type * func_type, stmt_ptr body)
-            : name{std::move(name)}
+        func_decl(std::string name, ast::function_type * func_type, stmt_ptr body, Location loc)
+            : node{loc}
+            , name{std::move(name)}
             , func_type{func_type}
             , body(std::move(body)) {}
 
@@ -67,8 +69,9 @@ namespace ast {
 
     class const_decl final : public top_level {
       public:
-        const_decl(typed_identifier && name_and_type, expr_ptr expr)
-            : name_and_type(std::move(name_and_type))
+        const_decl(typed_identifier && name_and_type, expr_ptr expr, Location loc)
+            : node{loc}
+            , name_and_type(std::move(name_and_type))
             , expr{std::move(expr)} {}
 
         non_copyable(const_decl);
@@ -89,8 +92,9 @@ namespace ast {
     class struct_decl final : public top_level {
       public:
         explicit struct_decl(std::string name, ast::struct_type * type,
-                             std::vector<typed_identifier> && fields = {})
-            : name(std::move(name))
+                             std::vector<typed_identifier> && fields, Location loc)
+            : node{loc}
+            , name(std::move(name))
             , fields{std::move(fields)}
             , type{type} {}
 
