@@ -23,7 +23,6 @@ namespace control_flow {
         all_cfg_nodes
 #undef expand_node_macro
 
-        // TODO: control_flow::node should store location data
         template<class... arg_t>
         void printError(std::optional<Location> loc, const arg_t &... args);
         // clang-format on
