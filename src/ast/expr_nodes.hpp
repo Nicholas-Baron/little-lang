@@ -10,7 +10,6 @@
 // expr node classes
 
 namespace ast {
-    // TODO: Mark some AST nodes as constants
     class user_val final : public expr {
       public:
         user_val(std::string && value, literal_type type, Location loc)
