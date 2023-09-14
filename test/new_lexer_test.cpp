@@ -190,6 +190,17 @@ TEST_CASE("the lexer will parse a hexadecimal integer") {
     CHECK(lexer->next_token() == lexer::token_type::eof);
 }
 
+TEST_CASE("the lexer will parse floating point literals") {
+    std::string buffer = "1.1";
+    auto lexer = lexer::from_buffer(buffer.c_str(), buffer.size());
+
+    CHECK(lexer != nullptr);
+    auto tok = lexer->next_token();
+    CHECK(tok == lexer::token_type::floating);
+    CHECK(tok == buffer);
+    CHECK(lexer->next_token() == lexer::token_type::eof);
+}
+
 TEST_CASE("the lexer will parse a colon and the word 'is' as the same token") {
     std::string buffer = "is:";
     auto lexer = lexer::from_buffer(buffer.c_str(), buffer.size());
