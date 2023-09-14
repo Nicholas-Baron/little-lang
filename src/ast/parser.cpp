@@ -85,7 +85,8 @@ ast::top_lvl_ptr parser::parse_top_level() {
         // Parse a constant
         return parse_const_decl();
     default:
-        print_error(lex->peek_token().location, "Unexpected ", lex->next_token().text);
+        print_error(lex->peek_token().location, "Unexpected ", lex->next_token().text,
+                    " for top level item");
         return nullptr;
     }
 }
@@ -222,10 +223,11 @@ std::unique_ptr<ast::func_decl> parser::parse_function() {
     // The body of a function may either be an `=` followed by an expression,
     // or just a statement.
     ast::stmt_ptr body;
-    if (auto equal_sign = lex->next_token(); equal_sign == lexer::token_type::equal) {
+    if (auto equal_sign = lex->peek_token(); equal_sign == lexer::token_type::equal) {
         // We need to inject the implied return for the expression,
         // as a function's body is just a statement
-        body = std::make_unique<ast::return_stmt>(equal_sign.location, parse_expression());
+        auto location = lex->next_token().location;
+        body = std::make_unique<ast::return_stmt>(location, parse_expression());
     } else {
         body = parse_statement();
     }
