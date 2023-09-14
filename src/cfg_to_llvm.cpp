@@ -458,7 +458,7 @@ void cfg_to_llvm::visit(control_flow::function_start & func_start) {
 
     // Ensure termination for the whole function
     // TODO: Iterate every block and check for termination on each?
-    if (auto & last_bb = func->getBasicBlockList().back(); not last_bb.back().isTerminator()) {
+    if (auto & last_bb = func->back(); not last_bb.back().isTerminator()) {
         ir_builder->SetInsertPoint(&last_bb);
         if (auto * return_type = func_type->getReturnType(); return_type->isVoidTy()) {
             ir_builder->CreateRetVoid();
@@ -563,7 +563,7 @@ void cfg_to_llvm::patch_parent_block(llvm::Function * current_function,
                                      std::vector<cfg_to_llvm::node_data> & values,
                                      node_data & incoming_value, llvm::BasicBlock * phi_block) {
 
-    for (auto & block : current_function->getBasicBlockList()) {
+    for (auto & block : *current_function) {
         if (std::find_if(values.begin(), values.end(),
                          [&block](const node_data & value) { return value.parent_block == &block; })
             != values.end()) {
@@ -714,10 +714,9 @@ void cfg_to_llvm::visit(control_flow::unary_operation & unary_operation) {
                    unary_operation.result_type);
     } break;
     case operand::negate:
-        if (auto float_op = value->value->getType()->isFloatingPointTy(); const_val != nullptr) {
-            bind_value(unary_operation,
-                       float_op ? llvm::ConstantExpr::getFNeg(const_val)
-                                : llvm::ConstantExpr::getNeg(const_val),
+        if (auto float_op = value->value->getType()->isFloatingPointTy();
+            const_val != nullptr and not float_op) {
+            bind_value(unary_operation, llvm::ConstantExpr::getNeg(const_val),
                        unary_operation.result_type);
         } else {
             bind_value(unary_operation,
