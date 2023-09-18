@@ -1,3 +1,4 @@
+#include <control_flow/graph.hpp>
 #include <intrinsics.hpp>
 
 bool is_intrinsic(const std::string & mod, const std::string & id) {

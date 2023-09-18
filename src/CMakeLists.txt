@@ -73,7 +73,6 @@ target_precompile_headers(
     ast/parser.hpp
     ast/stmt_nodes.hpp
     emit_asm.hpp
-    program.hpp
     utils/global_map.hpp
 )
 
