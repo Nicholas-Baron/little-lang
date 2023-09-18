@@ -18,12 +18,8 @@ bool exec_command(std::vector<std::string> && cmd, bool debug) {
         // in child
 
         std::vector<char *> args;
-        args.reserve(cmd.size());
-        for (auto & arg : cmd) {
-            auto arg_length = arg.size() + 1;
-            // NOLINTNEXTLINE (cppcoreguidelines-owning-memory)
-            args.emplace_back(strncpy(new char[arg_length], arg.c_str(), arg_length));
-        }
+        args.reserve(cmd.size() + 1);
+        for (auto & arg : cmd) { args.emplace_back(arg.data()); }
 
         args.push_back(nullptr);
 
