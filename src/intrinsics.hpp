@@ -1,5 +1,6 @@
 #pragma once
 
+#include "control_flow/graph.hpp"
 #include "control_flow/node.hpp"
 
 [[nodiscard]] bool is_intrinsic(const std::string & mod, const std::string & id);
