@@ -21,7 +21,7 @@ class lexer final {
     // Note that the lexer does not own the string and maintains a readonly view into it.
     // The caller must store the string *and* ensure that it is not modified while the lexer is
     // alive.
-    static std::unique_ptr<lexer> from_buffer(const char *, size_t);
+    static std::unique_ptr<lexer> from_buffer(const char * buffer, size_t size);
 
     non_copyable(lexer);
     non_movable(lexer);

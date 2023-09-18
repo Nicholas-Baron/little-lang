@@ -35,7 +35,7 @@ namespace control_flow {
             [[nodiscard]] std::string id() const;
         };
 
-        void store_result(node_data * result);
+        void store_result(node_data * value);
 
         std::pair<node_data *, size_t> add_node(node * node);
 

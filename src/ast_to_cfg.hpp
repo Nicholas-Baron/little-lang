@@ -23,7 +23,7 @@ class ast_to_cfg final
     : public ast::visitor_base
     , public value_getter<ast_to_cfg, ast::node, basic_block> {
   public:
-    ast_to_cfg(ast::type_context &);
+    ast_to_cfg(ast::type_context & type_context);
 
     non_copyable(ast_to_cfg);
     movable(ast_to_cfg);

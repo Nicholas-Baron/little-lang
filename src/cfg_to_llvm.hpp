@@ -55,9 +55,9 @@ class cfg_to_llvm final : public control_flow::visitor {
     void bind_value(const control_flow::node & node, llvm::Value * value, ast::type_ptr type);
     [[nodiscard]] const node_data * find_value_of(const control_flow::node * node) const;
 
-    void arg_at(control_flow::intrinsic_call &);
-    void arg_count(control_flow::intrinsic_call &);
-    void syscall(control_flow::intrinsic_call &);
+    void arg_at(control_flow::intrinsic_call & intrinsic_call);
+    void arg_count(control_flow::intrinsic_call & intrinsic_call);
+    void syscall(control_flow::intrinsic_call & intrinsic_call);
 
     static void patch_parent_block(llvm::Function * current_function,
                                    std::vector<cfg_to_llvm::node_data> & values,
