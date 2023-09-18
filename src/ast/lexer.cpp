@@ -103,7 +103,7 @@ lexer::token lexer::next_token(bool increasing_lookahead) {
         if (peek_char() == EOF) { break; }
     }
 
-    Location loc{line_num, col_num};
+    const Location loc{line_num, col_num};
 
     if (peek_char() == EOF) { return {token_type::eof, "", loc}; }
 
