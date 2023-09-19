@@ -31,10 +31,9 @@ namespace ast {
 
     class unary_expr final : public expr {
       public:
-        // NOLINTNEXTLINE
-        unary_expr(operation::unary op, expr_ptr operand, Location loc)
+        unary_expr(operation::unary operation, expr_ptr operand, Location loc)
             : node{loc}
-            , op(op)
+            , op(operation)
             , expr(std::move(operand)) {}
 
         non_copyable(unary_expr);
@@ -51,12 +50,11 @@ namespace ast {
 
     class binary_expr final : public expr {
       public:
-        // NOLINTNEXTLINE
-        binary_expr(expr_ptr lhs, operation::binary op, expr_ptr rhs, Location loc)
+        binary_expr(expr_ptr lhs, operation::binary bin_op, expr_ptr rhs, Location loc)
             : node{loc}
             , lhs(std::move(lhs))
             , rhs(std::move(rhs))
-            , op(op) {}
+            , op(bin_op) {}
 
         non_copyable(binary_expr);
 

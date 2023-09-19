@@ -3,11 +3,10 @@
 #include "operations.hpp"
 
 // TODO: Test this?
-// NOLINTNEXTLINE
-[[nodiscard]] std::string token_to_string(operation::binary op) {
+[[nodiscard]] std::string token_to_string(operation::binary operation) {
     using operand = operation::binary;
 
-    switch (op) {
+    switch (operation) {
     case operand::eq:
         return "operand::eq";
     case operand::ne:
@@ -39,11 +38,10 @@
     }
 }
 
-// NOLINTNEXTLINE
-[[nodiscard]] std::string token_to_string(operation::unary op) {
+[[nodiscard]] std::string token_to_string(operation::unary operation) {
     using operand = operation::unary;
 
-    switch (op) {
+    switch (operation) {
     case operand::bool_not:
         return "operand::bool_not";
     case operand::negate:
@@ -55,7 +53,6 @@
     }
 }
 
-// NOLINTNEXTLINE
 [[nodiscard]] std::string token_to_string(literal_type typ) {
     using type = literal_type;
 

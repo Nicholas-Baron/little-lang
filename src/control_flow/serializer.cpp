@@ -201,7 +201,6 @@ namespace control_flow {
         {
             nlohmann::json::object_t debug;
             for (const auto & [node, id] : visited) {
-                // NOLINTNEXTLINE
                 auto raw_addr = reinterpret_cast<std::uintptr_t>(node);
                 auto hex_addr
                     = (std::stringstream{} << std::setfill('0') << std::showbase << std::hex

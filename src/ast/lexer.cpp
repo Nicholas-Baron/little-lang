@@ -35,7 +35,6 @@ std::unique_ptr<lexer> lexer::from_file(const std::string & filename,
 
     // Next, we map the file into our memory.
     auto * data = static_cast<char *>(mmap(nullptr, file_length, PROT_READ, MAP_PRIVATE, fd, 0));
-    // NOLINTNEXTLINE
     if (data == MAP_FAILED) {
         perror("lexer mmap");
         return nullptr;
@@ -230,7 +229,6 @@ char lexer::next_escaped() {
     return current_char;
 }
 
-// NOLINTNEXTLINE
 lexer::token lexer::next_symbol(Location loc) {
 
     switch (const auto current_char = next_char(); current_char) {
