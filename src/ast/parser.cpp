@@ -216,7 +216,7 @@ std::unique_ptr<ast::func_decl> parser::parse_function() {
     arg_types.reserve(args.size());
     for (auto & arg : args) { arg_types.push_back(arg.type()); }
 
-    auto * return_type = ty_context.create_type<ast::prim_type>(ast::prim_type::type::unit);
+    const auto * return_type = ty_context.create_type<ast::prim_type>(ast::prim_type::type::unit);
     // Parse the optional return type.
     if (lex->consume_if(lexer::token_type::arrow).has_value()) { return_type = parse_type(); }
 
@@ -443,10 +443,10 @@ ast::typed_identifier parser::parse_opt_typed_identifier() {
     // Since type may be null, this covers the third (`name`) and first (`type name`) cases.
     // However, we need to check that there are at least 2 identifiers in a row before calling
     // parse_type. Otherwise, we may interpret the third case of just a name as a type.
-    auto * type = (lex->peek_token() == lexer::token_type::identifier
-                   and lex->peek_token(1) != lexer::token_type::identifier)
-                    ? nullptr
-                    : parse_type();
+    const auto * type = (lex->peek_token() == lexer::token_type::identifier
+                         and lex->peek_token(1) != lexer::token_type::identifier)
+                          ? nullptr
+                          : parse_type();
     auto name = lex->next_token();
     if (name != lexer::token_type::identifier) {
         print_error(name.location, "Expected an identifier; found ", name.text);
@@ -474,7 +474,7 @@ ast::typed_identifier parser::parse_typed_identifier() {
     } break;
     case lexer::token_type::identifier: {
         // the first case (`type name`) has occured.
-        auto * type = parse_type();
+        const auto * type = parse_type();
         auto name = lex->next_token();
 
         if (name != lexer::token_type::identifier) {
@@ -493,7 +493,7 @@ ast::typed_identifier parser::parse_typed_identifier() {
     }
 }
 
-ast::type_ptr parser::make_prim_type(lexer::token type_name) {
+ast::type_ptr parser::make_prim_type(const lexer::token & type_name) {
 
     if (strncmp(type_name.text.c_str(), "int", 3) == 0) {
         if (type_name == "int") { return nullptr; }
@@ -534,7 +534,8 @@ ast::type_ptr parser::parse_type() {
     switch (type_name_token.type) {
     case lexer::token_type::identifier: {
         lex->next_token();
-        auto * type_ptr = ty_context.lookup_user_type(type_name_token.text, lex->module_name());
+        const auto * type_ptr
+            = ty_context.lookup_user_type(type_name_token.text, lex->module_name());
         if (type_ptr == nullptr) {
             print_error(type_name_token.location,
                         "Expected a type name; Could not find user type named ",
@@ -543,7 +544,7 @@ ast::type_ptr parser::parse_type() {
         return type_ptr;
     }
     case lexer::token_type::prim_type: {
-        auto * type = make_prim_type(lex->next_token());
+        const auto * type = make_prim_type(lex->next_token());
         if (type == nullptr) {
             print_error(lex->peek_token().location, "Could not find primitive type named ",
                         lex->peek_token().text);
