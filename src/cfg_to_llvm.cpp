@@ -25,11 +25,10 @@ namespace {
 
     namespace constraints {
 
-        // NOLINTNEXTLINE
-        constexpr size_t count_in(const char * text, char c) {
+        constexpr size_t count_in(const char * text, char to_count) {
             auto count = 0U;
             while (text != nullptr and *text != '\0') {
-                count += static_cast<unsigned int>(*text == c);
+                count += static_cast<unsigned int>(*text == to_count);
                 // NOLINTNEXTLINE (*-pointer-arithmetic)
                 ++text;
             }
