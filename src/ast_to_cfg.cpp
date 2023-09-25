@@ -99,7 +99,7 @@ static void print_graphviz(const std::vector<link> & links) {
 #endif
 
 void ast_to_cfg::check_flow() noexcept {
-    std::vector<link> found_links;
+    std::vector<struct link> found_links;
 
     // Fill the map
     result_cfg->for_each_node([&](auto * node) {
