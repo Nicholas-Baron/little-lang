@@ -1,5 +1,7 @@
 # Bison is needed only for checking the formal grammar
 find_package(BISON)
+find_package(nlohmann_json REQUIRED)
+find_package(lyra REQUIRED)
 
 if(BISON_FOUND)
     # the bison spec file
@@ -55,12 +57,12 @@ target_link_libraries(littlec_lib littlec_ast littlec_utils)
 
 llvm_map_components_to_libnames(LLVM_LIBS all support)
 
-target_link_libraries(littlec_lib ${LLVM_LIBS} LLVM CONAN_PKG::lyra)
+target_link_libraries(littlec_lib ${LLVM_LIBS} LLVM bfg::lyra)
 target_link_options(littlec_lib PUBLIC -Wl,--gc-sections)
 target_include_directories(
     littlec_lib
     PUBLIC ${CMAKE_SOURCE_DIR}/src
-    PRIVATE CONAN_PKG::lyra ${CMAKE_BINARY_DIR} ${LLVM_INCLUDE_DIRS}
+    PRIVATE LYRA::LYRA ${CMAKE_BINARY_DIR} ${LLVM_INCLUDE_DIRS}
 )
 separate_arguments(LLVM_DEF_LIST NATIVE_COMMAND ${LLVM_DEFINITIONS})
 target_compile_definitions(littlec_lib PRIVATE ${LLVM_DEF_LIST})
@@ -81,7 +83,7 @@ add_executable(littlec main.cpp)
 target_compile_options(
     littlec PRIVATE -O2 -Wno-unused-command-line-argument -Wno-unused-parameter
 )
-target_link_libraries(littlec CONAN_PKG::lyra littlec_lib)
+target_link_libraries(littlec bfg::lyra littlec_lib)
 target_include_directories(
-    littlec PRIVATE ${CMAKE_SOURCE_DIR}/src CONAN_PKG::lyra ${CMAKE_BINARY_DIR}
+    littlec PRIVATE ${CMAKE_SOURCE_DIR}/src bfg::lyra ${CMAKE_BINARY_DIR}
 )

@@ -1,5 +1,8 @@
+find_package(Catch2 REQUIRED)
+find_package(lyra REQUIRED)
+
 add_library(test_runner STATIC main_tests.cpp)
-target_link_libraries(test_runner CONAN_PKG::catch2)
+target_link_libraries(test_runner Catch2::Catch2)
 
 foreach(
     test
@@ -15,7 +18,7 @@ foreach(
     string(CONCAT filename ${test} ".cpp")
     add_executable(${test} ${filename})
 
-    target_link_libraries(${test} littlec_lib test_runner CONAN_PKG::lyra)
+    target_link_libraries(${test} littlec_lib test_runner bfg::lyra)
     add_test(NAME "${test}" COMMAND $<TARGET_FILE:${test}>)
 endforeach()
 
